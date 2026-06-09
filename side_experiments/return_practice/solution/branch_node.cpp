@@ -1,7 +1,7 @@
 #include "branch_node.h"
 
-#include "branch_network.h"
 #include "experiment.h"
+#include "network.h"
 #include "solution.h"
 #include "world_model.h"
 #include "wrapper.h"
@@ -43,8 +43,8 @@ void BranchNode::save(ofstream& output_file,
 
 void BranchNode::load(ifstream& input_file,
 					  Wrapper* wrapper) {
-	this->original_network = new BranchNetwork(input_file);
-	this->branch_network = new BranchNetwork(input_file);
+	this->original_network = new Network(input_file);
+	this->branch_network = new Network(input_file);
 
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);

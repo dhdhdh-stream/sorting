@@ -10,8 +10,8 @@
 #include "abstract_experiment.h"
 
 class AbstractNode;
-class BranchNetwork;
 class ExperimentRun;
+class Network;
 class PredictRun;
 class Wrapper;
 
@@ -42,8 +42,8 @@ public:
 
 	std::vector<int> actions;
 
-	BranchNetwork* original_network;
-	BranchNetwork* branch_network;
+	Network* original_network;
+	Network* branch_network;
 
 	int starting_iter;
 

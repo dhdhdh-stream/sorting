@@ -1,8 +1,3 @@
-// - predicted state change doesn't make sense
-//   - just predicts average
-//     - which can lead to no man's land
-// - should generate obs or state changes instead
-
 #ifndef WORLD_MODEL_H
 #define WORLD_MODEL_H
 
@@ -32,6 +27,14 @@ public:
 	double predict_average_max_update;
 
 	double predict_misguess_average;
+
+	// std::vector<StateNetwork*> predict_val_networks;
+	// std::vector<StateNetwork*> predict_select_networks;
+	// double predict_misguess_average;
+
+	// std::vector<StateNetwork*> candidate_predict_val_networks;
+	// std::vector<StateNetwork*> candidate_predict_select_networks;
+	// double candidate_predict_misguess_average;
 
 	WorldModel(int num_obs,
 			   int num_actions);

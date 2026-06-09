@@ -3,11 +3,11 @@
 #include <set>
 
 #include "action_node.h"
-#include "branch_network.h"
 #include "branch_node.h"
 #include "end_node.h"
 #include "experiment.h"
 #include "globals.h"
+#include "network.h"
 #include "start_node.h"
 
 using namespace std;

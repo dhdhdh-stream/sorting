@@ -41,6 +41,8 @@ public:
 
 	void remove_input(int index);
 
+	void twiddle();
+
 	void save_weights(std::ofstream& output_file);
 };
 

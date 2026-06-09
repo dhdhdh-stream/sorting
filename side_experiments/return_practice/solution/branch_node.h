@@ -6,17 +6,13 @@
 #include "abstract_node.h"
 
 class AbstractExperiment;
-class BranchNetwork;
+class Network;
 class Wrapper;
 
 class BranchNode : public AbstractNode {
 public:
-	/**
-	 * - need to crunch world modeling down into simple equation
-	 *   - otherwise, expensive when many branches
-	 */
-	BranchNetwork* original_network;
-	BranchNetwork* branch_network;
+	Network* original_network;
+	Network* branch_network;
 
 	int original_next_node_id;
 	AbstractNode* original_next_node;

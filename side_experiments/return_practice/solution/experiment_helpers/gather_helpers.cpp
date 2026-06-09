@@ -8,13 +8,17 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "branch_network.h"
 #include "experiment_run.h"
 #include "globals.h"
+#include "network.h"
 #include "solution.h"
 #include "start_node.h"
+#include "world_model.h"
 #include "world_model_helpers.h"
 #include "wrapper.h"
+// temp
+#include "run.h"
+#include "state_network.h"
 
 using namespace std;
 
@@ -86,12 +90,12 @@ void Experiment::gather_backprop(double target_val,
 		uniform_int_distribution<int> start_distribution(0, this->start_state_history.size()-1);
 		uniform_int_distribution<int> end_distribution(0, this->end_state_history.size()-1);
 
-		this->original_network = new BranchNetwork(this->start_state_history[0].size());
+		this->original_network = new Network(this->start_state_history[0].size(), 1);
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int index = start_distribution(generator);
 			this->original_network->activate(this->start_state_history[index]);
-			double error = this->start_target_val_history[index] - this->original_network->output->acti_vals[0];
-			this->original_network->backprop(error);
+			vector<double> errors{this->start_target_val_history[index] - this->original_network->output->acti_vals[0]};
+			this->original_network->backprop(errors);
 		}
 
 		// // temp
@@ -102,12 +106,12 @@ void Experiment::gather_backprop(double target_val,
 		// 	cout << "this->start_target_val_history[h_index]: " << this->start_target_val_history[h_index] << endl;
 		// }
 
-		BranchNetwork* end_network = new BranchNetwork(this->end_state_history[0].size());
+		Network* end_network = new Network(this->end_state_history[0].size(), 1);
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int index = end_distribution(generator);
 			end_network->activate(this->end_state_history[index]);
-			double error = this->end_target_val_history[index] - end_network->output->acti_vals[0];
-			end_network->backprop(error);
+			vector<double> errors{this->end_target_val_history[index] - end_network->output->acti_vals[0]};
+			end_network->backprop(errors);
 		}
 
 		// temp
@@ -255,10 +259,41 @@ void Experiment::gather_backprop(double target_val,
 		// 	new_predicted[h_index] = end_network->output->acti_vals[0];
 		// }
 
+		// temp
+		AbstractNode* next_node;
+		switch (this->node_context->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)this->node_context;
+				next_node = start_node->next_node;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->node_context;
+				next_node = action_node->next_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)this->node_context;
+				if (this->is_branch) {
+					next_node = branch_node->branch_next_node;
+				} else {
+					next_node = branch_node->original_next_node;
+				}
+			}
+			break;
+		}
+
 		vector<vector<double>> train_new_state(NUM_SIMULATE);
 		vector<double> train_new_predicted(NUM_SIMULATE);
+		// temp
+		vector<double> end_predicted(NUM_SIMULATE);
 		for (int iter_index = 0; iter_index < NUM_SIMULATE; iter_index++) {
-			vector<double> state = this->start_state_history[start_distribution(generator)];
+			int start_index = start_distribution(generator);
+
+			vector<double> state = this->start_state_history[start_index];
 			train_new_state[iter_index] = state;
 			for (int a_index = 0; a_index < (int)best_actions.size(); a_index++) {
 				predict_helper(best_actions[a_index],
@@ -267,6 +302,38 @@ void Experiment::gather_backprop(double target_val,
 			}
 			end_network->activate(state);
 			train_new_predicted[iter_index] = end_network->output->acti_vals[0];
+
+			// temp
+			Run* run = new Run();
+			run->wrapper = wrapper;
+			run->node_context = next_node;
+			run->state = this->start_state_history[start_index];
+			while (true) {
+				int action;
+				bool is_next = false;
+				bool is_done = false;
+				while (!is_next) {
+					if (run->node_context == NULL) {
+						is_next = true;
+						is_done = true;
+					} else {
+						run->node_context->step(action,
+												is_next,
+												run);
+					}
+				}
+
+				if (is_done) {
+					break;
+				}
+
+				predict_helper(best_actions[action],
+							   state,
+							   wrapper);
+			}
+			wrapper->curr_model->final_network->activate(run->state);
+			end_predicted[iter_index] = wrapper->curr_model->final_network->output->acti_vals[0];
+			delete run;
 		}
 
 		// // temp
@@ -277,7 +344,7 @@ void Experiment::gather_backprop(double target_val,
 
 		delete end_network;
 
-		this->branch_network = new BranchNetwork(this->start_state_history[0].size());
+		this->branch_network = new Network(this->start_state_history[0].size(), 1);
 
 		// for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 		// 	int index = start_distribution(generator);
@@ -290,8 +357,8 @@ void Experiment::gather_backprop(double target_val,
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int index = train_new_distribution(generator);
 			this->branch_network->activate(train_new_state[index]);
-			double error = train_new_predicted[index] - this->branch_network->output->acti_vals[0];
-			this->branch_network->backprop(error);
+			vector<double> errors{train_new_predicted[index] - this->branch_network->output->acti_vals[0]};
+			this->branch_network->backprop(errors);
 		}
 
 		// // temp

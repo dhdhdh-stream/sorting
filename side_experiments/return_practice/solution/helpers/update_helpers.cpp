@@ -1,9 +1,9 @@
 #include "solution_helpers.h"
 
-#include "branch_network.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "experiment_run.h"
+#include "network.h"
 #include "solution.h"
 #include "wrapper.h"
 
@@ -20,12 +20,12 @@ void update_solution_helper(ExperimentRun* run,
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
 				if (branch_node_history->is_branch) {
 					branch_node->branch_network->activate(branch_node_history->state);
-					double error = target_val - branch_node->branch_network->output->acti_vals[0];
-					branch_node->branch_network->backprop(error);
+					vector<double> errors{target_val - branch_node->branch_network->output->acti_vals[0]};
+					branch_node->branch_network->backprop(errors);
 				} else {
 					branch_node->original_network->activate(branch_node_history->state);
-					double error = target_val - branch_node->original_network->output->acti_vals[0];
-					branch_node->original_network->backprop(error);
+					vector<double> errors{target_val - branch_node->original_network->output->acti_vals[0]};
+					branch_node->original_network->backprop(errors);
 				}
 			}
 			break;

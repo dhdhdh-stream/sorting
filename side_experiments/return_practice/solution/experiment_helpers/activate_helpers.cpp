@@ -4,10 +4,10 @@
 #include <limits>
 
 #include "action_node.h"
-#include "branch_network.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "experiment_run.h"
+#include "network.h"
 #include "solution.h"
 #include "start_node.h"
 #include "utilities.h"

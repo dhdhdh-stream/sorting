@@ -3,9 +3,9 @@
 #include <iostream>
 
 #include "abstract_node.h"
-#include "branch_network.h"
 #include "constants.h"
 #include "globals.h"
+#include "network.h"
 #include "wrapper.h"
 
 using namespace std;

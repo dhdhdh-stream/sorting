@@ -1,11 +1,11 @@
-#ifndef BRANCH_NETWORK_H
-#define BRANCH_NETWORK_H
+#ifndef NETWORK_H
+#define NETWORK_H
 
 #include <vector>
 
 #include "layer.h"
 
-class BranchNetwork {
+class Network {
 public:
 	Layer* input;
 
@@ -20,17 +20,20 @@ public:
 	double hidden_3_average_max_update;
 	double output_average_max_update;
 
-	BranchNetwork(int input_size);
-	BranchNetwork(BranchNetwork* original);
-	BranchNetwork(std::ifstream& input_file);
-	~BranchNetwork();
+	Network(int input_size,
+			int output_size);
+	Network(Network* original);
+	Network(std::ifstream& input_file);
+	~Network();
 
 	void activate(std::vector<double>& input_vals);
-	void backprop(double error);
+	void backprop(std::vector<double>& errors);
 
 	void add_inputs(int num_add);
+
+	void twiddle();
 
 	void save(std::ofstream& output_file);
 };
 
-#endif /* BRANCH_NETWORK_H */
+#endif /* NETWORK_H */

@@ -1,4 +1,4 @@
-#include "branch_network.h"
+#include "network.h"
 
 #include <iostream>
 
@@ -7,7 +7,8 @@
 
 using namespace std;
 
-BranchNetwork::BranchNetwork(int input_size) {
+Network::Network(int input_size,
+				 int output_size) {
 	this->input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < input_size; i_index++) {
 		this->input->acti_vals.push_back(0.0);
@@ -42,8 +43,10 @@ BranchNetwork::BranchNetwork(int input_size) {
 	this->hidden_3->update_structure();
 
 	this->output = new Layer(LINEAR_LAYER);
-	this->output->acti_vals.push_back(0.0);
-	this->output->errors.push_back(0.0);
+	for (int o_index = 0; o_index < output_size; o_index++) {
+		this->output->acti_vals.push_back(0.0);
+		this->output->errors.push_back(0.0);
+	}
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->input_layers.push_back(this->hidden_3);
@@ -56,7 +59,7 @@ BranchNetwork::BranchNetwork(int input_size) {
 	this->output_average_max_update = 0.0;
 }
 
-BranchNetwork::BranchNetwork(BranchNetwork* original) {
+Network::Network(Network* original) {
 	this->input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < (int)original->input->acti_vals.size(); i_index++) {
 		this->input->acti_vals.push_back(0.0);
@@ -94,8 +97,10 @@ BranchNetwork::BranchNetwork(BranchNetwork* original) {
 	this->hidden_3->copy_weights_from(original->hidden_3);
 
 	this->output = new Layer(LINEAR_LAYER);
-	this->output->acti_vals.push_back(0.0);
-	this->output->errors.push_back(0.0);
+	for (int o_index = 0; o_index < (int)original->output->acti_vals.size(); o_index++) {
+		this->output->acti_vals.push_back(0.0);
+		this->output->errors.push_back(0.0);
+	}
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->input_layers.push_back(this->hidden_3);
@@ -109,7 +114,7 @@ BranchNetwork::BranchNetwork(BranchNetwork* original) {
 	this->output_average_max_update = 0.0;
 }
 
-BranchNetwork::BranchNetwork(ifstream& input_file) {
+Network::Network(ifstream& input_file) {
 	this->input = new Layer(LINEAR_LAYER);
 	string input_size_line;
 	getline(input_file, input_size_line);
@@ -156,8 +161,13 @@ BranchNetwork::BranchNetwork(ifstream& input_file) {
 	this->hidden_3->update_structure();
 
 	this->output = new Layer(LINEAR_LAYER);
-	this->output->acti_vals.push_back(0.0);
-	this->output->errors.push_back(0.0);
+	string output_size_line;
+	getline(input_file, output_size_line);
+	int output_size = stoi(output_size_line);
+	for (int o_index = 0; o_index < output_size; o_index++) {
+		this->output->acti_vals.push_back(0.0);
+		this->output->errors.push_back(0.0);
+	}
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->input_layers.push_back(this->hidden_3);
@@ -175,7 +185,7 @@ BranchNetwork::BranchNetwork(ifstream& input_file) {
 	this->output_average_max_update = 0.0;
 }
 
-BranchNetwork::~BranchNetwork() {
+Network::~Network() {
 	delete this->input;
 	delete this->hidden_1;
 	delete this->hidden_2;
@@ -183,7 +193,7 @@ BranchNetwork::~BranchNetwork() {
 	delete this->output;
 }
 
-void BranchNetwork::activate(vector<double>& input_vals) {
+void Network::activate(vector<double>& input_vals) {
 	for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
 		this->input->acti_vals[i_index] = input_vals[i_index];
 	}
@@ -193,8 +203,10 @@ void BranchNetwork::activate(vector<double>& input_vals) {
 	this->output->activate();
 }
 
-void BranchNetwork::backprop(double error) {
-	this->output->errors[0] = error;
+void Network::backprop(vector<double>& errors) {
+	for (int o_index = 0; o_index < (int)errors.size(); o_index++) {
+		this->output->errors[o_index] = errors[o_index];
+	}
 	this->output->backprop();
 	this->hidden_3->backprop();
 	this->hidden_2->backprop();
@@ -250,7 +262,7 @@ void BranchNetwork::backprop(double error) {
 	}
 }
 
-void BranchNetwork::add_inputs(int num_add) {
+void Network::add_inputs(int num_add) {
 	for (int i_index = 0; i_index < num_add; i_index++) {
 		this->input->acti_vals.insert(this->input->acti_vals.begin(), 0.0);
 		this->input->errors.insert(this->input->errors.begin(), 0.0);
@@ -261,11 +273,19 @@ void BranchNetwork::add_inputs(int num_add) {
 	this->output->update_structure();
 }
 
-void BranchNetwork::save(ofstream& output_file) {
+void Network::twiddle() {
+	this->hidden_1->twiddle();
+	this->hidden_2->twiddle();
+	this->hidden_3->twiddle();
+	this->output->twiddle();
+}
+
+void Network::save(ofstream& output_file) {
 	output_file << this->input->acti_vals.size() << endl;
 	output_file << this->hidden_1->acti_vals.size() << endl;
 	output_file << this->hidden_2->acti_vals.size() << endl;
 	output_file << this->hidden_3->acti_vals.size() << endl;
+	output_file << this->output->acti_vals.size() << endl;
 
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);
