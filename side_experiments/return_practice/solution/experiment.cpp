@@ -12,22 +12,17 @@ using namespace std;
 
 Experiment::Experiment(AbstractNode* node_context,
 					   bool is_branch,
-					   AbstractNode* exit_next_node,
 					   Wrapper* wrapper) {
 	this->node_context = node_context;
 	this->is_branch = is_branch;
-	this->exit_next_node = exit_next_node;
 
 	this->original_network = NULL;
 	this->branch_network = NULL;
 
-	this->exit_next_node->exit_experiments.push_back(this);
-
 	this->starting_iter = wrapper->iter;
 
 	this->state = EXPERIMENT_STATE_GATHER;
-	this->start_hits = 0;
-	this->end_hits = 0;
+	this->state_iter = 0;
 }
 
 Experiment::~Experiment() {
@@ -46,11 +41,7 @@ void Experiment::pad_new_state(int num_add) {
 	switch (this->state) {
 	case EXPERIMENT_STATE_GATHER:
 		this->start_state_history.clear();
-		this->start_target_val_history.clear();
-		this->start_hits = 0;
-		this->end_state_history.clear();
-		this->end_target_val_history.clear();
-		this->end_hits = 0;
+		this->state_iter = 0;
 		break;
 	case EXPERIMENT_STATE_RAMP:
 	case EXPERIMENT_STATE_MEASURE:

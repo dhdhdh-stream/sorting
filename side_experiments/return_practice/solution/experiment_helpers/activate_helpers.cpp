@@ -36,10 +36,6 @@ void Experiment::experiment_step(int& action,
 			  run);
 }
 
-void Experiment::experiment_exit(ExperimentRun* run) {
-	gather_exit(run);
-}
-
 void Experiment::backprop(double target_val,
 						  ExperimentHistory* history,
 						  Wrapper* wrapper) {

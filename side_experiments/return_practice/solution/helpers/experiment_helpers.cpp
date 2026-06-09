@@ -135,48 +135,8 @@ void create_experiment(ExperimentRun* run,
 						explore_is_branch);
 
 	if (explore_node != NULL) {
-		AbstractNode* starting_node;
-		switch (explore_node->type) {
-		case NODE_TYPE_START:
-			{
-				StartNode* start_node = (StartNode*)explore_node;
-				starting_node = start_node->next_node;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)explore_node;
-				starting_node = action_node->next_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)explore_node;
-				if (explore_is_branch) {
-					starting_node = branch_node->branch_next_node;
-				} else {
-					starting_node = branch_node->original_next_node;
-				}
-			}
-			break;
-		}
-		vector<AbstractNode*> possible_exits;
-		wrapper->solution->random_exit_activate(
-			starting_node,
-			possible_exits);
-		geometric_distribution<int> exit_distribution(0.1);
-		int random_index;
-		while (true) {
-			random_index = exit_distribution(generator);
-			if (random_index < (int)possible_exits.size()) {
-				break;
-			}
-		}
-		AbstractNode* exit_next_node = possible_exits[random_index];
-
 		Experiment* new_experiment = new Experiment(explore_node,
 													explore_is_branch,
-													exit_next_node,
 													wrapper);
 
 		// temp

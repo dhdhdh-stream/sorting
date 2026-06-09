@@ -28,19 +28,14 @@ class Experiment : public AbstractExperiment {
 public:
 	AbstractNode* node_context;
 	bool is_branch;
-	AbstractNode* exit_next_node;
 
 	int state;
 	int state_iter;
 
 	std::vector<std::vector<double>> start_state_history;
-	std::vector<double> start_target_val_history;
-	int start_hits;
-	std::vector<std::vector<double>> end_state_history;
-	std::vector<double> end_target_val_history;
-	int end_hits;
 
 	std::vector<int> actions;
+	AbstractNode* exit_next_node;
 
 	Network* original_network;
 	Network* branch_network;
@@ -66,7 +61,6 @@ public:
 
 	Experiment(AbstractNode* node_context,
 			   bool is_branch,
-			   AbstractNode* exit_next_node,
 			   Wrapper* wrapper);
 	~Experiment();
 
@@ -74,13 +68,11 @@ public:
 	void experiment_step(int& action,
 						 bool& is_next,
 						 ExperimentRun* run);
-	void experiment_exit(ExperimentRun* run);
 	void backprop(double target_val,
 				  ExperimentHistory* history,
 				  Wrapper* wrapper);
 
 	void gather_activate(ExperimentRun* run);
-	void gather_exit(ExperimentRun* run);
 	void gather_backprop(double target_val,
 						 ExperimentHistory* history,
 						 Wrapper* wrapper);

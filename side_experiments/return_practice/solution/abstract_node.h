@@ -16,8 +16,6 @@ const int NODE_TYPE_END = 3;
 
 class AbstractNode {
 public:
-	std::vector<Experiment*> exit_experiments;
-
 	int type;
 
 	int id;
