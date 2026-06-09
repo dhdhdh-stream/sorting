@@ -119,3 +119,25 @@ void predict_helper(int action,
 		}
 	}
 }
+
+void predict_obs_helper(vector<double>& state,
+						Wrapper* wrapper) {
+	WorldModel* world_model = wrapper->curr_model;
+
+	{
+		vector<double> obs;
+		uniform_int_distribution<int> obs_distribution(0, 4);
+		if (obs_distribution(generator) == 0) {
+			obs.push_back(1.0);
+		} else {
+			obs.push_back(0.0);
+		}
+		vector<double> inputs;
+		inputs.insert(inputs.end(), state.begin(), state.end());
+		inputs.insert(inputs.end(), obs.begin(), obs.end());
+		world_model->obs_network->activate(inputs);
+		for (int o_index = 0; o_index < world_model->num_states; o_index++) {
+			state[o_index] += world_model->obs_network->output->acti_vals[o_index];
+		}
+	}
+}

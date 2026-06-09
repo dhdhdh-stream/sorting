@@ -16,6 +16,8 @@ void action_helper(int action,
 void predict_helper(int action,
 					std::vector<double>& state,
 					Wrapper* wrapper);
+void predict_obs_helper(std::vector<double>& state,
+						Wrapper* wrapper);
 
 void init_helper(ProblemType* problem_type,
 				 Wrapper* wrapper);

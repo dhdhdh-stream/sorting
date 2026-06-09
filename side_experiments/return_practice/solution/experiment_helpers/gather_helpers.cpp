@@ -1,5 +1,7 @@
 // TODO: should maybe predict until end
 // - current exit may not have enough diversity to train good network
+//   - samples completely not good enough to predict everything crazy that can happen
+//     - need to either use end, or at least a long trained network that has seen a lot
 
 #include "experiment.h"
 
@@ -54,6 +56,29 @@ void Experiment::gather_activate(ExperimentRun* run) {
 	}
 
 	this->start_state_history.push_back(run->state);
+
+	// // temp
+	// {
+	// 	vector<double> state(run->wrapper->curr_model->num_states, 0.0);
+
+	// 	obs_helper(run->obs_histories[0],
+	// 			   state,
+	// 			   run->wrapper);
+
+	// 	for (int a_index = 0; a_index < (int)run->action_histories.size(); a_index++) {
+	// 		action_helper(run->action_histories[a_index],
+	// 					  state,
+	// 					  run->wrapper);
+
+	// 		obs_helper(run->obs_histories[1 + a_index],
+	// 				   state,
+	// 				   run->wrapper);
+	// 	}
+
+	// 	if (state != run->state) {
+	// 		throw invalid_argument("state != run->state");
+	// 	}
+	// }
 }
 
 void Experiment::gather_exit(ExperimentRun* run) {
@@ -114,13 +139,13 @@ void Experiment::gather_backprop(double target_val,
 			end_network->backprop(errors);
 		}
 
-		// temp
-		for (int h_index = 0; h_index < 20; h_index++) {
-			cout << h_index << endl;
-			end_network->activate(this->end_state_history[h_index]);
-			cout << "end_network->output->acti_vals[0]: " << end_network->output->acti_vals[0] << endl;
-			cout << "this->end_target_val_history[h_index]: " << this->end_target_val_history[h_index] << endl;
-		}
+		// // temp
+		// for (int h_index = 0; h_index < 20; h_index++) {
+		// 	cout << h_index << endl;
+		// 	end_network->activate(this->end_state_history[h_index]);
+		// 	cout << "end_network->output->acti_vals[0]: " << end_network->output->acti_vals[0] << endl;
+		// 	cout << "this->end_target_val_history[h_index]: " << this->end_target_val_history[h_index] << endl;
+		// }
 
 		bool exit_in_place;
 		switch (this->node_context->type) {
@@ -167,12 +192,14 @@ void Experiment::gather_backprop(double target_val,
 		vector<int> best_actions;
 		double best_surprise = numeric_limits<double>::lowest();
 		for (int e_index = 0; e_index < NUM_EXPLORE; e_index++) {
+			int start_index = start_distribution(generator);
+
 			// // temp
 			// if (e_index < 10) {
 			// 	cout << e_index << endl;
 			// }
 
-			vector<double> state = this->start_state_history[start_distribution(generator)];
+			vector<double> state = this->start_state_history[start_index];
 			// // temp
 			// if (e_index < 10) {
 			// 	cout << "start state:";
@@ -211,11 +238,11 @@ void Experiment::gather_backprop(double target_val,
 			// 	cout << endl;
 			// }
 
-			for (int a_index = 0; a_index < (int)curr_actions.size(); a_index++) {
-				predict_helper(curr_actions[a_index],
-							   state,
-							   wrapper);
-			}
+			// for (int a_index = 0; a_index < (int)curr_actions.size(); a_index++) {
+			// 	predict_helper(curr_actions[a_index],
+			// 				   state,
+			// 				   wrapper);
+			// }
 			// // temp
 			// if (e_index < 10) {
 			// 	cout << "end state:";
@@ -225,12 +252,48 @@ void Experiment::gather_backprop(double target_val,
 			// 	cout << endl;
 			// }
 
-			end_network->activate(state);
-			double predicted = end_network->output->acti_vals[0];
+			// end_network->activate(state);
+			// double predicted = end_network->output->acti_vals[0];
 			// // temp
 			// if (e_index < 10) {
 			// 	cout << "predicted: " << predicted << endl;
 			// }
+
+			// temp
+			Run* run = new Run();
+			run->wrapper = wrapper;
+			run->state = this->start_state_history[start_index];
+			for (int a_index = 0; a_index < (int)curr_actions.size(); a_index++) {
+				predict_helper(curr_actions[a_index],
+							   run->state,
+							   wrapper);
+			}
+			run->node_context = this->exit_next_node;
+			while (true) {
+				int action;
+				bool is_next = false;
+				bool is_done = false;
+				while (!is_next) {
+					if (run->node_context == NULL) {
+						is_next = true;
+						is_done = true;
+					} else {
+						run->node_context->step(action,
+												is_next,
+												run);
+					}
+				}
+
+				if (is_done) {
+					break;
+				}
+
+				predict_obs_helper(run->state,
+								   wrapper);
+			}
+			wrapper->curr_model->final_network->activate(run->state);
+			double predicted = wrapper->curr_model->final_network->output->acti_vals[0];
+			delete run;
 
 			double curr_surprise = predicted - existing_predicted;
 			if (curr_surprise > best_surprise) {
@@ -239,13 +302,15 @@ void Experiment::gather_backprop(double target_val,
 			}
 		}
 
-		// temp
-		cout << "best_actions:";
-		for (int a_index = 0; a_index < (int)best_actions.size(); a_index++) {
-			cout << " " << best_actions[a_index];
-		}
-		cout << endl;
-		cout << "best_surprise: " << best_surprise << endl;
+		// // temp
+		// cout << "this->node_context->id: " << this->node_context->id << endl;
+		// cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
+		// cout << "best_actions:";
+		// for (int a_index = 0; a_index < (int)best_actions.size(); a_index++) {
+		// 	cout << " " << best_actions[a_index];
+		// }
+		// cout << endl;
+		// cout << "best_surprise: " << best_surprise << endl;
 
 		// vector<double> new_predicted(this->start_state_history.size());
 		// for (int h_index = 0; h_index < (int)this->start_state_history.size(); h_index++) {
@@ -258,33 +323,6 @@ void Experiment::gather_backprop(double target_val,
 		// 	end_network->activate(state);
 		// 	new_predicted[h_index] = end_network->output->acti_vals[0];
 		// }
-
-		// temp
-		AbstractNode* next_node;
-		switch (this->node_context->type) {
-		case NODE_TYPE_START:
-			{
-				StartNode* start_node = (StartNode*)this->node_context;
-				next_node = start_node->next_node;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				next_node = action_node->next_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					next_node = branch_node->branch_next_node;
-				} else {
-					next_node = branch_node->original_next_node;
-				}
-			}
-			break;
-		}
 
 		vector<vector<double>> train_new_state(NUM_SIMULATE);
 		vector<double> train_new_predicted(NUM_SIMULATE);
@@ -306,8 +344,13 @@ void Experiment::gather_backprop(double target_val,
 			// temp
 			Run* run = new Run();
 			run->wrapper = wrapper;
-			run->node_context = next_node;
 			run->state = this->start_state_history[start_index];
+			for (int a_index = 0; a_index < (int)best_actions.size(); a_index++) {
+				predict_helper(best_actions[a_index],
+							   run->state,
+							   wrapper);
+			}
+			run->node_context = this->exit_next_node;
 			while (true) {
 				int action;
 				bool is_next = false;
@@ -327,9 +370,8 @@ void Experiment::gather_backprop(double target_val,
 					break;
 				}
 
-				predict_helper(best_actions[action],
-							   state,
-							   wrapper);
+				predict_obs_helper(run->state,
+								   wrapper);
 			}
 			wrapper->curr_model->final_network->activate(run->state);
 			end_predicted[iter_index] = wrapper->curr_model->final_network->output->acti_vals[0];
@@ -339,7 +381,13 @@ void Experiment::gather_backprop(double target_val,
 		// // temp
 		// for (int h_index = 0; h_index < 10; h_index++) {
 		// 	cout << h_index << endl;
-		// 	cout << "new_predicted[h_index]: " << new_predicted[h_index] << endl;
+		// 	// cout << "this->start_state_history[h_index]:";
+		// 	// for (int s_index = 0; s_index < (int)this->start_state_history[h_index].size(); s_index++) {
+		// 	// 	cout << " " << this->start_state_history[h_index][s_index];
+		// 	// }
+		// 	// cout << endl;
+		// 	cout << "train_new_predicted[h_index]: " << train_new_predicted[h_index] << endl;
+		// 	cout << "end_predicted[h_index]: " << end_predicted[h_index] << endl;
 		// }
 
 		delete end_network;
@@ -357,7 +405,8 @@ void Experiment::gather_backprop(double target_val,
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int index = train_new_distribution(generator);
 			this->branch_network->activate(train_new_state[index]);
-			vector<double> errors{train_new_predicted[index] - this->branch_network->output->acti_vals[0]};
+			// vector<double> errors{train_new_predicted[index] - this->branch_network->output->acti_vals[0]};
+			vector<double> errors{end_predicted[index] - this->branch_network->output->acti_vals[0]};
 			this->branch_network->backprop(errors);
 		}
 
@@ -391,7 +440,8 @@ void Experiment::gather_backprop(double target_val,
 			this->original_network->activate(train_new_state[h_index]);
 			this->branch_network->activate(train_new_state[h_index]);
 			if (this->branch_network->output->acti_vals[0] > this->original_network->output->acti_vals[0]) {
-				sum_vals += train_new_predicted[h_index] - this->original_network->output->acti_vals[0];
+				// sum_vals += train_new_predicted[h_index] - this->original_network->output->acti_vals[0];
+				sum_vals += end_predicted[h_index] - this->original_network->output->acti_vals[0];
 			}
 
 			// // temp
