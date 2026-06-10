@@ -7,10 +7,14 @@
 class Network;
 class StateNetwork;
 
-const int NUM_PREDICT = 5;
+const int NUM_PREDICT = 4;
 
 class PredictWrapper {
 public:
+	StateNetwork* average_network;
+	int average_epoch_iter;
+	double average_average_max_update;
+
 	std::vector<StateNetwork*> val_networks;
 	std::vector<int> val_epoch_iters;
 	std::vector<double> val_average_max_updates;

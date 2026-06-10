@@ -21,7 +21,10 @@ const int PREDICT_CANDIDATE_CHECK_NUM_ITERS = 100;
 const int UPDATE_MIN_SAMPLE_SIZE = 1000;
 // const int ITERS_PER_UPDATE = 100;
 const int ITERS_PER_UPDATE = 1000;
-const int PREDICT_CANDIDATE_CHECK_NUM_ITERS = 100000;
+const int PREDICT_CANDIDATE_CHECK_NUM_ITERS = 1000000;
+/**
+ * - actual num iters divided by 10
+ */
 #endif /* MDEBUG */
 
 const int STATE_SIZE_HISTORY_NUM_SAVE = 3;
@@ -44,6 +47,34 @@ void predict_update_helper(vector<double>& start_state,
 				cout << " " << diff[d_index];
 			}
 			cout << endl;
+		}
+
+		{
+			predict_wrapper->average_network->activate(start_state);
+			vector<double> errors((int)start_state.size());
+			for (int s_index = 0; s_index < (int)start_state.size(); s_index++) {
+				errors[s_index] = diff[s_index] - predict_wrapper->average_network->output->acti_vals[s_index];
+			}
+			predict_wrapper->average_network->backprop(errors);
+
+			predict_wrapper->average_epoch_iter++;
+			if (predict_wrapper->average_epoch_iter >= NETWORK_EPOCH_SIZE) {
+				double max_update = 0.0;
+				predict_wrapper->average_network->get_max_update(max_update);
+
+				predict_wrapper->average_average_max_update = 0.999*predict_wrapper->average_average_max_update + 0.001*max_update;
+
+				if (max_update > 0.0) {
+					double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE) / predict_wrapper->average_average_max_update;
+					if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
+						learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+					}
+
+					predict_wrapper->average_network->update_weights(learning_rate);
+				}
+
+				predict_wrapper->average_epoch_iter = 0;
+			}
 		}
 
 		{
