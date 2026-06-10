@@ -4,6 +4,8 @@
 
 #include "constants.h"
 #include "globals.h"
+#include "network.h"
+#include "predict_wrapper.h"
 #include "solution.h"
 #include "state_network.h"
 #include "world_model.h"
@@ -14,82 +16,107 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int UPDATE_MIN_SAMPLE_SIZE = 10;
 const int ITERS_PER_UPDATE = 2;
+const int PREDICT_CANDIDATE_CHECK_NUM_ITERS = 100;
 #else
 const int UPDATE_MIN_SAMPLE_SIZE = 1000;
 // const int ITERS_PER_UPDATE = 100;
 const int ITERS_PER_UPDATE = 1000;
+const int PREDICT_CANDIDATE_CHECK_NUM_ITERS = 100000;
 #endif /* MDEBUG */
 
 const int STATE_SIZE_HISTORY_NUM_SAVE = 3;
 
 void predict_update_helper(vector<double>& start_state,
-						   vector<int>& actions,
 						   vector<double>& end_state,
-						   WorldModel* world_model,
-						   Wrapper* wrapper) {
-	vector<double> state = start_state;
+						   PredictWrapper* predict_wrapper) {
+	vector<double> diff(start_state.size());
+	for (int s_index = 0; s_index < (int)start_state.size(); s_index++) {
+		diff[s_index] = end_state[s_index] - start_state[s_index];
+	}
 
-	vector<StateNetworkHistory*> network_histories;
+	{
+		int min_index;
+		double min_error = numeric_limits<double>::max();
+		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+			predict_wrapper->val_networks[n_index]->activate(start_state);
 
-	for (int step_index = 0; step_index < (int)actions.size(); step_index++) {
-		int action = actions[step_index];
+			double error = 0.0;
+			for (int s_index = 0; s_index < (int)start_state.size(); s_index++) {
+				error += (diff[s_index] - predict_wrapper->val_networks[n_index]->output->acti_vals[s_index])
+					* (diff[s_index] - predict_wrapper->val_networks[n_index]->output->acti_vals[s_index]);
+			}
+			if (error < min_error) {
+				min_index = n_index;
+				min_error = error;
+			}
+		}
 
-		vector<double> partial_inputs;
-		for (int a_index = 0; a_index < wrapper->num_actions; a_index++) {
-			if (action == a_index) {
-				partial_inputs.push_back(1.0);
+		predict_wrapper->misguess_average = 0.9999*predict_wrapper->misguess_average + 0.0001*min_error;
+
+		{
+			vector<double> errors((int)start_state.size());
+			for (int s_index = 0; s_index < (int)start_state.size(); s_index++) {
+				errors[s_index] = diff[s_index] - predict_wrapper->val_networks[min_index]->output->acti_vals[s_index];
+			}
+			predict_wrapper->val_networks[min_index]->backprop(errors);
+
+			predict_wrapper->val_epoch_iters[min_index]++;
+			if (predict_wrapper->val_epoch_iters[min_index] >= NETWORK_EPOCH_SIZE) {
+				double max_update = 0.0;
+				predict_wrapper->val_networks[min_index]->get_max_update(max_update);
+
+				predict_wrapper->val_average_max_updates[min_index] = 0.999*predict_wrapper->val_average_max_updates[min_index] + 0.001*max_update;
+
+				if (max_update > 0.0) {
+					double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE) / predict_wrapper->val_average_max_updates[min_index];
+					if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
+						learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+					}
+
+					predict_wrapper->val_networks[min_index]->update_weights(learning_rate);
+				}
+
+				predict_wrapper->val_epoch_iters[min_index] = 0;
+			}
+		}
+
+		vector<double> select_vals(NUM_PREDICT);
+		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+			predict_wrapper->select_networks[n_index]->activate(start_state);
+			select_vals[n_index] = predict_wrapper->select_networks[n_index]->output->acti_vals[0];
+		}
+
+		double max_select_val = select_vals[0];
+		for (int n_index = 1; n_index < NUM_PREDICT; n_index++) {
+			if (select_vals[n_index] > max_select_val) {
+				max_select_val = select_vals[n_index];
+			}
+		}
+		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+			select_vals[n_index] -= max_select_val;
+		}
+
+		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+			select_vals[n_index] = exp(select_vals[n_index]);
+		}
+
+		double sum_select = 0.0;
+		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+			sum_select += select_vals[n_index];
+		}
+		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+			select_vals[n_index] /= sum_select;
+		}
+
+		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+			if (n_index == min_index) {
+				double error = 1.0 - select_vals[n_index];
+				predict_wrapper->select_networks[n_index]->backprop(error);
 			} else {
-				partial_inputs.push_back(0.0);
+				double error = -select_vals[n_index];
+				predict_wrapper->select_networks[n_index]->backprop(error);
 			}
 		}
-
-		vector<double> inputs;
-		inputs.insert(inputs.end(), state.begin(), state.end());
-		inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
-		StateNetworkHistory* network_history = new StateNetworkHistory();
-		world_model->predict_network->activate(inputs,
-											   network_history);
-		network_histories.push_back(network_history);
-		for (int o_index = 0; o_index < world_model->num_states; o_index++) {
-			state[o_index] += world_model->predict_network->output->acti_vals[o_index];
-		}
-	}
-
-	vector<double> state_errors(world_model->num_states);
-	double curr_sum_misguess = 0.0;
-	for (int i_index = 0; i_index < world_model->num_states; i_index++) {
-		state_errors[i_index] = end_state[i_index] - state[i_index];
-		curr_sum_misguess += (end_state[i_index] - state[i_index]) * (end_state[i_index] - state[i_index]);
-	}
-	world_model->predict_misguess_average = 0.9999*world_model->predict_misguess_average + 0.0001*curr_sum_misguess;
-
-	for (int step_index = (int)actions.size()-1; step_index >= 0; step_index--) {
-		world_model->predict_network->backprop(state_errors,
-											   network_histories[step_index]);
-		delete network_histories[step_index];
-		for (int i_index = 0; i_index < world_model->num_states; i_index++) {
-			state_errors[i_index] += world_model->predict_network->input->errors[i_index];
-			world_model->predict_network->input->errors[i_index] = 0.0;
-		}
-	}
-
-	world_model->predict_epoch_iter++;
-	if (world_model->predict_epoch_iter >= NETWORK_EPOCH_SIZE) {
-		double max_update = 0.0;
-		world_model->predict_network->get_max_update(max_update);
-
-		world_model->predict_average_max_update = 0.999*world_model->predict_average_max_update + 0.001*max_update;
-
-		if (max_update > 0.0) {
-			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE) / world_model->predict_average_max_update;
-			if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
-				learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
-			}
-
-			world_model->predict_network->update_weights(learning_rate);
-		}
-
-		world_model->predict_epoch_iter = 0;
 	}
 }
 
@@ -98,34 +125,14 @@ void true_update_helper(vector<vector<double>>& obs,
 						double target_val,
 						WorldModel* world_model,
 						Wrapper* wrapper) {
-	int predict_start_index = -1;
-	int predict_end_index = -1;
-	if (actions.size() > 0) {
-		uniform_int_distribution<int> from_start_distribution(0, 1);
-		if (from_start_distribution(generator) == 0) {
-			uniform_int_distribution<int> start_index_distribution(0, actions.size()-1);
-			predict_start_index = start_index_distribution(generator);
-
-			uniform_int_distribution<int> end_index_distribution(predict_start_index+1, obs.size()-1);
-			predict_end_index = end_index_distribution(generator);
-		} else {
-			uniform_int_distribution<int> end_index_distribution(1, obs.size()-1);
-			predict_end_index = end_index_distribution(generator);
-
-			uniform_int_distribution<int> start_index_distribution(0, predict_end_index-1);
-			predict_start_index = start_index_distribution(generator);
-		}
-	}
-
-	vector<double> predict_start_state;
-	vector<double> predict_end_state;
-
 	vector<double> state(world_model->num_states, 0.0);
 
 	vector<StateNetworkHistory*> obs_network_histories;
 	vector<StateNetworkHistory*> action_network_histories;
 
 	for (int step_index = 0; step_index < (int)actions.size(); step_index++) {
+		vector<double> start_state = state;
+
 		vector<double> obs_inputs;
 		obs_inputs.insert(obs_inputs.end(), state.begin(), state.end());
 		obs_inputs.insert(obs_inputs.end(), obs[step_index].begin(), obs[step_index].end());
@@ -137,12 +144,13 @@ void true_update_helper(vector<vector<double>>& obs,
 			state[o_index] += world_model->obs_network->output->acti_vals[o_index];
 		}
 
-		if (predict_start_index == step_index) {
-			predict_start_state = state;
-		}
-		if (predict_end_index == step_index) {
-			predict_end_state = state;
-		}
+		predict_update_helper(start_state,
+							  state,
+							  world_model->curr_predict);
+		predict_update_helper(start_state,
+							  state,
+							  world_model->candidate_predict);
+		world_model->candidate_iter++;
 
 		int action = actions[step_index];
 
@@ -167,6 +175,8 @@ void true_update_helper(vector<vector<double>>& obs,
 		}
 	}
 
+	vector<double> start_state = state;
+
 	vector<double> obs_inputs;
 	obs_inputs.insert(obs_inputs.end(), state.begin(), state.end());
 	obs_inputs.insert(obs_inputs.end(), obs.back().begin(), obs.back().end());
@@ -178,9 +188,13 @@ void true_update_helper(vector<vector<double>>& obs,
 		state[o_index] += world_model->obs_network->output->acti_vals[o_index];
 	}
 
-	if (predict_end_index == (int)obs.size()-1) {
-		predict_end_state = state;
-	}
+	predict_update_helper(start_state,
+						  state,
+						  world_model->curr_predict);
+	predict_update_helper(start_state,
+						  state,
+						  world_model->candidate_predict);
+	world_model->candidate_iter++;
 
 	world_model->final_network->activate(state);
 	double predicted = world_model->final_network->output->acti_vals[0];
@@ -252,15 +266,18 @@ void true_update_helper(vector<vector<double>>& obs,
 		world_model->epoch_iter = 0;
 	}
 
-	if (actions.size() > 0) {
-		vector<int> predict_actions = vector<int>(actions.begin() + predict_start_index,
-			actions.begin() + predict_end_index);
+	if (world_model->candidate_iter >= PREDICT_CANDIDATE_CHECK_NUM_ITERS) {
+		if (world_model->candidate_predict->misguess_average < world_model->curr_predict->misguess_average) {
+			delete world_model->curr_predict;
+			world_model->curr_predict = world_model->candidate_predict;
+		} else {
+			delete world_model->candidate_predict;
+		}
 
-		predict_update_helper(predict_start_state,
-							  predict_actions,
-							  predict_end_state,
-							  world_model,
-							  wrapper);
+		world_model->candidate_predict = new PredictWrapper(world_model->curr_predict);
+		world_model->candidate_predict->twiddle();
+
+		world_model->candidate_iter = 0;
 	}
 }
 

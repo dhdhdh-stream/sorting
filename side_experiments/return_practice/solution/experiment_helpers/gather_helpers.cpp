@@ -131,12 +131,12 @@ void Experiment::gather_backprop(double target_val,
 			delete run;
 		}
 
-		this->original_network = new Network(this->start_state_history[0].size(), 1);
+		this->original_network = new Network(this->start_state_history[0].size());
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int index = train_distribution(generator);
 			this->original_network->activate(train_existing_state[index]);
-			vector<double> errors{train_existing_predicted[index] - this->original_network->output->acti_vals[0]};
-			this->original_network->backprop(errors);
+			double error = train_existing_predicted[index] - this->original_network->output->acti_vals[0];
+			this->original_network->backprop(error);
 		}
 
 		// temp
@@ -319,13 +319,13 @@ void Experiment::gather_backprop(double target_val,
 		// 	cout << "train_new_predicted[h_index]: " << train_new_predicted[h_index] << endl;
 		// }
 
-		this->branch_network = new Network(this->start_state_history[0].size(), 1);
+		this->branch_network = new Network(this->start_state_history[0].size());
 
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int index = train_distribution(generator);
 			this->branch_network->activate(train_new_state[index]);
-			vector<double> errors{train_new_predicted[index] - this->branch_network->output->acti_vals[0]};
-			this->branch_network->backprop(errors);
+			double error = train_new_predicted[index] - this->branch_network->output->acti_vals[0];
+			this->branch_network->backprop(error);
 		}
 
 		// // temp

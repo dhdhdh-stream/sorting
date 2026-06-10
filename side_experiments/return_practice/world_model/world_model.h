@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 
+class PredictWrapper;
 class StateNetwork;
 
 class WorldModel {
@@ -19,22 +20,10 @@ public:
 	double misguess_average;
 	double misguess_variance_average;
 
-	StateNetwork* predict_network;
-	/**
-	 * - predict roughly the impact of 1 action and 1 obs update
-	 */
-	int predict_epoch_iter;
-	double predict_average_max_update;
+	PredictWrapper* curr_predict;
 
-	double predict_misguess_average;
-
-	// std::vector<StateNetwork*> predict_val_networks;
-	// std::vector<StateNetwork*> predict_select_networks;
-	// double predict_misguess_average;
-
-	// std::vector<StateNetwork*> candidate_predict_val_networks;
-	// std::vector<StateNetwork*> candidate_predict_select_networks;
-	// double candidate_predict_misguess_average;
+	PredictWrapper* candidate_predict;
+	int candidate_iter;
 
 	WorldModel(int num_obs,
 			   int num_actions);

@@ -36,6 +36,8 @@ public:
 	void add_outputs(int num_add);
 	void remove_outputs(int num_remove);
 
+	void twiddle();
+
 	void save(std::ofstream& output_file);
 };
 

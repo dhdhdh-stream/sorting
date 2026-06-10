@@ -1,6 +1,8 @@
 #include "world_model.h"
 
 #include "constants.h"
+#include "network.h"
+#include "predict_wrapper.h"
 #include "state_network.h"
 
 using namespace std;
@@ -20,10 +22,10 @@ WorldModel::WorldModel(int num_obs,
 	this->misguess_average = 0.0;
 	this->misguess_variance_average = 0.0;
 
-	this->predict_network = new StateNetwork(STARTING_NUM_STATE + num_actions, STARTING_NUM_STATE);
+	this->curr_predict = new PredictWrapper();
 
-	this->predict_epoch_iter = 0;
-	this->predict_average_max_update = 0.0;
+	this->candidate_predict = new PredictWrapper();
+	this->candidate_iter = 0;
 }
 
 WorldModel::WorldModel(WorldModel* original) {
@@ -40,10 +42,10 @@ WorldModel::WorldModel(WorldModel* original) {
 	this->misguess_average = original->misguess_average;
 	this->misguess_variance_average = original->misguess_variance_average;
 
-	this->predict_network = new StateNetwork(original->predict_network);
+	this->curr_predict = new PredictWrapper(original->curr_predict);
 
-	this->predict_epoch_iter = 0;
-	this->predict_average_max_update = original->predict_average_max_update;
+	this->candidate_predict = new PredictWrapper(original->candidate_predict);
+	this->candidate_iter = original->candidate_iter;
 }
 
 WorldModel::WorldModel(ifstream& input_file) {
@@ -70,13 +72,13 @@ WorldModel::WorldModel(ifstream& input_file) {
 	getline(input_file, misguess_variance_average_line);
 	this->misguess_variance_average = stod(misguess_variance_average_line);
 
-	this->predict_network = new StateNetwork(input_file);
+	this->curr_predict = new PredictWrapper(input_file);
 
-	this->predict_epoch_iter = 0;
+	this->candidate_predict = new PredictWrapper(input_file);
 
-	string predict_average_max_update_line;
-	getline(input_file, predict_average_max_update_line);
-	this->predict_average_max_update = stod(predict_average_max_update_line);
+	string candidate_iter_line;
+	getline(input_file, candidate_iter_line);
+	this->candidate_iter = stoi(candidate_iter_line);
 }
 
 WorldModel::~WorldModel() {
@@ -85,7 +87,9 @@ WorldModel::~WorldModel() {
 
 	delete this->final_network;
 
-	delete this->predict_network;
+	delete this->curr_predict;
+
+	delete this->candidate_predict;
 }
 
 void WorldModel::add_states() {
@@ -98,8 +102,9 @@ void WorldModel::add_states() {
 
 	this->final_network->add_inputs(NUM_STATE_CHANGE);
 
-	this->predict_network->add_inputs(NUM_STATE_CHANGE);
-	this->predict_network->add_outputs(NUM_STATE_CHANGE);
+	this->curr_predict->add_states();
+
+	this->candidate_predict->add_states();
 }
 
 void WorldModel::save(ofstream& output_file) {
@@ -115,7 +120,8 @@ void WorldModel::save(ofstream& output_file) {
 	output_file << this->misguess_average << endl;
 	output_file << this->misguess_variance_average << endl;
 
-	this->predict_network->save(output_file);
+	this->curr_predict->save(output_file);
 
-	output_file << this->predict_average_max_update << endl;
+	this->candidate_predict->save(output_file);
+	output_file << this->candidate_iter << endl;
 }

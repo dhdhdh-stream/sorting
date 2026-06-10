@@ -70,8 +70,6 @@ void init_helper(ProblemType* problem_type,
 
 			cout << "wrapper->curr_model->misguess_average: " << wrapper->curr_model->misguess_average << endl;
 			cout << "wrapper->large_model->misguess_average: " << wrapper->large_model->misguess_average << endl;
-			cout << "wrapper->curr_model->predict_misguess_average: " << wrapper->curr_model->predict_misguess_average << endl;
-			cout << "wrapper->large_model->predict_misguess_average: " << wrapper->large_model->predict_misguess_average << endl;
 			cout << "wrapper->curr_model->num_states: " << wrapper->curr_model->num_states << endl;
 			measure_test(wrapper);
 			cout << endl;

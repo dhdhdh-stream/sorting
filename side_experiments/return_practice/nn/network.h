@@ -20,14 +20,13 @@ public:
 	double hidden_3_average_max_update;
 	double output_average_max_update;
 
-	Network(int input_size,
-			int output_size);
+	Network(int input_size);
 	Network(Network* original);
 	Network(std::ifstream& input_file);
 	~Network();
 
 	void activate(std::vector<double>& input_vals);
-	void backprop(std::vector<double>& errors);
+	void backprop(double error);
 
 	void add_inputs(int num_add);
 

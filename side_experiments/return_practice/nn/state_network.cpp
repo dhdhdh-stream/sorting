@@ -266,6 +266,12 @@ void StateNetwork::remove_outputs(int num_remove) {
 	this->output->update_structure();
 }
 
+void StateNetwork::twiddle() {
+	this->hidden_1->twiddle();
+	this->hidden_2->twiddle();
+	this->output->twiddle();
+}
+
 void StateNetwork::save(ofstream& output_file) {
 	output_file << this->input->acti_vals.size() << endl;
 	output_file << this->hidden_1->acti_vals.size() << endl;

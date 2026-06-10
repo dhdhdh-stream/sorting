@@ -20,11 +20,11 @@ void update_solution_helper(ExperimentRun* run,
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
 				if (branch_node_history->is_branch) {
 					branch_node->branch_network->activate(branch_node_history->state);
-					vector<double> errors{target_val - branch_node->branch_network->output->acti_vals[0]};
-					branch_node->branch_network->backprop(errors);
+					double error = target_val - branch_node->branch_network->output->acti_vals[0];
+					branch_node->branch_network->backprop(error);
 				} else {
 					branch_node->original_network->activate(branch_node_history->state);
-					vector<double> errors{target_val - branch_node->original_network->output->acti_vals[0]};
+					double errors = target_val - branch_node->original_network->output->acti_vals[0];
 					branch_node->original_network->backprop(errors);
 				}
 			}
