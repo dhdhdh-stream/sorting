@@ -28,93 +28,125 @@ const int STATE_SIZE_HISTORY_NUM_SAVE = 3;
 
 void predict_update_helper(vector<double>& start_state,
 						   vector<double>& end_state,
-						   PredictWrapper* predict_wrapper) {
-	vector<double> diff(start_state.size());
-	for (int s_index = 0; s_index < (int)start_state.size(); s_index++) {
-		diff[s_index] = end_state[s_index] - start_state[s_index];
-	}
-
-	{
-		int min_index;
-		double min_error = numeric_limits<double>::max();
-		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
-			predict_wrapper->val_networks[n_index]->activate(start_state);
-
-			double error = 0.0;
-			for (int s_index = 0; s_index < (int)start_state.size(); s_index++) {
-				error += (diff[s_index] - predict_wrapper->val_networks[n_index]->output->acti_vals[s_index])
-					* (diff[s_index] - predict_wrapper->val_networks[n_index]->output->acti_vals[s_index]);
-			}
-			if (error < min_error) {
-				min_index = n_index;
-				min_error = error;
-			}
+						   PredictWrapper* predict_wrapper,
+						   Wrapper* wrapper) {
+	uniform_int_distribution<int> train_distribution(0, 9);
+	if (train_distribution(generator) == 0) {
+		vector<double> diff(start_state.size());
+		for (int s_index = 0; s_index < (int)start_state.size(); s_index++) {
+			diff[s_index] = end_state[s_index] - start_state[s_index];
 		}
 
-		predict_wrapper->misguess_average = 0.9999*predict_wrapper->misguess_average + 0.0001*min_error;
+		// temp
+		if (wrapper->curr_model->candidate_iter % 100000 == 0) {
+			cout << "diff:";
+			for (int d_index = 0; d_index < (int)diff.size(); d_index++) {
+				cout << " " << diff[d_index];
+			}
+			cout << endl;
+		}
 
 		{
-			vector<double> errors((int)start_state.size());
-			for (int s_index = 0; s_index < (int)start_state.size(); s_index++) {
-				errors[s_index] = diff[s_index] - predict_wrapper->val_networks[min_index]->output->acti_vals[s_index];
+			int min_index;
+			double min_error = numeric_limits<double>::max();
+			for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+				predict_wrapper->val_networks[n_index]->activate(start_state);
+
+				double error = 0.0;
+				for (int s_index = 0; s_index < (int)start_state.size(); s_index++) {
+					error += (diff[s_index] - predict_wrapper->val_networks[n_index]->output->acti_vals[s_index])
+						* (diff[s_index] - predict_wrapper->val_networks[n_index]->output->acti_vals[s_index]);
+				}
+				if (error < min_error) {
+					min_index = n_index;
+					min_error = error;
+				}
 			}
-			predict_wrapper->val_networks[min_index]->backprop(errors);
 
-			predict_wrapper->val_epoch_iters[min_index]++;
-			if (predict_wrapper->val_epoch_iters[min_index] >= NETWORK_EPOCH_SIZE) {
-				double max_update = 0.0;
-				predict_wrapper->val_networks[min_index]->get_max_update(max_update);
+			predict_wrapper->misguess_average = 0.9999*predict_wrapper->misguess_average + 0.0001*min_error;
 
-				predict_wrapper->val_average_max_updates[min_index] = 0.999*predict_wrapper->val_average_max_updates[min_index] + 0.001*max_update;
-
-				if (max_update > 0.0) {
-					double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE) / predict_wrapper->val_average_max_updates[min_index];
-					if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
-						learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+			{
+				// temp
+				if (wrapper->curr_model->candidate_iter % 100000 == 0) {
+					cout << "predict_wrapper->val_networks[min_index]->output->acti_vals:";
+					for (int d_index = 0; d_index < (int)predict_wrapper->val_networks[min_index]->output->acti_vals.size(); d_index++) {
+						cout << " " << predict_wrapper->val_networks[min_index]->output->acti_vals[d_index];
 					}
-
-					predict_wrapper->val_networks[min_index]->update_weights(learning_rate);
+					cout << endl;
+					cout << "min_index: " << min_index << endl;
 				}
 
-				predict_wrapper->val_epoch_iters[min_index] = 0;
+				vector<double> errors((int)start_state.size());
+				for (int s_index = 0; s_index < (int)start_state.size(); s_index++) {
+					errors[s_index] = diff[s_index] - predict_wrapper->val_networks[min_index]->output->acti_vals[s_index];
+				}
+				predict_wrapper->val_networks[min_index]->backprop(errors);
+
+				predict_wrapper->val_epoch_iters[min_index]++;
+				if (predict_wrapper->val_epoch_iters[min_index] >= NETWORK_EPOCH_SIZE) {
+					double max_update = 0.0;
+					predict_wrapper->val_networks[min_index]->get_max_update(max_update);
+
+					predict_wrapper->val_average_max_updates[min_index] = 0.999*predict_wrapper->val_average_max_updates[min_index] + 0.001*max_update;
+
+					if (max_update > 0.0) {
+						double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE) / predict_wrapper->val_average_max_updates[min_index];
+						if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
+							learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+						}
+
+						predict_wrapper->val_networks[min_index]->update_weights(learning_rate);
+					}
+
+					predict_wrapper->val_epoch_iters[min_index] = 0;
+				}
 			}
-		}
 
-		vector<double> select_vals(NUM_PREDICT);
-		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
-			predict_wrapper->select_networks[n_index]->activate(start_state);
-			select_vals[n_index] = predict_wrapper->select_networks[n_index]->output->acti_vals[0];
-		}
-
-		double max_select_val = select_vals[0];
-		for (int n_index = 1; n_index < NUM_PREDICT; n_index++) {
-			if (select_vals[n_index] > max_select_val) {
-				max_select_val = select_vals[n_index];
+			vector<double> select_vals(NUM_PREDICT);
+			for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+				predict_wrapper->select_networks[n_index]->activate(start_state);
+				select_vals[n_index] = predict_wrapper->select_networks[n_index]->output->acti_vals[0];
 			}
-		}
-		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
-			select_vals[n_index] -= max_select_val;
-		}
 
-		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
-			select_vals[n_index] = exp(select_vals[n_index]);
-		}
+			double max_select_val = select_vals[0];
+			for (int n_index = 1; n_index < NUM_PREDICT; n_index++) {
+				if (select_vals[n_index] > max_select_val) {
+					max_select_val = select_vals[n_index];
+				}
+			}
+			for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+				select_vals[n_index] -= max_select_val;
+			}
 
-		double sum_select = 0.0;
-		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
-			sum_select += select_vals[n_index];
-		}
-		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
-			select_vals[n_index] /= sum_select;
-		}
+			for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+				select_vals[n_index] = exp(select_vals[n_index]);
+			}
 
-		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
-			if (n_index == min_index) {
-				double error = 1.0 - select_vals[n_index];
-				predict_wrapper->select_networks[n_index]->backprop(error);
-			} else {
-				double error = -select_vals[n_index];
-				predict_wrapper->select_networks[n_index]->backprop(error);
+			double sum_select = 0.0;
+			for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+				sum_select += select_vals[n_index];
+			}
+			for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+				select_vals[n_index] /= sum_select;
+			}
+
+			// temp
+			if (wrapper->curr_model->candidate_iter % 100000 == 0) {
+				cout << "select_vals:";
+				for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+					cout << " " << select_vals[n_index];
+				}
+				cout << endl;
+			}
+
+			for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+				if (n_index == min_index) {
+					double error = 1.0 - select_vals[n_index];
+					predict_wrapper->select_networks[n_index]->backprop(error);
+				} else {
+					double error = -select_vals[n_index];
+					predict_wrapper->select_networks[n_index]->backprop(error);
+				}
 			}
 		}
 	}
@@ -146,10 +178,12 @@ void true_update_helper(vector<vector<double>>& obs,
 
 		predict_update_helper(start_state,
 							  state,
-							  world_model->curr_predict);
+							  world_model->curr_predict,
+							  wrapper);
 		predict_update_helper(start_state,
 							  state,
-							  world_model->candidate_predict);
+							  world_model->candidate_predict,
+							  wrapper);
 		world_model->candidate_iter++;
 
 		int action = actions[step_index];
@@ -190,10 +224,12 @@ void true_update_helper(vector<vector<double>>& obs,
 
 	predict_update_helper(start_state,
 						  state,
-						  world_model->curr_predict);
+						  world_model->curr_predict,
+						  wrapper);
 	predict_update_helper(start_state,
 						  state,
-						  world_model->candidate_predict);
+						  world_model->candidate_predict,
+						  wrapper);
 	world_model->candidate_iter++;
 
 	world_model->final_network->activate(state);

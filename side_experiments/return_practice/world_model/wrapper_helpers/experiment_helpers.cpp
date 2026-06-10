@@ -112,23 +112,23 @@ void Wrapper::experiment_end(double result,
 		}
 	}
 
-	// if (this->sample_obs.size() < SAMPLES_NUM_SAVE) {
-	// 	this->sample_obs.push_back(run->obs_histories);
-	// 	this->sample_actions.push_back(run->action_histories);
-	// 	this->sample_target_vals.push_back(result);
-	// } else {
-	// 	this->sample_obs[this->sample_index] = run->obs_histories;
-	// 	this->sample_actions[this->sample_index] = run->action_histories;
-	// 	this->sample_target_vals[this->sample_index] = result;
-	// }
-	// this->sample_index++;
-	// if (this->sample_index >= SAMPLES_NUM_SAVE) {
-	// 	check_state_size_helper(this);
+	if (this->sample_obs.size() < SAMPLES_NUM_SAVE) {
+		this->sample_obs.push_back(run->obs_histories);
+		this->sample_actions.push_back(run->action_histories);
+		this->sample_target_vals.push_back(result);
+	} else {
+		this->sample_obs[this->sample_index] = run->obs_histories;
+		this->sample_actions[this->sample_index] = run->action_histories;
+		this->sample_target_vals[this->sample_index] = result;
+	}
+	this->sample_index++;
+	if (this->sample_index >= SAMPLES_NUM_SAVE) {
+		check_state_size_helper(this);
 
-	// 	this->sample_index = 0;
-	// }
+		this->sample_index = 0;
+	}
 
-	// update_world_model_helper(this);
+	update_world_model_helper(this);
 
 	update_solution_helper(run,
 						   result);

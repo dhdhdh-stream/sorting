@@ -259,7 +259,7 @@ void Experiment::gather_backprop(double target_val,
 
 		// // temp
 		// cout << "this->node_context->id: " << this->node_context->id << endl;
-		// cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
+		// cout << "best_exit_next_node->id: " << best_exit_next_node->id << endl;
 		// cout << "best_actions:";
 		// for (int a_index = 0; a_index < (int)best_actions.size(); a_index++) {
 		// 	cout << " " << best_actions[a_index];
@@ -285,7 +285,7 @@ void Experiment::gather_backprop(double target_val,
 				predict_helper(run->state,
 							   wrapper);
 			}
-			run->node_context = this->exit_next_node;
+			run->node_context = best_exit_next_node;
 			while (true) {
 				int action;
 				bool is_next = false;
@@ -366,12 +366,12 @@ void Experiment::gather_backprop(double target_val,
 		cout << "this->predicted_global_improvement: " << this->predicted_global_improvement << endl;
 
 		bool is_success = false;
-		if (local_improvement > 0.0) {
+		if (this->predicted_local_improvement > 0.0) {
 			if (wrapper->solution->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
 				int num_better_than = 0;
 				for (list<double>::iterator it = wrapper->solution->train_new_last_scores.begin();
 						it != wrapper->solution->train_new_last_scores.end(); it++) {
-					if (global_improvement >= *it) {
+					if (this->predicted_global_improvement >= *it) {
 						num_better_than++;
 					}
 				}
@@ -385,9 +385,9 @@ void Experiment::gather_backprop(double target_val,
 				if (wrapper->solution->train_new_last_scores.size() >= NUM_LAST_TRACK) {
 					wrapper->solution->train_new_last_scores.pop_front();
 				}
-				wrapper->solution->train_new_last_scores.push_back(global_improvement);
+				wrapper->solution->train_new_last_scores.push_back(this->predicted_global_improvement);
 			} else {
-				wrapper->solution->train_new_last_scores.push_back(global_improvement);
+				wrapper->solution->train_new_last_scores.push_back(this->predicted_global_improvement);
 			}
 
 			is_success = true;

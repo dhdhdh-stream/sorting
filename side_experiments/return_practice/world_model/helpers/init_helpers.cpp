@@ -4,6 +4,7 @@
 
 #include "constants.h"
 #include "globals.h"
+#include "predict_wrapper.h"
 #include "problem.h"
 #include "solution_helpers.h"
 #include "world_model.h"
@@ -14,8 +15,8 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int INIT_ITERS = 100;
 #else
-// const int INIT_ITERS = 10000;
-const int INIT_ITERS = 1000;
+const int INIT_ITERS = 10000;
+// const int INIT_ITERS = 1000;
 #endif /* MDEBUG */
 
 void init_helper(ProblemType* problem_type,
@@ -70,6 +71,8 @@ void init_helper(ProblemType* problem_type,
 
 			cout << "wrapper->curr_model->misguess_average: " << wrapper->curr_model->misguess_average << endl;
 			cout << "wrapper->large_model->misguess_average: " << wrapper->large_model->misguess_average << endl;
+			cout << "wrapper->curr_model->curr_predict->misguess_average: " << wrapper->curr_model->curr_predict->misguess_average << endl;
+			cout << "wrapper->curr_model->candidate_predict->misguess_average: " << wrapper->curr_model->candidate_predict->misguess_average << endl;
 			cout << "wrapper->curr_model->num_states: " << wrapper->curr_model->num_states << endl;
 			measure_test(wrapper);
 			cout << endl;
