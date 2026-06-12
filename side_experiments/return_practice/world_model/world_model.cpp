@@ -52,8 +52,10 @@ WorldModel::WorldModel(int num_obs,
 	this->large_misguess_variance_average = 0.0;
 
 	this->large_predict = new PredictWrapper();
+	this->large_predict->add_states();
 
 	this->large_candidate_predict = new PredictWrapper();
+	this->large_candidate_predict->add_states();
 	this->large_candidate_iter = 0;
 }
 

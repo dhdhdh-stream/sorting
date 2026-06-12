@@ -43,14 +43,14 @@ void predict_update_helper(vector<double>& start_state,
 		diff[s_index] = end_state[s_index] - start_state[s_index];
 	}
 
-	// // temp
-	// if (wrapper->curr_model->candidate_iter % 100000 == 0) {
-	// 	cout << "diff:";
-	// 	for (int d_index = 0; d_index < (int)diff.size(); d_index++) {
-	// 		cout << " " << diff[d_index];
-	// 	}
-	// 	cout << endl;
-	// }
+	// temp
+	if ((wrapper->world_model->curr_candidate_iter+1) % 500000 == 0) {
+		cout << "diff:";
+		for (int d_index = 0; d_index < (int)diff.size(); d_index++) {
+			cout << " " << diff[d_index];
+		}
+		cout << endl;
+	}
 
 	{
 		predict_wrapper->average_network->activate(start_state);
@@ -100,15 +100,15 @@ void predict_update_helper(vector<double>& start_state,
 		predict_wrapper->misguess_average = 0.9999*predict_wrapper->misguess_average + 0.0001*min_error;
 
 		{
-			// // temp
-			// if (wrapper->curr_model->candidate_iter % 100000 == 0) {
-			// 	cout << "predict_wrapper->val_networks[min_index]->output->acti_vals:";
-			// 	for (int d_index = 0; d_index < (int)predict_wrapper->val_networks[min_index]->output->acti_vals.size(); d_index++) {
-			// 		cout << " " << predict_wrapper->val_networks[min_index]->output->acti_vals[d_index];
-			// 	}
-			// 	cout << endl;
-			// 	cout << "min_index: " << min_index << endl;
-			// }
+			// temp
+			if ((wrapper->world_model->curr_candidate_iter+1) % 500000 == 0) {
+				cout << "predict_wrapper->val_networks[min_index]->output->acti_vals:";
+				for (int d_index = 0; d_index < (int)predict_wrapper->val_networks[min_index]->output->acti_vals.size(); d_index++) {
+					cout << " " << predict_wrapper->val_networks[min_index]->output->acti_vals[d_index];
+				}
+				cout << endl;
+				cout << "min_index: " << min_index << endl;
+			}
 
 			vector<double> errors((int)start_state.size());
 			for (int s_index = 0; s_index < (int)start_state.size(); s_index++) {
@@ -164,14 +164,14 @@ void predict_update_helper(vector<double>& start_state,
 			select_vals[n_index] /= sum_select;
 		}
 
-		// // temp
-		// if (wrapper->curr_model->candidate_iter % 100000 == 0) {
-		// 	cout << "select_vals:";
-		// 	for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
-		// 		cout << " " << select_vals[n_index];
-		// 	}
-		// 	cout << endl;
-		// }
+		// temp
+		if ((wrapper->world_model->curr_candidate_iter+1) % 500000 == 0) {
+			cout << "select_vals:";
+			for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+				cout << " " << select_vals[n_index];
+			}
+			cout << endl;
+		}
 
 		for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
 			if (n_index == min_index) {
@@ -558,10 +558,19 @@ void check_state_size_helper(Wrapper* wrapper) {
 				new_network_outputs.push_back(world_model->num_states + o_index);
 			}
 			world_model->network_outputs.push_back(new_network_outputs);
+			for (int i_index = 0; i_index < (int)world_model->large_obs_network->input->errors.size(); i_index++) {
+				world_model->large_obs_network->input->errors[i_index] = 0.0;
+			}
 			world_model->obs_networks.push_back(world_model->large_obs_network);
+			for (int i_index = 0; i_index < (int)world_model->large_action_network->input->errors.size(); i_index++) {
+				world_model->large_action_network->input->errors[i_index] = 0.0;
+			}
 			world_model->action_networks.push_back(world_model->large_action_network);
 
 			delete world_model->curr_final_network;
+			for (int i_index = 0; i_index < (int)world_model->large_final_network->input->errors.size(); i_index++) {
+				world_model->large_final_network->input->errors[i_index] = 0.0;
+			}
 			world_model->curr_final_network = world_model->large_final_network;
 
 			world_model->curr_epoch_iter = world_model->large_epoch_iter;
