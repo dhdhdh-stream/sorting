@@ -131,7 +131,8 @@ void Wrapper::experiment_end(double result,
 	update_world_model_helper(this);
 
 	update_solution_helper(run,
-						   result);
+						   result,
+						   this);
 
 	// temp
 	if (this->iter % 1000 == 0) {

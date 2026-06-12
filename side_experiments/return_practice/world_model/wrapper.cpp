@@ -31,6 +31,8 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 	this->solution->node_counter++;
 	this->solution->nodes[start_node->id] = start_node;
 
+	start_node->average_instances_per_run = 1.0;
+
 	vector<ActionNode*> action_nodes;
 	uniform_int_distribution<int> action_distribution(0, this->num_actions-1);
 	for (int n_index = 0; n_index < INIT_NUM_ACTIONS; n_index++) {
@@ -40,6 +42,8 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 		this->solution->nodes[action_node->id] = action_node;
 
 		action_node->action = action_distribution(generator);
+
+		action_node->average_instances_per_run = 1.0;
 
 		action_nodes.push_back(action_node);
 	}

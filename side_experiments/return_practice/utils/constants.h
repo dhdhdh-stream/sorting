@@ -22,7 +22,7 @@ const int CHECK_STATE_SIZE_NUM_ITERS = 1000;
 #if defined(MDEBUG) && MDEBUG
 const int SCORE_HISTORIES_NUM_SAVE = 100;
 #else
-const int SCORE_HISTORIES_NUM_SAVE = 4000;
+const int SCORE_HISTORIES_NUM_SAVE = 1000;
 #endif /* MDEBUG */
 
 const int NUM_LAST_TRACK = 10;

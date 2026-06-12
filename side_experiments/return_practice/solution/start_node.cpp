@@ -12,6 +12,8 @@ StartNode::StartNode() {
 
 	this->history_index = 0;
 	this->experiment = NULL;
+
+	this->curr_instances_per_run = 0;
 }
 
 StartNode::~StartNode() {
@@ -23,6 +25,8 @@ StartNode::~StartNode() {
 void StartNode::save(ofstream& output_file,
 					 Wrapper* wrapper) {
 	output_file << this->next_node_id << endl;
+
+	output_file << this->average_instances_per_run << endl;
 }
 
 void StartNode::load(ifstream& input_file,
@@ -30,6 +34,10 @@ void StartNode::load(ifstream& input_file,
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
+
+	string average_instances_per_run_line;
+	getline(input_file, average_instances_per_run_line);
+	this->average_instances_per_run = stod(average_instances_per_run_line);
 }
 
 void StartNode::link(Wrapper* wrapper) {

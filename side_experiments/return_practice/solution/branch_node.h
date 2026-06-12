@@ -19,14 +19,19 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
+	double original_average_instances_per_run;
 	std::vector<std::vector<double>> original_state_history;
 	std::vector<double> original_target_val_history;
 	int original_history_index;
 	AbstractExperiment* original_experiment;
+	double branch_average_instances_per_run;
 	std::vector<std::vector<double>> branch_state_history;
 	std::vector<double> branch_target_val_history;
 	int branch_history_index;
 	AbstractExperiment* branch_experiment;
+
+	int original_curr_instances_per_run;
+	int branch_curr_instances_per_run;
 
 	BranchNode();
 	~BranchNode();

@@ -15,8 +15,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int INIT_ITERS = 100;
 #else
-const int INIT_ITERS = 10000;
-// const int INIT_ITERS = 1000;
+const int INIT_ITERS = 2000;
 #endif /* MDEBUG */
 
 void init_helper(ProblemType* problem_type,
@@ -53,8 +52,7 @@ void init_helper(ProblemType* problem_type,
 			wrapper->sample_target_vals[wrapper->sample_index] = target_val;
 		}
 		wrapper->sample_index++;
-		// if (wrapper->sample_index >= SAMPLES_NUM_SAVE) {
-		if (wrapper->sample_index % 1000 == 0) {
+		if ((wrapper->sample_index+1) % CHECK_STATE_SIZE_NUM_ITERS == 0) {
 			check_state_size_helper(wrapper);
 
 			wrapper->sample_index = 0;
@@ -65,7 +63,6 @@ void init_helper(ProblemType* problem_type,
 		delete problem;
 
 		// temp
-		// if ((iter_index + 1) % 1000 == 0) {
 		if ((iter_index + 1) % 100 == 0) {
 			cout << iter_index << endl;
 

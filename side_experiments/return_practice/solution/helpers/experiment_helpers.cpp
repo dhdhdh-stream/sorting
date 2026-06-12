@@ -15,6 +15,12 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int EXPERIMENT_MIN_NUM_STATES = 10;
+#else
+const int EXPERIMENT_MIN_NUM_STATES = 100;
+#endif /* MDEBUG */
+
 void count_eval_helper(ExperimentRun* run,
 					   int& node_count,
 					   int& eval_count) {
@@ -25,7 +31,7 @@ void count_eval_helper(ExperimentRun* run,
 		case NODE_TYPE_START:
 			{
 				StartNode* start_node = (StartNode*)node;
-				if (start_node->state_history.size() >= STATE_NUM_SAVE) {
+				if (start_node->state_history.size() >= EXPERIMENT_MIN_NUM_STATES) {
 					node_count++;
 					if (start_node->experiment != NULL) {
 						eval_count++;
@@ -36,7 +42,7 @@ void count_eval_helper(ExperimentRun* run,
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)node;
-				if (action_node->state_history.size() >= STATE_NUM_SAVE) {
+				if (action_node->state_history.size() >= EXPERIMENT_MIN_NUM_STATES) {
 					node_count++;
 					if (action_node->experiment != NULL) {
 						eval_count++;
@@ -49,14 +55,14 @@ void count_eval_helper(ExperimentRun* run,
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
 				if (branch_node_history->is_branch) {
-					if (branch_node->branch_state_history.size() >= STATE_NUM_SAVE) {
+					if (branch_node->branch_state_history.size() >= EXPERIMENT_MIN_NUM_STATES) {
 						node_count++;
 						if (branch_node->branch_experiment != NULL) {
 							eval_count++;
 						}
 					}
 				} else {
-					if (branch_node->original_state_history.size() >= STATE_NUM_SAVE) {
+					if (branch_node->original_state_history.size() >= EXPERIMENT_MIN_NUM_STATES) {
 						node_count++;
 						if (branch_node->original_experiment != NULL) {
 							eval_count++;
@@ -80,7 +86,7 @@ void gather_start_helper(ExperimentRun* run,
 		case NODE_TYPE_START:
 			{
 				StartNode* start_node = (StartNode*)node;
-				if (start_node->state_history.size() >= STATE_NUM_SAVE
+				if (start_node->state_history.size() >= EXPERIMENT_MIN_NUM_STATES
 						&& start_node->experiment == NULL) {
 					uniform_int_distribution<int> select_distribution(0, node_count);
 					node_count++;
@@ -94,7 +100,7 @@ void gather_start_helper(ExperimentRun* run,
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)node;
-				if (action_node->state_history.size() >= STATE_NUM_SAVE
+				if (action_node->state_history.size() >= EXPERIMENT_MIN_NUM_STATES
 						&& action_node->experiment == NULL) {
 					uniform_int_distribution<int> select_distribution(0, node_count);
 					node_count++;
@@ -110,7 +116,7 @@ void gather_start_helper(ExperimentRun* run,
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
 				if (branch_node_history->is_branch) {
-					if (branch_node->branch_state_history.size() >= STATE_NUM_SAVE
+					if (branch_node->branch_state_history.size() >= EXPERIMENT_MIN_NUM_STATES
 							&& branch_node->branch_experiment == NULL) {
 						uniform_int_distribution<int> select_distribution(0, node_count);
 						node_count++;
@@ -120,7 +126,7 @@ void gather_start_helper(ExperimentRun* run,
 						}
 					}
 				} else {
-					if (branch_node->original_state_history.size() >= STATE_NUM_SAVE
+					if (branch_node->original_state_history.size() >= EXPERIMENT_MIN_NUM_STATES
 							&& branch_node->original_experiment == NULL) {
 						uniform_int_distribution<int> select_distribution(0, node_count);
 						node_count++;
@@ -147,37 +153,9 @@ void create_experiment(ExperimentRun* run,
 						explore_is_branch);
 
 	if (explore_node != NULL) {
-		Experiment* new_experiment = new Experiment(explore_node,
-													explore_is_branch,
-													wrapper);
-
-		// temp
-		cout << "new_experiment" << endl;
-
-		switch (explore_node->type) {
-		case NODE_TYPE_START:
-			{
-				StartNode* start_node = (StartNode*)explore_node;
-				start_node->experiment = new_experiment;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)explore_node;
-				action_node->experiment = new_experiment;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)explore_node;
-				if (explore_is_branch) {
-					branch_node->branch_experiment = new_experiment;
-				} else {
-					branch_node->original_experiment = new_experiment;
-				}
-			}
-			break;
-		}
+		init_experiment_helper(explore_node,
+							   explore_is_branch,
+							   wrapper);
 	}
 }
 

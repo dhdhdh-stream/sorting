@@ -15,9 +15,8 @@ class Network;
 class PredictRun;
 class Wrapper;
 
-const int EXPERIMENT_STATE_GATHER = 0;
-const int EXPERIMENT_STATE_RAMP = 1;
-const int EXPERIMENT_STATE_MEASURE = 2;
+const int EXPERIMENT_STATE_RAMP = 0;
+const int EXPERIMENT_STATE_MEASURE = 1;
 
 const int MEASURE_STATUS_N_A = 0;
 const int MEASURE_STATUS_SUCCESS = 1;
@@ -35,8 +34,6 @@ public:
 
 	int state;
 	int state_iter;
-
-	std::vector<std::vector<double>> start_state_history;
 
 	std::vector<int> actions;
 	AbstractNode* exit_next_node;
@@ -63,9 +60,11 @@ public:
 	double local_improvement;
 	double global_improvement;
 
-	Experiment(AbstractNode* node_context,
-			   bool is_branch,
-			   Wrapper* wrapper);
+	int sum_original_num_instances;
+	int sum_branch_num_instances;
+	double original_average_instances_per_run;
+	double branch_average_instances_per_run;
+
 	~Experiment();
 
 	void experiment_activate(ExperimentRun* run);
@@ -76,20 +75,6 @@ public:
 	void backprop(double target_val,
 				  ExperimentHistory* history,
 				  Wrapper* wrapper);
-
-	void gather_activate(ExperimentRun* run);
-	void gather_backprop(double target_val,
-						 ExperimentHistory* history,
-						 Wrapper* wrapper);
-
-	void ramp_activate(ExperimentRun* run);
-	void ramp_step(int& action,
-				   bool& is_next,
-				   ExperimentRun* run);
-	void ramp_predict_activate(PredictRun* run);
-	void ramp_backprop(double target_val,
-					   ExperimentHistory* history,
-					   Wrapper* wrapper);
 
 	void pad_new_state(int num_add);
 

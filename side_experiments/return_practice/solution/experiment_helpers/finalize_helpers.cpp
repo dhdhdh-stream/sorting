@@ -57,6 +57,8 @@ void Experiment::add(Wrapper* wrapper) {
 
 		new_action_node->action = this->actions[s_index];
 
+		new_action_node->average_instances_per_run = this->branch_average_instances_per_run;
+
 		new_nodes.push_back(new_action_node);
 	}
 
@@ -182,6 +184,9 @@ void Experiment::add(Wrapper* wrapper) {
 	this->original_network = NULL;
 	new_branch_node->branch_network = this->branch_network;
 	this->branch_network = NULL;
+
+	new_branch_node->original_average_instances_per_run = this->original_average_instances_per_run;
+	new_branch_node->branch_average_instances_per_run = this->branch_average_instances_per_run;
 
 	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
 		int next_node_id;

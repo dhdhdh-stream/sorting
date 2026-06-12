@@ -20,7 +20,8 @@ double predict_helper(std::vector<double>& state,
 					  Wrapper* wrapper);
 
 void update_solution_helper(ExperimentRun* run,
-							double target_val);
+							double target_val,
+							Wrapper* wrapper);
 
 void measure_helper(Wrapper* wrapper,
 					double& score_average,

@@ -17,9 +17,12 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
+	double average_instances_per_run;
 	std::vector<std::vector<double>> state_history;
 	int history_index;
 	AbstractExperiment* experiment;
+
+	int curr_instances_per_run;
 
 	ActionNode();
 

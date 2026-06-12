@@ -70,6 +70,10 @@ void Solution::pad_new_state(int num_add) {
 		case NODE_TYPE_START:
 			{
 				StartNode* start_node = (StartNode*)it->second;
+
+				start_node->state_history.clear();
+				start_node->history_index = 0;
+
 				if (start_node->experiment != NULL) {
 					Experiment* experiment = (Experiment*)start_node->experiment;
 					experiment->pad_new_state(num_add);
@@ -79,6 +83,10 @@ void Solution::pad_new_state(int num_add) {
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)it->second;
+
+				action_node->state_history.clear();
+				action_node->history_index = 0;
+
 				if (action_node->experiment != NULL) {
 					Experiment* experiment = (Experiment*)action_node->experiment;
 					experiment->pad_new_state(num_add);
@@ -91,6 +99,13 @@ void Solution::pad_new_state(int num_add) {
 
 				branch_node->original_network->add_inputs(num_add);
 				branch_node->branch_network->add_inputs(num_add);
+
+				branch_node->original_state_history.clear();
+				branch_node->original_target_val_history.clear();
+				branch_node->original_history_index = 0;
+				branch_node->branch_state_history.clear();
+				branch_node->branch_target_val_history.clear();
+				branch_node->branch_history_index = 0;
 
 				if (branch_node->original_experiment != NULL) {
 					Experiment* experiment = (Experiment*)branch_node->original_experiment;
