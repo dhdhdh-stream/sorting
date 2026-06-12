@@ -11,7 +11,9 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
+	this->original_history_index = 0;
 	this->original_experiment = NULL;
+	this->branch_history_index = 0;
 	this->branch_experiment = NULL;
 }
 

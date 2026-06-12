@@ -252,21 +252,14 @@ void Network::backprop(double error) {
 
 void Network::add_inputs(int num_add) {
 	for (int i_index = 0; i_index < num_add; i_index++) {
-		this->input->acti_vals.insert(this->input->acti_vals.begin(), 0.0);
-		this->input->errors.insert(this->input->errors.begin(), 0.0);
+		this->input->acti_vals.push_back(0.0);
+		this->input->errors.push_back(0.0);
 	}
 
 	this->hidden_1->update_structure();
 	this->hidden_2->update_structure();
 	this->hidden_3->update_structure();
 	this->output->update_structure();
-}
-
-void Network::twiddle() {
-	this->hidden_1->twiddle();
-	this->hidden_2->twiddle();
-	this->hidden_3->twiddle();
-	this->output->twiddle();
 }
 
 void Network::save(ofstream& output_file) {

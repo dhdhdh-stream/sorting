@@ -1,7 +1,3 @@
-// TODO: maybe always have 1 predict predicting exactly average
-// - then split off of it
-//   - or split off of obs network
-
 #include <chrono>
 #include <iostream>
 #include <map>

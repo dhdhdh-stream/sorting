@@ -10,6 +10,7 @@ using namespace std;
 ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
+	this->history_index = 0;
 	this->experiment = NULL;
 }
 

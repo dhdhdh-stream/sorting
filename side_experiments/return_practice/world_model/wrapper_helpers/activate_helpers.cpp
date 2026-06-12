@@ -14,7 +14,7 @@ void Wrapper::init(Run* run) {
 
 	run->node_context = this->solution->nodes[0];
 
-	run->state = vector<double>(this->curr_model->num_states, 0.0);
+	run->state = vector<double>(this->world_model->num_states, 0.0);
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;

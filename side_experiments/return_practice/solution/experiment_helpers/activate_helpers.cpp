@@ -36,6 +36,15 @@ void Experiment::experiment_step(int& action,
 			  run);
 }
 
+void Experiment::predict_activate(PredictRun* run) {
+	switch (this->state) {
+	case EXPERIMENT_STATE_RAMP:
+	case EXPERIMENT_STATE_MEASURE:
+		ramp_predict_activate(run);
+		break;
+	}
+}
+
 void Experiment::backprop(double target_val,
 						  ExperimentHistory* history,
 						  Wrapper* wrapper) {

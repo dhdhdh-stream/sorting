@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
 	wrapper = new Wrapper("saves/",
 						  filename);
 
-	WorldModel* world_model = wrapper->curr_model;
+	WorldModel* world_model = wrapper->world_model;
 
 	// temp
 	cout << "world_model->curr_predict->misguess_average: " << world_model->curr_predict->misguess_average << endl;
@@ -142,8 +142,8 @@ int main(int argc, char* argv[]) {
 		cout << endl;
 	}
 
-	world_model->final_network->activate(state);
-	double predicted = world_model->final_network->output->acti_vals[0];
+	world_model->curr_final_network->activate(state);
+	double predicted = world_model->curr_final_network->output->acti_vals[0];
 	cout << "predicted: " << predicted << endl;
 
 	double target_val = problem->score_result();

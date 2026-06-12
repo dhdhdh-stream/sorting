@@ -30,8 +30,6 @@ public:
 
 	void add_inputs(int num_add);
 
-	void twiddle();
-
 	void save(std::ofstream& output_file);
 };
 

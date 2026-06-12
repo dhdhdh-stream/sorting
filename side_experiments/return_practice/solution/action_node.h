@@ -17,6 +17,8 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
+	std::vector<std::vector<double>> state_history;
+	int history_index;
 	AbstractExperiment* experiment;
 
 	ActionNode();
@@ -30,6 +32,8 @@ public:
 						 ExperimentRun* run);
 	void experiment_step_start(ExperimentRun* run);
 
+	void predict_step(PredictRun* run);
+
 	void save(std::ofstream& output_file,
 			  Wrapper* wrapper);
 	void load(std::ifstream& input_file);
@@ -39,6 +43,9 @@ public:
 
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
+	std::vector<double> state;
+	std::vector<double> large_state;
+
 	ActionNodeHistory(ActionNode* node);
 };
 

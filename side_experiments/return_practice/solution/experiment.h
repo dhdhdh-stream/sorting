@@ -23,6 +23,10 @@ const int MEASURE_STATUS_N_A = 0;
 const int MEASURE_STATUS_SUCCESS = 1;
 const int MEASURE_STATUS_FAIL = 2;
 
+void init_experiment_helper(AbstractNode* node_context,
+							bool is_branch,
+							Wrapper* wrapper);
+
 class ExperimentHistory;
 class Experiment : public AbstractExperiment {
 public:
@@ -68,6 +72,7 @@ public:
 	void experiment_step(int& action,
 						 bool& is_next,
 						 ExperimentRun* run);
+	void predict_activate(PredictRun* run);
 	void backprop(double target_val,
 				  ExperimentHistory* history,
 				  Wrapper* wrapper);
@@ -81,6 +86,7 @@ public:
 	void ramp_step(int& action,
 				   bool& is_next,
 				   ExperimentRun* run);
+	void ramp_predict_activate(PredictRun* run);
 	void ramp_backprop(double target_val,
 					   ExperimentHistory* history,
 					   Wrapper* wrapper);

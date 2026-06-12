@@ -16,10 +16,8 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 	this->num_obs = problem_type->num_obs();
 	this->num_actions = problem_type->num_possible_actions();
 
-	this->curr_model = new WorldModel(this->num_obs,
-									  this->num_actions);
-	this->large_model = new WorldModel(this->curr_model);
-	this->large_model->add_states();
+	this->world_model = new WorldModel(this->num_obs,
+									   this->num_actions);
 
 	this->solution = new Solution();
 
@@ -92,8 +90,7 @@ Wrapper::Wrapper(std::string path,
 	getline(input_file, num_actions_line);
 	this->num_actions = stoi(num_actions_line);
 
-	this->curr_model = new WorldModel(input_file);
-	this->large_model = new WorldModel(input_file);
+	this->world_model = new WorldModel(input_file);
 
 	this->solution = new Solution();
 	this->solution->load(input_file,
@@ -113,8 +110,7 @@ Wrapper::Wrapper(std::string path,
 }
 
 Wrapper::~Wrapper() {
-	delete this->curr_model;
-	delete this->large_model;
+	delete this->world_model;
 
 	delete this->solution;
 }
@@ -127,8 +123,7 @@ void Wrapper::save(string path,
 	output_file << this->num_obs << endl;
 	output_file << this->num_actions << endl;
 
-	this->curr_model->save(output_file);
-	this->large_model->save(output_file);
+	this->world_model->save(output_file);
 
 	this->solution->save(output_file,
 						 this);

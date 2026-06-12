@@ -9,10 +9,6 @@ using namespace std;
 void ActionNode::experiment_step(int& action,
 								 bool& is_next,
 								 ExperimentRun* run) {
-	ActionNodeHistory* history = new ActionNodeHistory(this);
-	history->index = (int)run->node_histories.size();
-	run->node_histories[this->id] = history;
-
 	run->action_histories.push_back(this->action);
 
 	action_helper(this->action,
@@ -24,6 +20,12 @@ void ActionNode::experiment_step(int& action,
 }
 
 void ActionNode::experiment_step_start(ExperimentRun* run) {
+	ActionNodeHistory* history = new ActionNodeHistory(this);
+	history->index = (int)run->node_histories.size();
+	run->node_histories[this->id] = history;
+
+	history->state = run->state;
+
 	run->node_context = this->next_node;
 
 	if (this->experiment != NULL) {

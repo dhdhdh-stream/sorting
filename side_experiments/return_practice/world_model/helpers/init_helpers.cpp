@@ -69,11 +69,11 @@ void init_helper(ProblemType* problem_type,
 		if ((iter_index + 1) % 100 == 0) {
 			cout << iter_index << endl;
 
-			cout << "wrapper->curr_model->misguess_average: " << wrapper->curr_model->misguess_average << endl;
-			cout << "wrapper->large_model->misguess_average: " << wrapper->large_model->misguess_average << endl;
-			cout << "wrapper->curr_model->curr_predict->misguess_average: " << wrapper->curr_model->curr_predict->misguess_average << endl;
-			cout << "wrapper->curr_model->candidate_predict->misguess_average: " << wrapper->curr_model->candidate_predict->misguess_average << endl;
-			cout << "wrapper->curr_model->num_states: " << wrapper->curr_model->num_states << endl;
+			cout << "wrapper->world_model->curr_misguess_average: " << wrapper->world_model->curr_misguess_average << endl;
+			cout << "wrapper->world_model->large_misguess_average: " << wrapper->world_model->large_misguess_average << endl;
+			cout << "wrapper->world_model->curr_predict->misguess_average: " << wrapper->world_model->curr_predict->misguess_average << endl;
+			cout << "wrapper->world_model->curr_candidate_predict->misguess_average: " << wrapper->world_model->curr_candidate_predict->misguess_average << endl;
+			cout << "wrapper->world_model->num_states: " << wrapper->world_model->num_states << endl;
 			measure_test(wrapper);
 			cout << endl;
 		}

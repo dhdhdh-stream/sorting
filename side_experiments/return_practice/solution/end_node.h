@@ -21,6 +21,8 @@ public:
 						 ExperimentRun* run);
 	void experiment_step_start(ExperimentRun* run);
 
+	void predict_step(PredictRun* run);
+
 	void save(std::ofstream& output_file,
 			  Wrapper* wrapper);
 	void load(std::ifstream& input_file,

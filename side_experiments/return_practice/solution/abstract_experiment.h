@@ -12,6 +12,8 @@ public:
 	virtual void experiment_step(int& action,
 								 bool& is_next,
 								 ExperimentRun* run) = 0;
+
+	virtual void predict_activate(PredictRun* run) = 0;
 };
 
 class AbstractExperimentState {

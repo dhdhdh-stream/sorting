@@ -208,39 +208,8 @@ void StateNetwork::update_weights(double learning_rate) {
 
 void StateNetwork::add_inputs(int num_add) {
 	for (int i_index = 0; i_index < num_add; i_index++) {
-		this->input->acti_vals.insert(this->input->acti_vals.begin(), 0.0);
-		this->input->errors.insert(this->input->errors.begin(), 0.0);
-	}
-
-	for (int h_index = 0; h_index < 2 * num_add; h_index++) {
-		this->hidden_1->acti_vals.insert(this->hidden_1->acti_vals.begin(), 0.0);
-		this->hidden_1->errors.insert(this->hidden_1->errors.begin(), 0.0);
-	}
-
-	for (int h_index = 0; h_index < num_add; h_index++) {
-		this->hidden_2->acti_vals.insert(this->hidden_2->acti_vals.begin(), 0.0);
-		this->hidden_2->errors.insert(this->hidden_2->errors.begin(), 0.0);
-	}
-
-	this->hidden_1->update_structure();
-	this->hidden_2->update_structure();
-	this->output->update_structure();
-}
-
-void StateNetwork::remove_inputs(int num_remove) {
-	for (int i_index = 0; i_index < num_remove; i_index++) {
-		this->input->acti_vals.erase(this->input->acti_vals.begin());
-		this->input->errors.erase(this->input->errors.begin());
-	}
-
-	for (int h_index = 0; h_index < 2 * num_remove; h_index++) {
-		this->hidden_1->acti_vals.erase(this->hidden_1->acti_vals.begin());
-		this->hidden_1->errors.erase(this->hidden_1->errors.begin());
-	}
-
-	for (int h_index = 0; h_index < num_remove; h_index++) {
-		this->hidden_2->acti_vals.erase(this->hidden_2->acti_vals.begin());
-		this->hidden_2->errors.erase(this->hidden_2->errors.begin());
+		this->input->acti_vals.push_back(0.0);
+		this->input->errors.push_back(0.0);
 	}
 
 	this->hidden_1->update_structure();
@@ -250,19 +219,28 @@ void StateNetwork::remove_inputs(int num_remove) {
 
 void StateNetwork::add_outputs(int num_add) {
 	for (int o_index = 0; o_index < num_add; o_index++) {
-		this->output->acti_vals.insert(this->output->acti_vals.begin(), 0.0);
-		this->output->errors.insert(this->output->errors.begin(), 0.0);
+		this->output->acti_vals.push_back(0.0);
+		this->output->errors.push_back(0.0);
 	}
 
+	this->hidden_1->update_structure();
+	this->hidden_2->update_structure();
 	this->output->update_structure();
 }
 
-void StateNetwork::remove_outputs(int num_remove) {
-	for (int o_index = 0; o_index < num_remove; o_index++) {
-		this->output->acti_vals.erase(this->output->acti_vals.begin());
-		this->output->errors.erase(this->output->errors.begin());
+void StateNetwork::resize() {
+	while (this->hidden_1->acti_vals.size() < 2 * this->input->acti_vals.size()) {
+		this->hidden_1->acti_vals.push_back(0.0);
+		this->hidden_1->errors.push_back(0.0);
 	}
 
+	while (this->hidden_2->acti_vals.size() < this->input->acti_vals.size()) {
+		this->hidden_2->acti_vals.push_back(0.0);
+		this->hidden_2->errors.push_back(0.0);
+	}
+
+	this->hidden_1->update_structure();
+	this->hidden_2->update_structure();
 	this->output->update_structure();
 }
 

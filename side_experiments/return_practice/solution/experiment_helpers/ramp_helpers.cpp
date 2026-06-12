@@ -8,6 +8,7 @@
 #include "constants.h"
 #include "experiment_run.h"
 #include "network.h"
+#include "predict_run.h"
 #include "solution.h"
 #include "start_node.h"
 #include "utilities.h"
@@ -77,6 +78,52 @@ void Experiment::ramp_step(int& action,
 		is_next = true;
 
 		state->step_index++;
+	}
+}
+
+void Experiment::ramp_predict_activate(PredictRun* run) {
+	ExperimentHistory* history;
+	map<Experiment*, ExperimentHistory*>::iterator it =
+		run->experiment_histories.find(this);
+	if (it == run->experiment_histories.end()) {
+		history = new ExperimentHistory(this);
+		run->experiment_histories[this] = history;
+	} else {
+		history = it->second;
+	}
+
+	if (history->is_on) {
+		this->original_network->activate(run->state);
+		this->branch_network->activate(run->state);
+
+		bool is_branch;
+		if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
+
+		#if defined(MDEBUG) && MDEBUG
+		if (run->wrapper->curr_run_seed%2 == 0) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
+		run->wrapper->curr_run_seed = xorshift(run->wrapper->curr_run_seed);
+		#endif /* MDEBUG */
+
+		if (is_branch) {
+			for (int a_index = 0; a_index < (int)this->actions.size(); a_index++) {
+				action_helper(this->actions[a_index],
+							  run->state,
+							  run->wrapper);
+
+				predict_helper(run->state,
+							   run->wrapper);
+			}
+
+			run->node_context = this->exit_next_node;
+		}
 	}
 }
 

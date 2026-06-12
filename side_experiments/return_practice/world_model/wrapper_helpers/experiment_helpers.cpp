@@ -24,7 +24,7 @@ void Wrapper::experiment_init(ExperimentRun* run) {
 	run->node_context = this->solution->nodes[0];
 	run->experiment_context = NULL;
 
-	run->state = vector<double>(this->curr_model->num_states, 0.0);
+	run->state = vector<double>(this->world_model->num_states, 0.0);
 
 	this->iter++;
 
@@ -122,7 +122,7 @@ void Wrapper::experiment_end(double result,
 		this->sample_target_vals[this->sample_index] = result;
 	}
 	this->sample_index++;
-	if (this->sample_index >= SAMPLES_NUM_SAVE) {
+	if ((this->sample_index+1) % CHECK_STATE_SIZE_NUM_ITERS == 0) {
 		check_state_size_helper(this);
 
 		this->sample_index = 0;
@@ -144,10 +144,9 @@ void Wrapper::experiment_end(double result,
 		cout << endl;
 		cout << "score_average: " << score_average << endl;
 		cout << "misguess_average: " << misguess_average << endl;
-		cout << "this->curr_model->num_states: " << this->curr_model->num_states << endl;
-		cout << "this->curr_model->misguess_average: " << this->curr_model->misguess_average << endl;
-		cout << "this->large_model->misguess_average: " << this->large_model->misguess_average << endl;
-		cout << "this->curr_model->num_states: " << this->curr_model->num_states << endl;
+		cout << "this->world_model->num_states: " << this->world_model->num_states << endl;
+		cout << "this->world_model->curr_misguess_average: " << this->world_model->curr_misguess_average << endl;
+		cout << "this->world_model->large_misguess_average: " << this->world_model->large_misguess_average << endl;
 		measure_test(this);
 		cout << endl;
 	}

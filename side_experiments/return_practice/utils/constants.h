@@ -10,7 +10,14 @@ const int NETWORK_EPOCH_SIZE = 20;
 const int STARTING_NUM_STATE = 4;
 const int NUM_STATE_CHANGE = 4;
 
+const int STATE_NUM_SAVE = 1000;
+
 const int SAMPLES_NUM_SAVE = 10000;
+#if defined(MDEBUG) && MDEBUG
+const int CHECK_STATE_SIZE_NUM_ITERS = 10;
+#else
+const int CHECK_STATE_SIZE_NUM_ITERS = 1000;
+#endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
 const int SCORE_HISTORIES_NUM_SAVE = 100;
@@ -27,19 +34,16 @@ const int MIN_NUM_LAST_TRACK = 3;
 const double LAST_BETTER_THAN_RATIO = 0.6;
 
 #if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_NUM_GEARS = 5;
-const int MEASURE_GEAR = 2;
+const int EXPERIMENT_NUM_GEARS = 3;
+const int MEASURE_GEAR = 1;
 const int RAMP_EPOCH_NUM_ITERS = 40;
 const int MEASURE_STEP_NUM_ITERS = 40;
 const int TOTAL_MAX_ITERS = 1000;
 #else
-const int EXPERIMENT_NUM_GEARS = 9;
-const int MEASURE_GEAR = 4;
-// const int RAMP_EPOCH_NUM_ITERS = 2000;
-// const int MEASURE_STEP_NUM_ITERS = 2000;
-// const int TOTAL_MAX_ITERS = 100000;
-const int RAMP_EPOCH_NUM_ITERS = 200;
-const int MEASURE_STEP_NUM_ITERS = 200;
+const int EXPERIMENT_NUM_GEARS = 3;
+const int MEASURE_GEAR = 1;
+const int RAMP_EPOCH_NUM_ITERS = 100;
+const int MEASURE_STEP_NUM_ITERS = 100;
 const int TOTAL_MAX_ITERS = 10000;
 #endif /* MDEBUG */
 

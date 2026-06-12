@@ -10,6 +10,7 @@ using namespace std;
 StartNode::StartNode() {
 	this->type = NODE_TYPE_START;
 
+	this->history_index = 0;
 	this->experiment = NULL;
 }
 

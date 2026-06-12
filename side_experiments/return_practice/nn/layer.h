@@ -26,9 +26,6 @@ public:
 	Layer(int type);
 
 	void update_structure();
-	/**
-	 * - update from front
-	 */
 
 	void copy_weights_from(Layer* original);
 	void load_weights_from(std::ifstream& input_file);
@@ -38,8 +35,6 @@ public:
 	void backprop_through();
 	void get_max_update(double& max_update_size);
 	void update_weights(double learning_rate);
-
-	void remove_input(int index);
 
 	void twiddle();
 

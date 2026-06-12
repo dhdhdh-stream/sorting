@@ -17,6 +17,7 @@
 #include "network.h"
 #include "run.h"
 #include "solution.h"
+#include "solution_helpers.h"
 #include "state_network.h"
 #include "start_node.h"
 #include "world_model.h"
@@ -97,38 +98,10 @@ void Experiment::gather_backprop(double target_val,
 		vector<double> train_existing_predicted(NUM_SIMULATE);
 		for (int iter_index = 0; iter_index < NUM_SIMULATE; iter_index++) {
 			int start_index = start_distribution(generator);
-
 			train_existing_state[iter_index] = this->start_state_history[start_index];
-
-			Run* run = new Run();
-			run->wrapper = wrapper;
-			run->state = this->start_state_history[start_index];
-			run->node_context = next_node;
-			while (true) {
-				int action;
-				bool is_next = false;
-				bool is_done = false;
-				while (!is_next) {
-					if (run->node_context == NULL) {
-						is_next = true;
-						is_done = true;
-					} else {
-						run->node_context->step(action,
-												is_next,
-												run);
-					}
-				}
-
-				if (is_done) {
-					break;
-				}
-
-				predict_helper(run->state,
-							   wrapper);
-			}
-			wrapper->curr_model->final_network->activate(run->state);
-			train_existing_predicted[iter_index] = wrapper->curr_model->final_network->output->acti_vals[0];
-			delete run;
+			train_existing_predicted[iter_index] = predict_helper(this->start_state_history[start_index],
+																  next_node,
+																  wrapper);
 		}
 
 		this->original_network = new Network(this->start_state_history[0].size());
@@ -211,43 +184,17 @@ void Experiment::gather_backprop(double target_val,
 			// 	cout << endl;
 			// }
 
-			Run* run = new Run();
-			run->wrapper = wrapper;
-			run->state = this->start_state_history[start_index];
 			for (int a_index = 0; a_index < (int)curr_actions.size(); a_index++) {
 				action_helper(curr_actions[a_index],
-							  run->state,
+							  state,
 							  wrapper);
 
-				predict_helper(run->state,
+				predict_helper(state,
 							   wrapper);
 			}
-			run->node_context = curr_exit_next_node;
-			while (true) {
-				int action;
-				bool is_next = false;
-				bool is_done = false;
-				while (!is_next) {
-					if (run->node_context == NULL) {
-						is_next = true;
-						is_done = true;
-					} else {
-						run->node_context->step(action,
-												is_next,
-												run);
-					}
-				}
-
-				if (is_done) {
-					break;
-				}
-
-				predict_helper(run->state,
-							   wrapper);
-			}
-			wrapper->curr_model->final_network->activate(run->state);
-			double predicted = wrapper->curr_model->final_network->output->acti_vals[0];
-			delete run;
+			double predicted = predict_helper(state,
+											  curr_exit_next_node,
+											  wrapper);
 
 			double curr_surprise = predicted - existing_predicted;
 			if (curr_surprise > best_surprise) {
@@ -274,43 +221,18 @@ void Experiment::gather_backprop(double target_val,
 
 			train_new_state[iter_index] = this->start_state_history[start_index];
 
-			Run* run = new Run();
-			run->wrapper = wrapper;
-			run->state = this->start_state_history[start_index];
+			vector<double> state = this->start_state_history[start_index];
 			for (int a_index = 0; a_index < (int)best_actions.size(); a_index++) {
 				action_helper(best_actions[a_index],
-							  run->state,
+							  state,
 							  wrapper);
 
-				predict_helper(run->state,
+				predict_helper(state,
 							   wrapper);
 			}
-			run->node_context = best_exit_next_node;
-			while (true) {
-				int action;
-				bool is_next = false;
-				bool is_done = false;
-				while (!is_next) {
-					if (run->node_context == NULL) {
-						is_next = true;
-						is_done = true;
-					} else {
-						run->node_context->step(action,
-												is_next,
-												run);
-					}
-				}
-
-				if (is_done) {
-					break;
-				}
-
-				predict_helper(run->state,
-							   wrapper);
-			}
-			wrapper->curr_model->final_network->activate(run->state);
-			train_new_predicted[iter_index] = wrapper->curr_model->final_network->output->acti_vals[0];
-			delete run;
+			train_new_predicted[iter_index] = predict_helper(state,
+															 best_exit_next_node,
+															 wrapper);
 		}
 
 		// // temp
@@ -390,6 +312,7 @@ void Experiment::gather_backprop(double target_val,
 				wrapper->solution->train_new_last_scores.push_back(this->predicted_global_improvement);
 			}
 
+			// temp
 			is_success = true;
 		}
 

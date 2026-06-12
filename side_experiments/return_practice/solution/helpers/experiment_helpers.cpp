@@ -25,18 +25,22 @@ void count_eval_helper(ExperimentRun* run,
 		case NODE_TYPE_START:
 			{
 				StartNode* start_node = (StartNode*)node;
-				node_count++;
-				if (start_node->experiment != NULL) {
-					eval_count++;
+				if (start_node->state_history.size() >= STATE_NUM_SAVE) {
+					node_count++;
+					if (start_node->experiment != NULL) {
+						eval_count++;
+					}
 				}
 			}
 			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)node;
-				node_count++;
-				if (action_node->experiment != NULL) {
-					eval_count++;
+				if (action_node->state_history.size() >= STATE_NUM_SAVE) {
+					node_count++;
+					if (action_node->experiment != NULL) {
+						eval_count++;
+					}
 				}
 			}
 			break;
@@ -45,14 +49,18 @@ void count_eval_helper(ExperimentRun* run,
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
 				if (branch_node_history->is_branch) {
-					node_count++;
-					if (branch_node->branch_experiment != NULL) {
-						eval_count++;
+					if (branch_node->branch_state_history.size() >= STATE_NUM_SAVE) {
+						node_count++;
+						if (branch_node->branch_experiment != NULL) {
+							eval_count++;
+						}
 					}
 				} else {
-					node_count++;
-					if (branch_node->original_experiment != NULL) {
-						eval_count++;
+					if (branch_node->original_state_history.size() >= STATE_NUM_SAVE) {
+						node_count++;
+						if (branch_node->original_experiment != NULL) {
+							eval_count++;
+						}
 					}
 				}
 			}
@@ -72,7 +80,8 @@ void gather_start_helper(ExperimentRun* run,
 		case NODE_TYPE_START:
 			{
 				StartNode* start_node = (StartNode*)node;
-				if (start_node->experiment == NULL) {
+				if (start_node->state_history.size() >= STATE_NUM_SAVE
+						&& start_node->experiment == NULL) {
 					uniform_int_distribution<int> select_distribution(0, node_count);
 					node_count++;
 					if (select_distribution(generator) == 0) {
@@ -85,7 +94,8 @@ void gather_start_helper(ExperimentRun* run,
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)node;
-				if (action_node->experiment == NULL) {
+				if (action_node->state_history.size() >= STATE_NUM_SAVE
+						&& action_node->experiment == NULL) {
 					uniform_int_distribution<int> select_distribution(0, node_count);
 					node_count++;
 					if (select_distribution(generator) == 0) {
@@ -100,7 +110,8 @@ void gather_start_helper(ExperimentRun* run,
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
 				if (branch_node_history->is_branch) {
-					if (branch_node->branch_experiment == NULL) {
+					if (branch_node->branch_state_history.size() >= STATE_NUM_SAVE
+							&& branch_node->branch_experiment == NULL) {
 						uniform_int_distribution<int> select_distribution(0, node_count);
 						node_count++;
 						if (select_distribution(generator) == 0) {
@@ -109,7 +120,8 @@ void gather_start_helper(ExperimentRun* run,
 						}
 					}
 				} else {
-					if (branch_node->original_experiment == NULL) {
+					if (branch_node->original_state_history.size() >= STATE_NUM_SAVE
+							&& branch_node->original_experiment == NULL) {
 						uniform_int_distribution<int> select_distribution(0, node_count);
 						node_count++;
 						if (select_distribution(generator) == 0) {
@@ -169,15 +181,78 @@ void create_experiment(ExperimentRun* run,
 	}
 }
 
+void crazy_gather_start_helper(ExperimentRun* run,
+							   int& node_count,
+							   AbstractNode*& explore_node,
+							   bool& explore_is_branch) {
+	for (map<int, AbstractNodeHistory*>::iterator h_it = run->node_histories.begin();
+			h_it != run->node_histories.end(); h_it++) {
+		AbstractNode* node = h_it->second->node;
+		switch (node->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)node;
+				if (start_node->experiment == NULL) {
+					uniform_int_distribution<int> select_distribution(0, node_count);
+					node_count++;
+					if (select_distribution(generator) == 0) {
+						explore_node = node;
+						explore_is_branch = false;
+					}
+				}
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)node;
+				if (action_node->experiment == NULL) {
+					uniform_int_distribution<int> select_distribution(0, node_count);
+					node_count++;
+					if (select_distribution(generator) == 0) {
+						explore_node = node;
+						explore_is_branch = false;
+					}
+				}
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
+				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
+				if (branch_node_history->is_branch) {
+					if (branch_node->branch_experiment == NULL) {
+						uniform_int_distribution<int> select_distribution(0, node_count);
+						node_count++;
+						if (select_distribution(generator) == 0) {
+							explore_node = branch_node;
+							explore_is_branch = true;
+						}
+					}
+				} else {
+					if (branch_node->original_experiment == NULL) {
+						uniform_int_distribution<int> select_distribution(0, node_count);
+						node_count++;
+						if (select_distribution(generator) == 0) {
+							explore_node = branch_node;
+							explore_is_branch = false;
+						}
+					}
+				}
+			}
+			break;
+		}
+	}
+}
+
 void create_crazy(ExperimentRun* run,
 				  Wrapper* wrapper) {
 	int node_count = 0;
 	AbstractNode* explore_node = NULL;
 	bool explore_is_branch;
-	gather_start_helper(run,
-						node_count,
-						explore_node,
-						explore_is_branch);
+	crazy_gather_start_helper(run,
+							  node_count,
+							  explore_node,
+							  explore_is_branch);
 
 	if (explore_node != NULL) {
 		AbstractNode* starting_node;

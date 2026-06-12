@@ -5,6 +5,7 @@
 
 class Experiment;
 class ExperimentRun;
+class PredictRun;
 class Run;
 class Solution;
 class Wrapper;
@@ -35,6 +36,8 @@ public:
 								 bool& is_next,
 								 ExperimentRun* run) = 0;
 	virtual void experiment_step_start(ExperimentRun* run) = 0;
+
+	virtual void predict_step(PredictRun* run) = 0;
 
 	virtual void save(std::ofstream& output_file,
 					  Wrapper* wrapper) = 0;

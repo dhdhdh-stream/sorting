@@ -69,6 +69,10 @@ void Crazy::experiment_step(int& action,
 	}
 }
 
+void Crazy::predict_activate(PredictRun* run) {
+	// do nothing
+}
+
 CrazyState::CrazyState(Crazy* experiment) {
 	this->experiment = experiment;
 }

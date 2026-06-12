@@ -19,7 +19,13 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
+	std::vector<std::vector<double>> original_state_history;
+	std::vector<double> original_target_val_history;
+	int original_history_index;
 	AbstractExperiment* original_experiment;
+	std::vector<std::vector<double>> branch_state_history;
+	std::vector<double> branch_target_val_history;
+	int branch_history_index;
 	AbstractExperiment* branch_experiment;
 
 	BranchNode();
@@ -34,6 +40,8 @@ public:
 						 ExperimentRun* run);
 	void experiment_step_start(ExperimentRun* run);
 
+	void predict_step(PredictRun* run);
+
 	void save(std::ofstream& output_file,
 			  Wrapper* wrapper);
 	void load(std::ifstream& input_file,
@@ -47,6 +55,7 @@ public:
 	bool is_branch;
 
 	std::vector<double> state;
+	std::vector<double> large_state;
 
 	BranchNodeHistory(BranchNode* node);
 };
