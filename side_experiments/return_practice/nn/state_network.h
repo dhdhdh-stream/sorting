@@ -33,7 +33,7 @@ public:
 
 	void add_inputs(int num_add);
 	void add_outputs(int num_add);
-	void resize();
+	void resize(int num_states);
 
 	void twiddle();
 

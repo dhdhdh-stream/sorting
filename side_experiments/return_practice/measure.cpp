@@ -39,8 +39,6 @@ int main(int argc, char* argv[]) {
 	wrapper = new Wrapper("saves/",
 						  filename);
 
-	measure_test(wrapper);
-
 	double sum_scores = 0.0;
 	for (int iter_index = 0; iter_index < MEASURE_NUM_ITERS; iter_index++) {
 		Problem* problem = problem_type->get_problem();

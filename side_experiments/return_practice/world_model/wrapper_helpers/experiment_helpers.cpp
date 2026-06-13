@@ -113,24 +113,6 @@ void Wrapper::experiment_end(double result,
 		}
 	}
 
-	if (this->sample_obs.size() < SAMPLES_NUM_SAVE) {
-		this->sample_obs.push_back(run->obs_histories);
-		this->sample_actions.push_back(run->action_histories);
-		this->sample_target_vals.push_back(result);
-	} else {
-		this->sample_obs[this->sample_index] = run->obs_histories;
-		this->sample_actions[this->sample_index] = run->action_histories;
-		this->sample_target_vals[this->sample_index] = result;
-	}
-	this->sample_index++;
-	if ((this->sample_index+1) % CHECK_STATE_SIZE_NUM_ITERS == 0) {
-		check_state_size_helper(this);
-
-		this->sample_index = 0;
-	}
-
-	update_world_model_helper(this);
-
 	update_solution_helper(run,
 						   result,
 						   this);
@@ -152,7 +134,6 @@ void Wrapper::experiment_end(double result,
 		cout << "this->world_model->large_predict->misguess_average: " << this->world_model->large_predict->misguess_average << endl;
 		cout << "this->world_model->large_candidate_predict->misguess_average: " << this->world_model->large_candidate_predict->misguess_average << endl;
 		cout << "this->world_model->num_states: " << this->world_model->num_states << endl;
-		measure_test(this);
 		cout << endl;
 	}
 
@@ -162,6 +143,24 @@ void Wrapper::experiment_end(double result,
 							it->second,
 							this);
 	}
+
+	if (this->sample_obs.size() < SAMPLES_NUM_SAVE) {
+		this->sample_obs.push_back(run->obs_histories);
+		this->sample_actions.push_back(run->action_histories);
+		this->sample_target_vals.push_back(result);
+	} else {
+		this->sample_obs[this->sample_index] = run->obs_histories;
+		this->sample_actions[this->sample_index] = run->action_histories;
+		this->sample_target_vals[this->sample_index] = result;
+	}
+	this->sample_index++;
+	if ((this->sample_index+1) % CHECK_STATE_SIZE_NUM_ITERS == 0) {
+		check_state_size_helper(this);
+
+		this->sample_index = 0;
+	}
+
+	update_world_model_helper(this);
 
 	uniform_int_distribution<int> crazy_distribution(0, 4);
 	if (crazy_distribution(generator) == 0) {

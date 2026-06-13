@@ -228,13 +228,13 @@ void StateNetwork::add_outputs(int num_add) {
 	this->output->update_structure();
 }
 
-void StateNetwork::resize() {
-	while (this->hidden_1->acti_vals.size() < 2 * this->input->acti_vals.size()) {
+void StateNetwork::resize(int num_states) {
+	while ((int)this->hidden_1->acti_vals.size() < 2 * num_states) {
 		this->hidden_1->acti_vals.push_back(0.0);
 		this->hidden_1->errors.push_back(0.0);
 	}
 
-	while (this->hidden_2->acti_vals.size() < this->input->acti_vals.size()) {
+	while ((int)this->hidden_2->acti_vals.size() < num_states) {
 		this->hidden_2->acti_vals.push_back(0.0);
 		this->hidden_2->errors.push_back(0.0);
 	}

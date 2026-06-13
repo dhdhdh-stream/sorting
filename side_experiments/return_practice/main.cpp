@@ -7,9 +7,11 @@
 #include "constants.h"
 #include "experiment_run.h"
 #include "globals.h"
+#include "hit_all.h"
+// #include "minesweeper.h"
 #include "solution.h"
 #include "solution_helpers.h"
-#include "test_indirect.h"
+// #include "test_indirect.h"
 #include "world_model.h"
 #include "world_model_helpers.h"
 #include "wrapper.h"
@@ -28,7 +30,9 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeTestIndirect();
+	// ProblemType* problem_type = new TypeTestIndirect();
+	// ProblemType* problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeHitAll();
 
 	string filename;
 	Wrapper* wrapper;

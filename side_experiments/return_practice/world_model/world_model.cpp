@@ -38,12 +38,12 @@ WorldModel::WorldModel(int num_obs,
 	this->curr_candidate_iter = 0;
 
 	this->large_obs_network = new StateNetwork(STARTING_NUM_STATE + NUM_STATE_CHANGE + num_obs, NUM_STATE_CHANGE);
-	this->large_obs_network->resize();
+	this->large_obs_network->resize(STARTING_NUM_STATE + NUM_STATE_CHANGE);
 	this->large_action_network = new StateNetwork(STARTING_NUM_STATE + NUM_STATE_CHANGE + num_actions, NUM_STATE_CHANGE);
-	this->large_action_network->resize();
+	this->large_action_network->resize(STARTING_NUM_STATE + NUM_STATE_CHANGE);
 
 	this->large_final_network = new StateNetwork(STARTING_NUM_STATE + NUM_STATE_CHANGE, 1);
-	this->large_final_network->resize();
+	this->large_final_network->resize(STARTING_NUM_STATE + NUM_STATE_CHANGE);
 
 	this->large_epoch_iter = 0;
 	this->large_average_max_update = 0.0;

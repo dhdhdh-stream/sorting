@@ -547,7 +547,11 @@ void check_state_size_helper(Wrapper* wrapper) {
 			}
 		}
 
+		#if defined(MDEBUG) && MDEBUG
+		if (should_increase || rand()%10 == 0) {
+		#else
 		if (should_increase) {
+		#endif /* MDEBUG */
 			vector<int> new_network_inputs;
 			for (int i_index = 0; i_index < world_model->num_states + NUM_STATE_CHANGE; i_index++) {
 				new_network_inputs.push_back(i_index);
@@ -588,14 +592,14 @@ void check_state_size_helper(Wrapper* wrapper) {
 
 			world_model->num_states += NUM_STATE_CHANGE;
 
-			world_model->large_obs_network = new StateNetwork(world_model->num_states + NUM_STATE_CHANGE, NUM_STATE_CHANGE);
-			world_model->large_obs_network->resize();
-			world_model->large_action_network = new StateNetwork(world_model->num_states + NUM_STATE_CHANGE, NUM_STATE_CHANGE);
-			world_model->large_action_network->resize();
+			world_model->large_obs_network = new StateNetwork(world_model->num_states + NUM_STATE_CHANGE + wrapper->num_obs, NUM_STATE_CHANGE);
+			world_model->large_obs_network->resize(world_model->num_states + NUM_STATE_CHANGE);
+			world_model->large_action_network = new StateNetwork(world_model->num_states + NUM_STATE_CHANGE + wrapper->num_actions, NUM_STATE_CHANGE);
+			world_model->large_action_network->resize(world_model->num_states + NUM_STATE_CHANGE);
 
 			world_model->large_final_network = new StateNetwork(world_model->curr_final_network);
 			world_model->large_final_network->add_inputs(NUM_STATE_CHANGE);
-			world_model->large_final_network->resize();
+			world_model->large_final_network->resize(world_model->num_states + NUM_STATE_CHANGE);
 
 			world_model->large_epoch_iter = 0;
 			world_model->large_average_max_update = 0.0;
