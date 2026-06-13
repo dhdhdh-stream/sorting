@@ -85,11 +85,11 @@ void predict_helper(vector<double>& state,
 		select_vals[n_index] = exp(select_vals[n_index]);
 	}
 
-	// temp
-	cout << "select_vals:" << endl;
-	for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
-		cout << n_index << ": " << select_vals[n_index] << endl;
-	}
+	// // temp
+	// cout << "select_vals:" << endl;
+	// for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
+	// 	cout << n_index << ": " << select_vals[n_index] << endl;
+	// }
 
 	double sum_select = 0.0;
 	for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
@@ -106,8 +106,8 @@ void predict_helper(vector<double>& state,
 		}
 	}
 
-	// temp
-	cout << "select_index: " << select_index << endl;
+	// // temp
+	// cout << "select_index: " << select_index << endl;
 
 	predict_wrapper->val_networks[select_index]->activate(state);
 	for (int o_index = 0; o_index < (int)state.size(); o_index++) {

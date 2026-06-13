@@ -297,11 +297,11 @@ void Experiment::backprop(double target_val,
 			this->original_average_instances_per_run = (2.0 * (double)this->sum_original_num_instances) / (double)total_iters;
 			this->branch_average_instances_per_run = (2.0 * (double)this->sum_branch_num_instances) / (double)total_iters;
 
-			// // temp
-			// cout << "new_score_average: " << new_score_average << endl;
-			// cout << "existing_score_average: " << existing_score_average << endl;
-			// cout << "this->local_improvement: " << this->local_improvement << endl;
-			// cout << "this->global_improvement: " << this->global_improvement << endl;
+			// temp
+			cout << "existing_score_average: " << existing_score_average << endl;
+			cout << "new_score_average: " << new_score_average << endl;
+			cout << "this->local_improvement: " << this->local_improvement << endl;
+			cout << "this->global_improvement: " << this->global_improvement << endl;
 
 			this->total_count = 0;
 			this->existing_sum_scores = 0.0;

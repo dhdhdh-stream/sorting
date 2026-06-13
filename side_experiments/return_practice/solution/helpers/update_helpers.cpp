@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -71,8 +73,10 @@ void update_solution_helper(ExperimentRun* run,
 
 					if (branch_node->branch_state_history.size() < STATE_NUM_SAVE) {
 						branch_node->branch_state_history.push_back(branch_node_history->state);
+						branch_node->branch_target_val_history.push_back(target_val);
 					} else {
 						branch_node->branch_state_history[branch_node->branch_history_index] = branch_node_history->state;
+						branch_node->branch_target_val_history[branch_node->branch_history_index] = target_val;
 					}
 					branch_node->branch_history_index++;
 					if (branch_node->branch_history_index >= STATE_NUM_SAVE) {
@@ -91,17 +95,19 @@ void update_solution_helper(ExperimentRun* run,
 				} else {
 					branch_node->original_curr_instances_per_run++;
 
-					if (branch_node->original_state_history.size() < UPDATE_MIN_NUM_SAMPLES) {
+					if (branch_node->original_state_history.size() < STATE_NUM_SAVE) {
 						branch_node->original_state_history.push_back(branch_node_history->state);
+						branch_node->original_target_val_history.push_back(target_val);
 					} else {
 						branch_node->original_state_history[branch_node->original_history_index] = branch_node_history->state;
+						branch_node->original_target_val_history[branch_node->original_history_index] = target_val;
 					}
 					branch_node->original_history_index++;
 					if (branch_node->original_history_index >= STATE_NUM_SAVE) {
 						branch_node->original_history_index = 0;
 					}
 
-					if (branch_node->original_state_history.size() >= STATE_NUM_SAVE) {
+					if (branch_node->original_state_history.size() >= UPDATE_MIN_NUM_SAMPLES) {
 						uniform_int_distribution<int> distribution(0, branch_node->original_state_history.size()-1);
 						for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
 							int index = distribution(generator);

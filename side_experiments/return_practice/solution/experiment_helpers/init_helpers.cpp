@@ -271,9 +271,6 @@ void init_experiment_helper(AbstractNode* node_context,
 		} else {
 			wrapper->solution->train_new_last_scores.push_back(predicted_global_improvement);
 		}
-
-		// temp
-		is_success = true;
 	}
 
 	if (is_success) {
@@ -299,6 +296,9 @@ void init_experiment_helper(AbstractNode* node_context,
 		experiment->existing_count = 0;
 		experiment->new_sum_scores = 0.0;
 		experiment->new_count = 0;
+
+		experiment->predicted_local_improvement = predicted_local_improvement;
+		experiment->predicted_global_improvement = predicted_global_improvement;
 
 		experiment->state = EXPERIMENT_STATE_RAMP;
 		experiment->state_iter = 0;

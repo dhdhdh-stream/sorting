@@ -25,13 +25,13 @@ const int SCORE_HISTORIES_NUM_SAVE = 100;
 const int SCORE_HISTORIES_NUM_SAVE = 1000;
 #endif /* MDEBUG */
 
-const int NUM_LAST_TRACK = 10;
+const int NUM_LAST_TRACK = 20;
 #if defined(MDEBUG) && MDEBUG
 const int MIN_NUM_LAST_TRACK = 1;
 #else
-const int MIN_NUM_LAST_TRACK = 3;
+const int MIN_NUM_LAST_TRACK = 5;
 #endif /* MDEBUG */
-const double LAST_BETTER_THAN_RATIO = 0.6;
+const double LAST_BETTER_THAN_RATIO = 0.8;
 
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_NUM_GEARS = 3;

@@ -8,6 +8,7 @@
 #include "experiment.h"
 #include "experiment_run.h"
 #include "globals.h"
+#include "predict_wrapper.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "utilities.h"
@@ -135,19 +136,22 @@ void Wrapper::experiment_end(double result,
 						   this);
 
 	// temp
-	if (this->iter % 1000 == 0) {
+	if (this->iter % 100 == 0) {
 		cout << this->iter << endl;
 		double score_average;
 		double misguess_average;
 		measure_helper(this,
 					   score_average,
 					   misguess_average);
-		cout << endl;
 		cout << "score_average: " << score_average << endl;
 		cout << "misguess_average: " << misguess_average << endl;
-		cout << "this->world_model->num_states: " << this->world_model->num_states << endl;
 		cout << "this->world_model->curr_misguess_average: " << this->world_model->curr_misguess_average << endl;
 		cout << "this->world_model->large_misguess_average: " << this->world_model->large_misguess_average << endl;
+		cout << "this->world_model->curr_predict->misguess_average: " << this->world_model->curr_predict->misguess_average << endl;
+		cout << "this->world_model->curr_candidate_predict->misguess_average: " << this->world_model->curr_candidate_predict->misguess_average << endl;
+		cout << "this->world_model->large_predict->misguess_average: " << this->world_model->large_predict->misguess_average << endl;
+		cout << "this->world_model->large_candidate_predict->misguess_average: " << this->world_model->large_candidate_predict->misguess_average << endl;
+		cout << "this->world_model->num_states: " << this->world_model->num_states << endl;
 		measure_test(this);
 		cout << endl;
 	}
