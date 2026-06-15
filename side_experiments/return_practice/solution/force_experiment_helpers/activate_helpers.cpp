@@ -35,17 +35,17 @@ void ForceExperiment::predict_activate(PredictRun* run) {
 }
 
 void ForceExperiment::backprop(double target_val,
-							   ForceExperimentHistory* history,
+							   ExperimentRun* run,
 							   Wrapper* wrapper) {
 	switch (this->state) {
 	case FORCE_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
-						 history,
+						 run,
 						 wrapper);
 		break;
 	case FORCE_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
-						   history,
+						   run,
 						   wrapper);
 		break;
 	}

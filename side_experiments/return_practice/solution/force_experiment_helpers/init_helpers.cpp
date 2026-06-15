@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "network.h"
 #include "solution_helpers.h"
@@ -16,12 +17,6 @@ using namespace std;
 const int NUM_SIMULATE = 40;
 #else
 const int NUM_SIMULATE = 4000;
-#endif /* MDEBUG */
-
-#if defined(MDEBUG) && MDEBUG
-const int TRAIN_ITERS = 30;
-#else
-const int TRAIN_ITERS = 300000;
 #endif /* MDEBUG */
 
 void init_force_experiment_helper(AbstractNode* node_context,

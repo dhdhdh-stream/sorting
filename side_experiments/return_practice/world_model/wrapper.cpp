@@ -10,7 +10,8 @@
 
 using namespace std;
 
-const int INIT_NUM_ACTIONS = 10;
+// const int INIT_NUM_ACTIONS = 10;
+const int INIT_NUM_ACTIONS = 1;
 
 Wrapper::Wrapper(ProblemType* problem_type) {
 	this->num_obs = problem_type->num_obs();

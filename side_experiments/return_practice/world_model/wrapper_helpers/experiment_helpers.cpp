@@ -80,7 +80,7 @@ void Wrapper::experiment_end(double result,
 							 ExperimentRun* run) {
 	if (this->force_experiment != NULL) {
 		this->force_experiment->backprop(result,
-										 run->force_experiment_history,
+										 run,
 										 this);
 	} else {
 		if (this->solution->score_histories.size() < SCORE_HISTORIES_NUM_SAVE) {

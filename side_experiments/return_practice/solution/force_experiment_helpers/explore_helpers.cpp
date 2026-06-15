@@ -105,9 +105,9 @@ void ForceExperiment::explore_experiment_step(int& action,
 }
 
 void ForceExperiment::explore_backprop(double target_val,
-									   ForceExperimentHistory* history,
+									   ExperimentRun* run,
 									   Wrapper* wrapper) {
-	if (history->hit_branch) {
+	if (run->force_experiment_history->hit_branch) {
 		double curr_surprise = target_val - this->curr_existing_predicted;
 
 		#if defined(MDEBUG) && MDEBUG

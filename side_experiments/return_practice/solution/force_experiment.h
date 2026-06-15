@@ -41,8 +41,10 @@ public:
 	AbstractNode* best_exit_next_node;
 
 	std::vector<double> existing_predicted;
-	std::vector<std::vector<std::vector<double>>> new_obs;
-	std::vector<std::vector<int>> new_actions;
+	std::vector<std::vector<std::vector<double>>> new_branch_obs;
+	std::vector<std::vector<int>> new_branch_actions;
+	std::vector<std::vector<std::vector<double>>> new_full_obs;
+	std::vector<std::vector<int>> new_full_actions;
 	std::vector<double> new_target_vals;
 
 	ForceExperiment();
@@ -54,7 +56,7 @@ public:
 						 ExperimentRun* run);
 	void predict_activate(PredictRun* run);
 	void backprop(double target_val,
-				  ForceExperimentHistory* history,
+				  ExperimentRun* run,
 				  Wrapper* wrapper);
 
 	void explore_experiment_activate(ExperimentRun* run);
@@ -62,7 +64,7 @@ public:
 								 bool& is_next,
 								 ExperimentRun* run);
 	void explore_backprop(double target_val,
-						  ForceExperimentHistory* history,
+						  ExperimentRun* run,
 						  Wrapper* wrapper);
 
 	void train_new_experiment_activate(ExperimentRun* run);
@@ -70,7 +72,7 @@ public:
 								   bool& is_next,
 								   ExperimentRun* run);
 	void train_new_backprop(double target_val,
-							ForceExperimentHistory* history,
+							ExperimentRun* run,
 							Wrapper* wrapper);
 };
 
