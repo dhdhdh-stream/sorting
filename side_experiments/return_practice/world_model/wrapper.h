@@ -4,8 +4,8 @@
 #include <fstream>
 #include <vector>
 
-class Crazy;
 class ExperimentRun;
+class ForceExperiment;
 class ProblemType;
 class Run;
 class Solution;
@@ -22,8 +22,8 @@ public:
 
 	int iter;
 
-	Crazy* crazy;
-	bool hit_crazy;
+	int experiment_iter;
+	ForceExperiment* force_experiment;
 
 	std::vector<std::vector<std::vector<double>>> sample_obs;
 	std::vector<std::vector<int>> sample_actions;

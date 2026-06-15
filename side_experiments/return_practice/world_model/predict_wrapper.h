@@ -28,7 +28,7 @@ public:
 	PredictWrapper(std::ifstream& input_file);
 	~PredictWrapper();
 
-	void add_states();
+	void add_states(int num_add);
 
 	void twiddle();
 

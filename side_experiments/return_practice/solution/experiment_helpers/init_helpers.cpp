@@ -109,11 +109,19 @@ void init_experiment_helper(AbstractNode* node_context,
 	}
 
 	Network* original_network = new Network(state_history[0].size());
+	double original_hidden_1_average_max_update = 0.0;
+	double original_hidden_2_average_max_update = 0.0;
+	double original_hidden_3_average_max_update = 0.0;
+	double original_output_average_max_update = 0.0;
 	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 		int index = train_distribution(generator);
 		original_network->activate(train_existing_state[index]);
 		double error = train_existing_predicted[index] - original_network->output->acti_vals[0];
-		original_network->backprop(error);
+		original_network->init_backprop(error,
+										original_hidden_1_average_max_update,
+										original_hidden_2_average_max_update,
+										original_hidden_3_average_max_update,
+										original_output_average_max_update);
 	}
 
 	vector<int> best_actions;
@@ -197,12 +205,19 @@ void init_experiment_helper(AbstractNode* node_context,
 	}
 
 	Network* branch_network = new Network(state_history[0].size());
-
+	double branch_hidden_1_average_max_update = 0.0;
+	double branch_hidden_2_average_max_update = 0.0;
+	double branch_hidden_3_average_max_update = 0.0;
+	double branch_output_average_max_update = 0.0;
 	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 		int index = train_distribution(generator);
 		branch_network->activate(train_new_state[index]);
 		double error = train_new_predicted[index] - branch_network->output->acti_vals[0];
-		branch_network->backprop(error);
+		branch_network->init_backprop(error,
+									  branch_hidden_1_average_max_update,
+									  branch_hidden_2_average_max_update,
+									  branch_hidden_3_average_max_update,
+									  branch_output_average_max_update);
 	}
 
 	double sum_vals = 0.0;
@@ -210,7 +225,7 @@ void init_experiment_helper(AbstractNode* node_context,
 		original_network->activate(train_new_state[h_index]);
 		branch_network->activate(train_new_state[h_index]);
 		if (branch_network->output->acti_vals[0] > original_network->output->acti_vals[0]) {
-			sum_vals += train_new_predicted[h_index] - train_existing_predicted[h_index];
+			sum_vals += branch_network->output->acti_vals[0] - original_network->output->acti_vals[0];
 		}
 	}
 	double predicted_local_improvement = sum_vals / (double)NUM_SIMULATE;
@@ -273,7 +288,11 @@ void init_experiment_helper(AbstractNode* node_context,
 		}
 	}
 
+	#if defined(MDEBUG) && MDEBUG
+	if (is_success || rand()%3 != 0) {
+	#else
 	if (is_success) {
+	#endif /* MDEBUG */
 		// temp
 		cout << "new_experiment" << endl;
 

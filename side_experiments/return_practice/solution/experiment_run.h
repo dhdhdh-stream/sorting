@@ -9,6 +9,7 @@ class AbstractNode;
 class AbstractNodeHistory;
 class Experiment;
 class ExperimentHistory;
+class ForceExperimentHistory;
 class Wrapper;
 
 class ExperimentRun {
@@ -21,12 +22,14 @@ public:
 	std::vector<double> state;
 
 	std::map<Experiment*, ExperimentHistory*> experiment_histories;
+	ForceExperimentHistory* force_experiment_history;
 
 	std::map<int, AbstractNodeHistory*> node_histories;
 
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<int> action_histories;
 
+	ExperimentRun();
 	~ExperimentRun();
 };
 

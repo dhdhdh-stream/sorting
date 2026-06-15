@@ -8,7 +8,6 @@ const double NETWORK_TARGET_MAX_UPDATE = 0.01;
 const int NETWORK_EPOCH_SIZE = 20;
 
 const int STARTING_NUM_STATE = 4;
-const int NUM_STATE_CHANGE = 4;
 
 #if defined(MDEBUG) && MDEBUG
 const int STATE_NUM_SAVE = 100;
@@ -18,10 +17,8 @@ const int STATE_NUM_SAVE = 1000;
 
 #if defined(MDEBUG) && MDEBUG
 const int SAMPLES_NUM_SAVE = 100;
-const int CHECK_STATE_SIZE_NUM_ITERS = 10;
 #else
 const int SAMPLES_NUM_SAVE = 10000;
-const int CHECK_STATE_SIZE_NUM_ITERS = 1000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

@@ -24,39 +24,15 @@ WorldModel::WorldModel(int num_obs,
 	this->obs_networks.push_back(new StateNetwork(STARTING_NUM_STATE + num_obs, STARTING_NUM_STATE));
 	this->action_networks.push_back(new StateNetwork(STARTING_NUM_STATE + num_actions, STARTING_NUM_STATE));
 
-	this->curr_final_network = new StateNetwork(STARTING_NUM_STATE, 1);
+	this->final_network = new StateNetwork(STARTING_NUM_STATE, 1);
 
-	this->curr_epoch_iter = 0;
-	this->curr_average_max_update = 0.0;
+	this->epoch_iter = 0;
+	this->average_max_update = 0.0;
 
-	this->curr_misguess_average = 0.0;
-	this->curr_misguess_variance_average = 0.0;
+	this->predict = new PredictWrapper();
 
-	this->curr_predict = new PredictWrapper();
-
-	this->curr_candidate_predict = new PredictWrapper();
-	this->curr_candidate_iter = 0;
-
-	this->large_obs_network = new StateNetwork(STARTING_NUM_STATE + NUM_STATE_CHANGE + num_obs, NUM_STATE_CHANGE);
-	this->large_obs_network->resize(STARTING_NUM_STATE + NUM_STATE_CHANGE);
-	this->large_action_network = new StateNetwork(STARTING_NUM_STATE + NUM_STATE_CHANGE + num_actions, NUM_STATE_CHANGE);
-	this->large_action_network->resize(STARTING_NUM_STATE + NUM_STATE_CHANGE);
-
-	this->large_final_network = new StateNetwork(STARTING_NUM_STATE + NUM_STATE_CHANGE, 1);
-	this->large_final_network->resize(STARTING_NUM_STATE + NUM_STATE_CHANGE);
-
-	this->large_epoch_iter = 0;
-	this->large_average_max_update = 0.0;
-
-	this->large_misguess_average = 0.0;
-	this->large_misguess_variance_average = 0.0;
-
-	this->large_predict = new PredictWrapper();
-	this->large_predict->add_states();
-
-	this->large_candidate_predict = new PredictWrapper();
-	this->large_candidate_predict->add_states();
-	this->large_candidate_iter = 0;
+	this->candidate_predict = new PredictWrapper();
+	this->candidate_iter = 0;
 }
 
 WorldModel::WorldModel(ifstream& input_file) {
@@ -94,82 +70,21 @@ WorldModel::WorldModel(ifstream& input_file) {
 		this->action_networks.push_back(new StateNetwork(input_file));
 	}
 
-	this->curr_final_network = new StateNetwork(input_file);
+	this->final_network = new StateNetwork(input_file);
 
-	this->curr_epoch_iter = 0;
+	this->epoch_iter = 0;
 
-	string curr_average_max_update_line;
-	getline(input_file, curr_average_max_update_line);
-	this->curr_average_max_update = stod(curr_average_max_update_line);
+	string average_max_update_line;
+	getline(input_file, average_max_update_line);
+	this->average_max_update = stod(average_max_update_line);
 
-	string curr_misguess_average_line;
-	getline(input_file, curr_misguess_average_line);
-	this->curr_misguess_average = stod(curr_misguess_average_line);
+	this->predict = new PredictWrapper(input_file);
 
-	string curr_misguess_variance_average_line;
-	getline(input_file, curr_misguess_variance_average_line);
-	this->curr_misguess_variance_average = stod(curr_misguess_variance_average_line);
+	this->candidate_predict = new PredictWrapper(input_file);
 
-	string curr_history_size_line;
-	getline(input_file, curr_history_size_line);
-	int curr_history_size = stoi(curr_history_size_line);
-	for (int h_index = 0; h_index < curr_history_size; h_index++) {
-		string misguess_average_line;
-		getline(input_file, misguess_average_line);
-		this->curr_misguess_average_history.push_back(stod(misguess_average_line));
-
-		string misguess_variance_average_line;
-		getline(input_file, misguess_variance_average_line);
-		this->curr_misguess_variance_average_history.push_back(stod(misguess_variance_average_line));
-	}
-
-	this->curr_predict = new PredictWrapper(input_file);
-
-	this->curr_candidate_predict = new PredictWrapper(input_file);
-
-	string curr_candidate_iter_line;
-	getline(input_file, curr_candidate_iter_line);
-	this->curr_candidate_iter = stoi(curr_candidate_iter_line);
-
-	this->large_obs_network = new StateNetwork(input_file);
-	this->large_action_network = new StateNetwork(input_file);
-
-	this->large_final_network = new StateNetwork(input_file);
-
-	this->large_epoch_iter = 0;
-
-	string large_average_max_update_line;
-	getline(input_file, large_average_max_update_line);
-	this->large_average_max_update = stod(large_average_max_update_line);
-
-	string large_misguess_average_line;
-	getline(input_file, large_misguess_average_line);
-	this->large_misguess_average = stod(large_misguess_average_line);
-
-	string large_misguess_variance_average_line;
-	getline(input_file, large_misguess_variance_average_line);
-	this->large_misguess_variance_average = stod(large_misguess_variance_average_line);
-
-	string large_history_size_line;
-	getline(input_file, large_history_size_line);
-	int large_history_size = stoi(large_history_size_line);
-	for (int h_index = 0; h_index < large_history_size; h_index++) {
-		string misguess_average_line;
-		getline(input_file, misguess_average_line);
-		this->large_misguess_average_history.push_back(stod(misguess_average_line));
-
-		string misguess_variance_average_line;
-		getline(input_file, misguess_variance_average_line);
-		this->large_misguess_variance_average_history.push_back(stod(misguess_variance_average_line));
-	}
-
-	this->large_predict = new PredictWrapper(input_file);
-
-	this->large_candidate_predict = new PredictWrapper(input_file);
-
-	string large_candidate_iter_line;
-	getline(input_file, large_candidate_iter_line);
-	this->large_candidate_iter = stoi(large_candidate_iter_line);
+	string candidate_iter_line;
+	getline(input_file, candidate_iter_line);
+	this->candidate_iter = stoi(candidate_iter_line);
 }
 
 WorldModel::~WorldModel() {
@@ -180,20 +95,11 @@ WorldModel::~WorldModel() {
 		delete this->action_networks[n_index];
 	}
 
-	delete this->curr_final_network;
+	delete this->final_network;
 
-	delete this->curr_predict;
+	delete this->predict;
 
-	delete this->curr_candidate_predict;
-
-	delete this->large_obs_network;
-	delete this->large_action_network;
-
-	delete this->large_final_network;
-
-	delete this->large_predict;
-
-	delete this->large_candidate_predict;
+	delete this->candidate_predict;
 }
 
 void WorldModel::save(ofstream& output_file) {
@@ -215,42 +121,12 @@ void WorldModel::save(ofstream& output_file) {
 		this->action_networks[n_index]->save(output_file);
 	}
 
-	this->curr_final_network->save(output_file);
+	this->final_network->save(output_file);
 
-	output_file << this->curr_average_max_update << endl;
+	output_file << this->average_max_update << endl;
 
-	output_file << this->curr_misguess_average << endl;
-	output_file << this->curr_misguess_variance_average << endl;
+	this->predict->save(output_file);
 
-	output_file << this->curr_misguess_average_history.size() << endl;
-	for (int h_index = 0; h_index < (int)this->curr_misguess_average_history.size(); h_index++) {
-		output_file << this->curr_misguess_average_history[h_index] << endl;
-		output_file << this->curr_misguess_variance_average_history[h_index] << endl;
-	}
-
-	this->curr_predict->save(output_file);
-
-	this->curr_candidate_predict->save(output_file);
-	output_file << this->curr_candidate_iter << endl;
-
-	this->large_obs_network->save(output_file);
-	this->large_action_network->save(output_file);
-
-	this->large_final_network->save(output_file);
-
-	output_file << this->large_average_max_update << endl;
-
-	output_file << this->large_misguess_average << endl;
-	output_file << this->large_misguess_variance_average << endl;
-
-	output_file << this->large_misguess_average_history.size() << endl;
-	for (int h_index = 0; h_index < (int)this->large_misguess_average_history.size(); h_index++) {
-		output_file << this->large_misguess_average_history[h_index] << endl;
-		output_file << this->large_misguess_variance_average_history[h_index] << endl;
-	}
-
-	this->large_predict->save(output_file);
-
-	this->large_candidate_predict->save(output_file);
-	output_file << this->large_candidate_iter << endl;
+	this->candidate_predict->save(output_file);
+	output_file << this->candidate_iter << endl;
 }

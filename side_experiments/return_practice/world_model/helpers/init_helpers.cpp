@@ -52,9 +52,7 @@ void init_helper(ProblemType* problem_type,
 			wrapper->sample_target_vals[wrapper->sample_index] = target_val;
 		}
 		wrapper->sample_index++;
-		if ((wrapper->sample_index+1) % CHECK_STATE_SIZE_NUM_ITERS == 0) {
-			check_state_size_helper(wrapper);
-
+		if (wrapper->sample_index >= SAMPLES_NUM_SAVE) {
 			wrapper->sample_index = 0;
 		}
 
@@ -66,12 +64,8 @@ void init_helper(ProblemType* problem_type,
 		if ((iter_index + 1) % 100 == 0) {
 			cout << iter_index << endl;
 
-			cout << "wrapper->world_model->curr_misguess_average: " << wrapper->world_model->curr_misguess_average << endl;
-			cout << "wrapper->world_model->large_misguess_average: " << wrapper->world_model->large_misguess_average << endl;
-			cout << "wrapper->world_model->curr_predict->misguess_average: " << wrapper->world_model->curr_predict->misguess_average << endl;
-			cout << "wrapper->world_model->curr_candidate_predict->misguess_average: " << wrapper->world_model->curr_candidate_predict->misguess_average << endl;
-			cout << "wrapper->world_model->large_predict->misguess_average: " << wrapper->world_model->large_predict->misguess_average << endl;
-			cout << "wrapper->world_model->large_candidate_predict->misguess_average: " << wrapper->world_model->large_candidate_predict->misguess_average << endl;
+			cout << "wrapper->world_model->predict->misguess_average: " << wrapper->world_model->predict->misguess_average << endl;
+			cout << "wrapper->world_model->candidate_predict->misguess_average: " << wrapper->world_model->candidate_predict->misguess_average << endl;
 			cout << "wrapper->world_model->num_states: " << wrapper->world_model->num_states << endl;
 			cout << endl;
 		}

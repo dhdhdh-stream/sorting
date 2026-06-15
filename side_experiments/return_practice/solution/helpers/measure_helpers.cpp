@@ -50,8 +50,8 @@ void measure_helper(Wrapper* wrapper,
 		double target_val = problem->score_result();
 		sum_scores += target_val;
 
-		wrapper->world_model->curr_final_network->activate(run->state);
-		double predicted = wrapper->world_model->curr_final_network->output->acti_vals[0];
+		wrapper->world_model->final_network->activate(run->state);
+		double predicted = wrapper->world_model->final_network->output->acti_vals[0];
 
 		sum_misguess += (target_val - predicted) * (target_val - predicted);
 

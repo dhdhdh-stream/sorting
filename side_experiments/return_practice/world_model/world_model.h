@@ -16,40 +16,15 @@ public:
 	std::vector<StateNetwork*> obs_networks;
 	std::vector<StateNetwork*> action_networks;
 
-	StateNetwork* curr_final_network;
+	StateNetwork* final_network;
 
-	int curr_epoch_iter;
-	int curr_average_max_update;
+	int epoch_iter;
+	int average_max_update;
 
-	double curr_misguess_average;
-	double curr_misguess_variance_average;
+	PredictWrapper* predict;
 
-	std::vector<double> curr_misguess_average_history;
-	std::vector<double> curr_misguess_variance_average_history;
-
-	PredictWrapper* curr_predict;
-
-	PredictWrapper* curr_candidate_predict;
-	int curr_candidate_iter;
-
-	StateNetwork* large_obs_network;
-	StateNetwork* large_action_network;
-
-	StateNetwork* large_final_network;
-
-	int large_epoch_iter;
-	int large_average_max_update;
-
-	double large_misguess_average;
-	double large_misguess_variance_average;
-
-	std::vector<double> large_misguess_average_history;
-	std::vector<double> large_misguess_variance_average_history;
-
-	PredictWrapper* large_predict;
-
-	PredictWrapper* large_candidate_predict;
-	int large_candidate_iter;
+	PredictWrapper* candidate_predict;
+	int candidate_iter;
 
 	WorldModel(int num_obs,
 			   int num_actions);

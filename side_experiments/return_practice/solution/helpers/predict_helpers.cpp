@@ -23,8 +23,8 @@ double predict_helper(vector<double>& state,
 		run->node_context->predict_step(run);
 	}
 
-	wrapper->world_model->curr_final_network->activate(run->state);
-	double predicted = wrapper->world_model->curr_final_network->output->acti_vals[0];
+	wrapper->world_model->final_network->activate(run->state);
+	double predicted = wrapper->world_model->final_network->output->acti_vals[0];
 
 	delete run;
 

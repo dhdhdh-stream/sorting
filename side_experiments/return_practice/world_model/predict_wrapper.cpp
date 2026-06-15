@@ -75,17 +75,17 @@ PredictWrapper::~PredictWrapper() {
 	}
 }
 
-void PredictWrapper::add_states() {
-	this->average_network->add_inputs(NUM_STATE_CHANGE);
-	this->average_network->add_outputs(NUM_STATE_CHANGE);
+void PredictWrapper::add_states(int num_add) {
+	this->average_network->add_inputs(num_add);
+	this->average_network->add_outputs(num_add);
 	this->average_network->resize(this->average_network->input->acti_vals.size());
 
 	for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
-		this->val_networks[n_index]->add_inputs(NUM_STATE_CHANGE);
-		this->val_networks[n_index]->add_outputs(NUM_STATE_CHANGE);
+		this->val_networks[n_index]->add_inputs(num_add);
+		this->val_networks[n_index]->add_outputs(num_add);
 		this->val_networks[n_index]->resize(this->average_network->input->acti_vals.size());
 
-		this->select_networks[n_index]->add_inputs(NUM_STATE_CHANGE);
+		this->select_networks[n_index]->add_inputs(num_add);
 	}
 }
 

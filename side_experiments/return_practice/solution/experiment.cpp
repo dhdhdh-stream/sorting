@@ -11,9 +11,6 @@
 using namespace std;
 
 Experiment::~Experiment() {
-	// temp
-	cout << "delete experiment" << endl;
-
 	if (this->original_network != NULL) {
 		delete this->original_network;
 	}

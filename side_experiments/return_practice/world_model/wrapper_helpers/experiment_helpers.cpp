@@ -4,9 +4,9 @@
 
 #include "abstract_node.h"
 #include "constants.h"
-#include "crazy.h"
 #include "experiment.h"
 #include "experiment_run.h"
+#include "force_experiment.h"
 #include "globals.h"
 #include "predict_wrapper.h"
 #include "solution.h"
@@ -28,6 +28,10 @@ void Wrapper::experiment_init(ExperimentRun* run) {
 	run->state = vector<double>(this->world_model->num_states, 0.0);
 
 	this->iter++;
+
+	if (this->force_experiment != NULL) {
+		run->force_experiment_history = new ForceExperimentHistory(this->force_experiment);
+	}
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
@@ -74,17 +78,10 @@ pair<bool,int> Wrapper::experiment_step(vector<double> obs,
 
 void Wrapper::experiment_end(double result,
 							 ExperimentRun* run) {
-	if (this->crazy != NULL) {
-		delete this->crazy;
-		this->crazy = NULL;
-
-		// if (this->hit_crazy) {
-		// 	cout << "crazy actions:";
-		// 	for (int a_index = 0; a_index < (int)run->action_histories.size(); a_index++) {
-		// 		cout << " " << run->action_histories[a_index];
-		// 	}
-		// 	cout << endl;
-		// }
+	if (this->force_experiment != NULL) {
+		this->force_experiment->backprop(result,
+										 run->force_experiment_history,
+										 this);
 	} else {
 		if (this->solution->score_histories.size() < SCORE_HISTORIES_NUM_SAVE) {
 			this->solution->score_histories.push_back(result);
@@ -111,30 +108,26 @@ void Wrapper::experiment_end(double result,
 			create_experiment(run,
 							  this);
 		}
-	}
 
-	update_solution_helper(run,
-						   result,
-						   this);
+		update_solution_helper(run,
+							   result,
+							   this);
 
-	// temp
-	if (this->iter % 100 == 0) {
-		cout << this->iter << endl;
-		double score_average;
-		double misguess_average;
-		measure_helper(this,
-					   score_average,
-					   misguess_average);
-		cout << "score_average: " << score_average << endl;
-		cout << "misguess_average: " << misguess_average << endl;
-		cout << "this->world_model->curr_misguess_average: " << this->world_model->curr_misguess_average << endl;
-		cout << "this->world_model->large_misguess_average: " << this->world_model->large_misguess_average << endl;
-		cout << "this->world_model->curr_predict->misguess_average: " << this->world_model->curr_predict->misguess_average << endl;
-		cout << "this->world_model->curr_candidate_predict->misguess_average: " << this->world_model->curr_candidate_predict->misguess_average << endl;
-		cout << "this->world_model->large_predict->misguess_average: " << this->world_model->large_predict->misguess_average << endl;
-		cout << "this->world_model->large_candidate_predict->misguess_average: " << this->world_model->large_candidate_predict->misguess_average << endl;
-		cout << "this->world_model->num_states: " << this->world_model->num_states << endl;
-		cout << endl;
+		// // temp
+		// if (this->iter % 100 == 0) {
+		// 	cout << this->iter << endl;
+		// 	double score_average;
+		// 	double misguess_average;
+		// 	measure_helper(this,
+		// 				   score_average,
+		// 				   misguess_average);
+		// 	cout << "score_average: " << score_average << endl;
+		// 	cout << "misguess_average: " << misguess_average << endl;
+		// 	cout << "this->world_model->predict->misguess_average: " << this->world_model->predict->misguess_average << endl;
+		// 	cout << "this->world_model->candidate_predict->misguess_average: " << this->world_model->candidate_predict->misguess_average << endl;
+		// 	cout << "this->world_model->num_states: " << this->world_model->num_states << endl;
+		// 	cout << endl;
+		// }
 	}
 
 	for (map<Experiment*, ExperimentHistory*>::iterator it = run->experiment_histories.begin();
@@ -154,17 +147,9 @@ void Wrapper::experiment_end(double result,
 		this->sample_target_vals[this->sample_index] = result;
 	}
 	this->sample_index++;
-	if ((this->sample_index+1) % CHECK_STATE_SIZE_NUM_ITERS == 0) {
-		check_state_size_helper(this);
-
+	if (this->sample_index >= SAMPLES_NUM_SAVE) {
 		this->sample_index = 0;
 	}
 
 	update_world_model_helper(this);
-
-	uniform_int_distribution<int> crazy_distribution(0, 4);
-	if (crazy_distribution(generator) == 0) {
-		create_crazy(run,
-					 this);
-	}
 }

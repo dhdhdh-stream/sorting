@@ -12,8 +12,6 @@ void count_eval_helper(ExperimentRun* run,
 					   int& eval_count);
 void create_experiment(ExperimentRun* run,
 					   Wrapper* wrapper);
-void create_crazy(ExperimentRun* run,
-				  Wrapper* wrapper);
 
 double predict_helper(std::vector<double>& state,
 					  AbstractNode* next_node,

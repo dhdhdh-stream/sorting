@@ -63,7 +63,7 @@ void action_helper(int action,
 
 void predict_helper(vector<double>& state,
 					Wrapper* wrapper) {
-	PredictWrapper* predict_wrapper = wrapper->world_model->curr_predict;
+	PredictWrapper* predict_wrapper = wrapper->world_model->predict;
 
 	vector<double> select_vals(NUM_PREDICT);
 	for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {

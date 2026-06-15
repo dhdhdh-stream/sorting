@@ -72,7 +72,8 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 
 	this->iter = 0;
 
-	this->crazy = NULL;
+	this->experiment_iter = 0;
+	this->force_experiment = NULL;
 
 	this->sample_index = 0;
 
@@ -104,7 +105,8 @@ Wrapper::Wrapper(std::string path,
 
 	this->iter = 0;
 
-	this->crazy = NULL;
+	this->experiment_iter = 0;
+	this->force_experiment = NULL;
 
 	this->sample_index = 0;
 
