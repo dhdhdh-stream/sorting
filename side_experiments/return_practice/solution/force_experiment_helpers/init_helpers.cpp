@@ -1,11 +1,14 @@
 #include "force_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
 #include "network.h"
 #include "solution_helpers.h"
 #include "start_node.h"
+#include "wrapper.h"
 
 using namespace std;
 
@@ -141,4 +144,8 @@ void init_force_experiment_helper(AbstractNode* node_context,
 		}
 		break;
 	}
+	wrapper->force_experiment = experiment;
+
+	// temp
+	cout << "force_experiment" << endl;
 }

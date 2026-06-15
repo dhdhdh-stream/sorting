@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "hit_all.h"
-// #include "minesweeper.h"
+// #include "hit_all.h"
+#include "minesweeper.h"
 #include "run.h"
 #include "state_network.h"
 // #include "test_indirect.h"
@@ -23,8 +23,8 @@ void measure_helper(Wrapper* wrapper,
 					double& score_average,
 					double& misguess_average) {
 	// ProblemType* problem_type = new TypeTestIndirect();
-	// ProblemType* problem_type = new TypeMinesweeper();
-	ProblemType* problem_type = new TypeHitAll();
+	ProblemType* problem_type = new TypeMinesweeper();
+	// ProblemType* problem_type = new TypeHitAll();
 
 	double sum_scores = 0.0;
 	double sum_misguess = 0.0;

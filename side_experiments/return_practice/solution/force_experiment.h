@@ -45,6 +45,7 @@ public:
 	std::vector<std::vector<int>> new_actions;
 	std::vector<double> new_target_vals;
 
+	ForceExperiment();
 	~ForceExperiment();
 
 	void experiment_activate(ExperimentRun* run);

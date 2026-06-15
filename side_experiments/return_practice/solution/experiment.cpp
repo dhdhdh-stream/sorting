@@ -10,6 +10,10 @@
 
 using namespace std;
 
+Experiment::Experiment() {
+	this->type = EXPERIMENT_TYPE_RAMP;
+}
+
 Experiment::~Experiment() {
 	if (this->original_network != NULL) {
 		delete this->original_network;

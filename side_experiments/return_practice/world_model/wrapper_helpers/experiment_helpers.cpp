@@ -113,21 +113,21 @@ void Wrapper::experiment_end(double result,
 							   result,
 							   this);
 
-		// // temp
-		// if (this->iter % 100 == 0) {
-		// 	cout << this->iter << endl;
-		// 	double score_average;
-		// 	double misguess_average;
-		// 	measure_helper(this,
-		// 				   score_average,
-		// 				   misguess_average);
-		// 	cout << "score_average: " << score_average << endl;
-		// 	cout << "misguess_average: " << misguess_average << endl;
-		// 	cout << "this->world_model->predict->misguess_average: " << this->world_model->predict->misguess_average << endl;
-		// 	cout << "this->world_model->candidate_predict->misguess_average: " << this->world_model->candidate_predict->misguess_average << endl;
-		// 	cout << "this->world_model->num_states: " << this->world_model->num_states << endl;
-		// 	cout << endl;
-		// }
+		// temp
+		if ((this->iter + 1) % 1000 == 0) {
+			cout << this->iter << endl;
+			double score_average;
+			double misguess_average;
+			measure_helper(this,
+						   score_average,
+						   misguess_average);
+			cout << "score_average: " << score_average << endl;
+			cout << "misguess_average: " << misguess_average << endl;
+			cout << "this->world_model->predict->misguess_average: " << this->world_model->predict->misguess_average << endl;
+			cout << "this->world_model->candidate_predict->misguess_average: " << this->world_model->candidate_predict->misguess_average << endl;
+			cout << "this->world_model->num_states: " << this->world_model->num_states << endl;
+			cout << endl;
+		}
 	}
 
 	for (map<Experiment*, ExperimentHistory*>::iterator it = run->experiment_histories.begin();

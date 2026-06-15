@@ -1,3 +1,6 @@
+// training only to branch can cause state to be large which can be unstable?
+// try training temp final network until end
+
 #include "force_experiment.h"
 
 #include <iostream>
@@ -11,6 +14,7 @@
 #include "network.h"
 #include "predict_wrapper.h"
 #include "solution.h"
+#include "solution_helpers.h"
 #include "state_network.h"
 #include "start_node.h"
 #include "world_model.h"
@@ -22,13 +26,13 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_SAMPLES = 10;
 #else
-const int TRAIN_NEW_NUM_SAMPLES = 1000;
+const int TRAIN_NEW_NUM_SAMPLES = 200;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NUM_ITERS = 200;
 #else
-const int TRAIN_NUM_ITERS = 2000000;
+const int TRAIN_NUM_ITERS = 1000000;
 #endif /* MDEBUG */
 
 void ForceExperiment::train_new_experiment_activate(ExperimentRun* run) {
@@ -318,8 +322,11 @@ void ForceExperiment::train_new_backprop(double target_val,
 		this->new_target_vals.push_back(target_val);
 
 		if (this->new_obs.size() >= TRAIN_NEW_NUM_SAMPLES) {
-			StateNetwork* obs_network = new StateNetwork(wrapper->world_model->num_states + FORCE_EXPERIMENT_NUM_NEW_STATE, FORCE_EXPERIMENT_NUM_NEW_STATE);
-			StateNetwork* action_network = new StateNetwork(wrapper->world_model->num_states + FORCE_EXPERIMENT_NUM_NEW_STATE, FORCE_EXPERIMENT_NUM_NEW_STATE);
+			// temp
+			cout << "train_new" << endl;
+
+			StateNetwork* obs_network = new StateNetwork(wrapper->world_model->num_states + FORCE_EXPERIMENT_NUM_NEW_STATE + wrapper->num_obs, FORCE_EXPERIMENT_NUM_NEW_STATE);
+			StateNetwork* action_network = new StateNetwork(wrapper->world_model->num_states + FORCE_EXPERIMENT_NUM_NEW_STATE + wrapper->num_actions, FORCE_EXPERIMENT_NUM_NEW_STATE);
 			Network* branch_network = new Network(wrapper->world_model->num_states + FORCE_EXPERIMENT_NUM_NEW_STATE);
 			int epoch_iter = 0;
 			double average_max_update = 0.0;
@@ -336,6 +343,11 @@ void ForceExperiment::train_new_backprop(double target_val,
 							 epoch_iter,
 							 average_max_update,
 							 wrapper);
+
+				// temp
+				if (iter_index % 100000 == 0) {
+					cout << iter_index << endl;
+				}
 			}
 
 			double sum_vals = 0.0;
@@ -381,6 +393,7 @@ void ForceExperiment::train_new_backprop(double target_val,
 			double predicted_global_improvement = average_instances_per_run * predicted_local_improvement;
 
 			// temp
+			cout << "force_experiment" << endl;
 			cout << "predicted_local_improvement: " << predicted_local_improvement << endl;
 			cout << "predicted_global_improvement: " << predicted_global_improvement << endl;
 
@@ -415,6 +428,12 @@ void ForceExperiment::train_new_backprop(double target_val,
 			#else
 			if (is_success) {
 			#endif /* MDEBUG */
+				// temp
+				for (int i_index = 0; i_index < 10; i_index++) {
+					cout << "start " << i_index << endl;
+					view_world_model_helper(wrapper);
+				}
+
 				vector<int> new_network_inputs;
 				for (int i_index = 0; i_index < wrapper->world_model->num_states + FORCE_EXPERIMENT_NUM_NEW_STATE; i_index++) {
 					new_network_inputs.push_back(i_index);
@@ -460,6 +479,7 @@ void ForceExperiment::train_new_backprop(double target_val,
 				experiment->exit_next_node = this->best_exit_next_node;
 
 				experiment->original_network = this->original_network;
+				this->original_network = NULL;
 				experiment->branch_network = branch_network;
 
 				experiment->curr_ramp = 0;
@@ -473,6 +493,8 @@ void ForceExperiment::train_new_backprop(double target_val,
 
 				experiment->predicted_local_improvement = predicted_local_improvement;
 				experiment->predicted_global_improvement = predicted_global_improvement;
+
+				experiment->is_force = true;
 
 				experiment->state = EXPERIMENT_STATE_RAMP;
 				experiment->state_iter = 0;
@@ -500,6 +522,12 @@ void ForceExperiment::train_new_backprop(double target_val,
 						}
 					}
 					break;
+				}
+
+				// temp
+				for (int i_index = 0; i_index < 10; i_index++) {
+					cout << "end " << i_index << endl;
+					view_world_model_helper(wrapper);
 				}
 			} else {
 				delete obs_network;

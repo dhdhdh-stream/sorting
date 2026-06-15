@@ -319,6 +319,8 @@ void init_experiment_helper(AbstractNode* node_context,
 		experiment->predicted_local_improvement = predicted_local_improvement;
 		experiment->predicted_global_improvement = predicted_global_improvement;
 
+		experiment->is_force = false;
+
 		experiment->state = EXPERIMENT_STATE_RAMP;
 		experiment->state_iter = 0;
 

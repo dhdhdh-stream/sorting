@@ -35,6 +35,8 @@ void Experiment::add(Wrapper* wrapper) {
 	ss << "this->local_improvement: " << this->local_improvement << "; ";
 	ss << "this->global_improvement: " << this->global_improvement << "; ";
 
+	ss << "this->is_force: " << this->is_force << "; ";
+
 	double sum_vals = 0.0;
 	for (int h_index = 0; h_index < (int)wrapper->solution->score_histories.size(); h_index++) {
 		sum_vals += wrapper->solution->score_histories[h_index];

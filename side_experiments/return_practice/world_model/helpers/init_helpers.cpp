@@ -15,7 +15,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int INIT_ITERS = 100;
 #else
-const int INIT_ITERS = 2000;
+const int INIT_ITERS = 10000;
 #endif /* MDEBUG */
 
 void init_helper(ProblemType* problem_type,
@@ -61,7 +61,7 @@ void init_helper(ProblemType* problem_type,
 		delete problem;
 
 		// temp
-		if ((iter_index + 1) % 100 == 0) {
+		if ((iter_index + 1) % 1000 == 0) {
 			cout << iter_index << endl;
 
 			cout << "wrapper->world_model->predict->misguess_average: " << wrapper->world_model->predict->misguess_average << endl;

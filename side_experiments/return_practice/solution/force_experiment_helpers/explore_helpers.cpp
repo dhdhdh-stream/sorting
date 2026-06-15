@@ -15,7 +15,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int EXPLORE_ITERS = 10;
 #else
-const int EXPLORE_ITERS = 400;
+const int EXPLORE_ITERS = 200;
 #endif /* MDEBUG */
 
 void ForceExperiment::explore_experiment_activate(ExperimentRun* run) {

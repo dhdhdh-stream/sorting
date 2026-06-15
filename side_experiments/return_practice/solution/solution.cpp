@@ -75,8 +75,14 @@ void Solution::pad_new_state(int num_add) {
 				start_node->history_index = 0;
 
 				if (start_node->experiment != NULL) {
-					Experiment* experiment = (Experiment*)start_node->experiment;
-					experiment->pad_new_state(num_add);
+					switch (start_node->experiment->type) {
+					case EXPERIMENT_STATE_RAMP:
+						{
+							Experiment* experiment = (Experiment*)start_node->experiment;
+							experiment->pad_new_state(num_add);
+						}
+						break;
+					}
 				}
 			}
 			break;
@@ -88,8 +94,14 @@ void Solution::pad_new_state(int num_add) {
 				action_node->history_index = 0;
 
 				if (action_node->experiment != NULL) {
-					Experiment* experiment = (Experiment*)action_node->experiment;
-					experiment->pad_new_state(num_add);
+					switch (action_node->experiment->type) {
+					case EXPERIMENT_STATE_RAMP:
+						{
+							Experiment* experiment = (Experiment*)action_node->experiment;
+							experiment->pad_new_state(num_add);
+						}
+						break;
+					}
 				}
 			}
 			break;
@@ -108,12 +120,24 @@ void Solution::pad_new_state(int num_add) {
 				branch_node->branch_history_index = 0;
 
 				if (branch_node->original_experiment != NULL) {
-					Experiment* experiment = (Experiment*)branch_node->original_experiment;
-					experiment->pad_new_state(num_add);
+					switch (branch_node->original_experiment->type) {
+					case EXPERIMENT_STATE_RAMP:
+						{
+							Experiment* experiment = (Experiment*)branch_node->original_experiment;
+							experiment->pad_new_state(num_add);
+						}
+						break;
+					}
 				}
 				if (branch_node->branch_experiment != NULL) {
-					Experiment* experiment = (Experiment*)branch_node->branch_experiment;
-					experiment->pad_new_state(num_add);
+					switch (branch_node->branch_experiment->type) {
+					case EXPERIMENT_STATE_RAMP:
+						{
+							Experiment* experiment = (Experiment*)branch_node->branch_experiment;
+							experiment->pad_new_state(num_add);
+						}
+						break;
+					}
 				}
 			}
 			break;

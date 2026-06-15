@@ -22,4 +22,6 @@ void init_helper(ProblemType* problem_type,
 void update_world_model_helper(Wrapper* wrapper);
 void check_state_size_helper(Wrapper* wrapper);
 
+void view_world_model_helper(Wrapper* wrapper);
+
 #endif /* WORLD_MODEL_HELPERS_H */

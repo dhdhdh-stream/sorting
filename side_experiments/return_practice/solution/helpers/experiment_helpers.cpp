@@ -21,7 +21,7 @@ const int EXPERIMENT_MIN_NUM_STATES = 10;
 const int EXPERIMENT_MIN_NUM_STATES = 100;
 #endif /* MDEBUG */
 
-const int FORCE_EXPERIMENT_ITER = 10;
+const int FORCE_EXPERIMENT_ITER = 4;
 
 void count_eval_helper(ExperimentRun* run,
 					   int& node_count,

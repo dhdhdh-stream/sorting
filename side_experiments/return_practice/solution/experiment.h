@@ -65,6 +65,9 @@ public:
 	double original_average_instances_per_run;
 	double branch_average_instances_per_run;
 
+	bool is_force;
+
+	Experiment();
 	~Experiment();
 
 	void experiment_activate(ExperimentRun* run);

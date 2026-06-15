@@ -11,6 +11,10 @@
 
 using namespace std;
 
+ForceExperiment::ForceExperiment() {
+	this->type = EXPERIMENT_TYPE_FORCE;
+}
+
 ForceExperiment::~ForceExperiment() {
 	if (this->original_network != NULL) {
 		delete this->original_network;

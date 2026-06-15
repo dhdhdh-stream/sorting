@@ -4,8 +4,13 @@
 class ExperimentRun;
 class PredictRun;
 
+const int EXPERIMENT_TYPE_RAMP = 0;
+const int EXPERIMENT_TYPE_FORCE = 1;
+
 class AbstractExperiment {
 public:
+	int type;
+
 	virtual ~AbstractExperiment() {};
 
 	virtual void experiment_activate(ExperimentRun* run) = 0;
