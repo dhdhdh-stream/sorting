@@ -19,8 +19,6 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 	this->is_branch = is_branch;
 	this->exit_next_node = exit_next_node;
 
-	this->node_context->experiment = this;
-
 	this->existing_network = NULL;
 	this->new_network = NULL;
 
@@ -48,6 +46,20 @@ ExploreExperiment::~ExploreExperiment() {
 
 	if (this->best_new_scope != NULL) {
 		delete this->best_new_scope;
+	}
+}
+
+bool ExploreExperiment::further_than(ExploreExperiment* other) {
+	if (this->state < other->state) {
+		return false;
+	} else if (this->state > other->state) {
+		return true;
+	} else {
+		if (this->state_iter <= other->state_iter) {
+			return false;
+		} else {
+			return true;
+		}
 	}
 }
 

@@ -16,39 +16,6 @@
 
 using namespace std;
 
-void count_eval_helper(ScopeHistory* scope_history,
-					   int& node_count,
-					   int& eval_count) {
-	if (scope_history->scope->is_outer) {
-		return;
-	}
-
-	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
-			h_it != scope_history->node_histories.end(); h_it++) {
-		AbstractNode* node = h_it->second->node;
-		switch (node->type) {
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
-				count_eval_helper(scope_node_history->scope_history,
-								  node_count,
-								  eval_count);
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)node;
-				if (branch_node->ramp < RAMP_NUM_GEARS) {
-					eval_count++;
-				}
-			}
-			break;
-		}
-
-		node_count++;
-	}
-}
-
 /**
  * - don't prioritize exploring new nodes as new scopes change explore
  */
@@ -168,7 +135,7 @@ void create_experiment(ScopeHistory* scope_history,
 			explore_node,
 			explore_is_branch,
 			exit_next_node);
-		wrapper->curr_explore_experiment = new_experiment;
+		explore_node->experiment = new_experiment;
 
 		wrapper->solution->num_experiments++;
 	}

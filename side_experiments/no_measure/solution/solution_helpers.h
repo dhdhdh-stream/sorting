@@ -15,9 +15,6 @@ class ScopeNode;
 class Solution;
 class SolutionWrapper;
 
-void count_eval_helper(ScopeHistory* scope_history,
-					   int& node_count,
-					   int& eval_count);
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper);
 

@@ -32,9 +32,6 @@ const int NEW_SCOPE_MIN_NODES = 10;
 
 const int RAMP_NUM_GEARS = 9;
 
-const double FAIL_T_SCORE = 0.674;
-const double SUCCESS_T_SCORE = 2.326;
-
 #if defined(MDEBUG) && MDEBUG
 const int NUM_LAST_TRACK = 4;
 const int MIN_NUM_LAST_TRACK = 2;

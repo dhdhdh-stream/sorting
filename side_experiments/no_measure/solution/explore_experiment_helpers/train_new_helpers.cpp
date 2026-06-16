@@ -86,6 +86,7 @@ void ExploreExperiment::train_new_exit_step(SolutionWrapper* wrapper) {
 
 void ExploreExperiment::train_new_backprop(
 		double target_val,
+		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper,
 		set<Scope*>& updated_scopes) {
 	this->total_count++;
@@ -175,7 +176,8 @@ void ExploreExperiment::train_new_backprop(
 				add(wrapper);
 			}
 
-			wrapper->curr_explore_experiment = NULL;
+			wrapper->experiment_iter++;
+
 			this->node_context->experiment = NULL;
 			delete this;
 		}

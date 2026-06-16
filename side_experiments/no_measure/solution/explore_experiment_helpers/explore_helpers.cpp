@@ -25,7 +25,7 @@ const int EXPLORE_ITERS = 400;
 #endif /* MDEBUG */
 
 void ExploreExperiment::explore_check_activate(SolutionWrapper* wrapper) {
-	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->explore_experiment_history;
+	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
 
 	this->num_instances_until_target--;
 	if (history->existing_predicted.size() == 0
@@ -167,7 +167,7 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->explore_experiment_history;
+		ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
 
 		this->existing_network->activate(obs);
 		history->existing_predicted.push_back(
@@ -216,9 +216,8 @@ void ExploreExperiment::explore_exit_step(SolutionWrapper* wrapper) {
 }
 
 void ExploreExperiment::explore_backprop(double target_val,
+										 ExploreExperimentHistory* history,
 										 SolutionWrapper* wrapper) {
-	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->explore_experiment_history;
-
 	uniform_int_distribution<int> until_distribution(1, 2 * this->average_instances_per_run);
 	this->num_instances_until_target = until_distribution(generator);
 
@@ -262,7 +261,6 @@ void ExploreExperiment::explore_backprop(double target_val,
 				this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
 				this->state_iter = 0;
 			} else {
-				wrapper->curr_explore_experiment = NULL;
 				this->node_context->experiment = NULL;
 				delete this;
 			}

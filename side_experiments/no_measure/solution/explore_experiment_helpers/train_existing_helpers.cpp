@@ -38,9 +38,8 @@ void ExploreExperiment::train_existing_step(
 
 void ExploreExperiment::train_existing_backprop(
 		double target_val,
+		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
-	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->explore_experiment_history;
-
 	if (history->is_hit) {
 		while (this->target_val_histories.size() < this->obs_histories.size()) {
 			this->target_val_histories.push_back(target_val);

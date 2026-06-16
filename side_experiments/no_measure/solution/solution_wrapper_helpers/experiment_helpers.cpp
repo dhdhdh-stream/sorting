@@ -20,6 +20,8 @@ const int OUTER_ITERS = 8;
 
 const int TARGET_NODES_PER_EVAL = 20;
 
+const int EXPERIMENT_REFRESH_NUM_ITERS = 20;
+
 void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
 
@@ -29,10 +31,11 @@ void SolutionWrapper::experiment_init() {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	if (this->curr_explore_experiment != NULL) {
-		this->explore_experiment_history = new ExploreExperimentHistory(this->curr_explore_experiment);
+	uniform_int_distribution<int> explore_distribution(0, 1);
+	if (explore_distribution(generator) == 0) {
+		this->should_explore = true;
 	} else {
-		this->eval_iter++;
+		this->should_explore = false;
 	}
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
@@ -86,50 +89,104 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	if (this->curr_explore_experiment != NULL) {
-		set<Scope*> updated_scopes;
-		this->explore_experiment_history->experiment->backprop(
-			result,
-			this,
-			updated_scopes);
+	if (this->should_explore) {
+		if (this->explore_experiment_histories.size() == 0) {
+			if (this->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
+				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+					Scope* scope = this->solution->scopes[s_index];
+					for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+							it != scope->nodes.end(); it++) {
+						if (it->second->experiment != NULL) {
+							delete it->second->experiment;
+							it->second->experiment = NULL;
+						}
+					}
+				}
+				for (int s_index = 0; s_index < (int)this->solution->outer_scopes.size(); s_index++) {
+					Scope* scope = this->solution->outer_scopes[s_index];
+					for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+							it != scope->nodes.end(); it++) {
+						if (it->second->experiment != NULL) {
+							delete it->second->experiment;
+							it->second->experiment = NULL;
+						}
+					}
+				}
 
-		if (updated_scopes.size() > 0) {
-			for (set<Scope*>::iterator it = updated_scopes.begin();
-					it != updated_scopes.end(); it++) {
-				clean_scope(*it);
+				this->experiment_iter = 0;
 			}
 
-			this->solution->timestamp++;
-			// switch (this->solution->state) {
-			// case SOLUTION_STATE_NON_OUTER:
-			// 	if ((int)this->solution->clean_improvement_history.size() >= STUCK_NUM_ITERS) {
-			// 		double prev_val = this->solution->clean_improvement_history[this->solution->clean_improvement_history.size() - STUCK_NUM_ITERS];
-			// 		bool improved = false;
-			// 		for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
-			// 			if (this->solution->clean_improvement_history[this->solution->clean_improvement_history.size() - 1 - h_index] > prev_val) {
-			// 				improved = true;
-			// 				break;
-			// 			}
-			// 		}
+			create_experiment(this->scope_histories[0],
+							  this);
+		} else if (this->explore_experiment_histories.size() >= 2) {
+			ExploreExperiment* keep_experiment = NULL;
+			for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
+					it != this->explore_experiment_histories.end(); it++) {
+				if (keep_experiment == NULL) {
+					keep_experiment = it->first;
+				} else {
+					if (it->first->further_than(keep_experiment)) {
+						keep_experiment->node_context->experiment = NULL;
+						delete keep_experiment;
 
-			// 		if (!improved) {
-			// 			this->solution->timestamp = -1;
-			// 		}
-			// 	}
-			// 	break;
-			// case SOLUTION_STATE_OUTER:
-			// 	if (this->solution->timestamp >= OUTER_ITERS) {
-			// 		this->solution->state = SOLUTION_STATE_NON_OUTER;
-			// 		this->solution->timestamp = 0;
+						keep_experiment = it->first;
+					} else {
+						it->first->node_context->experiment = NULL;
+						delete it->first;
+					}
+				}
+			}
+		} else {
+			set<Scope*> updated_scopes;
+			for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
+					it != this->explore_experiment_histories.end(); it++) {
+				it->first->backprop(result,
+									it->second,
+									this,
+									updated_scopes);
+			}
 
-			// 		this->solution->merge_outer();
-			// 	}
-			// 	break;
-			// }
+			if (updated_scopes.size() > 0) {
+				for (set<Scope*>::iterator it = updated_scopes.begin();
+						it != updated_scopes.end(); it++) {
+					clean_scope(*it);
+				}
+
+				this->solution->timestamp++;
+				// switch (this->solution->state) {
+				// case SOLUTION_STATE_NON_OUTER:
+				// 	if ((int)this->solution->clean_improvement_history.size() >= STUCK_NUM_ITERS) {
+				// 		double prev_val = this->solution->clean_improvement_history[this->solution->clean_improvement_history.size() - STUCK_NUM_ITERS];
+				// 		bool improved = false;
+				// 		for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
+				// 			if (this->solution->clean_improvement_history[this->solution->clean_improvement_history.size() - 1 - h_index] > prev_val) {
+				// 				improved = true;
+				// 				break;
+				// 			}
+				// 		}
+
+				// 		if (!improved) {
+				// 			this->solution->timestamp = -1;
+				// 		}
+				// 	}
+				// 	break;
+				// case SOLUTION_STATE_OUTER:
+				// 	if (this->solution->timestamp >= OUTER_ITERS) {
+				// 		this->solution->state = SOLUTION_STATE_NON_OUTER;
+				// 		this->solution->timestamp = 0;
+
+				// 		this->solution->merge_outer();
+				// 	}
+				// 	break;
+				// }
+			}
 		}
 
-		delete this->explore_experiment_history;
-		this->explore_experiment_history = NULL;
+		for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
+				it != this->explore_experiment_histories.end(); it++) {
+			delete it->second;
+		}
+		this->explore_experiment_histories.clear();
 	} else {
 		update_helper(this->scope_histories[0],
 					  result);
@@ -143,22 +200,6 @@ void SolutionWrapper::experiment_end(double result) {
 			if (this->history_index >= HISTORIES_NUM_SAVE) {
 				this->history_index = 0;
 			}
-		}
-
-		int node_count = 0;
-		int eval_count = 0;
-		count_eval_helper(this->scope_histories[0],
-						  node_count,
-						  eval_count);
-
-		int target_count = (node_count + (TARGET_NODES_PER_EVAL-1)) / TARGET_NODES_PER_EVAL;
-		if (eval_count < target_count) {
-			cout << "node_count: " << node_count << endl;
-			cout << "eval_count: " << eval_count << endl;
-			cout << "target_count: " << target_count << endl;
-
-			create_experiment(this->scope_histories[0],
-							  this);
 		}
 	}
 

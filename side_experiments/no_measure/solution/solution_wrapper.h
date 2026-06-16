@@ -24,12 +24,14 @@ class SolutionWrapper {
 public:
 	Solution* solution;
 
-	ExploreExperiment* curr_explore_experiment;
-
-	int eval_iter;
-
 	std::vector<double> score_histories;
 	int history_index;
+
+	int experiment_iter;
+	/**
+	 * - fully reset experiments every so often
+	 *   - to enable experiments in different places
+	 */
 
 	/**
 	 * - run variables
@@ -40,7 +42,8 @@ public:
 
 	int num_actions;
 
-	ExploreExperimentHistory* explore_experiment_history;
+	bool should_explore;
+	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_experiment_histories;
 
 	Problem* problem;
 

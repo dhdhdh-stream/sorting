@@ -14,7 +14,15 @@ void ExploreExperiment::experiment_check_activate(
 		bool is_branch,
 		SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
-		ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->explore_experiment_history;
+		ExploreExperimentHistory* history;
+		map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it =
+			wrapper->explore_experiment_histories.find(this);
+		if (it == wrapper->explore_experiment_histories.end()) {
+			history = new ExploreExperimentHistory(this);
+			wrapper->explore_experiment_histories[this] = history;
+		} else {
+			history = it->second;
+		}
 		history->is_hit = true;
 
 		switch (this->state) {
@@ -75,19 +83,23 @@ void ExploreExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 }
 
 void ExploreExperiment::backprop(double target_val,
+								 ExploreExperimentHistory* history,
 								 SolutionWrapper* wrapper,
 								 set<Scope*>& updated_scopes) {
 	switch (this->state) {
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_backprop(target_val,
+								history,
 								wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
+						 history,
 						 wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
+						   history,
 						   wrapper,
 						   updated_scopes);
 		break;

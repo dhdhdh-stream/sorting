@@ -20,6 +20,7 @@ const int EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
 
+class ExploreExperimentHistory;
 class ExploreExperiment : public AbstractExperiment {
 public:
 	int state;
@@ -68,6 +69,7 @@ public:
 					SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 	void backprop(double target_val,
+				  ExploreExperimentHistory* history,
 				  SolutionWrapper* wrapper,
 				  std::set<Scope*>& updated_scopes);
 
@@ -75,6 +77,7 @@ public:
 	void train_existing_step(std::vector<double>& obs,
 							 SolutionWrapper* wrapper);
 	void train_existing_backprop(double target_val,
+								 ExploreExperimentHistory* history,
 								 SolutionWrapper* wrapper);
 
 	void explore_check_activate(SolutionWrapper* wrapper);
@@ -87,6 +90,7 @@ public:
 							SolutionWrapper* wrapper);
 	void explore_exit_step(SolutionWrapper* wrapper);
 	void explore_backprop(double target_val,
+						  ExploreExperimentHistory* history,
 						  SolutionWrapper* wrapper);
 
 	void train_new_check_activate(SolutionWrapper* wrapper);
@@ -96,10 +100,13 @@ public:
 						SolutionWrapper* wrapper);
 	void train_new_exit_step(SolutionWrapper* wrapper);
 	void train_new_backprop(double target_val,
+							ExploreExperimentHistory* history,
 							SolutionWrapper* wrapper,
 							std::set<Scope*>& updated_scopes);
 
 	void add(SolutionWrapper* wrapper);
+
+	bool further_than(ExploreExperiment* other);
 };
 
 class ExploreExperimentHistory {

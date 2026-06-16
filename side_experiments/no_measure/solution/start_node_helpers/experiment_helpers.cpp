@@ -21,7 +21,8 @@ void StartNode::experiment_step(vector<double>& obs,
 
 	wrapper->node_context.back() = this->next_node;
 
-	if (this->experiment != NULL) {
+	if (this->experiment != NULL
+			&& wrapper->should_explore) {
 		this->experiment->experiment_check_activate(
 			this,
 			false,
