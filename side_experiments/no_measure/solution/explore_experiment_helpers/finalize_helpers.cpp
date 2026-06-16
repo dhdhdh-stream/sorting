@@ -54,6 +54,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	}
 	double val_average = sum_vals / (double)wrapper->score_histories.size();
 	wrapper->solution->improvement_history.push_back(val_average);
+	cout << "val_average: " << val_average << endl;
 
 	wrapper->solution->curr_score = val_average;
 

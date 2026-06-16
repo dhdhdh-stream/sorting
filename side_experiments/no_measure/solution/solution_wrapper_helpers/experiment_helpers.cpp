@@ -18,7 +18,7 @@ const int STUCK_NUM_ITERS = 10;
 
 const int OUTER_ITERS = 8;
 
-const int TARGET_NODES_PER_EVAL = 10;
+const int TARGET_NODES_PER_EVAL = 20;
 
 void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
@@ -86,37 +86,7 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	if (this->curr_explore_experiment == NULL) {
-		update_helper(this->scope_histories[0],
-					  result);
-
-		if (this->score_histories.size() < HISTORIES_NUM_SAVE) {
-			this->score_histories.push_back(result);
-		} else {
-			this->score_histories[this->history_index] = result;
-
-			this->history_index++;
-			if (this->history_index >= HISTORIES_NUM_SAVE) {
-				this->history_index = 0;
-			}
-		}
-
-		int node_count = 0;
-		int eval_count = 0;
-		count_eval_helper(this->scope_histories[0],
-						  node_count,
-						  eval_count);
-
-		int target_count = (node_count + (TARGET_NODES_PER_EVAL-1)) / TARGET_NODES_PER_EVAL;
-		if (eval_count < target_count) {
-			// cout << "node_count: " << node_count << endl;
-			// cout << "eval_count: " << eval_count << endl;
-			// cout << "target_count: " << target_count << endl;
-
-			create_experiment(this->scope_histories[0],
-							  this);
-		}
-	} else {
+	if (this->curr_explore_experiment != NULL) {
 		set<Scope*> updated_scopes;
 		this->explore_experiment_history->experiment->backprop(
 			result,
@@ -160,6 +130,36 @@ void SolutionWrapper::experiment_end(double result) {
 
 		delete this->explore_experiment_history;
 		this->explore_experiment_history = NULL;
+	} else {
+		update_helper(this->scope_histories[0],
+					  result);
+
+		if (this->score_histories.size() < HISTORIES_NUM_SAVE) {
+			this->score_histories.push_back(result);
+		} else {
+			this->score_histories[this->history_index] = result;
+
+			this->history_index++;
+			if (this->history_index >= HISTORIES_NUM_SAVE) {
+				this->history_index = 0;
+			}
+		}
+
+		int node_count = 0;
+		int eval_count = 0;
+		count_eval_helper(this->scope_histories[0],
+						  node_count,
+						  eval_count);
+
+		int target_count = (node_count + (TARGET_NODES_PER_EVAL-1)) / TARGET_NODES_PER_EVAL;
+		if (eval_count < target_count) {
+			cout << "node_count: " << node_count << endl;
+			cout << "eval_count: " << eval_count << endl;
+			cout << "target_count: " << target_count << endl;
+
+			create_experiment(this->scope_histories[0],
+							  this);
+		}
 	}
 
 	delete this->scope_histories[0];

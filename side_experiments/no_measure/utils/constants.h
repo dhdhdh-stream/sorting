@@ -41,8 +41,8 @@ const int MIN_NUM_LAST_TRACK = 2;
 const double LAST_BETTER_THAN_RATIO = 0.5;
 #else
 const int NUM_LAST_TRACK = 10;
-const int MIN_NUM_LAST_TRACK = 3;
-const double LAST_BETTER_THAN_RATIO = 0.6;
+const int MIN_NUM_LAST_TRACK = 5;
+const double LAST_BETTER_THAN_RATIO = 0.8;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

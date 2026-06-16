@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
@@ -12,8 +14,10 @@ using namespace std;
 const int RAMP_UPDATE_MIN_SAMPLES = 10;
 #if defined(MDEBUG) && MDEBUG
 const int RAMP_UPDATE_NUM_TRAIN = 2;
+const int ITERS_PER_RAMP = 2;
 #else
 const int RAMP_UPDATE_NUM_TRAIN = 100;
+const int ITERS_PER_RAMP = 100;
 #endif /* MDEBUG */
 
 void update_helper(ScopeHistory* scope_history,
@@ -85,9 +89,12 @@ void update_helper(ScopeHistory* scope_history,
 						}
 
 						branch_node->ramp_iter++;
-						if (branch_node->ramp_iter >= RAMP_HISTORY_NUM_SAVE) {
+						if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
 							branch_node->ramp++;
 							branch_node->ramp_iter = 0;
+
+							// temp
+							cout << "branch_node->ramp: " << branch_node->ramp << endl;
 						}
 					} else {
 						if (branch_node->original_obs_history.size() < RAMP_HISTORY_NUM_SAVE) {

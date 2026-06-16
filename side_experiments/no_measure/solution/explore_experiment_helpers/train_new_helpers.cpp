@@ -135,6 +135,10 @@ void ExploreExperiment::train_new_backprop(
 			double average_instances_per_run = (double)this->sum_num_instances / (double)this->total_count;
 			double global_improvement = average_instances_per_run * local_improvement;
 
+			// temp
+			cout << "local_improvement: " << local_improvement << endl;
+			cout << "global_improvement: " << global_improvement << endl;
+
 			bool is_success = false;
 			if (local_improvement > 0.0) {
 				if (wrapper->solution->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {

@@ -1,33 +1,8 @@
-// TODO: measure explore vs eval cost
-
-// - outer combine success rate simply extremely low
-
-// - getting dominated by noise?
-//   - maybe hitting the point where signals are good?
-
-// - check with results
-
-// - actually, outer combine simply very difficult
-
-// - maybe early on, try to get number of experiments above 10
-//   - but later on, go for 1 in 20?
-
-// - with 10 percent filter every 10, not worse, but slower?
-//   - every 40 faster
-
-// - maybe have Markov component and algorithmic component
-//   - Markov component decides what the goal should be, what algorithmic component/signal to use
-// - or have different semi-related problems that can use same scopes
-//   - can then optimize on one problem, and check that it improves another
-
-// - maybe model things differently
-//   - not repeatedly tackling the same problem again and again with a single score function...
-//   - ...but have choice between multiple problems
-//     - each with its own score function
-//     - need to choose problems and optimize for them
-// - then, need to create problems/score functions
-
-// TODO: try having branches specifically for explore
+// TODO: if focusing on 1 explore at a time, can easily get stuck in low probability nodes
+// - maybe can have multiple explores, but delete if conflict
+//   - keep experiment that has most samples?
+//     - even if leading experiment has already happened
+//       - delete after run
 
 #include <chrono>
 #include <iostream>
