@@ -32,15 +32,15 @@ void ExploreExperiment::explore_check_activate(SolutionWrapper* wrapper) {
 			&& this->num_instances_until_target <= 0) {
 		uniform_int_distribution<int> new_scope_distribution(0, 3);
 		if (wrapper->solution->state == SOLUTION_STATE_OUTER) {
-			this->curr_new_scope = outer_create_new_scope(wrapper);
+			history->curr_new_scope = outer_create_new_scope(wrapper);
 		} else if (new_scope_distribution(generator) == 0) {
-			this->curr_new_scope = create_new_scope(this->node_context->parent,
-													wrapper);
+			history->curr_new_scope = create_new_scope(this->node_context->parent,
+													   wrapper);
 		}
-		if (this->curr_new_scope != NULL) {
-			this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-			this->curr_actions.push_back(-1);
-			this->curr_scopes.push_back(this->curr_new_scope);
+		if (history->curr_new_scope != NULL) {
+			history->curr_step_types.push_back(STEP_TYPE_SCOPE);
+			history->curr_actions.push_back(-1);
+			history->curr_scopes.push_back(history->curr_new_scope);
 		} else {
 			bool exit_is_next;
 			switch (this->node_context->type) {
@@ -138,17 +138,17 @@ void ExploreExperiment::explore_check_activate(SolutionWrapper* wrapper) {
 					}
 				}
 				if (is_scope) {
-					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-					this->curr_actions.push_back(-1);
+					history->curr_step_types.push_back(STEP_TYPE_SCOPE);
+					history->curr_actions.push_back(-1);
 
 					int child_index = possible_child_indexes[child_index_distribution(generator)];
-					this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
+					history->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
 				} else {
-					this->curr_step_types.push_back(STEP_TYPE_ACTION);
+					history->curr_step_types.push_back(STEP_TYPE_ACTION);
 
-					this->curr_actions.push_back(-1);
+					history->curr_actions.push_back(-1);
 
-					this->curr_scopes.push_back(NULL);
+					history->curr_scopes.push_back(NULL);
 				}
 			}
 		}
@@ -165,30 +165,29 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 									 bool& fetch_action,
 									 SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
+	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
 
 	if (experiment_state->step_index == 0) {
-		ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
-
 		this->existing_network->activate(obs);
 		history->existing_predicted.push_back(
 			this->existing_network->output->acti_vals[0]);
 	}
 
-	if (experiment_state->step_index >= (int)this->curr_step_types.size()) {
+	if (experiment_state->step_index >= (int)history->curr_step_types.size()) {
 		wrapper->node_context.back() = this->exit_next_node;
 
 		delete experiment_state;
 		wrapper->experiment_context.back() = NULL;
 	} else {
-		if (this->curr_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
+		if (history->curr_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
 			is_next = true;
 			fetch_action = true;
 
 			wrapper->num_actions++;
 		} else {
-			ScopeHistory* inner_scope_history = new ScopeHistory(this->curr_scopes[experiment_state->step_index]);
+			ScopeHistory* inner_scope_history = new ScopeHistory(history->curr_scopes[experiment_state->step_index]);
 			wrapper->scope_histories.push_back(inner_scope_history);
-			wrapper->node_context.push_back(this->curr_scopes[experiment_state->step_index]->nodes[0]);
+			wrapper->node_context.push_back(history->curr_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
 		}
 	}
@@ -197,8 +196,9 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 void ExploreExperiment::explore_set_action(int action,
 										   SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
+	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
 
-	this->curr_actions[experiment_state->step_index] = action;
+	history->curr_actions[experiment_state->step_index] = action;
 
 	experiment_state->step_index++;
 }
@@ -233,20 +233,12 @@ void ExploreExperiment::explore_backprop(double target_val,
 			if (this->best_new_scope != NULL) {
 				delete this->best_new_scope;
 			}
-			this->best_new_scope = this->curr_new_scope;
-			this->curr_new_scope = NULL;
-			this->best_step_types = this->curr_step_types;
-			this->best_actions = this->curr_actions;
-			this->best_scopes = this->curr_scopes;
+			this->best_new_scope = history->curr_new_scope;
+			history->curr_new_scope = NULL;
+			this->best_step_types = history->curr_step_types;
+			this->best_actions = history->curr_actions;
+			this->best_scopes = history->curr_scopes;
 		}
-
-		if (this->curr_new_scope != NULL) {
-			delete this->curr_new_scope;
-			this->curr_new_scope = NULL;
-		}
-		this->curr_step_types.clear();
-		this->curr_actions.clear();
-		this->curr_scopes.clear();
 
 		this->state_iter++;
 		if (this->state_iter >= EXPLORE_ITERS) {
@@ -256,7 +248,8 @@ void ExploreExperiment::explore_backprop(double target_val,
 			if (this->best_surprise >= 0.0) {
 			#endif /* MDEBUG */
 				this->sum_num_instances = 0;
-				this->total_count = 0;
+
+				this->start_iter = wrapper->iter;
 
 				this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
 				this->state_iter = 0;

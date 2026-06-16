@@ -23,6 +23,8 @@ const int TARGET_NODES_PER_EVAL = 20;
 const int EXPERIMENT_REFRESH_NUM_ITERS = 20;
 
 void SolutionWrapper::experiment_init() {
+	this->iter++;
+
 	this->num_actions = 1;
 
 	#if defined(MDEBUG) && MDEBUG

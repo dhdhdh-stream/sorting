@@ -89,8 +89,6 @@ void ExploreExperiment::train_new_backprop(
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper,
 		set<Scope*>& updated_scopes) {
-	this->total_count++;
-
 	if (this->obs_histories.size() > this->target_val_histories.size()) {
 		while (this->obs_histories.size() > this->target_val_histories.size()) {
 			this->target_val_histories.push_back(target_val);
@@ -133,12 +131,18 @@ void ExploreExperiment::train_new_backprop(
 				}
 			}
 			double local_improvement = sum_vals / ((double)this->obs_histories.size() - (double)num_train);
-			double average_instances_per_run = (double)this->sum_num_instances / (double)this->total_count;
+
+			int total_iters = wrapper->iter - this->start_iter;
+			if (total_iters < 0) {
+				total_iters += numeric_limits<int>::max();
+			}
+			double average_instances_per_run = 2.0 * (double)this->sum_num_instances / (double)total_iters;
+
 			double global_improvement = average_instances_per_run * local_improvement;
 
-			// temp
-			cout << "local_improvement: " << local_improvement << endl;
-			cout << "global_improvement: " << global_improvement << endl;
+			// // temp
+			// cout << "local_improvement: " << local_improvement << endl;
+			// cout << "global_improvement: " << global_improvement << endl;
 
 			bool is_success = false;
 			if (local_improvement > 0.0) {

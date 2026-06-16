@@ -93,8 +93,8 @@ void update_helper(ScopeHistory* scope_history,
 							branch_node->ramp++;
 							branch_node->ramp_iter = 0;
 
-							// temp
-							cout << "branch_node->ramp: " << branch_node->ramp << endl;
+							// // temp
+							// cout << "branch_node->ramp: " << branch_node->ramp << endl;
 						}
 					} else {
 						if (branch_node->original_obs_history.size() < RAMP_HISTORY_NUM_SAVE) {

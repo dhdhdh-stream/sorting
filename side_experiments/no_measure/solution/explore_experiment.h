@@ -33,18 +33,13 @@ public:
 	double average_instances_per_run;
 	int num_instances_until_target;
 
-	Scope* curr_new_scope;
-	std::vector<int> curr_step_types;
-	std::vector<int> curr_actions;
-	std::vector<Scope*> curr_scopes;
-
 	double best_surprise;
 	Scope* best_new_scope;
 	std::vector<int> best_step_types;
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;
 
-	int total_count;
+	int start_iter;
 
 	Network* new_network;
 
@@ -113,11 +108,15 @@ class ExploreExperimentHistory {
 public:
 	ExploreExperiment* experiment;
 
-	bool is_hit;
-
 	std::vector<double> existing_predicted;
 
+	Scope* curr_new_scope;
+	std::vector<int> curr_step_types;
+	std::vector<int> curr_actions;
+	std::vector<Scope*> curr_scopes;
+
 	ExploreExperimentHistory(ExploreExperiment* experiment);
+	~ExploreExperimentHistory();
 };
 
 class ExploreExperimentState : public AbstractExperimentState {

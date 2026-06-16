@@ -24,6 +24,8 @@ class SolutionWrapper {
 public:
 	Solution* solution;
 
+	int iter;
+
 	std::vector<double> score_histories;
 	int history_index;
 

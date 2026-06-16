@@ -1,9 +1,3 @@
-// TODO: if focusing on 1 explore at a time, can easily get stuck in low probability nodes
-// - maybe can have multiple explores, but delete if conflict
-//   - keep experiment that has most samples?
-//     - even if leading experiment has already happened
-//       - delete after run
-
 #include <chrono>
 #include <iostream>
 #include <map>

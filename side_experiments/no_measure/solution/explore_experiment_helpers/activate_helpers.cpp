@@ -14,16 +14,11 @@ void ExploreExperiment::experiment_check_activate(
 		bool is_branch,
 		SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
-		ExploreExperimentHistory* history;
 		map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it =
 			wrapper->explore_experiment_histories.find(this);
 		if (it == wrapper->explore_experiment_histories.end()) {
-			history = new ExploreExperimentHistory(this);
-			wrapper->explore_experiment_histories[this] = history;
-		} else {
-			history = it->second;
+			wrapper->explore_experiment_histories[this] = new ExploreExperimentHistory(this);
 		}
-		history->is_hit = true;
 
 		switch (this->state) {
 		case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
