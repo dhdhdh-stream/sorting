@@ -7,6 +7,8 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 const double NETWORK_TARGET_MAX_UPDATE = 0.01;
 const int NETWORK_EPOCH_SIZE = 20;
 
+const double VERIFICATION_RATIO = 0.2;
+
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;
 #else

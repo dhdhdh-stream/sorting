@@ -75,6 +75,8 @@ public:
 							Wrapper* wrapper);
 
 	bool further_than(ForceExperiment* other);
+
+	void train_new_state_helper(Wrapper* wrapper);
 };
 
 class ForceExperimentHistory {
