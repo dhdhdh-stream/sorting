@@ -10,8 +10,7 @@
 
 using namespace std;
 
-// const int INIT_NUM_ACTIONS = 10;
-const int INIT_NUM_ACTIONS = 1;
+const int INIT_NUM_ACTIONS = 10;
 
 Wrapper::Wrapper(ProblemType* problem_type) {
 	this->num_obs = problem_type->num_obs();
@@ -74,7 +73,6 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 	this->iter = 0;
 
 	this->experiment_iter = 0;
-	this->force_experiment = NULL;
 
 	this->sample_index = 0;
 
@@ -107,7 +105,6 @@ Wrapper::Wrapper(std::string path,
 	this->iter = 0;
 
 	this->experiment_iter = 0;
-	this->force_experiment = NULL;
 
 	this->sample_index = 0;
 

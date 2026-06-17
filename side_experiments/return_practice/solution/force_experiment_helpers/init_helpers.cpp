@@ -21,6 +21,7 @@ const int NUM_SIMULATE = 4000;
 
 void init_force_experiment_helper(AbstractNode* node_context,
 								  bool is_branch,
+								  AbstractNode* exit_next_node,
 								  Wrapper* wrapper) {
 	vector<vector<double>> state_history;
 	switch (node_context->type) {
@@ -107,6 +108,7 @@ void init_force_experiment_helper(AbstractNode* node_context,
 
 	experiment->node_context = node_context;
 	experiment->is_branch = is_branch;
+	experiment->exit_next_node = exit_next_node;
 
 	experiment->original_network = original_network;
 
@@ -139,7 +141,6 @@ void init_force_experiment_helper(AbstractNode* node_context,
 		}
 		break;
 	}
-	wrapper->force_experiment = experiment;
 
 	// temp
 	cout << "force_experiment" << endl;

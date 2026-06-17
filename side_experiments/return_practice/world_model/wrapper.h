@@ -23,7 +23,10 @@ public:
 	int iter;
 
 	int experiment_iter;
-	ForceExperiment* force_experiment;
+	/**
+	 * - fully reset experiments every so often
+	 *   - to enable experiments in different places
+	 */
 
 	std::vector<std::vector<std::vector<double>>> sample_obs;
 	std::vector<std::vector<int>> sample_actions;

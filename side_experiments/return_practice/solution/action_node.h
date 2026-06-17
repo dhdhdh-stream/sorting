@@ -47,7 +47,6 @@ public:
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
 	std::vector<double> state;
-	std::vector<double> large_state;
 
 	ActionNodeHistory(ActionNode* node);
 };

@@ -1,6 +1,5 @@
 #include "action_node.h"
 
-#include "experiment.h"
 #include "predict_run.h"
 #include "world_model_helpers.h"
 
@@ -15,8 +14,4 @@ void ActionNode::predict_step(PredictRun* run) {
 				   run->wrapper);
 
 	run->node_context = this->next_node;
-
-	if (this->experiment != NULL) {
-		this->experiment->predict_activate(run);
-	}
 }

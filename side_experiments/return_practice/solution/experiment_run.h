@@ -7,8 +7,7 @@
 class AbstractExperimentState;
 class AbstractNode;
 class AbstractNodeHistory;
-class Experiment;
-class ExperimentHistory;
+class ForceExperiment;
 class ForceExperimentHistory;
 class Wrapper;
 
@@ -21,15 +20,14 @@ public:
 
 	std::vector<double> state;
 
-	std::map<Experiment*, ExperimentHistory*> experiment_histories;
-	ForceExperimentHistory* force_experiment_history;
+	bool should_force;
+	std::map<ForceExperiment*, ForceExperimentHistory*> force_experiment_histories;
 
 	std::map<int, AbstractNodeHistory*> node_histories;
 
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<int> action_histories;
 
-	ExperimentRun();
 	~ExperimentRun();
 };
 

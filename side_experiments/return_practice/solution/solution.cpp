@@ -5,7 +5,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "end_node.h"
-#include "experiment.h"
 #include "globals.h"
 #include "network.h"
 #include "start_node.h"
@@ -23,46 +22,6 @@ Solution::~Solution() {
 	}
 }
 
-void Solution::random_exit_activate(AbstractNode* starting_node,
-									vector<AbstractNode*>& possible_exits) {
-	AbstractNode* curr_node = starting_node;
-	while (true) {
-		if (curr_node == NULL) {
-			break;
-		}
-
-		switch (curr_node->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* node = (ActionNode*)curr_node;
-
-				possible_exits.push_back(curr_node);
-
-				curr_node = node->next_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* node = (BranchNode*)curr_node;
-
-				possible_exits.push_back(curr_node);
-
-				uniform_int_distribution<int> distribution(0, 1);
-				if (distribution(generator) == 0) {
-					curr_node = node->branch_next_node;
-				} else {
-					curr_node = node->original_next_node;
-				}
-			}
-			break;
-		case NODE_TYPE_END:
-			possible_exits.push_back(curr_node);
-			curr_node = NULL;
-			break;
-		}
-	}
-}
-
 void Solution::pad_new_state(int num_add) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
@@ -73,17 +32,6 @@ void Solution::pad_new_state(int num_add) {
 
 				start_node->state_history.clear();
 				start_node->history_index = 0;
-
-				if (start_node->experiment != NULL) {
-					switch (start_node->experiment->type) {
-					case EXPERIMENT_STATE_RAMP:
-						{
-							Experiment* experiment = (Experiment*)start_node->experiment;
-							experiment->pad_new_state(num_add);
-						}
-						break;
-					}
-				}
 			}
 			break;
 		case NODE_TYPE_ACTION:
@@ -92,17 +40,6 @@ void Solution::pad_new_state(int num_add) {
 
 				action_node->state_history.clear();
 				action_node->history_index = 0;
-
-				if (action_node->experiment != NULL) {
-					switch (action_node->experiment->type) {
-					case EXPERIMENT_STATE_RAMP:
-						{
-							Experiment* experiment = (Experiment*)action_node->experiment;
-							experiment->pad_new_state(num_add);
-						}
-						break;
-					}
-				}
 			}
 			break;
 		case NODE_TYPE_BRANCH:
@@ -118,27 +55,6 @@ void Solution::pad_new_state(int num_add) {
 				branch_node->branch_state_history.clear();
 				branch_node->branch_target_val_history.clear();
 				branch_node->branch_history_index = 0;
-
-				if (branch_node->original_experiment != NULL) {
-					switch (branch_node->original_experiment->type) {
-					case EXPERIMENT_STATE_RAMP:
-						{
-							Experiment* experiment = (Experiment*)branch_node->original_experiment;
-							experiment->pad_new_state(num_add);
-						}
-						break;
-					}
-				}
-				if (branch_node->branch_experiment != NULL) {
-					switch (branch_node->branch_experiment->type) {
-					case EXPERIMENT_STATE_RAMP:
-						{
-							Experiment* experiment = (Experiment*)branch_node->branch_experiment;
-							experiment->pad_new_state(num_add);
-						}
-						break;
-					}
-				}
 			}
 			break;
 		}
@@ -167,12 +83,6 @@ void Solution::save(ofstream& output_file,
 	output_file << this->train_new_last_scores.size() << endl;
 	for (list<double>::iterator it = this->train_new_last_scores.begin();
 			it != this->train_new_last_scores.end(); it++) {
-		output_file << *it << endl;
-	}
-
-	output_file << this->ramp_last_scores.size() << endl;
-	for (list<double>::iterator it = this->ramp_last_scores.begin();
-			it != this->ramp_last_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 
@@ -259,15 +169,6 @@ void Solution::load(ifstream& input_file,
 		string score_line;
 		getline(input_file, score_line);
 		this->train_new_last_scores.push_back(stod(score_line));
-	}
-
-	string num_ramp_last_scores_line;
-	getline(input_file, num_ramp_last_scores_line);
-	int num_ramp_last_scores = stoi(num_ramp_last_scores_line);
-	for (int e_index = 0; e_index < num_ramp_last_scores; e_index++) {
-		string score_line;
-		getline(input_file, score_line);
-		this->ramp_last_scores.push_back(stod(score_line));
 	}
 
 	string history_size_line;

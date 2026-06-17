@@ -45,7 +45,6 @@ public:
 class StartNodeHistory : public AbstractNodeHistory {
 public:
 	std::vector<double> state;
-	std::vector<double> large_state;
 
 	StartNodeHistory(StartNode* node);
 };

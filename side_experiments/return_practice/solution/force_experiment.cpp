@@ -21,8 +21,22 @@ ForceExperiment::~ForceExperiment() {
 	}
 }
 
+bool ForceExperiment::further_than(ForceExperiment* other) {
+	if (this->state < other->state) {
+		return false;
+	} else if (this->state > other->state) {
+		return true;
+	} else {
+		if (this->state_iter <= other->state_iter) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+}
+
 ForceExperimentHistory::ForceExperimentHistory(ForceExperiment* experiment) {
-	this->hit_branch = false;
+	this->experiment = experiment;
 }
 
 ForceExperimentState::ForceExperimentState(ForceExperiment* experiment) {

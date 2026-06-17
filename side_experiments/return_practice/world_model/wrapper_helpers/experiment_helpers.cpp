@@ -2,22 +2,25 @@
 
 #include <iostream>
 
-#include "abstract_node.h"
+#include "action_node.h"
+#include "branch_node.h"
 #include "constants.h"
-#include "experiment.h"
 #include "experiment_run.h"
 #include "force_experiment.h"
 #include "globals.h"
 #include "predict_wrapper.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "start_node.h"
 #include "utilities.h"
 #include "world_model.h"
 #include "world_model_helpers.h"
 
 using namespace std;
 
-const int TARGET_NODES_PER_EVAL = 10;
+const int TARGET_NODES_PER_EVAL = 20;
+
+const int EXPERIMENT_REFRESH_NUM_ITERS = 20;
 
 void Wrapper::experiment_init(ExperimentRun* run) {
 	run->wrapper = this;
@@ -29,8 +32,11 @@ void Wrapper::experiment_init(ExperimentRun* run) {
 
 	this->iter++;
 
-	if (this->force_experiment != NULL) {
-		run->force_experiment_history = new ForceExperimentHistory(this->force_experiment);
+	uniform_int_distribution<int> explore_distribution(0, 1);
+	if (explore_distribution(generator) == 0) {
+		run->should_force = true;
+	} else {
+		run->should_force = false;
 	}
 
 	#if defined(MDEBUG) && MDEBUG
@@ -78,10 +84,124 @@ pair<bool,int> Wrapper::experiment_step(vector<double> obs,
 
 void Wrapper::experiment_end(double result,
 							 ExperimentRun* run) {
-	if (this->force_experiment != NULL) {
-		this->force_experiment->backprop(result,
-										 run,
-										 this);
+	if (run->should_force) {
+		if (run->force_experiment_histories.size() == 0) {
+			if (this->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
+				for (map<int, AbstractNode*>::iterator it = this->solution->nodes.begin();
+						it != this->solution->nodes.end(); it++) {
+					switch (it->second->type) {
+					case NODE_TYPE_START:
+						{
+							StartNode* start_node = (StartNode*)it->second;
+							if (start_node->experiment != NULL) {
+								delete start_node->experiment;
+								start_node->experiment = NULL;
+							}
+						}
+						break;
+					case NODE_TYPE_ACTION:
+						{
+							ActionNode* action_node = (ActionNode*)it->second;
+							if (action_node->experiment != NULL) {
+								delete action_node->experiment;
+								action_node->experiment = NULL;
+							}
+						}
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNode* branch_node = (BranchNode*)it->second;
+							if (branch_node->original_experiment != NULL) {
+								delete branch_node->original_experiment;
+								branch_node->original_experiment = NULL;
+							}
+							if (branch_node->branch_experiment != NULL) {
+								delete branch_node->branch_experiment;
+								branch_node->branch_experiment = NULL;
+							}
+						}
+						break;
+					}
+				}
+
+				this->experiment_iter = 0;
+			}
+
+			create_force_experiment(run,
+									this);
+		} else if (run->force_experiment_histories.size() >= 2) {
+			ForceExperiment* keep_experiment = NULL;
+			for (map<ForceExperiment*, ForceExperimentHistory*>::iterator it = run->force_experiment_histories.begin();
+					it != run->force_experiment_histories.end(); it++) {
+				if (keep_experiment == NULL) {
+					keep_experiment = it->first;
+				} else {
+					if (it->first->further_than(keep_experiment)) {
+						switch (keep_experiment->node_context->type) {
+							case NODE_TYPE_START:
+							{
+								StartNode* start_node = (StartNode*)keep_experiment->node_context;
+								start_node->experiment = NULL;
+							}
+							break;
+						case NODE_TYPE_ACTION:
+							{
+								ActionNode* action_node = (ActionNode*)keep_experiment->node_context;
+								action_node->experiment = NULL;
+							}
+							break;
+						case NODE_TYPE_BRANCH:
+							{
+								BranchNode* branch_node = (BranchNode*)keep_experiment->node_context;
+								if (keep_experiment->is_branch) {
+									branch_node->branch_experiment = NULL;
+								} else {
+									branch_node->original_experiment = NULL;
+								}
+							}
+							break;
+						}
+						delete keep_experiment;
+
+						keep_experiment = it->first;
+					} else {
+						switch (it->first->node_context->type) {
+							case NODE_TYPE_START:
+							{
+								StartNode* start_node = (StartNode*)it->first->node_context;
+								start_node->experiment = NULL;
+							}
+							break;
+						case NODE_TYPE_ACTION:
+							{
+								ActionNode* action_node = (ActionNode*)it->first->node_context;
+								action_node->experiment = NULL;
+							}
+							break;
+						case NODE_TYPE_BRANCH:
+							{
+								BranchNode* branch_node = (BranchNode*)it->first->node_context;
+								if (it->first->is_branch) {
+									branch_node->branch_experiment = NULL;
+								} else {
+									branch_node->original_experiment = NULL;
+								}
+							}
+							break;
+						}
+						delete it->first;
+					}
+				}
+			}
+		} else {
+			for (map<ForceExperiment*, ForceExperimentHistory*>::iterator it = run->force_experiment_histories.begin();
+					it != run->force_experiment_histories.end(); it++) {
+				it->first->backprop(result,
+									run,
+									it->second,
+									this);
+			}
+		}
 	} else {
 		if (this->solution->score_histories.size() < SCORE_HISTORIES_NUM_SAVE) {
 			this->solution->score_histories.push_back(result);
@@ -128,13 +248,6 @@ void Wrapper::experiment_end(double result,
 			cout << "this->world_model->num_states: " << this->world_model->num_states << endl;
 			cout << endl;
 		}
-	}
-
-	for (map<Experiment*, ExperimentHistory*>::iterator it = run->experiment_histories.begin();
-			it != run->experiment_histories.end(); it++) {
-		it->first->backprop(result,
-							it->second,
-							this);
 	}
 
 	if (this->sample_obs.size() < SAMPLES_NUM_SAVE) {

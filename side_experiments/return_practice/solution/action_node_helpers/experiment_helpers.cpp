@@ -1,6 +1,6 @@
 #include "action_node.h"
 
-#include "experiment.h"
+#include "abstract_experiment.h"
 #include "experiment_run.h"
 #include "world_model_helpers.h"
 

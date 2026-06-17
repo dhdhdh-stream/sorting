@@ -1,6 +1,6 @@
 #include "start_node.h"
 
-#include "experiment.h"
+#include "abstract_experiment.h"
 #include "solution.h"
 #include "world_model.h"
 #include "wrapper.h"

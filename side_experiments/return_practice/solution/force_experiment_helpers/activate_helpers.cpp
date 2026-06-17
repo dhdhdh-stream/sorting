@@ -30,22 +30,21 @@ void ForceExperiment::experiment_step(int& action,
 	}
 }
 
-void ForceExperiment::predict_activate(PredictRun* run) {
-	// unreachable
-}
-
 void ForceExperiment::backprop(double target_val,
 							   ExperimentRun* run,
+							   ForceExperimentHistory* history,
 							   Wrapper* wrapper) {
 	switch (this->state) {
 	case FORCE_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 run,
+						 history,
 						 wrapper);
 		break;
 	case FORCE_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
 						   run,
+						   history,
 						   wrapper);
 		break;
 	}

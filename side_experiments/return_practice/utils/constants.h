@@ -41,18 +41,6 @@ const int MIN_NUM_LAST_TRACK = 5;
 #endif /* MDEBUG */
 const double LAST_BETTER_THAN_RATIO = 0.8;
 
-#if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_NUM_GEARS = 3;
-const int MEASURE_GEAR = 1;
-const int RAMP_EPOCH_NUM_ITERS = 40;
-const int MEASURE_STEP_NUM_ITERS = 40;
-const int TOTAL_MAX_ITERS = 1000;
-#else
-const int EXPERIMENT_NUM_GEARS = 3;
-const int MEASURE_GEAR = 1;
-const int RAMP_EPOCH_NUM_ITERS = 100;
-const int MEASURE_STEP_NUM_ITERS = 100;
-const int TOTAL_MAX_ITERS = 10000;
-#endif /* MDEBUG */
+const int RAMP_NUM_GEARS = 9;
 
 #endif /* CONSTANTS_H */

@@ -1,6 +1,6 @@
 #include "branch_node.h"
 
-#include "experiment.h"
+#include "abstract_experiment.h"
 #include "network.h"
 #include "solution.h"
 #include "world_model.h"
@@ -40,6 +40,9 @@ void BranchNode::save(ofstream& output_file,
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
 
+	output_file << this->ramp << endl;
+	output_file << this->ramp_iter << endl;
+
 	output_file << this->original_average_instances_per_run << endl;
 	output_file << this->branch_average_instances_per_run << endl;
 
@@ -61,6 +64,14 @@ void BranchNode::load(ifstream& input_file,
 	string branch_next_node_id_line;
 	getline(input_file, branch_next_node_id_line);
 	this->branch_next_node_id = stoi(branch_next_node_id_line);
+
+	string ramp_line;
+	getline(input_file, ramp_line);
+	this->ramp = stoi(ramp_line);
+
+	string ramp_iter_line;
+	getline(input_file, ramp_iter_line);
+	this->ramp_iter = stoi(ramp_iter_line);
 
 	string original_average_instances_per_run_line;
 	getline(input_file, original_average_instances_per_run_line);

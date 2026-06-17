@@ -19,6 +19,9 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
+	int ramp;
+	int ramp_iter;
+
 	double original_average_instances_per_run;
 	std::vector<std::vector<double>> original_state_history;
 	std::vector<double> original_target_val_history;
@@ -60,7 +63,6 @@ public:
 	bool is_branch;
 
 	std::vector<double> state;
-	std::vector<double> large_state;
 
 	BranchNodeHistory(BranchNode* node);
 };

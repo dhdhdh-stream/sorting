@@ -21,16 +21,12 @@ public:
 	int score_index;
 
 	std::list<double> train_new_last_scores;
-	std::list<double> ramp_last_scores;
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
 
 	Solution();
 	~Solution();
-
-	void random_exit_activate(AbstractNode* starting_node,
-							  std::vector<AbstractNode*>& possible_exits);
 
 	void pad_new_state(int num_add);
 

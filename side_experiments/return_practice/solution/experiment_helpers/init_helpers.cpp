@@ -5,7 +5,7 @@
  * TODO: instead of predicting until end, predict until signal end of scope
  */
 
-#include "experiment.h"
+#include "solution_helpers.h"
 
 #include <iostream>
 
@@ -36,6 +36,7 @@ const int NUM_EXPLORE = 1000;
 
 void init_experiment_helper(AbstractNode* node_context,
 							bool is_branch,
+							AbstractNode* exit_next_node,
 							Wrapper* wrapper) {
 	vector<vector<double>> state_history;
 	switch (node_context->type) {
@@ -119,7 +120,6 @@ void init_experiment_helper(AbstractNode* node_context,
 	}
 
 	vector<int> best_actions;
-	AbstractNode* best_exit_next_node;
 	double best_surprise = numeric_limits<double>::lowest();
 	for (int e_index = 0; e_index < NUM_EXPLORE; e_index++) {
 		int start_index = start_distribution(generator);
@@ -129,23 +129,9 @@ void init_experiment_helper(AbstractNode* node_context,
 		original_network->activate(state);
 		double existing_predicted = original_network->output->acti_vals[0];
 
-		vector<AbstractNode*> possible_exits;
-		wrapper->solution->random_exit_activate(
-			next_node,
-			possible_exits);
-		geometric_distribution<int> exit_distribution(0.1);
-		int random_index;
-		while (true) {
-			random_index = exit_distribution(generator);
-			if (random_index < (int)possible_exits.size()) {
-				break;
-			}
-		}
-		AbstractNode* curr_exit_next_node = possible_exits[random_index];
-
 		int new_num_steps;
 		geometric_distribution<int> geo_distribution(0.3);
-		if (random_index == 0) {
+		if (exit_next_node == next_node) {
 			new_num_steps = 1 + geo_distribution(generator);
 		} else {
 			new_num_steps = geo_distribution(generator);
@@ -166,13 +152,12 @@ void init_experiment_helper(AbstractNode* node_context,
 						   wrapper);
 		}
 		double predicted = predict_helper(state,
-										  curr_exit_next_node,
+										  exit_next_node,
 										  wrapper);
 
 		double curr_surprise = predicted - existing_predicted;
 		if (curr_surprise > best_surprise) {
 			best_actions = curr_actions;
-			best_exit_next_node = curr_exit_next_node;
 			best_surprise = curr_surprise;
 		}
 	}
@@ -194,7 +179,7 @@ void init_experiment_helper(AbstractNode* node_context,
 						   wrapper);
 		}
 		train_new_predicted[iter_index] = predict_helper(state,
-														 best_exit_next_node,
+														 exit_next_node,
 														 wrapper);
 	}
 
@@ -287,61 +272,13 @@ void init_experiment_helper(AbstractNode* node_context,
 	#else
 	if (is_success) {
 	#endif /* MDEBUG */
-		// temp
-		cout << "new_experiment" << endl;
-
-		Experiment* experiment = new Experiment();
-
-		experiment->node_context = node_context;
-		experiment->is_branch = is_branch;
-
-		experiment->actions = best_actions;
-		experiment->exit_next_node = best_exit_next_node;
-
-		experiment->original_network = original_network;
-		experiment->branch_network = branch_network;
-
-		experiment->curr_ramp = 0;
-		experiment->measure_status = MEASURE_STATUS_N_A;
-
-		experiment->total_count = 0;
-		experiment->existing_sum_scores = 0.0;
-		experiment->existing_count = 0;
-		experiment->new_sum_scores = 0.0;
-		experiment->new_count = 0;
-
-		experiment->predicted_local_improvement = predicted_local_improvement;
-		experiment->predicted_global_improvement = predicted_global_improvement;
-
-		experiment->is_force = false;
-
-		experiment->state = EXPERIMENT_STATE_RAMP;
-		experiment->state_iter = 0;
-
-		switch (node_context->type) {
-		case NODE_TYPE_START:
-			{
-				StartNode* start_node = (StartNode*)node_context;
-				start_node->experiment = experiment;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)node_context;
-				action_node->experiment = experiment;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)node_context;
-				if (is_branch) {
-					branch_node->branch_experiment = experiment;
-				} else {
-					branch_node->original_experiment = experiment;
-				}
-			}
-			break;
-		}
+		finalize_helper(node_context,
+						is_branch,
+						best_actions,
+						exit_next_node,
+						original_network,
+						branch_network,
+						wrapper);
 	} else {
 		delete original_network;
 		delete branch_network;

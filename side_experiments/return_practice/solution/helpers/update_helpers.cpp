@@ -22,6 +22,15 @@ const int UPDATE_MIN_NUM_SAMPLES = 100;
 const int UPDATE_ITERS = 100;
 #endif /* MDEBUG */
 
+const int RAMP_UPDATE_MIN_SAMPLES = 10;
+#if defined(MDEBUG) && MDEBUG
+const int RAMP_UPDATE_NUM_TRAIN = 2;
+const int ITERS_PER_RAMP = 2;
+#else
+const int RAMP_UPDATE_NUM_TRAIN = 100;
+const int ITERS_PER_RAMP = 100;
+#endif /* MDEBUG */
+
 void update_solution_helper(ExperimentRun* run,
 							double target_val,
 							Wrapper* wrapper) {
@@ -83,13 +92,34 @@ void update_solution_helper(ExperimentRun* run,
 						branch_node->branch_history_index = 0;
 					}
 
-					if (branch_node->branch_state_history.size() >= UPDATE_MIN_NUM_SAMPLES) {
-						uniform_int_distribution<int> distribution(0, branch_node->branch_state_history.size()-1);
-						for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
-							int index = distribution(generator);
-							branch_node->branch_network->activate(branch_node->branch_state_history[index]);
-							double error = branch_node->branch_target_val_history[index] - branch_node->branch_network->output->acti_vals[0];
-							branch_node->branch_network->backprop(error);
+					if (branch_node->ramp >= RAMP_NUM_GEARS) {
+						if (branch_node->branch_state_history.size() >= UPDATE_MIN_NUM_SAMPLES) {
+							uniform_int_distribution<int> distribution(0, branch_node->branch_state_history.size()-1);
+							for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
+								int index = distribution(generator);
+								branch_node->branch_network->activate(branch_node->branch_state_history[index]);
+								double error = branch_node->branch_target_val_history[index] - branch_node->branch_network->output->acti_vals[0];
+								branch_node->branch_network->backprop(error);
+							}
+						}
+					} else {
+						if (branch_node->branch_state_history.size() >= RAMP_UPDATE_MIN_SAMPLES) {
+							uniform_int_distribution<int> distribution(0, branch_node->branch_state_history.size()-1);
+							for (int iter_index = 0; iter_index < RAMP_UPDATE_NUM_TRAIN; iter_index++) {
+								int index = distribution(generator);
+								branch_node->branch_network->activate(branch_node->branch_state_history[index]);
+								double error = branch_node->branch_target_val_history[index] - branch_node->branch_network->output->acti_vals[0];
+								branch_node->branch_network->backprop(error);
+							}
+						}
+
+						branch_node->ramp_iter++;
+						if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
+							branch_node->ramp++;
+							branch_node->ramp_iter = 0;
+
+							// // temp
+							// cout << "branch_node->ramp: " << branch_node->ramp << endl;
 						}
 					}
 				} else {
@@ -107,13 +137,25 @@ void update_solution_helper(ExperimentRun* run,
 						branch_node->original_history_index = 0;
 					}
 
-					if (branch_node->original_state_history.size() >= UPDATE_MIN_NUM_SAMPLES) {
-						uniform_int_distribution<int> distribution(0, branch_node->original_state_history.size()-1);
-						for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
-							int index = distribution(generator);
-							branch_node->original_network->activate(branch_node->original_state_history[index]);
-							double errors = branch_node->original_target_val_history[index] - branch_node->original_network->output->acti_vals[0];
-							branch_node->original_network->backprop(errors);
+					if (branch_node->ramp >= RAMP_NUM_GEARS) {
+						if (branch_node->original_state_history.size() >= UPDATE_MIN_NUM_SAMPLES) {
+							uniform_int_distribution<int> distribution(0, branch_node->original_state_history.size()-1);
+							for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
+								int index = distribution(generator);
+								branch_node->original_network->activate(branch_node->original_state_history[index]);
+								double errors = branch_node->original_target_val_history[index] - branch_node->original_network->output->acti_vals[0];
+								branch_node->original_network->backprop(errors);
+							}
+						}
+					} else {
+						if (branch_node->original_state_history.size() >= RAMP_UPDATE_MIN_SAMPLES) {
+							uniform_int_distribution<int> distribution(0, branch_node->original_state_history.size()-1);
+							for (int iter_index = 0; iter_index < RAMP_UPDATE_NUM_TRAIN; iter_index++) {
+								int index = distribution(generator);
+								branch_node->original_network->activate(branch_node->original_state_history[index]);
+								double error = branch_node->original_target_val_history[index] - branch_node->original_network->output->acti_vals[0];
+								branch_node->original_network->backprop(error);
+							}
 						}
 					}
 				}
