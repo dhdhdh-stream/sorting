@@ -19,7 +19,8 @@ const int UPDATE_MIN_NUM_SAMPLES = 10;
 const int UPDATE_ITERS = 2;
 #else
 const int UPDATE_MIN_NUM_SAMPLES = 100;
-const int UPDATE_ITERS = 100;
+// const int UPDATE_ITERS = 100;
+const int UPDATE_ITERS = 1;
 #endif /* MDEBUG */
 
 const int RAMP_UPDATE_MIN_SAMPLES = 10;

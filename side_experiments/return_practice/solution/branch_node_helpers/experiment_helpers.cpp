@@ -59,7 +59,8 @@ void BranchNode::experiment_step(int& action,
 
 		run->node_context = this->branch_next_node;
 
-		if (this->branch_experiment != NULL) {
+		if (this->branch_experiment != NULL
+				&& run->should_force) {
 			this->branch_experiment->experiment_activate(run);
 		}
 	} else {
@@ -67,7 +68,8 @@ void BranchNode::experiment_step(int& action,
 
 		run->node_context = this->original_next_node;
 
-		if (this->original_experiment != NULL) {
+		if (this->original_experiment != NULL
+				&& run->should_force) {
 			this->original_experiment->experiment_activate(run);
 		}
 	}

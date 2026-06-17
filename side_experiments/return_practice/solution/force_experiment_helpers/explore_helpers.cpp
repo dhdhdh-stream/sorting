@@ -1,5 +1,7 @@
 #include "force_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "experiment_run.h"
@@ -15,7 +17,8 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int EXPLORE_ITERS = 10;
 #else
-const int EXPLORE_ITERS = 200;
+// const int EXPLORE_ITERS = 200;
+const int EXPLORE_ITERS = 400;
 #endif /* MDEBUG */
 
 void ForceExperiment::explore_experiment_activate(ExperimentRun* run) {
@@ -58,7 +61,7 @@ void ForceExperiment::explore_experiment_activate(ExperimentRun* run) {
 		new_num_steps = geo_distribution(generator);
 	}
 
-	uniform_int_distribution<int> action_distribution(0, 3);
+	uniform_int_distribution<int> action_distribution(0, run->wrapper->num_actions-1);
 	for (int s_index = 0; s_index < new_num_steps; s_index++) {
 		history->curr_actions.push_back(action_distribution(generator));
 	}
@@ -97,6 +100,17 @@ void ForceExperiment::explore_backprop(double target_val,
 									   ForceExperimentHistory* history,
 									   Wrapper* wrapper) {
 	double curr_surprise = target_val - history->existing_predicted;
+
+	// // temp
+	// cout << "history->curr_actions:";
+	// for (int s_index = 0; s_index < (int)history->curr_actions.size(); s_index++) {
+	// 	cout << " " << history->curr_actions[s_index];
+	// }
+	// cout << endl;
+	// cout << "history->existing_predicted: " << history->existing_predicted << endl;
+	// cout << "target_val: " << target_val << endl;
+	// cout << "curr_surprise: " << curr_surprise << endl;
+	// cout << endl;
 
 	#if defined(MDEBUG) && MDEBUG
 	if (curr_surprise > this->best_surprise || true) {

@@ -21,7 +21,8 @@ void StartNode::experiment_step_start(ExperimentRun* run) {
 
 	run->node_context = this->next_node;
 
-	if (this->experiment != NULL) {
+	if (this->experiment != NULL
+			&& run->should_force) {
 		this->experiment->experiment_activate(run);
 	}
 }

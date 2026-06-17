@@ -213,6 +213,9 @@ void finalize_helper(AbstractNode* node_context,
 	new_branch_node->original_average_instances_per_run = average_instances_per_run / 2.0;
 	new_branch_node->branch_average_instances_per_run = average_instances_per_run / 2.0;
 
+	new_branch_node->ramp = 0;
+	new_branch_node->ramp_iter = 0;
+
 	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
 		int next_node_id;
 		AbstractNode* next_node;

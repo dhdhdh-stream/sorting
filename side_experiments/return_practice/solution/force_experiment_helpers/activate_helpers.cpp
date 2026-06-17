@@ -1,8 +1,16 @@
 #include "force_experiment.h"
 
+#include "experiment_run.h"
+
 using namespace std;
 
 void ForceExperiment::experiment_activate(ExperimentRun* run) {
+	map<ForceExperiment*, ForceExperimentHistory*>::iterator it =
+		run->force_experiment_histories.find(this);
+	if (it == run->force_experiment_histories.end()) {
+		run->force_experiment_histories[this] = new ForceExperimentHistory(this);
+	}
+
 	switch (this->state) {
 	case FORCE_EXPERIMENT_STATE_EXPLORE:
 		explore_experiment_activate(run);

@@ -33,42 +33,47 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 
 	start_node->average_instances_per_run = 1.0;
 
-	vector<ActionNode*> action_nodes;
-	uniform_int_distribution<int> action_distribution(0, this->num_actions-1);
-	for (int n_index = 0; n_index < INIT_NUM_ACTIONS; n_index++) {
-		ActionNode* action_node = new ActionNode();
-		action_node->id = this->solution->node_counter;
-		this->solution->node_counter++;
-		this->solution->nodes[action_node->id] = action_node;
+	// vector<ActionNode*> action_nodes;
+	// uniform_int_distribution<int> action_distribution(0, this->num_actions-1);
+	// for (int n_index = 0; n_index < INIT_NUM_ACTIONS; n_index++) {
+	// 	ActionNode* action_node = new ActionNode();
+	// 	action_node->id = this->solution->node_counter;
+	// 	this->solution->node_counter++;
+	// 	this->solution->nodes[action_node->id] = action_node;
 
-		action_node->action = action_distribution(generator);
+	// 	action_node->action = action_distribution(generator);
 
-		action_node->average_instances_per_run = 1.0;
+	// 	action_node->average_instances_per_run = 1.0;
 
-		action_nodes.push_back(action_node);
-	}
+	// 	action_nodes.push_back(action_node);
+	// }
 
 	EndNode* end_node = new EndNode();
 	end_node->id = this->solution->node_counter;
 	this->solution->node_counter++;
 	this->solution->nodes[end_node->id] = end_node;
 
-	start_node->next_node_id = action_nodes[0]->id;
-	start_node->next_node = action_nodes[0];
+	// start_node->next_node_id = action_nodes[0]->id;
+	// start_node->next_node = action_nodes[0];
 
-	action_nodes[0]->ancestor_ids.push_back(start_node->id);
+	// action_nodes[0]->ancestor_ids.push_back(start_node->id);
 
-	for (int a_index = 1; a_index < (int)action_nodes.size(); a_index++) {
-		action_nodes[a_index-1]->next_node_id = action_nodes[a_index]->id;
-		action_nodes[a_index-1]->next_node = action_nodes[a_index];
+	// for (int a_index = 1; a_index < (int)action_nodes.size(); a_index++) {
+	// 	action_nodes[a_index-1]->next_node_id = action_nodes[a_index]->id;
+	// 	action_nodes[a_index-1]->next_node = action_nodes[a_index];
 
-		action_nodes[a_index]->ancestor_ids.push_back(action_nodes[a_index-1]->id);
-	}
+	// 	action_nodes[a_index]->ancestor_ids.push_back(action_nodes[a_index-1]->id);
+	// }
 
-	action_nodes.back()->next_node_id = end_node->id;
-	action_nodes.back()->next_node = end_node;
+	// action_nodes.back()->next_node_id = end_node->id;
+	// action_nodes.back()->next_node = end_node;
 
-	end_node->ancestor_ids.push_back(action_nodes.back()->id);
+	// end_node->ancestor_ids.push_back(action_nodes.back()->id);
+
+	start_node->next_node_id = end_node->id;
+	start_node->next_node = end_node;
+
+	end_node->ancestor_ids.push_back(start_node->id);
 
 	this->iter = 0;
 

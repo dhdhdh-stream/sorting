@@ -5,9 +5,10 @@
 #include <random>
 
 #include "globals.h"
+#include "minesweeper.h"
 #include "run.h"
 #include "solution_helpers.h"
-#include "test_indirect.h"
+// #include "test_indirect.h"
 #include "world_model.h"
 #include "wrapper.h"
 
@@ -27,7 +28,8 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeTestIndirect();
+	// ProblemType* problem_type = new TypeTestIndirect();
+	ProblemType* problem_type = new TypeMinesweeper();
 
 	string filename;
 	Wrapper* wrapper;

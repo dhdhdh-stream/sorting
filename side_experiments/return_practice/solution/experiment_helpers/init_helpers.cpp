@@ -138,7 +138,7 @@ void init_experiment_helper(AbstractNode* node_context,
 		}
 
 		vector<int> curr_actions;
-		uniform_int_distribution<int> action_distribution(0, 3);
+		uniform_int_distribution<int> action_distribution(0, wrapper->num_actions-1);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			curr_actions.push_back(action_distribution(generator));
 		}

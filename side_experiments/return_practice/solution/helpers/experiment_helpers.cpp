@@ -50,7 +50,6 @@ void gather_start_helper(ExperimentRun* run,
 			h_it != run->node_histories.end(); h_it++) {
 		curr_node_histories[h_it->second->index] = h_it->second->node;
 	}
-	curr_node_histories.push_back(NULL);
 
 	for (map<int, AbstractNodeHistory*>::iterator h_it = run->node_histories.begin();
 			h_it != run->node_histories.end(); h_it++) {
