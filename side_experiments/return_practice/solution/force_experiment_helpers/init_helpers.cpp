@@ -141,7 +141,4 @@ void init_force_experiment_helper(AbstractNode* node_context,
 		}
 		break;
 	}
-
-	// temp
-	cout << "force_experiment" << endl;
 }

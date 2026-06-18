@@ -431,27 +431,48 @@ void ForceExperiment::train_new_state_helper(Wrapper* wrapper) {
 	int epoch_iter = 0;
 	double average_max_update = 0.0;
 
+	uniform_int_distribution<int> non_overall_distribution(0, 2);
+	uniform_int_distribution<int> overall_sample_distribution(0, wrapper->sample_obs.size()-1);
 	for (int iter_index = 0; iter_index < TRAIN_NUM_ITERS; iter_index++) {
-		int index = sample_distribution(generator);
-		train_final_helper(this->new_full_obs[index],
-						   this->new_full_actions[index],
-						   this->new_target_vals[index],
-						   obs_network,
-						   action_network,
-						   temp_final_network,
-						   epoch_iter,
-						   average_max_update,
-						   wrapper);
+		if (non_overall_distribution(generator) == 0) {
+			int index = sample_distribution(generator);
+			train_final_helper(this->new_full_obs[index],
+							   this->new_full_actions[index],
+							   this->new_target_vals[index],
+							   obs_network,
+							   action_network,
+							   temp_final_network,
+							   epoch_iter,
+							   average_max_update,
+							   wrapper);
+		} else {
+			/**
+			 * - also train on overall samples to prevent instability
+			 */
+			int index = overall_sample_distribution(generator);
+			train_final_helper(wrapper->sample_obs[index],
+							   wrapper->sample_actions[index],
+							   wrapper->sample_target_vals[index],
+							   obs_network,
+							   action_network,
+							   temp_final_network,
+							   epoch_iter,
+							   average_max_update,
+							   wrapper);
+		}
 
-		train_branch_helper(this->new_branch_obs[index],
-							this->new_branch_actions[index],
-							this->new_target_vals[index],
-							obs_network,
-							action_network,
-							branch_network,
-							epoch_iter,
-							average_max_update,
-							wrapper);
+		{
+			int index = sample_distribution(generator);
+			train_branch_helper(this->new_branch_obs[index],
+								this->new_branch_actions[index],
+								this->new_target_vals[index],
+								obs_network,
+								action_network,
+								branch_network,
+								epoch_iter,
+								average_max_update,
+								wrapper);
+		}
 
 		// temp
 		if (iter_index % 100000 == 0) {

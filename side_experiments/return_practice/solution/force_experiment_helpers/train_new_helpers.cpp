@@ -1,5 +1,8 @@
+// TODO: bad existing predicted
+
 #include "force_experiment.h"
 
+#include <algorithm>
 #include <iostream>
 
 #include "action_node.h"
@@ -140,6 +143,31 @@ void ForceExperiment::train_new_backprop(double target_val,
 			cout << " " << this->best_actions[s_index];
 		}
 		cout << endl;
+
+		{
+			default_random_engine generator_copy = generator;
+			shuffle(this->existing_predicted.begin(), this->existing_predicted.end(), generator_copy);
+		}
+		{
+			default_random_engine generator_copy = generator;
+			shuffle(this->new_branch_obs.begin(), this->new_branch_obs.end(), generator_copy);
+		}
+		{
+			default_random_engine generator_copy = generator;
+			shuffle(this->new_branch_actions.begin(), this->new_branch_actions.end(), generator_copy);
+		}
+		{
+			default_random_engine generator_copy = generator;
+			shuffle(this->new_full_obs.begin(), this->new_full_obs.end(), generator_copy);
+		}
+		{
+			default_random_engine generator_copy = generator;
+			shuffle(this->new_full_actions.begin(), this->new_full_actions.end(), generator_copy);
+		}
+		{
+			default_random_engine generator_copy = generator;
+			shuffle(this->new_target_vals.begin(), this->new_target_vals.end(), generator_copy);
+		}
 
 		switch (this->node_context->type) {
 		case NODE_TYPE_START:
