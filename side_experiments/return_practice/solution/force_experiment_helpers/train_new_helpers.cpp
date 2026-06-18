@@ -20,13 +20,6 @@
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int TRAIN_NEW_NUM_SAMPLES = 10;
-#else
-// const int TRAIN_NEW_NUM_SAMPLES = 200;
-const int TRAIN_NEW_NUM_SAMPLES = 5000;
-#endif /* MDEBUG */
-
 void ForceExperiment::train_new_experiment_activate(ExperimentRun* run) {
 	ForceExperimentHistory* history = run->force_experiment_histories[this];
 
@@ -64,69 +57,10 @@ void ForceExperiment::train_new_experiment_step(int& action,
 	}
 }
 
-void calc_branch_state_helper(vector<vector<double>>& obs,
-							  vector<int>& actions,
-							  Wrapper* wrapper,
-							  vector<double>& branch_state) {
-	WorldModel* world_model = wrapper->world_model;
-
-	vector<double> state(world_model->num_states, 0.0);
-
-	for (int step_index = 0; step_index < (int)obs.size(); step_index++) {
-		{
-			vector<double> start_state = state;
-
-			for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
-				vector<double> inputs;
-				for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
-					inputs.push_back(start_state[world_model->network_inputs[n_index][i_index]]);
-				}
-				inputs.insert(inputs.end(), obs[step_index].begin(), obs[step_index].end());
-				world_model->obs_networks[n_index]->activate(inputs);
-				for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
-					state[world_model->network_outputs[n_index][o_index]] +=
-						world_model->obs_networks[n_index]->output->acti_vals[o_index];
-				}
-			}
-		}
-
-		if (step_index < (int)actions.size()) {
-			int action = actions[step_index];
-
-			vector<double> partial_inputs;
-			for (int a_index = 0; a_index < wrapper->num_actions; a_index++) {
-				if (action == a_index) {
-					partial_inputs.push_back(1.0);
-				} else {
-					partial_inputs.push_back(0.0);
-				}
-			}
-
-			vector<double> start_state = state;
-
-			for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
-				vector<double> inputs;
-				for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
-					inputs.push_back(start_state[world_model->network_inputs[n_index][i_index]]);
-				}
-				inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
-				world_model->action_networks[n_index]->activate(inputs);
-				for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
-					state[world_model->network_outputs[n_index][o_index]] +=
-						world_model->action_networks[n_index]->output->acti_vals[o_index];
-				}
-			}
-		}
-	}
-
-	branch_state = state;
-}
-
 void ForceExperiment::train_new_backprop(double target_val,
 										 ExperimentRun* run,
 										 ForceExperimentHistory* history,
 										 Wrapper* wrapper) {
-	this->existing_predicted.push_back(history->existing_predicted);
 	this->new_branch_obs.push_back(history->branch_obs);
 	this->new_branch_actions.push_back(history->branch_actions);
 	this->new_full_obs.push_back(run->obs_histories);
@@ -134,7 +68,7 @@ void ForceExperiment::train_new_backprop(double target_val,
 	this->new_target_vals.push_back(target_val);
 
 	this->state_iter++;
-	if (this->state_iter >= TRAIN_NEW_NUM_SAMPLES) {
+	if (this->state_iter >= EXPERIMENT_NUM_SAMPLES) {
 		// // temp
 		// cout << "train_new" << endl;
 		// cout << "new explore path:";
@@ -143,10 +77,6 @@ void ForceExperiment::train_new_backprop(double target_val,
 		// }
 		// cout << endl;
 
-		{
-			default_random_engine generator_copy = generator;
-			shuffle(this->existing_predicted.begin(), this->existing_predicted.end(), generator_copy);
-		}
 		{
 			default_random_engine generator_copy = generator;
 			shuffle(this->new_branch_obs.begin(), this->new_branch_obs.end(), generator_copy);
@@ -198,24 +128,24 @@ void ForceExperiment::train_new_backprop(double target_val,
 
 		uniform_int_distribution<int> sample_distribution(0, num_train-1);
 
-		vector<vector<double>> train_new_state(this->new_branch_obs.size());
-		for (int h_index = 0; h_index < (int)this->new_branch_obs.size(); h_index++) {
-			vector<double> curr_branch_state;
-			calc_branch_state_helper(this->new_branch_obs[h_index],
-									 this->new_branch_actions[h_index],
-									 wrapper,
-									 curr_branch_state);
-			train_new_state[h_index] = curr_branch_state;
+		vector<vector<double>> train_new_states(num_train);
+		for (int h_index = 0; h_index < num_train; h_index++) {
+			vector<double> state;
+			calc_state_helper(this->new_branch_obs[h_index],
+							  this->new_branch_actions[h_index],
+							  wrapper,
+							  state);
+			train_new_states[h_index] = state;
 		}
 
-		Network* branch_network = new Network(wrapper->world_model->num_states + FORCE_EXPERIMENT_NUM_NEW_STATE);
+		Network* branch_network = new Network(train_new_states[0].size());
 		double branch_hidden_1_average_max_update = 0.0;
 		double branch_hidden_2_average_max_update = 0.0;
 		double branch_hidden_3_average_max_update = 0.0;
 		double branch_output_average_max_update = 0.0;
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int index = sample_distribution(generator);
-			branch_network->activate(train_new_state[index]);
+			branch_network->activate(train_new_states[index]);
 			double error = this->new_target_vals[index] - branch_network->output->acti_vals[0];
 			branch_network->init_backprop(error,
 										  branch_hidden_1_average_max_update,
@@ -224,20 +154,33 @@ void ForceExperiment::train_new_backprop(double target_val,
 										  branch_output_average_max_update);
 		}
 
-		double sum_vals = 0.0;
-		for (int h_index = num_train; h_index < (int)this->new_branch_obs.size(); h_index++) {
-			branch_network->activate(train_new_state[h_index]);
-			if (branch_network->output->acti_vals[0] > this->existing_predicted[h_index]) {
-				sum_vals += this->new_target_vals[h_index] - this->existing_predicted[h_index];
+		double existing_sum_vals = 0.0;
+		for (int h_index = num_train; h_index < (int)this->existing_branch_obs.size(); h_index++) {
+			vector<double> state;
+			calc_state_helper(this->existing_branch_obs[h_index],
+							  this->existing_branch_actions[h_index],
+							  wrapper,
+							  state);
+			this->original_network->activate(state);
+			branch_network->activate(state);
+			if (branch_network->output->acti_vals[0] > this->original_network->output->acti_vals[0]) {
+				existing_sum_vals += this->existing_target_vals[h_index];
 			}
-
-			// // temp
-			// cout << h_index << endl;
-			// cout << "this->existing_predicted[h_index]: " << this->existing_predicted[h_index] << endl;
-			// cout << "branch_network->output->acti_vals[0]: " << branch_network->output->acti_vals[0] << endl;
-			// cout << "this->new_target_vals[h_index]: " << this->new_target_vals[h_index] << endl;
 		}
-		double predicted_local_improvement = sum_vals / (double)num_verify;
+		double new_sum_vals = 0.0;
+		for (int h_index = num_train; h_index < (int)this->new_branch_obs.size(); h_index++) {
+			vector<double> state;
+			calc_state_helper(this->new_branch_obs[h_index],
+							  this->new_branch_actions[h_index],
+							  wrapper,
+							  state);
+			this->original_network->activate(state);
+			branch_network->activate(state);
+			if (branch_network->output->acti_vals[0] > this->original_network->output->acti_vals[0]) {
+				new_sum_vals += this->new_target_vals[h_index];
+			}
+		}
+		double predicted_local_improvement = (new_sum_vals - existing_sum_vals) / (double)num_verify;
 
 		double average_instances_per_run;
 		switch (node_context->type) {

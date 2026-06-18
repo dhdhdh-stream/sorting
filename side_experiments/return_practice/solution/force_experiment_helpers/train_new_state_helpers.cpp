@@ -494,20 +494,51 @@ void ForceExperiment::train_new_state_helper(Wrapper* wrapper) {
 		train_new_state[h_index] = curr_branch_state;
 	}
 
-	double sum_vals = 0.0;
-	for (int h_index = num_train; h_index < (int)this->new_branch_obs.size(); h_index++) {
-		branch_network->activate(train_new_state[h_index]);
-		if (branch_network->output->acti_vals[0] > this->existing_predicted[h_index]) {
-			sum_vals += this->new_target_vals[h_index] - this->existing_predicted[h_index];
-		}
+	double existing_sum_vals = 0.0;
+	for (int h_index = num_train; h_index < (int)this->existing_branch_obs.size(); h_index++) {
+		vector<double> state;
+		calc_state_helper(this->existing_branch_obs[h_index],
+						  this->existing_branch_actions[h_index],
+						  wrapper,
+						  state);
+		this->original_network->activate(state);
 
-		// // temp
-		// cout << h_index << endl;
-		// cout << "this->existing_predicted[h_index]: " << this->existing_predicted[h_index] << endl;
-		// cout << "branch_network->output->acti_vals[0]: " << branch_network->output->acti_vals[0] << endl;
-		// cout << "this->new_target_vals[h_index]: " << this->new_target_vals[h_index] << endl;
+		vector<double> force_state;
+		calc_branch_state_helper(this->existing_branch_obs[h_index],
+								 this->existing_branch_actions[h_index],
+								 obs_network,
+								 action_network,
+								 wrapper,
+								 force_state);
+		branch_network->activate(force_state);
+
+		if (branch_network->output->acti_vals[0] > this->original_network->output->acti_vals[0]) {
+			existing_sum_vals += this->existing_target_vals[h_index];
+		}
 	}
-	double predicted_local_improvement = sum_vals / (double)num_verify;
+	double new_sum_vals = 0.0;
+	for (int h_index = num_train; h_index < (int)this->new_branch_obs.size(); h_index++) {
+		vector<double> state;
+		calc_state_helper(this->new_branch_obs[h_index],
+						  this->new_branch_actions[h_index],
+						  wrapper,
+						  state);
+		this->original_network->activate(state);
+
+		vector<double> force_state;
+		calc_branch_state_helper(this->new_branch_obs[h_index],
+								 this->new_branch_actions[h_index],
+								 obs_network,
+								 action_network,
+								 wrapper,
+								 force_state);
+		branch_network->activate(force_state);
+
+		if (branch_network->output->acti_vals[0] > this->original_network->output->acti_vals[0]) {
+			new_sum_vals += this->new_target_vals[h_index];
+		}
+	}
+	double predicted_local_improvement = (new_sum_vals - existing_sum_vals) / (double)num_verify;
 
 	double average_instances_per_run;
 	switch (node_context->type) {

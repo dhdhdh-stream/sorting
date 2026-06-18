@@ -16,6 +16,10 @@ void create_experiment(ExperimentRun* run,
 void create_force_experiment(ExperimentRun* run,
 							 Wrapper* wrapper);
 
+void calc_state_helper(std::vector<std::vector<double>>& obs,
+					   std::vector<int>& actions,
+					   Wrapper* wrapper,
+					   std::vector<double>& branch_state);
 double predict_helper(std::vector<double>& state,
 					  AbstractNode* next_node,
 					  Wrapper* wrapper);

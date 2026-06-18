@@ -31,7 +31,10 @@ public:
 	int state;
 	int state_iter;
 
-	std::vector<std::vector<double>> existing_states;
+	std::vector<std::vector<std::vector<double>>> existing_branch_obs;
+	std::vector<std::vector<int>> existing_branch_actions;
+	std::vector<std::vector<std::vector<double>>> existing_full_obs;
+	std::vector<std::vector<int>> existing_full_actions;
 	std::vector<double> existing_target_vals;
 
 	Network* original_network;
@@ -39,7 +42,6 @@ public:
 	double best_surprise;
 	std::vector<int> best_actions;
 
-	std::vector<double> existing_predicted;
 	std::vector<std::vector<std::vector<double>>> new_branch_obs;
 	std::vector<std::vector<int>> new_branch_actions;
 	std::vector<std::vector<std::vector<double>>> new_full_obs;
@@ -93,8 +95,6 @@ public:
 class ForceExperimentHistory {
 public:
 	ForceExperiment* experiment;
-
-	std::vector<double> state;
 
 	double existing_predicted;
 
