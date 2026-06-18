@@ -12,15 +12,14 @@ class PredictRun;
 class StateNetwork;
 class Wrapper;
 
-const int FORCE_EXPERIMENT_STATE_EXPLORE = 0;
-const int FORCE_EXPERIMENT_STATE_TRAIN_NEW = 1;
+const int FORCE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
+/**
+ * - (re)gather samples specifically for existing as predict may not be reliable
+ */
+const int FORCE_EXPERIMENT_STATE_EXPLORE = 1;
+const int FORCE_EXPERIMENT_STATE_TRAIN_NEW = 2;
 
 const int FORCE_EXPERIMENT_NUM_NEW_STATE = 2;
-
-void init_force_experiment_helper(AbstractNode* node_context,
-								  bool is_branch,
-								  AbstractNode* exit_next_node,
-								  Wrapper* wrapper);
 
 class ForceExperimentHistory;
 class ForceExperiment : public AbstractExperiment {
@@ -31,6 +30,9 @@ public:
 
 	int state;
 	int state_iter;
+
+	std::vector<std::vector<double>> existing_states;
+	std::vector<double> existing_target_vals;
 
 	Network* original_network;
 
@@ -44,7 +46,10 @@ public:
 	std::vector<std::vector<int>> new_full_actions;
 	std::vector<double> new_target_vals;
 
-	ForceExperiment();
+	ForceExperiment(AbstractNode* node_context,
+					bool is_branch,
+					AbstractNode* exit_next_node,
+					Wrapper* wrapper);
 	~ForceExperiment();
 
 	void experiment_activate(ExperimentRun* run);
@@ -55,6 +60,12 @@ public:
 				  ExperimentRun* run,
 				  ForceExperimentHistory* history,
 				  Wrapper* wrapper);
+
+	void train_existing_experiment_activate(ExperimentRun* run);
+	void train_existing_backprop(double target_val,
+								 ExperimentRun* run,
+								 ForceExperimentHistory* history,
+								 Wrapper* wrapper);
 
 	void explore_experiment_activate(ExperimentRun* run);
 	void explore_experiment_step(int& action,
@@ -82,6 +93,8 @@ public:
 class ForceExperimentHistory {
 public:
 	ForceExperiment* experiment;
+
+	std::vector<double> state;
 
 	double existing_predicted;
 

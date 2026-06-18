@@ -1,5 +1,3 @@
-// TODO: bad existing predicted
-
 #include "force_experiment.h"
 
 #include <algorithm>
@@ -135,7 +133,8 @@ void ForceExperiment::train_new_backprop(double target_val,
 	this->new_full_actions.push_back(run->action_histories);
 	this->new_target_vals.push_back(target_val);
 
-	if (this->new_branch_obs.size() >= TRAIN_NEW_NUM_SAMPLES) {
+	this->state_iter++;
+	if (this->state_iter >= TRAIN_NEW_NUM_SAMPLES) {
 		// temp
 		cout << "train_new" << endl;
 		cout << "new explore path:";

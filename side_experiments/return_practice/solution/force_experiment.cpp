@@ -11,8 +11,16 @@
 
 using namespace std;
 
-ForceExperiment::ForceExperiment() {
-	this->type = EXPERIMENT_TYPE_FORCE;
+ForceExperiment::ForceExperiment(AbstractNode* node_context,
+								 bool is_branch,
+								 AbstractNode* exit_next_node,
+								 Wrapper* wrapper) {
+	this->node_context = node_context;
+	this->is_branch = is_branch;
+	this->exit_next_node = exit_next_node;
+
+	this->state = FORCE_EXPERIMENT_STATE_TRAIN_EXISTING;
+	this->state_iter = 0;
 }
 
 ForceExperiment::~ForceExperiment() {

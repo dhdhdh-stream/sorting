@@ -179,9 +179,34 @@ void create_force_experiment(ExperimentRun* run,
 		}
 		AbstractNode* exit_next_node = explore_node_histories[random_index];
 
-		init_force_experiment_helper(explore_node,
-									 explore_is_branch,
-									 exit_next_node,
-									 wrapper);
+		ForceExperiment* experiment = new ForceExperiment(explore_node,
+														  explore_is_branch,
+														  exit_next_node,
+														  wrapper);
+
+		switch (explore_node->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)explore_node;
+				start_node->experiment = experiment;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)explore_node;
+				action_node->experiment = experiment;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)explore_node;
+				if (explore_is_branch) {
+					branch_node->branch_experiment = experiment;
+				} else {
+					branch_node->original_experiment = experiment;
+				}
+			}
+			break;
+		}
 	}
 }
