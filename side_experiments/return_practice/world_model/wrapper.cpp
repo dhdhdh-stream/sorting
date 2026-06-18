@@ -13,12 +13,6 @@ using namespace std;
 const int INIT_NUM_ACTIONS = 10;
 
 Wrapper::Wrapper(ProblemType* problem_type) {
-	this->num_obs = problem_type->num_obs();
-	this->num_actions = problem_type->num_possible_actions();
-
-	this->world_model = new WorldModel(this->num_obs,
-									   this->num_actions);
-
 	this->solution = new Solution();
 
 	this->solution->timestamp = 0;
@@ -75,6 +69,12 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 
 	end_node->ancestor_ids.push_back(start_node->id);
 
+	this->world_model = new WorldModel(this->num_obs,
+									   this->num_actions);
+
+	this->num_obs = problem_type->num_obs();
+	this->num_actions = problem_type->num_possible_actions();
+
 	this->iter = 0;
 
 	this->experiment_iter = 0;
@@ -91,6 +91,12 @@ Wrapper::Wrapper(std::string path,
 	ifstream input_file;
 	input_file.open(path + name);
 
+	this->solution = new Solution();
+	this->solution->load(input_file,
+						 this);
+
+	this->world_model = new WorldModel(input_file);
+
 	string num_obs_line;
 	getline(input_file, num_obs_line);
 	this->num_obs = stoi(num_obs_line);
@@ -99,11 +105,18 @@ Wrapper::Wrapper(std::string path,
 	getline(input_file, num_actions_line);
 	this->num_actions = stoi(num_actions_line);
 
-	this->world_model = new WorldModel(input_file);
+	string history_size_line;
+	getline(input_file, history_size_line);
+	int history_size = stoi(history_size_line);
+	for (int h_index = 0; h_index < history_size; h_index++) {
+		string improvement_line;
+		getline(input_file, improvement_line);
+		this->improvement_history.push_back(stod(improvement_line));
 
-	this->solution = new Solution();
-	this->solution->load(input_file,
-						 this);
+		string change_line;
+		getline(input_file, change_line);
+		this->change_history.push_back(change_line);
+	}
 
 	input_file.close();
 
@@ -119,9 +132,9 @@ Wrapper::Wrapper(std::string path,
 }
 
 Wrapper::~Wrapper() {
-	delete this->world_model;
-
 	delete this->solution;
+
+	delete this->world_model;
 }
 
 void Wrapper::save(string path,
@@ -129,13 +142,19 @@ void Wrapper::save(string path,
 	ofstream output_file;
 	output_file.open(path + "temp_" + name);
 
-	output_file << this->num_obs << endl;
-	output_file << this->num_actions << endl;
+	this->solution->save(output_file,
+						 this);
 
 	this->world_model->save(output_file);
 
-	this->solution->save(output_file,
-						 this);
+	output_file << this->num_obs << endl;
+	output_file << this->num_actions << endl;
+
+	output_file << this->improvement_history.size() << endl;
+	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {
+		output_file << this->improvement_history[h_index] << endl;
+		output_file << this->change_history[h_index] << endl;
+	}
 
 	output_file.close();
 

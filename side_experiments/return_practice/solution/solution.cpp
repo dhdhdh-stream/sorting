@@ -85,12 +85,6 @@ void Solution::save(ofstream& output_file,
 			it != this->train_new_last_scores.end(); it++) {
 		output_file << *it << endl;
 	}
-
-	output_file << this->improvement_history.size() << endl;
-	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {
-		output_file << this->improvement_history[h_index] << endl;
-		output_file << this->change_history[h_index] << endl;
-	}
 }
 
 void Solution::load(ifstream& input_file,
@@ -169,19 +163,6 @@ void Solution::load(ifstream& input_file,
 		string score_line;
 		getline(input_file, score_line);
 		this->train_new_last_scores.push_back(stod(score_line));
-	}
-
-	string history_size_line;
-	getline(input_file, history_size_line);
-	int history_size = stoi(history_size_line);
-	for (int h_index = 0; h_index < history_size; h_index++) {
-		string improvement_line;
-		getline(input_file, improvement_line);
-		this->improvement_history.push_back(stod(improvement_line));
-
-		string change_line;
-		getline(input_file, change_line);
-		this->change_history.push_back(change_line);
 	}
 }
 

@@ -22,9 +22,6 @@ public:
 
 	std::list<double> train_new_last_scores;
 
-	std::vector<double> improvement_history;
-	std::vector<std::string> change_history;
-
 	Solution();
 	~Solution();
 

@@ -44,8 +44,8 @@ void finalize_helper(AbstractNode* node_context,
 	cout << "score_average: " << score_average << endl;
 	wrapper->solution->curr_score = score_average;
 
-	wrapper->solution->improvement_history.push_back(score_average);
-	wrapper->solution->change_history.push_back(ss.str());
+	wrapper->improvement_history.push_back(score_average);
+	wrapper->change_history.push_back(ss.str());
 
 	cout << ss.str() << endl;
 

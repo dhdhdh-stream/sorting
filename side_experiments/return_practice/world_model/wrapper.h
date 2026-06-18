@@ -13,12 +13,15 @@ class WorldModel;
 
 class Wrapper {
 public:
-	int num_obs;
-	int num_actions;
+	Solution* solution;
 
 	WorldModel* world_model;
 
-	Solution* solution;
+	int num_obs;
+	int num_actions;
+
+	std::vector<double> improvement_history;
+	std::vector<std::string> change_history;
 
 	int iter;
 
