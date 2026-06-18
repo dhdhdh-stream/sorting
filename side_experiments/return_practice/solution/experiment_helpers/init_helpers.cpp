@@ -237,9 +237,9 @@ void init_experiment_helper(AbstractNode* node_context,
 
 	double predicted_global_improvement = average_instances_per_run * predicted_local_improvement;
 
-	// temp
-	cout << "predicted_local_improvement: " << predicted_local_improvement << endl;
-	cout << "predicted_global_improvement: " << predicted_global_improvement << endl;
+	// // temp
+	// cout << "predicted_local_improvement: " << predicted_local_improvement << endl;
+	// cout << "predicted_global_improvement: " << predicted_global_improvement << endl;
 
 	bool is_success = false;
 	if (predicted_local_improvement > 0.0) {

@@ -12,6 +12,9 @@ void ForceExperiment::experiment_activate(ExperimentRun* run) {
 	}
 
 	switch (this->state) {
+	case FORCE_EXPERIMENT_STATE_TRAIN_EXISTING:
+		train_existing_experiment_activate(run);
+		break;
 	case FORCE_EXPERIMENT_STATE_EXPLORE:
 		explore_experiment_activate(run);
 		break;
@@ -43,6 +46,12 @@ void ForceExperiment::backprop(double target_val,
 							   ForceExperimentHistory* history,
 							   Wrapper* wrapper) {
 	switch (this->state) {
+	case FORCE_EXPERIMENT_STATE_TRAIN_EXISTING:
+		train_existing_backprop(target_val,
+								run,
+								history,
+								wrapper);
+		break;
 	case FORCE_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 run,

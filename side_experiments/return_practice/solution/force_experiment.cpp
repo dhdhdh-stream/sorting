@@ -19,6 +19,8 @@ ForceExperiment::ForceExperiment(AbstractNode* node_context,
 	this->is_branch = is_branch;
 	this->exit_next_node = exit_next_node;
 
+	this->original_network = NULL;
+
 	this->state = FORCE_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 }

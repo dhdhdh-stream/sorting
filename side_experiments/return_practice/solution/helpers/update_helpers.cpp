@@ -119,8 +119,8 @@ void update_solution_helper(ExperimentRun* run,
 							branch_node->ramp++;
 							branch_node->ramp_iter = 0;
 
-							// temp
-							cout << "branch_node->ramp: " << branch_node->ramp << endl;
+							// // temp
+							// cout << "branch_node->ramp: " << branch_node->ramp << endl;
 
 							if (branch_node->ramp >= RAMP_NUM_GEARS) {
 								wrapper->solution->timestamp++;

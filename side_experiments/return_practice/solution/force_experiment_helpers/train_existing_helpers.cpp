@@ -1,5 +1,7 @@
 #include "force_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "experiment_run.h"
 #include "globals.h"

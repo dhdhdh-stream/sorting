@@ -264,5 +264,5 @@ void Wrapper::experiment_end(double result,
 		this->sample_index = 0;
 	}
 
-	update_world_model_helper(this);
+	// update_world_model_helper(this);
 }

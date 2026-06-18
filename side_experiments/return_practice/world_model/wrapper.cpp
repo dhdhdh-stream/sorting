@@ -13,6 +13,9 @@ using namespace std;
 const int INIT_NUM_ACTIONS = 10;
 
 Wrapper::Wrapper(ProblemType* problem_type) {
+	this->num_obs = problem_type->num_obs();
+	this->num_actions = problem_type->num_possible_actions();
+
 	this->solution = new Solution();
 
 	this->solution->timestamp = 0;
@@ -71,9 +74,6 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 
 	this->world_model = new WorldModel(this->num_obs,
 									   this->num_actions);
-
-	this->num_obs = problem_type->num_obs();
-	this->num_actions = problem_type->num_possible_actions();
 
 	this->iter = 0;
 

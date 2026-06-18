@@ -135,13 +135,13 @@ void ForceExperiment::train_new_backprop(double target_val,
 
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_NEW_NUM_SAMPLES) {
-		// temp
-		cout << "train_new" << endl;
-		cout << "new explore path:";
-		for (int s_index = 0; s_index < (int)this->best_actions.size(); s_index++) {
-			cout << " " << this->best_actions[s_index];
-		}
-		cout << endl;
+		// // temp
+		// cout << "train_new" << endl;
+		// cout << "new explore path:";
+		// for (int s_index = 0; s_index < (int)this->best_actions.size(); s_index++) {
+		// 	cout << " " << this->best_actions[s_index];
+		// }
+		// cout << endl;
 
 		{
 			default_random_engine generator_copy = generator;
@@ -267,10 +267,10 @@ void ForceExperiment::train_new_backprop(double target_val,
 
 		double predicted_global_improvement = average_instances_per_run * predicted_local_improvement;
 
-		// temp
-		cout << "force_experiment" << endl;
-		cout << "predicted_local_improvement: " << predicted_local_improvement << endl;
-		cout << "predicted_global_improvement: " << predicted_global_improvement << endl;
+		// // temp
+		// cout << "force_experiment" << endl;
+		// cout << "predicted_local_improvement: " << predicted_local_improvement << endl;
+		// cout << "predicted_global_improvement: " << predicted_global_improvement << endl;
 
 		bool is_success = false;
 		if (predicted_local_improvement > 0.0) {
