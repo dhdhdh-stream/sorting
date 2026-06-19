@@ -495,6 +495,7 @@ void ForceExperiment::train_new_state_helper(Wrapper* wrapper) {
 	}
 
 	double existing_sum_vals = 0.0;
+	int existing_count = 0;
 	for (int h_index = num_train; h_index < (int)this->existing_branch_obs.size(); h_index++) {
 		vector<double> state;
 		calc_state_helper(this->existing_branch_obs[h_index],
@@ -514,9 +515,12 @@ void ForceExperiment::train_new_state_helper(Wrapper* wrapper) {
 
 		if (branch_network->output->acti_vals[0] > this->original_network->output->acti_vals[0]) {
 			existing_sum_vals += this->existing_target_vals[h_index];
+			existing_count++;
 		}
 	}
+	double existing_average = existing_sum_vals / (double)existing_count;
 	double new_sum_vals = 0.0;
+	int new_count = 0;
 	for (int h_index = num_train; h_index < (int)this->new_branch_obs.size(); h_index++) {
 		vector<double> state;
 		calc_state_helper(this->new_branch_obs[h_index],
@@ -536,9 +540,12 @@ void ForceExperiment::train_new_state_helper(Wrapper* wrapper) {
 
 		if (branch_network->output->acti_vals[0] > this->original_network->output->acti_vals[0]) {
 			new_sum_vals += this->new_target_vals[h_index];
+			new_count++;
 		}
 	}
-	double predicted_local_improvement = (new_sum_vals - existing_sum_vals) / (double)num_verify;
+	double new_average = new_sum_vals / (double)new_count;
+	double average_ratio = (existing_count + new_count) / (2.0 * num_verify);
+	double predicted_local_improvement = (new_average - existing_average) * average_ratio;
 
 	double average_instances_per_run;
 	switch (node_context->type) {
@@ -574,7 +581,9 @@ void ForceExperiment::train_new_state_helper(Wrapper* wrapper) {
 	// cout << "predicted_global_improvement: " << predicted_global_improvement << endl;
 
 	bool is_success = false;
-	if (predicted_local_improvement > 0.0) {
+	if (existing_count > 0
+			&& new_count > 0
+			&& predicted_local_improvement > 0.0) {
 		if (wrapper->solution->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
 			int num_better_than = 0;
 			for (list<double>::iterator it = wrapper->solution->train_new_last_scores.begin();

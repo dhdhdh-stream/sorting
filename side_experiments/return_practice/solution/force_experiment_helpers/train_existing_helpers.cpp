@@ -58,8 +58,8 @@ void ForceExperiment::train_existing_backprop(double target_val,
 		vector<vector<double>> train_existing_states(num_train);
 		for (int h_index = 0; h_index < num_train; h_index++) {
 			vector<double> state;
-			calc_state_helper(this->new_branch_obs[h_index],
-							  this->new_branch_actions[h_index],
+			calc_state_helper(this->existing_branch_obs[h_index],
+							  this->existing_branch_actions[h_index],
 							  wrapper,
 							  state);
 			train_existing_states[h_index] = state;
