@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 
+class CompareExperiment;
 class ExperimentRun;
 class ForceExperiment;
 class ProblemType;
@@ -35,6 +36,8 @@ public:
 	std::vector<std::vector<int>> sample_actions;
 	std::vector<double> sample_target_vals;
 	int sample_index;
+
+	CompareExperiment* compare_experiment;
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;

@@ -17,7 +17,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_MIN_NUM_STATES = 10;
 #else
-const int EXPERIMENT_MIN_NUM_STATES = 100;
+const int EXPERIMENT_MIN_NUM_STATES = 1000;
 #endif /* MDEBUG */
 
 const int FORCE_EXPERIMENT_ITER = 4;

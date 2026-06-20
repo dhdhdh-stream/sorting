@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "compare_experiment.h"
 #include "constants.h"
 #include "experiment_run.h"
 #include "force_experiment.h"
@@ -32,11 +33,17 @@ void Wrapper::experiment_init(ExperimentRun* run) {
 
 	this->iter++;
 
-	uniform_int_distribution<int> explore_distribution(0, 1);
-	if (explore_distribution(generator) == 0) {
+	if (this->compare_experiment != NULL) {
+		run->compare_experiment_history = new CompareExperimentHistory(this->compare_experiment);
+
 		run->should_force = true;
 	} else {
-		run->should_force = false;
+		uniform_int_distribution<int> explore_distribution(0, 1);
+		if (explore_distribution(generator) == 0) {
+			run->should_force = true;
+		} else {
+			run->should_force = false;
+		}
 	}
 
 	#if defined(MDEBUG) && MDEBUG
@@ -84,6 +91,15 @@ pair<bool,int> Wrapper::experiment_step(vector<double> obs,
 
 void Wrapper::experiment_end(double result,
 							 ExperimentRun* run) {
+	if (this->compare_experiment == NULL) {
+		create_experiment(run,
+						  this);
+	} else {
+		this->compare_experiment->backprop(result,
+										   run,
+										   this);
+	}
+
 	if (run->should_force) {
 		if (run->force_experiment_histories.size() == 0) {
 			if (this->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {

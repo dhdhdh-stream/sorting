@@ -11,6 +11,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "compare_experiment.h"
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
@@ -21,12 +22,6 @@
 #include "wrapper.h"
 
 using namespace std;
-
-#if defined(MDEBUG) && MDEBUG
-const int NUM_SIMULATE = 40;
-#else
-const int NUM_SIMULATE = 4000;
-#endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_EXPLORE = 5;
@@ -65,8 +60,6 @@ void init_experiment_helper(AbstractNode* node_context,
 	}
 	uniform_int_distribution<int> start_distribution(0, state_history.size()-1);
 
-	uniform_int_distribution<int> train_distribution(0, NUM_SIMULATE-1);
-
 	AbstractNode* next_node;
 	switch (node_context->type) {
 	case NODE_TYPE_START:
@@ -93,9 +86,9 @@ void init_experiment_helper(AbstractNode* node_context,
 		break;
 	}
 
-	vector<vector<double>> train_existing_state(NUM_SIMULATE);
-	vector<double> train_existing_predicted(NUM_SIMULATE);
-	for (int iter_index = 0; iter_index < NUM_SIMULATE; iter_index++) {
+	vector<vector<double>> train_existing_state(EXPERIMENT_NUM_SAMPLES);
+	vector<double> train_existing_predicted(EXPERIMENT_NUM_SAMPLES);
+	for (int iter_index = 0; iter_index < EXPERIMENT_NUM_SAMPLES; iter_index++) {
 		int start_index = start_distribution(generator);
 		train_existing_state[iter_index] = state_history[start_index];
 		train_existing_predicted[iter_index] = predict_helper(state_history[start_index],
@@ -103,13 +96,18 @@ void init_experiment_helper(AbstractNode* node_context,
 															  wrapper);
 	}
 
-	Network* original_network = new Network(state_history[0].size());
+	int num_verify = VERIFICATION_RATIO * (double)EXPERIMENT_NUM_SAMPLES;
+	int num_train = EXPERIMENT_NUM_SAMPLES - num_verify;
+
+	uniform_int_distribution<int> sample_distribution(0, num_train-1);
+
+	Network* original_network = new Network(train_existing_state[0].size());
 	double original_hidden_1_average_max_update = 0.0;
 	double original_hidden_2_average_max_update = 0.0;
 	double original_hidden_3_average_max_update = 0.0;
 	double original_output_average_max_update = 0.0;
 	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-		int index = train_distribution(generator);
+		int index = sample_distribution(generator);
 		original_network->activate(train_existing_state[index]);
 		double error = train_existing_predicted[index] - original_network->output->acti_vals[0];
 		original_network->init_backprop(error,
@@ -162,9 +160,9 @@ void init_experiment_helper(AbstractNode* node_context,
 		}
 	}
 
-	vector<vector<double>> train_new_state(NUM_SIMULATE);
-	vector<double> train_new_predicted(NUM_SIMULATE);
-	for (int iter_index = 0; iter_index < NUM_SIMULATE; iter_index++) {
+	vector<vector<double>> train_new_state(EXPERIMENT_NUM_SAMPLES);
+	vector<double> train_new_predicted(EXPERIMENT_NUM_SAMPLES);
+	for (int iter_index = 0; iter_index < EXPERIMENT_NUM_SAMPLES; iter_index++) {
 		int start_index = start_distribution(generator);
 
 		train_new_state[iter_index] = state_history[start_index];
@@ -183,13 +181,13 @@ void init_experiment_helper(AbstractNode* node_context,
 														 wrapper);
 	}
 
-	Network* branch_network = new Network(state_history[0].size());
+	Network* branch_network = new Network(train_new_state[0].size());
 	double branch_hidden_1_average_max_update = 0.0;
 	double branch_hidden_2_average_max_update = 0.0;
 	double branch_hidden_3_average_max_update = 0.0;
 	double branch_output_average_max_update = 0.0;
 	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-		int index = train_distribution(generator);
+		int index = sample_distribution(generator);
 		branch_network->activate(train_new_state[index]);
 		double error = train_new_predicted[index] - branch_network->output->acti_vals[0];
 		branch_network->init_backprop(error,
@@ -199,15 +197,30 @@ void init_experiment_helper(AbstractNode* node_context,
 									  branch_output_average_max_update);
 	}
 
-	double sum_vals = 0.0;
-	for (int h_index = 0; h_index < NUM_SIMULATE; h_index++) {
+	double existing_sum_vals = 0.0;
+	int existing_count = 0;
+	for (int h_index = num_train; h_index < (int)train_existing_state.size(); h_index++) {
+		original_network->activate(train_existing_state[h_index]);
+		branch_network->activate(train_existing_state[h_index]);
+		if (branch_network->output->acti_vals[0] > original_network->output->acti_vals[0]) {
+			existing_sum_vals += train_existing_predicted[h_index];
+			existing_count++;
+		}
+	}
+	double existing_average = existing_sum_vals / (double)existing_count;
+	double new_sum_vals = 0.0;
+	int new_count = 0;
+	for (int h_index = num_train; h_index < (int)train_new_state.size(); h_index++) {
 		original_network->activate(train_new_state[h_index]);
 		branch_network->activate(train_new_state[h_index]);
 		if (branch_network->output->acti_vals[0] > original_network->output->acti_vals[0]) {
-			sum_vals += branch_network->output->acti_vals[0] - original_network->output->acti_vals[0];
+			new_sum_vals += train_new_predicted[h_index];
+			new_count++;
 		}
 	}
-	double predicted_local_improvement = sum_vals / (double)NUM_SIMULATE;
+	double new_average = new_sum_vals / (double)new_count;
+	double average_ratio = (existing_count + new_count) / (2.0 * num_verify);
+	double predicted_local_improvement = (new_average - existing_average) * average_ratio;
 
 	double average_instances_per_run;
 	switch (node_context->type) {
@@ -272,13 +285,57 @@ void init_experiment_helper(AbstractNode* node_context,
 	#else
 	if (is_success) {
 	#endif /* MDEBUG */
-		finalize_helper(node_context,
-						is_branch,
-						best_actions,
-						exit_next_node,
-						original_network,
-						branch_network,
-						wrapper);
+		// finalize_helper(node_context,
+		// 				is_branch,
+		// 				best_actions,
+		// 				exit_next_node,
+		// 				original_network,
+		// 				branch_network,
+		// 				wrapper);
+
+		CompareExperiment* experiment = new CompareExperiment();
+
+		experiment->node_context = node_context;
+		experiment->is_branch = is_branch;
+		experiment->exit_next_node = exit_next_node;
+
+		experiment->original_network = original_network;
+		experiment->branch_network = branch_network;
+
+		experiment->actions = best_actions;
+
+		experiment->predicted_existing_average = existing_average;
+		experiment->predicted_new_average = new_average;
+
+		experiment->sum_scores = 0.0;
+
+		experiment->state = COMPARE_EXPERIMENT_MEASURE_EXISTING;
+		experiment->state_iter = 0;
+
+		switch (node_context->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)node_context;
+				start_node->experiment = experiment;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)node_context;
+				action_node->experiment = experiment;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)node_context;
+				if (is_branch) {
+					branch_node->branch_experiment = experiment;
+				} else {
+					branch_node->original_experiment = experiment;
+				}
+			}
+			break;
+		}
 	} else {
 		delete original_network;
 		delete branch_network;

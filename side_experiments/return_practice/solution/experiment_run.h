@@ -7,6 +7,7 @@
 class AbstractExperimentState;
 class AbstractNode;
 class AbstractNodeHistory;
+class CompareExperimentHistory;
 class ForceExperiment;
 class ForceExperimentHistory;
 class Wrapper;
@@ -28,6 +29,9 @@ public:
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<int> action_histories;
 
+	CompareExperimentHistory* compare_experiment_history;
+
+	ExperimentRun();
 	~ExperimentRun();
 };
 

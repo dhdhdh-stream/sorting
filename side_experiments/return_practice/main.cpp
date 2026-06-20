@@ -2,6 +2,13 @@
 
 // TODO: reinforce states from branch
 
+// TODO: use results from current in later networks
+// - so can build complex calculations
+// - also drop network size
+
+// TODO: with scopes, even if outer has many states, inner may not need many
+// - if inner doesn't affect an outer state, than won't need an inner state to update outer
+
 #include <chrono>
 #include <iostream>
 #include <map>

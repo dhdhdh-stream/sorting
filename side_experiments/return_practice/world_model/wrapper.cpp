@@ -81,6 +81,8 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 
 	this->sample_index = 0;
 
+	this->compare_experiment = NULL;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
@@ -125,6 +127,8 @@ Wrapper::Wrapper(std::string path,
 	this->experiment_iter = 0;
 
 	this->sample_index = 0;
+
+	this->compare_experiment = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
