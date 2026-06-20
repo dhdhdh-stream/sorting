@@ -20,6 +20,7 @@ void BranchNode::experiment_step(int& action,
 	run->node_histories[this->id] = history;
 
 	history->state = run->state;
+	history->obs_history_index = run->obs_histories.size();
 
 	bool is_branch;
 	if (this->ramp < RAMP_NUM_GEARS) {

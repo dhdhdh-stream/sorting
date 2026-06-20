@@ -10,6 +10,8 @@
 #include "network.h"
 #include "solution.h"
 #include "start_node.h"
+#include "state_network.h"
+#include "world_model.h"
 #include "wrapper.h"
 
 using namespace std;
@@ -31,6 +33,123 @@ const int ITERS_PER_RAMP = 2;
 const int RAMP_UPDATE_NUM_TRAIN = 100;
 const int ITERS_PER_RAMP = 100;
 #endif /* MDEBUG */
+
+void update_helper(vector<vector<double>>& obs,
+				   vector<int>& actions,
+				   double target_val,
+				   Network* network,
+				   Wrapper* wrapper) {
+	WorldModel* world_model = wrapper->world_model;
+
+	vector<double> state(world_model->num_states, 0.0);
+
+	vector<vector<StateNetworkHistory*>> obs_network_histories;
+	vector<vector<StateNetworkHistory*>> action_network_histories;
+
+	for (int step_index = 0; step_index < (int)obs.size(); step_index++) {
+		{
+			vector<double> start_state = state;
+
+			vector<StateNetworkHistory*> step_obs_network_histories;
+			for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
+				vector<double> inputs;
+				for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
+					inputs.push_back(state[world_model->network_inputs[n_index][i_index]]);
+				}
+				inputs.insert(inputs.end(), obs[step_index].begin(), obs[step_index].end());
+				StateNetworkHistory* network_history = new StateNetworkHistory();
+				world_model->obs_networks[n_index]->activate(inputs,
+															 network_history);
+				step_obs_network_histories.push_back(network_history);
+				for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
+					state[world_model->network_outputs[n_index][o_index]] +=
+						world_model->obs_networks[n_index]->output->acti_vals[o_index];
+				}
+			}
+			obs_network_histories.push_back(step_obs_network_histories);
+		}
+
+		if (step_index < (int)actions.size()) {
+			int action = actions[step_index];
+
+			vector<double> partial_inputs;
+			for (int a_index = 0; a_index < wrapper->num_actions; a_index++) {
+				if (action == a_index) {
+					partial_inputs.push_back(1.0);
+				} else {
+					partial_inputs.push_back(0.0);
+				}
+			}
+
+			vector<StateNetworkHistory*> step_action_network_histories;
+			for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
+				vector<double> inputs;
+				for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
+					inputs.push_back(state[world_model->network_inputs[n_index][i_index]]);
+				}
+				inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
+				StateNetworkHistory* network_history = new StateNetworkHistory();
+				world_model->action_networks[n_index]->activate(inputs,
+																network_history);
+				step_action_network_histories.push_back(network_history);
+				for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
+					state[world_model->network_outputs[n_index][o_index]] +=
+						world_model->action_networks[n_index]->output->acti_vals[o_index];
+				}
+			}
+			action_network_histories.push_back(step_action_network_histories);
+		}
+	}
+
+	network->activate(state);
+	double predicted = network->output->acti_vals[0];
+
+	double final_error = target_val - predicted;
+
+	vector<double> state_errors(world_model->num_states, 0.0);
+
+	network->backprop(final_error);
+	for (int i_index = 0; i_index < world_model->num_states; i_index++) {
+		state_errors[i_index] += network->input->errors[i_index];
+		network->input->errors[i_index] = 0.0;
+	}
+
+	for (int step_index = (int)obs.size()-1; step_index >= 0; step_index--) {
+		if (step_index < (int)actions.size()) {
+			for (int n_index = (int)world_model->action_networks.size()-1; n_index >= 0; n_index--) {
+				vector<double> errors;
+				for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
+					errors.push_back(state_errors[world_model->network_outputs[n_index][o_index]]);
+				}
+				world_model->action_networks[n_index]->backprop(errors,
+																action_network_histories[step_index][n_index]);
+				delete action_network_histories[step_index][n_index];
+				for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
+					state_errors[world_model->network_inputs[n_index][i_index]] +=
+						world_model->action_networks[n_index]->input->errors[i_index];
+					world_model->action_networks[n_index]->input->errors[i_index] = 0.0;
+				}
+			}
+		}
+
+		{
+			for (int n_index = (int)world_model->obs_networks.size()-1; n_index >= 0; n_index--) {
+				vector<double> errors;
+				for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
+					errors.push_back(state_errors[world_model->network_outputs[n_index][o_index]]);
+				}
+				world_model->obs_networks[n_index]->backprop(errors,
+															 obs_network_histories[step_index][n_index]);
+				delete obs_network_histories[step_index][n_index];
+				for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
+					state_errors[world_model->network_inputs[n_index][i_index]] +=
+						world_model->obs_networks[n_index]->input->errors[i_index];
+					world_model->obs_networks[n_index]->input->errors[i_index] = 0.0;
+				}
+			}
+		}
+	}
+}
 
 void update_solution_helper(ExperimentRun* run,
 							double target_val,
@@ -93,40 +212,48 @@ void update_solution_helper(ExperimentRun* run,
 						branch_node->branch_history_index = 0;
 					}
 
-					if (branch_node->ramp >= RAMP_NUM_GEARS) {
-						if (branch_node->branch_state_history.size() >= UPDATE_MIN_NUM_SAMPLES) {
-							uniform_int_distribution<int> distribution(0, branch_node->branch_state_history.size()-1);
-							for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
-								int index = distribution(generator);
-								branch_node->branch_network->activate(branch_node->branch_state_history[index]);
-								double error = branch_node->branch_target_val_history[index] - branch_node->branch_network->output->acti_vals[0];
-								branch_node->branch_network->backprop(error);
-							}
-						}
-					} else {
-						if (branch_node->branch_state_history.size() >= RAMP_UPDATE_MIN_SAMPLES) {
-							uniform_int_distribution<int> distribution(0, branch_node->branch_state_history.size()-1);
-							for (int iter_index = 0; iter_index < RAMP_UPDATE_NUM_TRAIN; iter_index++) {
-								int index = distribution(generator);
-								branch_node->branch_network->activate(branch_node->branch_state_history[index]);
-								double error = branch_node->branch_target_val_history[index] - branch_node->branch_network->output->acti_vals[0];
-								branch_node->branch_network->backprop(error);
-							}
-						}
+					// if (branch_node->ramp >= RAMP_NUM_GEARS) {
+					// 	if (branch_node->branch_state_history.size() >= UPDATE_MIN_NUM_SAMPLES) {
+					// 		uniform_int_distribution<int> distribution(0, branch_node->branch_state_history.size()-1);
+					// 		for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
+					// 			int index = distribution(generator);
+					// 			branch_node->branch_network->activate(branch_node->branch_state_history[index]);
+					// 			double error = branch_node->branch_target_val_history[index] - branch_node->branch_network->output->acti_vals[0];
+					// 			branch_node->branch_network->backprop(error);
+					// 		}
+					// 	}
+					// } else {
+					// 	if (branch_node->branch_state_history.size() >= RAMP_UPDATE_MIN_SAMPLES) {
+					// 		uniform_int_distribution<int> distribution(0, branch_node->branch_state_history.size()-1);
+					// 		for (int iter_index = 0; iter_index < RAMP_UPDATE_NUM_TRAIN; iter_index++) {
+					// 			int index = distribution(generator);
+					// 			branch_node->branch_network->activate(branch_node->branch_state_history[index]);
+					// 			double error = branch_node->branch_target_val_history[index] - branch_node->branch_network->output->acti_vals[0];
+					// 			branch_node->branch_network->backprop(error);
+					// 		}
+					// 	}
 
-						branch_node->ramp_iter++;
-						if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
-							branch_node->ramp++;
-							branch_node->ramp_iter = 0;
+					// 	branch_node->ramp_iter++;
+					// 	if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
+					// 		branch_node->ramp++;
+					// 		branch_node->ramp_iter = 0;
 
-							// // temp
-							// cout << "branch_node->ramp: " << branch_node->ramp << endl;
+					// 		// // temp
+					// 		// cout << "branch_node->ramp: " << branch_node->ramp << endl;
 
-							if (branch_node->ramp >= RAMP_NUM_GEARS) {
-								wrapper->solution->timestamp++;
-							}
-						}
-					}
+					// 		if (branch_node->ramp >= RAMP_NUM_GEARS) {
+					// 			wrapper->solution->timestamp++;
+					// 		}
+					// 	}
+					// }
+
+					vector<vector<double>> obs(run->obs_histories.begin(), run->obs_histories.begin() + branch_node_history->obs_history_index);
+					vector<int> actions(run->action_histories.begin(), run->action_histories.begin() + branch_node_history->obs_history_index-1);
+					update_helper(obs,
+								  actions,
+								  target_val,
+								  branch_node->branch_network,
+								  wrapper);
 				} else {
 					branch_node->original_curr_instances_per_run++;
 
@@ -142,27 +269,35 @@ void update_solution_helper(ExperimentRun* run,
 						branch_node->original_history_index = 0;
 					}
 
-					if (branch_node->ramp >= RAMP_NUM_GEARS) {
-						if (branch_node->original_state_history.size() >= UPDATE_MIN_NUM_SAMPLES) {
-							uniform_int_distribution<int> distribution(0, branch_node->original_state_history.size()-1);
-							for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
-								int index = distribution(generator);
-								branch_node->original_network->activate(branch_node->original_state_history[index]);
-								double errors = branch_node->original_target_val_history[index] - branch_node->original_network->output->acti_vals[0];
-								branch_node->original_network->backprop(errors);
-							}
-						}
-					} else {
-						if (branch_node->original_state_history.size() >= RAMP_UPDATE_MIN_SAMPLES) {
-							uniform_int_distribution<int> distribution(0, branch_node->original_state_history.size()-1);
-							for (int iter_index = 0; iter_index < RAMP_UPDATE_NUM_TRAIN; iter_index++) {
-								int index = distribution(generator);
-								branch_node->original_network->activate(branch_node->original_state_history[index]);
-								double error = branch_node->original_target_val_history[index] - branch_node->original_network->output->acti_vals[0];
-								branch_node->original_network->backprop(error);
-							}
-						}
-					}
+					// if (branch_node->ramp >= RAMP_NUM_GEARS) {
+					// 	if (branch_node->original_state_history.size() >= UPDATE_MIN_NUM_SAMPLES) {
+					// 		uniform_int_distribution<int> distribution(0, branch_node->original_state_history.size()-1);
+					// 		for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
+					// 			int index = distribution(generator);
+					// 			branch_node->original_network->activate(branch_node->original_state_history[index]);
+					// 			double errors = branch_node->original_target_val_history[index] - branch_node->original_network->output->acti_vals[0];
+					// 			branch_node->original_network->backprop(errors);
+					// 		}
+					// 	}
+					// } else {
+					// 	if (branch_node->original_state_history.size() >= RAMP_UPDATE_MIN_SAMPLES) {
+					// 		uniform_int_distribution<int> distribution(0, branch_node->original_state_history.size()-1);
+					// 		for (int iter_index = 0; iter_index < RAMP_UPDATE_NUM_TRAIN; iter_index++) {
+					// 			int index = distribution(generator);
+					// 			branch_node->original_network->activate(branch_node->original_state_history[index]);
+					// 			double error = branch_node->original_target_val_history[index] - branch_node->original_network->output->acti_vals[0];
+					// 			branch_node->original_network->backprop(error);
+					// 		}
+					// 	}
+					// }
+
+					vector<vector<double>> obs(run->obs_histories.begin(), run->obs_histories.begin() + branch_node_history->obs_history_index);
+					vector<int> actions(run->action_histories.begin(), run->action_histories.begin() + branch_node_history->obs_history_index-1);
+					update_helper(obs,
+								  actions,
+								  target_val,
+								  branch_node->original_network,
+								  wrapper);
 				}
 			}
 			break;

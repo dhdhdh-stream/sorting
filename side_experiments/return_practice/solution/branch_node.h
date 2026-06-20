@@ -64,6 +64,8 @@ public:
 
 	std::vector<double> state;
 
+	int obs_history_index;
+
 	BranchNodeHistory(BranchNode* node);
 };
 
