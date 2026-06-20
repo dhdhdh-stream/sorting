@@ -7,6 +7,7 @@
 #include "experiment_run.h"
 #include "network.h"
 #include "start_node.h"
+#include "utilities.h"
 #include "world_model_helpers.h"
 #include "wrapper.h"
 
@@ -14,9 +15,25 @@ using namespace std;
 
 void CompareExperiment::measure_new_experiment_activate(
 		ExperimentRun* run) {
+	bool is_branch;
 	this->original_network->activate(run->state);
 	this->branch_network->activate(run->state);
 	if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+		is_branch = true;
+	} else {
+		is_branch = false;
+	}
+
+	#if defined(MDEBUG) && MDEBUG
+	if (run->wrapper->curr_run_seed%2 == 0) {
+		is_branch = true;
+	} else {
+		is_branch = false;
+	}
+	run->wrapper->curr_run_seed = xorshift(run->wrapper->curr_run_seed);
+	#endif /* MDEBUG */
+
+	if (is_branch) {
 		run->compare_experiment_history->hit_branch = true;
 
 		CompareExperimentState* new_experiment_state = new CompareExperimentState(this);
