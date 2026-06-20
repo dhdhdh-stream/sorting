@@ -277,7 +277,7 @@ void update_helper(vector<vector<double>>& obs,
 
 	for (int step_index = (int)obs.size()-1; step_index >= 0; step_index--) {
 		if (step_index < (int)actions.size()) {
-			for (int n_index = (int)world_model->action_networks.size()-1; n_index >= 0; n_index++) {
+			for (int n_index = (int)world_model->action_networks.size()-1; n_index >= 0; n_index--) {
 				vector<double> errors;
 				for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
 					errors.push_back(state_errors[world_model->network_outputs[n_index][o_index]]);
@@ -294,7 +294,7 @@ void update_helper(vector<vector<double>>& obs,
 		}
 
 		{
-			for (int n_index = (int)world_model->obs_networks.size()-1; n_index >= 0; n_index++) {
+			for (int n_index = (int)world_model->obs_networks.size()-1; n_index >= 0; n_index--) {
 				vector<double> errors;
 				for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
 					errors.push_back(state_errors[world_model->network_outputs[n_index][o_index]]);
