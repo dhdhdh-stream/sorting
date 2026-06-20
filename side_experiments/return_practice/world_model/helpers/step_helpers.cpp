@@ -17,12 +17,10 @@ void obs_helper(vector<double>& obs,
 				Wrapper* wrapper) {
 	WorldModel* world_model = wrapper->world_model;
 
-	vector<double> start_state = state;
-
 	for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
 		vector<double> inputs;
 		for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
-			inputs.push_back(start_state[world_model->network_inputs[n_index][i_index]]);
+			inputs.push_back(state[world_model->network_inputs[n_index][i_index]]);
 		}
 		inputs.insert(inputs.end(), obs.begin(), obs.end());
 		world_model->obs_networks[n_index]->activate(inputs);
@@ -37,8 +35,6 @@ void action_helper(int action,
 				   Wrapper* wrapper) {
 	WorldModel* world_model = wrapper->world_model;
 
-	vector<double> start_state = state;
-
 	vector<double> partial_inputs;
 	for (int a_index = 0; a_index < wrapper->num_actions; a_index++) {
 		if (action == a_index) {
@@ -51,7 +47,7 @@ void action_helper(int action,
 	for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
 		vector<double> inputs;
 		for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
-			inputs.push_back(start_state[world_model->network_inputs[n_index][i_index]]);
+			inputs.push_back(state[world_model->network_inputs[n_index][i_index]]);
 		}
 		inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
 		world_model->action_networks[n_index]->activate(inputs);

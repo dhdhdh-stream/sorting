@@ -43,12 +43,10 @@ void train_final_helper(vector<vector<double>>& obs,
 
 	for (int step_index = 0; step_index < (int)obs.size(); step_index++) {
 		{
-			vector<double> start_state = state;
-
 			for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
 				vector<double> inputs;
 				for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
-					inputs.push_back(start_state[world_model->network_inputs[n_index][i_index]]);
+					inputs.push_back(state[world_model->network_inputs[n_index][i_index]]);
 				}
 				inputs.insert(inputs.end(), obs[step_index].begin(), obs[step_index].end());
 				world_model->obs_networks[n_index]->activate(inputs);
@@ -60,7 +58,7 @@ void train_final_helper(vector<vector<double>>& obs,
 
 			{
 				vector<double> inputs;
-				inputs.insert(inputs.end(), start_state.begin(), start_state.end());
+				inputs.insert(inputs.end(), state.begin(), state.end());
 				inputs.insert(inputs.end(), force_state.begin(), force_state.end());
 				inputs.insert(inputs.end(), obs[step_index].begin(), obs[step_index].end());
 				StateNetworkHistory* network_history = new StateNetworkHistory();
@@ -85,12 +83,10 @@ void train_final_helper(vector<vector<double>>& obs,
 				}
 			}
 
-			vector<double> start_state = state;
-
 			for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
 				vector<double> inputs;
 				for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
-					inputs.push_back(start_state[world_model->network_inputs[n_index][i_index]]);
+					inputs.push_back(state[world_model->network_inputs[n_index][i_index]]);
 				}
 				inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
 				world_model->action_networks[n_index]->activate(inputs);
@@ -102,7 +98,7 @@ void train_final_helper(vector<vector<double>>& obs,
 
 			{
 				vector<double> inputs;
-				inputs.insert(inputs.end(), start_state.begin(), start_state.end());
+				inputs.insert(inputs.end(), state.begin(), state.end());
 				inputs.insert(inputs.end(), force_state.begin(), force_state.end());
 				inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
 				StateNetworkHistory* network_history = new StateNetworkHistory();

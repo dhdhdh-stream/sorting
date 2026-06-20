@@ -203,7 +203,7 @@ void update_helper(vector<vector<double>>& obs,
 			for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
 				vector<double> inputs;
 				for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
-					inputs.push_back(start_state[world_model->network_inputs[n_index][i_index]]);
+					inputs.push_back(state[world_model->network_inputs[n_index][i_index]]);
 				}
 				inputs.insert(inputs.end(), obs[step_index].begin(), obs[step_index].end());
 				StateNetworkHistory* network_history = new StateNetworkHistory();
@@ -242,13 +242,11 @@ void update_helper(vector<vector<double>>& obs,
 				}
 			}
 
-			vector<double> start_state = state;
-
 			vector<StateNetworkHistory*> step_action_network_histories;
 			for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
 				vector<double> inputs;
 				for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
-					inputs.push_back(start_state[world_model->network_inputs[n_index][i_index]]);
+					inputs.push_back(state[world_model->network_inputs[n_index][i_index]]);
 				}
 				inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
 				StateNetworkHistory* network_history = new StateNetworkHistory();
@@ -279,12 +277,10 @@ void update_helper(vector<vector<double>>& obs,
 
 	for (int step_index = (int)obs.size()-1; step_index >= 0; step_index--) {
 		if (step_index < (int)actions.size()) {
-			vector<double> start_errors = state_errors;
-
-			for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
+			for (int n_index = (int)world_model->action_networks.size()-1; n_index >= 0; n_index++) {
 				vector<double> errors;
 				for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
-					errors.push_back(start_errors[world_model->network_outputs[n_index][o_index]]);
+					errors.push_back(state_errors[world_model->network_outputs[n_index][o_index]]);
 				}
 				world_model->action_networks[n_index]->backprop(errors,
 																action_network_histories[step_index][n_index]);
@@ -298,12 +294,10 @@ void update_helper(vector<vector<double>>& obs,
 		}
 
 		{
-			vector<double> start_errors = state_errors;
-
-			for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
+			for (int n_index = (int)world_model->obs_networks.size()-1; n_index >= 0; n_index++) {
 				vector<double> errors;
 				for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
-					errors.push_back(start_errors[world_model->network_outputs[n_index][o_index]]);
+					errors.push_back(state_errors[world_model->network_outputs[n_index][o_index]]);
 				}
 				world_model->obs_networks[n_index]->backprop(errors,
 															 obs_network_histories[step_index][n_index]);

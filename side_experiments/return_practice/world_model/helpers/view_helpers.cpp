@@ -25,13 +25,11 @@ void view_helper(vector<vector<double>>& obs,
 			}
 			cout << endl;
 
-			vector<double> start_state = state;
-
 			vector<StateNetworkHistory*> step_obs_network_histories;
 			for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
 				vector<double> inputs;
 				for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
-					inputs.push_back(start_state[world_model->network_inputs[n_index][i_index]]);
+					inputs.push_back(state[world_model->network_inputs[n_index][i_index]]);
 				}
 				inputs.insert(inputs.end(), obs[step_index].begin(), obs[step_index].end());
 				world_model->obs_networks[n_index]->activate(inputs);
@@ -61,12 +59,10 @@ void view_helper(vector<vector<double>>& obs,
 				}
 			}
 
-			vector<double> start_state = state;
-
 			for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
 				vector<double> inputs;
 				for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
-					inputs.push_back(start_state[world_model->network_inputs[n_index][i_index]]);
+					inputs.push_back(state[world_model->network_inputs[n_index][i_index]]);
 				}
 				inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
 				world_model->action_networks[n_index]->activate(inputs);
