@@ -4,6 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "constants.h"
+#include "crazy.h"
 #include "experiment_run.h"
 #include "globals.h"
 #include "network.h"
@@ -61,28 +62,36 @@ void BranchNode::experiment_step(int& action,
 	if (is_branch) {
 		history->is_branch = true;
 
-		if (!run->should_force) {
+		if (run->run_type == RUN_TYPE_N_A) {
 			run->taken_branch_node_networks.back().push_back(this->branch_network);
 		}
 
 		run->node_context = this->branch_next_node;
 
 		if (this->branch_experiment != NULL
-				&& run->should_force) {
+				&& run->run_type == RUN_TYPE_FORCE) {
 			this->branch_experiment->experiment_activate(run);
+		} else if (run->run_type == RUN_TYPE_CRAZY) {
+			create_crazy_helper(this,
+								true,
+								run);
 		}
 	} else {
 		history->is_branch = false;
 
-		if (!run->should_force) {
+		if (run->run_type == RUN_TYPE_N_A) {
 			run->taken_branch_node_networks.back().push_back(this->original_network);
 		}
 
 		run->node_context = this->original_next_node;
 
 		if (this->original_experiment != NULL
-				&& run->should_force) {
+				&& run->run_type == RUN_TYPE_FORCE) {
 			this->original_experiment->experiment_activate(run);
+		} else if (run->run_type == RUN_TYPE_CRAZY) {
+			create_crazy_helper(this,
+								false,
+								run);
 		}
 	}
 }

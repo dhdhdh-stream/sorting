@@ -2,6 +2,7 @@
 
 #include "abstract_node.h"
 #include "compare_experiment.h"
+#include "crazy.h"
 #include "force_experiment.h"
 #include "state_network.h"
 
@@ -36,5 +37,9 @@ ExperimentRun::~ExperimentRun() {
 
 	if (this->compare_experiment_history != NULL) {
 		delete this->compare_experiment_history;
+	}
+
+	for (int c_index = 0; c_index < (int)this->crazies.size(); c_index++) {
+		delete this->crazies[c_index];
 	}
 }

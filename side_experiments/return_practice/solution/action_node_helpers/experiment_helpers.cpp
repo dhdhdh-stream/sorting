@@ -1,6 +1,7 @@
 #include "action_node.h"
 
 #include "abstract_experiment.h"
+#include "crazy.h"
 #include "experiment_run.h"
 #include "world_model_helpers.h"
 
@@ -28,7 +29,11 @@ void ActionNode::experiment_step_start(ExperimentRun* run) {
 	run->node_context = this->next_node;
 
 	if (this->experiment != NULL
-			&& run->should_force) {
+			&& run->run_type == RUN_TYPE_FORCE) {
 		this->experiment->experiment_activate(run);
+	} else if (run->run_type == RUN_TYPE_CRAZY) {
+		create_crazy_helper(this,
+								false,
+								run);
 	}
 }

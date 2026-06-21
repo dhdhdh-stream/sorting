@@ -8,11 +8,16 @@ class AbstractExperimentState;
 class AbstractNode;
 class AbstractNodeHistory;
 class CompareExperimentHistory;
+class Crazy;
 class ForceExperiment;
 class ForceExperimentHistory;
 class Network;
 class StateNetworkHistory;
 class Wrapper;
+
+const int RUN_TYPE_N_A = 0;
+const int RUN_TYPE_FORCE = 1;
+const int RUN_TYPE_CRAZY = 2;
 
 class ExperimentRun {
 public:
@@ -23,7 +28,8 @@ public:
 
 	std::vector<double> state;
 
-	bool should_force;
+	int run_type;
+
 	std::map<ForceExperiment*, ForceExperimentHistory*> force_experiment_histories;
 
 	std::map<int, AbstractNodeHistory*> node_histories;
@@ -36,6 +42,8 @@ public:
 	std::vector<std::vector<Network*>> taken_branch_node_networks;
 
 	CompareExperimentHistory* compare_experiment_history;
+
+	std::vector<Crazy*> crazies;
 
 	ExperimentRun();
 	~ExperimentRun();

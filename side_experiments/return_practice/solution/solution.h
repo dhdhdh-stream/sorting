@@ -26,6 +26,9 @@ public:
 	Solution();
 	~Solution();
 
+	void random_exit_activate(AbstractNode* starting_node,
+							  std::vector<AbstractNode*>& possible_exits);
+
 	void pad_new_state(int num_add);
 
 	void save(std::ofstream& output_file,

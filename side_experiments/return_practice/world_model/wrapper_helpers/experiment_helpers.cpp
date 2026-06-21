@@ -37,12 +37,8 @@ void Wrapper::experiment_init(ExperimentRun* run) {
 		run->compare_experiment_history = new CompareExperimentHistory(this->compare_experiment);
 	}
 
-	uniform_int_distribution<int> explore_distribution(0, 1);
-	if (explore_distribution(generator) == 0) {
-		run->should_force = true;
-	} else {
-		run->should_force = false;
-	}
+	uniform_int_distribution<int> type_distribution(0, 2);
+	run->run_type = type_distribution(generator);
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
@@ -121,7 +117,7 @@ void Wrapper::experiment_end(double result,
 	// 									   this);
 	// }
 
-	if (run->should_force) {
+	if (run->run_type == RUN_TYPE_FORCE) {
 		if (run->force_experiment_histories.size() == 0) {
 			if (this->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
 				for (map<int, AbstractNode*>::iterator it = this->solution->nodes.begin();
@@ -239,7 +235,7 @@ void Wrapper::experiment_end(double result,
 									this);
 			}
 		}
-	} else {
+	} else if (run->run_type == RUN_TYPE_N_A) {
 		if (this->solution->score_histories.size() < SCORE_HISTORIES_NUM_SAVE) {
 			this->solution->score_histories.push_back(result);
 		} else {
@@ -250,21 +246,21 @@ void Wrapper::experiment_end(double result,
 			}
 		}
 
-		int node_count = 0;
-		int eval_count = 0;
-		count_eval_helper(run,
-						  node_count,
-						  eval_count);
+		// int node_count = 0;
+		// int eval_count = 0;
+		// count_eval_helper(run,
+		// 				  node_count,
+		// 				  eval_count);
 
-		int target_count = (node_count + (TARGET_NODES_PER_EVAL-1)) / TARGET_NODES_PER_EVAL;
-		if (eval_count < target_count) {
-			// // temp
-			// cout << "node_count: " << node_count << endl;
-			// cout << "eval_count: " << eval_count << endl;
-			// cout << "target_count: " << target_count << endl;
-			create_experiment(run,
-							  this);
-		}
+		// int target_count = (node_count + (TARGET_NODES_PER_EVAL-1)) / TARGET_NODES_PER_EVAL;
+		// if (eval_count < target_count) {
+		// 	// // temp
+		// 	// cout << "node_count: " << node_count << endl;
+		// 	// cout << "eval_count: " << eval_count << endl;
+		// 	// cout << "target_count: " << target_count << endl;
+		// 	create_experiment(run,
+		// 					  this);
+		// }
 
 		update_solution_helper(run,
 							   result,
