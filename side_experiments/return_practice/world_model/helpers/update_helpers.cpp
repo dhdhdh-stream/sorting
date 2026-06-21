@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "constants.h"
+#include "experiment_run.h"
 #include "globals.h"
 #include "network.h"
 #include "predict_wrapper.h"
@@ -354,6 +355,100 @@ void update_helper(vector<vector<double>>& obs,
 		world_model->candidate_predict->twiddle();
 
 		world_model->candidate_iter = 0;
+	}
+}
+
+void update_helper(double target_val,
+				   ExperimentRun* run) {
+	WorldModel* world_model = run->wrapper->world_model;
+
+	vector<double> state_errors(world_model->num_states, 0.0);
+
+	{
+		world_model->final_network->activate(run->state);
+		double predicted = world_model->final_network->output->acti_vals[0];
+
+		vector<double> final_errors{target_val - predicted};
+
+		world_model->final_network->backprop(final_errors);
+		for (int i_index = 0; i_index < world_model->num_states; i_index++) {
+			state_errors[i_index] += world_model->final_network->input->errors[i_index];
+			world_model->final_network->input->errors[i_index] = 0.0;
+		}
+	}
+
+	for (int step_index = (int)run->obs_histories.size()-1; step_index >= 0; step_index--) {
+		if (step_index < (int)run->action_histories.size()) {
+			for (int n_index = (int)world_model->action_networks.size()-1; n_index >= 0; n_index--) {
+				vector<double> errors;
+				for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
+					errors.push_back(state_errors[world_model->network_outputs[n_index][o_index]]);
+				}
+				world_model->action_networks[n_index]->backprop(errors,
+																run->action_network_histories[step_index][n_index]);
+				for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
+					state_errors[world_model->network_inputs[n_index][i_index]] +=
+						world_model->action_networks[n_index]->input->errors[i_index];
+					world_model->action_networks[n_index]->input->errors[i_index] = 0.0;
+				}
+			}
+		}
+
+		for (int n_index = (int)run->taken_branch_node_networks[step_index].size()-1; n_index >= 0; n_index--) {
+			double error = target_val - run->taken_branch_node_networks[step_index][n_index]->output->acti_vals[0];
+			run->taken_branch_node_networks[step_index][n_index]->backprop(error);
+			for (int i_index = 0; i_index < world_model->num_states; i_index++) {
+				state_errors[i_index] += run->taken_branch_node_networks[step_index][n_index]->input->errors[i_index];
+				run->taken_branch_node_networks[step_index][n_index]->input->errors[i_index] = 0.0;
+			}
+		}
+
+		{
+			for (int n_index = (int)world_model->obs_networks.size()-1; n_index >= 0; n_index--) {
+				vector<double> errors;
+				for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
+					errors.push_back(state_errors[world_model->network_outputs[n_index][o_index]]);
+				}
+				world_model->obs_networks[n_index]->backprop(errors,
+															 run->obs_network_histories[step_index][n_index]);
+				for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
+					state_errors[world_model->network_inputs[n_index][i_index]] +=
+						world_model->obs_networks[n_index]->input->errors[i_index];
+					world_model->obs_networks[n_index]->input->errors[i_index] = 0.0;
+				}
+			}
+		}
+	}
+
+	world_model->epoch_iter++;
+	if (world_model->epoch_iter >= NETWORK_EPOCH_SIZE) {
+		double max_update = 0.0;
+		for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
+			world_model->obs_networks[n_index]->get_max_update(max_update);
+		}
+		for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
+			world_model->action_networks[n_index]->get_max_update(max_update);
+		}
+		world_model->final_network->get_max_update(max_update);
+
+		world_model->average_max_update = 0.999*world_model->average_max_update + 0.001*max_update;
+
+		if (max_update > 0.0) {
+			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE) / world_model->average_max_update;
+			if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
+				learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+			}
+
+			for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
+				world_model->obs_networks[n_index]->update_weights(learning_rate);
+			}
+			for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
+				world_model->action_networks[n_index]->update_weights(learning_rate);
+			}
+			world_model->final_network->update_weights(learning_rate);
+		}
+
+		world_model->epoch_iter = 0;
 	}
 }
 

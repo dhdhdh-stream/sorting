@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "experiment_run.h"
 #include "globals.h"
 #include "network.h"
 #include "predict_wrapper.h"
@@ -30,6 +31,28 @@ void obs_helper(vector<double>& obs,
 	}
 }
 
+void obs_helper_w_history(vector<double>& obs,
+						  ExperimentRun* run) {
+	WorldModel* world_model = run->wrapper->world_model;
+
+	run->obs_network_histories.push_back(vector<StateNetworkHistory*>());
+
+	for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
+		vector<double> inputs;
+		for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
+			inputs.push_back(run->state[world_model->network_inputs[n_index][i_index]]);
+		}
+		inputs.insert(inputs.end(), obs.begin(), obs.end());
+		StateNetworkHistory* network_history = new StateNetworkHistory();
+		world_model->obs_networks[n_index]->activate(inputs,
+													 network_history);
+		run->obs_network_histories.back().push_back(network_history);
+		for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
+			run->state[world_model->network_outputs[n_index][o_index]] += world_model->obs_networks[n_index]->output->acti_vals[o_index];
+		}
+	}
+}
+
 void action_helper(int action,
 				   vector<double>& state,
 				   Wrapper* wrapper) {
@@ -53,6 +76,37 @@ void action_helper(int action,
 		world_model->action_networks[n_index]->activate(inputs);
 		for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
 			state[world_model->network_outputs[n_index][o_index]] += world_model->action_networks[n_index]->output->acti_vals[o_index];
+		}
+	}
+}
+
+void action_helper_w_history(int action,
+							 ExperimentRun* run) {
+	WorldModel* world_model = run->wrapper->world_model;
+
+	vector<double> partial_inputs;
+	for (int a_index = 0; a_index < run->wrapper->num_actions; a_index++) {
+		if (action == a_index) {
+			partial_inputs.push_back(1.0);
+		} else {
+			partial_inputs.push_back(0.0);
+		}
+	}
+
+	run->action_network_histories.push_back(vector<StateNetworkHistory*>());
+
+	for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
+		vector<double> inputs;
+		for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
+			inputs.push_back(run->state[world_model->network_inputs[n_index][i_index]]);
+		}
+		inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
+		StateNetworkHistory* network_history = new StateNetworkHistory();
+		world_model->action_networks[n_index]->activate(inputs,
+														network_history);
+		run->action_network_histories.back().push_back(network_history);
+		for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
+			run->state[world_model->network_outputs[n_index][o_index]] += world_model->action_networks[n_index]->output->acti_vals[o_index];
 		}
 	}
 }

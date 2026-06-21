@@ -11,9 +11,8 @@ void ActionNode::experiment_step(int& action,
 								 ExperimentRun* run) {
 	run->action_histories.push_back(this->action);
 
-	action_helper(this->action,
-				  run->state,
-				  run->wrapper);
+	action_helper_w_history(this->action,
+							run);
 
 	action = this->action;
 	is_next = true;

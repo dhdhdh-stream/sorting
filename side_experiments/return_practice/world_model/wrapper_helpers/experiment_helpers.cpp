@@ -55,9 +55,10 @@ pair<bool,int> Wrapper::experiment_step(vector<double> obs,
 										ExperimentRun* run) {
 	run->obs_histories.push_back(obs);
 
-	obs_helper(obs,
-			   run->state,
-			   this);
+	obs_helper_w_history(obs,
+						 run);
+
+	run->taken_branch_node_networks.push_back(vector<Network*>());
 
 	if (run->experiment_context == NULL
 			&& run->node_context != NULL) {
@@ -278,7 +279,9 @@ void Wrapper::experiment_end(double result,
 		this->sample_index = 0;
 	}
 
-	update_world_model_helper(this);
+	// update_world_model_helper(this);
+	update_helper(result,
+				  run);
 	/**
 	 * - spending time improving world model improves predict existing
 	 *   - which improves explore and actually increases speed

@@ -10,6 +10,8 @@ class AbstractNodeHistory;
 class CompareExperimentHistory;
 class ForceExperiment;
 class ForceExperimentHistory;
+class Network;
+class StateNetworkHistory;
 class Wrapper;
 
 class ExperimentRun {
@@ -28,6 +30,10 @@ public:
 
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<int> action_histories;
+
+	std::vector<std::vector<StateNetworkHistory*>> obs_network_histories;
+	std::vector<std::vector<StateNetworkHistory*>> action_network_histories;
+	std::vector<std::vector<Network*>> taken_branch_node_networks;
 
 	CompareExperimentHistory* compare_experiment_history;
 
