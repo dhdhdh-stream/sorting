@@ -23,17 +23,6 @@ const int UPDATE_MIN_SAMPLE_SIZE = 100;
 const int ITERS_PER_UPDATE = 1;
 #endif /* MDEBUG */
 
-const int ITERS_PER_PREDICT = 40;
-
-#if defined(MDEBUG) && MDEBUG
-const int PREDICT_CANDIDATE_CHECK_NUM_ITERS = 100;
-#else
-const int PREDICT_CANDIDATE_CHECK_NUM_ITERS = 2000000;
-/**
- * - actual num iters divided by ITERS_PER_PREDICT
- */
-#endif /* MDEBUG */
-
 void predict_update_helper(vector<double>& start_state,
 						   vector<double>& end_state,
 						   PredictWrapper* predict_wrapper,
@@ -449,6 +438,20 @@ void update_helper(double target_val,
 		}
 
 		world_model->epoch_iter = 0;
+	}
+
+	if (world_model->candidate_iter >= PREDICT_CANDIDATE_CHECK_NUM_ITERS) {
+		if (world_model->candidate_predict->misguess_average < world_model->predict->misguess_average) {
+			delete world_model->predict;
+			world_model->predict = world_model->candidate_predict;
+		} else {
+			delete world_model->candidate_predict;
+		}
+
+		world_model->candidate_predict = new PredictWrapper(world_model->predict);
+		world_model->candidate_predict->twiddle();
+
+		world_model->candidate_iter = 0;
 	}
 }
 

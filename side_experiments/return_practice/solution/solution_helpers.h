@@ -41,7 +41,8 @@ void finalize_helper(AbstractNode* node_context,
 					 AbstractNode* exit_next_node,
 					 Network* original_network,
 					 Network* branch_network,
-					 Wrapper* wrapper);
+					 Wrapper* wrapper,
+					 int type);
 
 void measure_helper(Wrapper* wrapper,
 					double& score_average,

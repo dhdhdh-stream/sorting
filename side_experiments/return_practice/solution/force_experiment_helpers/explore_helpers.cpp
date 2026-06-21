@@ -84,9 +84,11 @@ void ForceExperiment::explore_experiment_step(int& action,
 	} else {
 		run->action_histories.push_back(history->curr_actions[state->step_index]);
 
-		action_helper(history->curr_actions[state->step_index],
-					  run->state,
-					  run->wrapper);
+		// action_helper(history->curr_actions[state->step_index],
+		// 			  run->state,
+		// 			  run->wrapper);
+		action_helper_w_history(history->curr_actions[state->step_index],
+								run);
 
 		action = history->curr_actions[state->step_index];
 		is_next = true;

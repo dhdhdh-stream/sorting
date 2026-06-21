@@ -55,9 +55,11 @@ void CompareExperiment::measure_new_experiment_step(
 	} else {
 		run->action_histories.push_back(this->actions[state->step_index]);
 
-		action_helper(this->actions[state->step_index],
-					  run->state,
-					  run->wrapper);
+		// action_helper(this->actions[state->step_index],
+		// 			  run->state,
+		// 			  run->wrapper);
+		action_helper_w_history(this->actions[state->step_index],
+								run);
 
 		action = this->actions[state->step_index];
 		is_next = true;

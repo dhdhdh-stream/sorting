@@ -44,6 +44,9 @@ void BranchNode::save(ofstream& output_file,
 
 	output_file << this->ramp << endl;
 	output_file << this->ramp_iter << endl;
+	output_file << this->original_iter << endl;
+
+	output_file << this->ramp_type << endl;
 
 	output_file << this->original_average_instances_per_run << endl;
 	output_file << this->branch_average_instances_per_run << endl;
@@ -74,6 +77,14 @@ void BranchNode::load(ifstream& input_file,
 	string ramp_iter_line;
 	getline(input_file, ramp_iter_line);
 	this->ramp_iter = stoi(ramp_iter_line);
+
+	string original_iter_line;
+	getline(input_file, original_iter_line);
+	this->original_iter = stoi(original_iter_line);
+
+	string ramp_type_line;
+	getline(input_file, ramp_type_line);
+	this->ramp_type = stoi(ramp_type_line);
 
 	string original_average_instances_per_run_line;
 	getline(input_file, original_average_instances_per_run_line);

@@ -19,7 +19,8 @@ void finalize_helper(AbstractNode* node_context,
 					 AbstractNode* exit_next_node,
 					 Network* original_network,
 					 Network* branch_network,
-					 Wrapper* wrapper) {
+					 Wrapper* wrapper,
+					 int type) {
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
@@ -215,6 +216,9 @@ void finalize_helper(AbstractNode* node_context,
 
 	new_branch_node->ramp = 0;
 	new_branch_node->ramp_iter = 0;
+	new_branch_node->original_iter = 0;
+
+	new_branch_node->ramp_type = type;
 
 	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
 		int next_node_id;

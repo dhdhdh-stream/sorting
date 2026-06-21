@@ -20,7 +20,8 @@ public:
 	std::vector<double> score_histories;
 	int score_index;
 
-	std::list<double> train_new_last_scores;
+	std::list<double> predict_last_scores;
+	std::list<double> force_last_scores;
 
 	Solution();
 	~Solution();

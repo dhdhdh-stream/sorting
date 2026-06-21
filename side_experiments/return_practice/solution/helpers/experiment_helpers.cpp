@@ -29,8 +29,12 @@ void count_eval_helper(ExperimentRun* run,
 			h_it != run->node_histories.end(); h_it++) {
 		AbstractNode* node = h_it->second->node;
 		if (node->type == NODE_TYPE_BRANCH) {
+			BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 			BranchNode* branch_node = (BranchNode*)node;
-			if (branch_node->ramp < RAMP_NUM_GEARS) {
+			if (branch_node->ramp < RAMP_NUM_GEARS
+					&& branch_node->ramp_type == RAMP_TYPE_PREDICT
+					&& (branch_node_history->would_be_branch
+						|| branch_node->original_iter < 10000)) {
 				eval_count++;
 			}
 		}

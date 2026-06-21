@@ -37,6 +37,8 @@ void obs_helper_w_history(vector<double>& obs,
 
 	run->obs_network_histories.push_back(vector<StateNetworkHistory*>());
 
+	vector<double> start_state = run->state;
+
 	for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
 		vector<double> inputs;
 		for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
@@ -50,6 +52,18 @@ void obs_helper_w_history(vector<double>& obs,
 		for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
 			run->state[world_model->network_outputs[n_index][o_index]] += world_model->obs_networks[n_index]->output->acti_vals[o_index];
 		}
+	}
+
+	world_model->candidate_iter++;
+	if ((world_model->candidate_iter+1) % ITERS_PER_PREDICT == 0) {
+		predict_update_helper(start_state,
+							  run->state,
+							  world_model->predict,
+							  run->wrapper);
+		predict_update_helper(start_state,
+							  run->state,
+							  world_model->candidate_predict,
+							  run->wrapper);
 	}
 }
 

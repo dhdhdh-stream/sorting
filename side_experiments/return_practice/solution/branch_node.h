@@ -9,6 +9,9 @@ class AbstractExperiment;
 class Network;
 class Wrapper;
 
+const int RAMP_TYPE_PREDICT = 0;
+const int RAMP_TYPE_FORCE = 1;
+
 class BranchNode : public AbstractNode {
 public:
 	Network* original_network;
@@ -21,6 +24,9 @@ public:
 
 	int ramp;
 	int ramp_iter;
+	int original_iter;
+
+	int ramp_type;
 
 	double original_average_instances_per_run;
 	std::vector<std::vector<double>> original_state_history;
@@ -61,6 +67,7 @@ public:
 class BranchNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_branch;
+	bool would_be_branch;
 
 	std::vector<double> state;
 

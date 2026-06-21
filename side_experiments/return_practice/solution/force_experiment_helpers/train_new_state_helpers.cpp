@@ -470,10 +470,10 @@ void ForceExperiment::train_new_state_helper(Wrapper* wrapper) {
 								wrapper);
 		}
 
-		// // temp
-		// if (iter_index % 100000 == 0) {
-		// 	cout << iter_index << endl;
-		// }
+		// temp
+		if (iter_index % 100000 == 0) {
+			cout << iter_index << endl;
+		}
 	}
 
 	delete temp_final_network;
@@ -571,36 +571,36 @@ void ForceExperiment::train_new_state_helper(Wrapper* wrapper) {
 
 	double predicted_global_improvement = average_instances_per_run * predicted_local_improvement;
 
-	// // temp
-	// cout << "train_new_state" << endl;
-	// cout << "predicted_local_improvement: " << predicted_local_improvement << endl;
-	// cout << "predicted_global_improvement: " << predicted_global_improvement << endl;
+	// temp
+	cout << "train_new_state" << endl;
+	cout << "predicted_local_improvement: " << predicted_local_improvement << endl;
+	cout << "predicted_global_improvement: " << predicted_global_improvement << endl;
 
 	bool is_success = false;
 	if (existing_count > 0
 			&& new_count > 0
 			&& predicted_local_improvement > 0.0) {
-		if (wrapper->solution->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+		if (wrapper->solution->force_last_scores.size() >= MIN_NUM_LAST_TRACK) {
 			int num_better_than = 0;
-			for (list<double>::iterator it = wrapper->solution->train_new_last_scores.begin();
-					it != wrapper->solution->train_new_last_scores.end(); it++) {
+			for (list<double>::iterator it = wrapper->solution->force_last_scores.begin();
+					it != wrapper->solution->force_last_scores.end(); it++) {
 				if (predicted_global_improvement >= *it) {
 					num_better_than++;
 				}
 			}
 
-			double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->train_new_last_scores.size();
+			double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->force_last_scores.size();
 
 			if (num_better_than >= target_better_than) {
 				is_success = true;
 			}
 
-			if (wrapper->solution->train_new_last_scores.size() >= NUM_LAST_TRACK) {
-				wrapper->solution->train_new_last_scores.pop_front();
+			if (wrapper->solution->force_last_scores.size() >= NUM_LAST_TRACK) {
+				wrapper->solution->force_last_scores.pop_front();
 			}
-			wrapper->solution->train_new_last_scores.push_back(predicted_global_improvement);
+			wrapper->solution->force_last_scores.push_back(predicted_global_improvement);
 		} else {
-			wrapper->solution->train_new_last_scores.push_back(predicted_global_improvement);
+			wrapper->solution->force_last_scores.push_back(predicted_global_improvement);
 		}
 	}
 
@@ -695,7 +695,8 @@ void ForceExperiment::train_new_state_helper(Wrapper* wrapper) {
 						this->exit_next_node,
 						this->original_network,
 						branch_network,
-						wrapper);
+						wrapper,
+						RAMP_TYPE_FORCE);
 		this->original_network = NULL;
 
 		// // temp

@@ -26,7 +26,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int NUM_EXPLORE = 5;
 #else
-const int NUM_EXPLORE = 1000;
+const int NUM_EXPLORE = 200;
 #endif /* MDEBUG */
 
 void init_experiment_helper(AbstractNode* node_context,
@@ -128,7 +128,7 @@ void init_experiment_helper(AbstractNode* node_context,
 		double existing_predicted = original_network->output->acti_vals[0];
 
 		int new_num_steps;
-		geometric_distribution<int> geo_distribution(0.3);
+		geometric_distribution<int> geo_distribution(0.5);
 		if (exit_next_node == next_node) {
 			new_num_steps = 1 + geo_distribution(generator);
 		} else {
@@ -153,12 +153,26 @@ void init_experiment_helper(AbstractNode* node_context,
 										  exit_next_node,
 										  wrapper);
 
+		// // temp
+		// if (e_index < 5) {
+		// 	cout << "existing_predicted: " << existing_predicted << endl;
+		// 	cout << "predicted: " << predicted << endl;
+		// }
+
 		double curr_surprise = predicted - existing_predicted;
 		if (curr_surprise > best_surprise) {
 			best_actions = curr_actions;
 			best_surprise = curr_surprise;
 		}
 	}
+
+	// temp
+	cout << "best_surprise: " << best_surprise << endl;
+	cout << "best_actions:";
+	for (int a_index = 0; a_index < (int)best_actions.size(); a_index++) {
+		cout << " " << best_actions[a_index];
+	}
+	cout << endl;
 
 	vector<vector<double>> train_new_state(EXPERIMENT_NUM_SAMPLES);
 	vector<double> train_new_predicted(EXPERIMENT_NUM_SAMPLES);
@@ -206,6 +220,13 @@ void init_experiment_helper(AbstractNode* node_context,
 			existing_sum_vals += train_existing_predicted[h_index];
 			existing_count++;
 		}
+
+		// // temp
+		// if (h_index < num_train + 5) {
+		// 	cout << "branch_network->output->acti_vals[0]: " << branch_network->output->acti_vals[0] << endl;
+		// 	cout << "original_network->output->acti_vals[0]: " << original_network->output->acti_vals[0] << endl;
+		// 	cout << "train_existing_predicted[h_index]: " << train_existing_predicted[h_index] << endl;
+		// }
 	}
 	double existing_average = existing_sum_vals / (double)existing_count;
 	double new_sum_vals = 0.0;
@@ -217,6 +238,13 @@ void init_experiment_helper(AbstractNode* node_context,
 			new_sum_vals += train_new_predicted[h_index];
 			new_count++;
 		}
+
+		// // temp
+		// if (h_index < num_train + 5) {
+		// 	cout << "branch_network->output->acti_vals[0]: " << branch_network->output->acti_vals[0] << endl;
+		// 	cout << "original_network->output->acti_vals[0]: " << original_network->output->acti_vals[0] << endl;
+		// 	cout << "train_new_predicted[h_index]: " << train_new_predicted[h_index] << endl;
+		// }
 	}
 	double new_average = new_sum_vals / (double)new_count;
 	double average_ratio = (existing_count + new_count) / (2.0 * num_verify);
@@ -251,32 +279,35 @@ void init_experiment_helper(AbstractNode* node_context,
 	double predicted_global_improvement = average_instances_per_run * predicted_local_improvement;
 
 	// temp
+	cout << "predict" << endl;
 	cout << "predicted_local_improvement: " << predicted_local_improvement << endl;
 	cout << "predicted_global_improvement: " << predicted_global_improvement << endl;
 
 	bool is_success = false;
-	if (predicted_local_improvement > 0.0) {
-		if (wrapper->solution->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+	if (existing_count > 0
+			&& new_count > 0
+			&& predicted_local_improvement > 0.0) {
+		if (wrapper->solution->predict_last_scores.size() >= MIN_NUM_LAST_TRACK) {
 			int num_better_than = 0;
-			for (list<double>::iterator it = wrapper->solution->train_new_last_scores.begin();
-					it != wrapper->solution->train_new_last_scores.end(); it++) {
+			for (list<double>::iterator it = wrapper->solution->predict_last_scores.begin();
+					it != wrapper->solution->predict_last_scores.end(); it++) {
 				if (predicted_global_improvement >= *it) {
 					num_better_than++;
 				}
 			}
 
-			double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->train_new_last_scores.size();
+			double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->predict_last_scores.size();
 
 			if (num_better_than >= target_better_than) {
 				is_success = true;
 			}
 
-			if (wrapper->solution->train_new_last_scores.size() >= NUM_LAST_TRACK) {
-				wrapper->solution->train_new_last_scores.pop_front();
+			if (wrapper->solution->predict_last_scores.size() >= NUM_LAST_TRACK) {
+				wrapper->solution->predict_last_scores.pop_front();
 			}
-			wrapper->solution->train_new_last_scores.push_back(predicted_global_improvement);
+			wrapper->solution->predict_last_scores.push_back(predicted_global_improvement);
 		} else {
-			wrapper->solution->train_new_last_scores.push_back(predicted_global_improvement);
+			wrapper->solution->predict_last_scores.push_back(predicted_global_improvement);
 		}
 	}
 
@@ -285,58 +316,62 @@ void init_experiment_helper(AbstractNode* node_context,
 	#else
 	if (is_success) {
 	#endif /* MDEBUG */
-		// finalize_helper(node_context,
-		// 				is_branch,
-		// 				best_actions,
-		// 				exit_next_node,
-		// 				original_network,
-		// 				branch_network,
-		// 				wrapper);
+		// temp
+		cout << "predict success" << endl;
 
-		CompareExperiment* experiment = new CompareExperiment();
+		finalize_helper(node_context,
+						is_branch,
+						best_actions,
+						exit_next_node,
+						original_network,
+						branch_network,
+						wrapper,
+						RAMP_TYPE_PREDICT);
 
-		experiment->node_context = node_context;
-		experiment->is_branch = is_branch;
-		experiment->exit_next_node = exit_next_node;
+		// CompareExperiment* experiment = new CompareExperiment();
 
-		experiment->original_network = original_network;
-		experiment->branch_network = branch_network;
+		// experiment->node_context = node_context;
+		// experiment->is_branch = is_branch;
+		// experiment->exit_next_node = exit_next_node;
 
-		experiment->actions = best_actions;
+		// experiment->original_network = original_network;
+		// experiment->branch_network = branch_network;
 
-		experiment->predicted_existing_average = existing_average;
-		experiment->predicted_new_average = new_average;
+		// experiment->actions = best_actions;
 
-		experiment->sum_scores = 0.0;
+		// experiment->predicted_existing_average = existing_average;
+		// experiment->predicted_new_average = new_average;
 
-		experiment->state = COMPARE_EXPERIMENT_MEASURE_EXISTING;
-		experiment->state_iter = 0;
+		// experiment->sum_scores = 0.0;
 
-		switch (node_context->type) {
-		case NODE_TYPE_START:
-			{
-				StartNode* start_node = (StartNode*)node_context;
-				start_node->experiment = experiment;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)node_context;
-				action_node->experiment = experiment;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)node_context;
-				if (is_branch) {
-					branch_node->branch_experiment = experiment;
-				} else {
-					branch_node->original_experiment = experiment;
-				}
-			}
-			break;
-		}
-		wrapper->compare_experiment = experiment;
+		// experiment->state = COMPARE_EXPERIMENT_MEASURE_EXISTING;
+		// experiment->state_iter = 0;
+
+		// switch (node_context->type) {
+		// case NODE_TYPE_START:
+		// 	{
+		// 		StartNode* start_node = (StartNode*)node_context;
+		// 		start_node->experiment = experiment;
+		// 	}
+		// 	break;
+		// case NODE_TYPE_ACTION:
+		// 	{
+		// 		ActionNode* action_node = (ActionNode*)node_context;
+		// 		action_node->experiment = experiment;
+		// 	}
+		// 	break;
+		// case NODE_TYPE_BRANCH:
+		// 	{
+		// 		BranchNode* branch_node = (BranchNode*)node_context;
+		// 		if (is_branch) {
+		// 			branch_node->branch_experiment = experiment;
+		// 		} else {
+		// 			branch_node->original_experiment = experiment;
+		// 		}
+		// 	}
+		// 	break;
+		// }
+		// wrapper->compare_experiment = experiment;
 	} else {
 		delete original_network;
 		delete branch_network;

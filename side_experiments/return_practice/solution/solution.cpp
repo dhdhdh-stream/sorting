@@ -80,9 +80,15 @@ void Solution::save(ofstream& output_file,
 						 wrapper);
 	}
 
-	output_file << this->train_new_last_scores.size() << endl;
-	for (list<double>::iterator it = this->train_new_last_scores.begin();
-			it != this->train_new_last_scores.end(); it++) {
+	output_file << this->predict_last_scores.size() << endl;
+	for (list<double>::iterator it = this->predict_last_scores.begin();
+			it != this->predict_last_scores.end(); it++) {
+		output_file << *it << endl;
+	}
+
+	output_file << this->force_last_scores.size() << endl;
+	for (list<double>::iterator it = this->force_last_scores.begin();
+			it != this->force_last_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 }
@@ -156,13 +162,22 @@ void Solution::load(ifstream& input_file,
 		it->second->link(wrapper);
 	}
 
-	string num_train_new_last_scores_line;
-	getline(input_file, num_train_new_last_scores_line);
-	int num_train_new_last_scores = stoi(num_train_new_last_scores_line);
-	for (int e_index = 0; e_index < num_train_new_last_scores; e_index++) {
+	string num_predict_last_scores_line;
+	getline(input_file, num_predict_last_scores_line);
+	int num_predict_last_scores = stoi(num_predict_last_scores_line);
+	for (int e_index = 0; e_index < num_predict_last_scores; e_index++) {
 		string score_line;
 		getline(input_file, score_line);
-		this->train_new_last_scores.push_back(stod(score_line));
+		this->predict_last_scores.push_back(stod(score_line));
+	}
+
+	string num_force_last_scores_line;
+	getline(input_file, num_force_last_scores_line);
+	int num_force_last_scores = stoi(num_force_last_scores_line);
+	for (int e_index = 0; e_index < num_force_last_scores; e_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->force_last_scores.push_back(stod(score_line));
 	}
 }
 

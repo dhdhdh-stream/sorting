@@ -27,21 +27,25 @@ void BranchNode::experiment_step(int& action,
 
 	bool is_branch;
 	if (this->ramp < RAMP_NUM_GEARS) {
-		uniform_int_distribution<int> on_distribution(0, RAMP_NUM_GEARS);
-		if (this->ramp >= on_distribution(generator)) {
-			if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+		if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+			uniform_int_distribution<int> on_distribution(0, RAMP_NUM_GEARS);
+			if (this->ramp >= on_distribution(generator)) {
 				is_branch = true;
 			} else {
 				is_branch = false;
 			}
+			history->would_be_branch = true;
 		} else {
 			is_branch = false;
+			history->would_be_branch = false;
 		}
 	} else {
 		if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
 			is_branch = true;
+			history->would_be_branch = true;
 		} else {
 			is_branch = false;
+			history->would_be_branch = false;
 		}
 	}
 
