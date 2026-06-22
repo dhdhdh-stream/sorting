@@ -223,23 +223,32 @@ void update_solution_helper(ExperimentRun* run,
 						// 	}
 						// }
 					} else {
-						if (branch_node->branch_state_history.size() >= RAMP_UPDATE_MIN_SAMPLES) {
-							uniform_int_distribution<int> distribution(0, branch_node->branch_state_history.size()-1);
-							for (int iter_index = 0; iter_index < RAMP_UPDATE_NUM_TRAIN; iter_index++) {
-								int index = distribution(generator);
-								branch_node->branch_network->activate(branch_node->branch_state_history[index]);
-								double error = branch_node->branch_target_val_history[index] - branch_node->branch_network->output->acti_vals[0];
-								branch_node->branch_network->backprop(error);
-							}
-						}
+						// if (branch_node->branch_state_history.size() >= RAMP_UPDATE_MIN_SAMPLES) {
+						// 	uniform_int_distribution<int> distribution(0, branch_node->branch_state_history.size()-1);
+						// 	for (int iter_index = 0; iter_index < RAMP_UPDATE_NUM_TRAIN; iter_index++) {
+						// 		int index = distribution(generator);
+						// 		branch_node->branch_network->activate(branch_node->branch_state_history[index]);
+						// 		double error = branch_node->branch_target_val_history[index] - branch_node->branch_network->output->acti_vals[0];
+						// 		branch_node->branch_network->backprop(error);
+						// 	}
+						// }
+
+						// TODO: to give added weight, can try simply multiplying error signal
+						vector<vector<double>> obs(run->obs_histories.begin(), run->obs_histories.begin() + branch_node_history->obs_history_index);
+						vector<int> actions(run->action_histories.begin(), run->action_histories.begin() + branch_node_history->obs_history_index-1);
+						update_helper(obs,
+									  actions,
+									  target_val,
+									  branch_node->branch_network,
+									  wrapper);
 
 						branch_node->ramp_iter++;
 						if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
 							branch_node->ramp++;
 							branch_node->ramp_iter = 0;
 
-							// temp
-							cout << "branch_node->ramp: " << branch_node->ramp << endl;
+							// // temp
+							// cout << "branch_node->ramp: " << branch_node->ramp << endl;
 
 							if (branch_node->ramp >= RAMP_NUM_GEARS) {
 								wrapper->solution->timestamp++;
@@ -280,15 +289,23 @@ void update_solution_helper(ExperimentRun* run,
 						// 	}
 						// }
 					} else {
-						if (branch_node->original_state_history.size() >= RAMP_UPDATE_MIN_SAMPLES) {
-							uniform_int_distribution<int> distribution(0, branch_node->original_state_history.size()-1);
-							for (int iter_index = 0; iter_index < RAMP_UPDATE_NUM_TRAIN; iter_index++) {
-								int index = distribution(generator);
-								branch_node->original_network->activate(branch_node->original_state_history[index]);
-								double error = branch_node->original_target_val_history[index] - branch_node->original_network->output->acti_vals[0];
-								branch_node->original_network->backprop(error);
-							}
-						}
+						// if (branch_node->original_state_history.size() >= RAMP_UPDATE_MIN_SAMPLES) {
+						// 	uniform_int_distribution<int> distribution(0, branch_node->original_state_history.size()-1);
+						// 	for (int iter_index = 0; iter_index < RAMP_UPDATE_NUM_TRAIN; iter_index++) {
+						// 		int index = distribution(generator);
+						// 		branch_node->original_network->activate(branch_node->original_state_history[index]);
+						// 		double error = branch_node->original_target_val_history[index] - branch_node->original_network->output->acti_vals[0];
+						// 		branch_node->original_network->backprop(error);
+						// 	}
+						// }
+
+						vector<vector<double>> obs(run->obs_histories.begin(), run->obs_histories.begin() + branch_node_history->obs_history_index);
+						vector<int> actions(run->action_histories.begin(), run->action_histories.begin() + branch_node_history->obs_history_index-1);
+						update_helper(obs,
+									  actions,
+									  target_val,
+									  branch_node->original_network,
+									  wrapper);
 
 						branch_node->original_iter++;
 					}

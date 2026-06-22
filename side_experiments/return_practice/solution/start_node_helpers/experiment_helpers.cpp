@@ -4,6 +4,7 @@
 #include "constants.h"
 #include "crazy.h"
 #include "experiment_run.h"
+#include "globals.h"
 
 using namespace std;
 
@@ -26,8 +27,11 @@ void StartNode::experiment_step_start(ExperimentRun* run) {
 			&& run->run_type == RUN_TYPE_FORCE) {
 		this->experiment->experiment_activate(run);
 	} else if (run->run_type == RUN_TYPE_CRAZY) {
-		create_crazy_helper(this,
+		uniform_int_distribution<int> crazy_distribution(0, 19);
+		if (crazy_distribution(generator) == 0) {
+			create_crazy_helper(this,
 								false,
 								run);
+		}
 	}
 }

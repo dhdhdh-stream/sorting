@@ -1,6 +1,9 @@
 // TODO: with scopes, even if outer has many states, inner may not need many
 // - if inner doesn't affect an outer state, than won't need an inner state to update outer
 
+// TODO: possible reason for crashes is numerical instability?
+// - some crazy sequence causes state to overflow
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -47,10 +50,10 @@ int main(int argc, char* argv[]) {
 		filename = "main.txt";
 		wrapper = new Wrapper(problem_type);
 
-		init_helper(problem_type,
-					wrapper);
+		// init_helper(problem_type,
+		// 			wrapper);
 
-		wrapper->save("saves/", filename);
+		// wrapper->save("saves/", filename);
 	}
 
 	while (true) {

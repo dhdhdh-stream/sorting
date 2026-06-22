@@ -470,10 +470,10 @@ void ForceExperiment::train_new_state_helper(Wrapper* wrapper) {
 								wrapper);
 		}
 
-		// temp
-		if (iter_index % 100000 == 0) {
-			cout << iter_index << endl;
-		}
+		// // temp
+		// if (iter_index % 100000 == 0) {
+		// 	cout << iter_index << endl;
+		// }
 	}
 
 	delete temp_final_network;
@@ -571,10 +571,10 @@ void ForceExperiment::train_new_state_helper(Wrapper* wrapper) {
 
 	double predicted_global_improvement = average_instances_per_run * predicted_local_improvement;
 
-	// temp
-	cout << "train_new_state" << endl;
-	cout << "predicted_local_improvement: " << predicted_local_improvement << endl;
-	cout << "predicted_global_improvement: " << predicted_global_improvement << endl;
+	// // temp
+	// cout << "train_new_state" << endl;
+	// cout << "predicted_local_improvement: " << predicted_local_improvement << endl;
+	// cout << "predicted_global_improvement: " << predicted_global_improvement << endl;
 
 	bool is_success = false;
 	if (existing_count > 0

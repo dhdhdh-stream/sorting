@@ -319,59 +319,59 @@ void init_experiment_helper(AbstractNode* node_context,
 		// temp
 		cout << "predict success" << endl;
 
-		finalize_helper(node_context,
-						is_branch,
-						best_actions,
-						exit_next_node,
-						original_network,
-						branch_network,
-						wrapper,
-						RAMP_TYPE_PREDICT);
+		// finalize_helper(node_context,
+		// 				is_branch,
+		// 				best_actions,
+		// 				exit_next_node,
+		// 				original_network,
+		// 				branch_network,
+		// 				wrapper,
+		// 				RAMP_TYPE_PREDICT);
 
-		// CompareExperiment* experiment = new CompareExperiment();
+		CompareExperiment* experiment = new CompareExperiment();
 
-		// experiment->node_context = node_context;
-		// experiment->is_branch = is_branch;
-		// experiment->exit_next_node = exit_next_node;
+		experiment->node_context = node_context;
+		experiment->is_branch = is_branch;
+		experiment->exit_next_node = exit_next_node;
 
-		// experiment->original_network = original_network;
-		// experiment->branch_network = branch_network;
+		experiment->original_network = original_network;
+		experiment->branch_network = branch_network;
 
-		// experiment->actions = best_actions;
+		experiment->actions = best_actions;
 
-		// experiment->predicted_existing_average = existing_average;
-		// experiment->predicted_new_average = new_average;
+		experiment->predicted_existing_average = existing_average;
+		experiment->predicted_new_average = new_average;
 
-		// experiment->sum_scores = 0.0;
+		experiment->sum_scores = 0.0;
 
-		// experiment->state = COMPARE_EXPERIMENT_MEASURE_EXISTING;
-		// experiment->state_iter = 0;
+		experiment->state = COMPARE_EXPERIMENT_MEASURE_EXISTING;
+		experiment->state_iter = 0;
 
-		// switch (node_context->type) {
-		// case NODE_TYPE_START:
-		// 	{
-		// 		StartNode* start_node = (StartNode*)node_context;
-		// 		start_node->experiment = experiment;
-		// 	}
-		// 	break;
-		// case NODE_TYPE_ACTION:
-		// 	{
-		// 		ActionNode* action_node = (ActionNode*)node_context;
-		// 		action_node->experiment = experiment;
-		// 	}
-		// 	break;
-		// case NODE_TYPE_BRANCH:
-		// 	{
-		// 		BranchNode* branch_node = (BranchNode*)node_context;
-		// 		if (is_branch) {
-		// 			branch_node->branch_experiment = experiment;
-		// 		} else {
-		// 			branch_node->original_experiment = experiment;
-		// 		}
-		// 	}
-		// 	break;
-		// }
-		// wrapper->compare_experiment = experiment;
+		switch (node_context->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)node_context;
+				start_node->experiment = experiment;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)node_context;
+				action_node->experiment = experiment;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)node_context;
+				if (is_branch) {
+					branch_node->branch_experiment = experiment;
+				} else {
+					branch_node->original_experiment = experiment;
+				}
+			}
+			break;
+		}
+		wrapper->compare_experiment = experiment;
 	} else {
 		delete original_network;
 		delete branch_network;

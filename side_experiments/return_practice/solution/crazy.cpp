@@ -18,8 +18,8 @@ using namespace std;
 const int NUM_EXPLORE = 2;
 const int NUM_SIMULATE = 2;
 #else
-const int NUM_EXPLORE = 400;
-const int NUM_SIMULATE = 100;
+const int NUM_EXPLORE = 100;
+const int NUM_SIMULATE = 10;
 #endif /* MDEBUG */
 
 void create_crazy_helper(AbstractNode* node_context,

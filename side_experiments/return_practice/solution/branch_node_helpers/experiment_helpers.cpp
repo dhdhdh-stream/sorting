@@ -72,9 +72,12 @@ void BranchNode::experiment_step(int& action,
 				&& run->run_type == RUN_TYPE_FORCE) {
 			this->branch_experiment->experiment_activate(run);
 		} else if (run->run_type == RUN_TYPE_CRAZY) {
-			create_crazy_helper(this,
-								true,
-								run);
+			uniform_int_distribution<int> crazy_distribution(0, 19);
+			if (crazy_distribution(generator) == 0) {
+				create_crazy_helper(this,
+									true,
+									run);
+			}
 		}
 	} else {
 		history->is_branch = false;
@@ -89,9 +92,12 @@ void BranchNode::experiment_step(int& action,
 				&& run->run_type == RUN_TYPE_FORCE) {
 			this->original_experiment->experiment_activate(run);
 		} else if (run->run_type == RUN_TYPE_CRAZY) {
-			create_crazy_helper(this,
-								false,
-								run);
+			uniform_int_distribution<int> crazy_distribution(0, 19);
+			if (crazy_distribution(generator) == 0) {
+				create_crazy_helper(this,
+									false,
+									run);
+			}
 		}
 	}
 }
