@@ -72,8 +72,7 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 
 	end_node->ancestor_ids.push_back(start_node->id);
 
-	this->world_model = new WorldModel(this->num_obs,
-									   this->num_actions);
+	this->world_model = new WorldModel(this);
 
 	this->iter = 0;
 

@@ -6,6 +6,7 @@
 
 class Network;
 class StateNetwork;
+class Wrapper;
 
 const int NUM_PREDICT = 4;
 
@@ -23,7 +24,7 @@ public:
 
 	double misguess_average;
 
-	PredictWrapper();
+	PredictWrapper(Wrapper* wrapper);
 	PredictWrapper(PredictWrapper* original);
 	PredictWrapper(std::ifstream& input_file);
 	~PredictWrapper();

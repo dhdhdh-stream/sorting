@@ -4,11 +4,11 @@
 #include "network.h"
 #include "predict_wrapper.h"
 #include "state_network.h"
+#include "wrapper.h"
 
 using namespace std;
 
-WorldModel::WorldModel(int num_obs,
-					   int num_actions) {
+WorldModel::WorldModel(Wrapper* wrapper) {
 	this->num_states = STARTING_NUM_STATE;
 
 	vector<int> inputs;
@@ -21,17 +21,17 @@ WorldModel::WorldModel(int num_obs,
 		outputs.push_back(o_index);
 	}
 	this->network_outputs.push_back(outputs);
-	this->obs_networks.push_back(new StateNetwork(STARTING_NUM_STATE + num_obs, STARTING_NUM_STATE));
-	this->action_networks.push_back(new StateNetwork(STARTING_NUM_STATE + num_actions, STARTING_NUM_STATE));
+	this->obs_networks.push_back(new StateNetwork(STARTING_NUM_STATE + wrapper->num_obs, STARTING_NUM_STATE));
+	this->action_networks.push_back(new StateNetwork(STARTING_NUM_STATE + wrapper->num_actions, STARTING_NUM_STATE));
 
 	this->final_network = new StateNetwork(STARTING_NUM_STATE, 1);
 
 	this->epoch_iter = 0;
 	this->average_max_update = 0.0;
 
-	this->predict = new PredictWrapper();
+	this->predict = new PredictWrapper(wrapper);
 
-	this->candidate_predict = new PredictWrapper();
+	this->candidate_predict = new PredictWrapper(wrapper);
 	this->candidate_iter = 0;
 }
 

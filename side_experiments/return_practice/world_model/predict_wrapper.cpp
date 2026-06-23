@@ -4,16 +4,17 @@
 #include "globals.h"
 #include "network.h"
 #include "state_network.h"
+#include "wrapper.h"
 
 using namespace std;
 
-PredictWrapper::PredictWrapper() {
-	this->average_network = new StateNetwork(STARTING_NUM_STATE, STARTING_NUM_STATE);
+PredictWrapper::PredictWrapper(Wrapper* wrapper) {
+	this->average_network = new StateNetwork(STARTING_NUM_STATE, wrapper->num_obs);
 	this->average_epoch_iter = 0;
 	this->average_average_max_update = 0.0;
 
 	for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
-		this->val_networks.push_back(new StateNetwork(STARTING_NUM_STATE, STARTING_NUM_STATE));
+		this->val_networks.push_back(new StateNetwork(STARTING_NUM_STATE, wrapper->num_obs));
 		this->val_epoch_iters.push_back(0);
 		this->val_average_max_updates.push_back(0.0);
 
@@ -77,12 +78,10 @@ PredictWrapper::~PredictWrapper() {
 
 void PredictWrapper::add_states(int num_add) {
 	this->average_network->add_inputs(num_add);
-	this->average_network->add_outputs(num_add);
 	this->average_network->resize(this->average_network->input->acti_vals.size());
 
 	for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
 		this->val_networks[n_index]->add_inputs(num_add);
-		this->val_networks[n_index]->add_outputs(num_add);
 		this->val_networks[n_index]->resize(this->average_network->input->acti_vals.size());
 
 		this->select_networks[n_index]->add_inputs(num_add);

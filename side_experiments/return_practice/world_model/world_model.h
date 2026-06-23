@@ -6,6 +6,7 @@
 
 class PredictWrapper;
 class StateNetwork;
+class Wrapper;
 
 class WorldModel {
 public:
@@ -26,8 +27,7 @@ public:
 	PredictWrapper* candidate_predict;
 	int candidate_iter;
 
-	WorldModel(int num_obs,
-			   int num_actions);
+	WorldModel(Wrapper* wrapper);
 	WorldModel(std::ifstream& input_file);
 	~WorldModel();
 

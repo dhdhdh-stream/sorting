@@ -1,3 +1,8 @@
+/**
+ * - going to be slow regardless
+ *   - limited by layers depending on other layers, and so on
+ */
+
 #ifndef STATE_NETWORK_H
 #define STATE_NETWORK_H
 

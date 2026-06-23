@@ -127,7 +127,8 @@ void action_helper_w_history(int action,
 
 void predict_helper(vector<double>& state,
 					Wrapper* wrapper) {
-	PredictWrapper* predict_wrapper = wrapper->world_model->predict;
+	WorldModel* world_model = wrapper->world_model;
+	PredictWrapper* predict_wrapper = world_model->predict;
 
 	vector<double> select_vals(NUM_PREDICT);
 	for (int n_index = 0; n_index < NUM_PREDICT; n_index++) {
@@ -174,7 +175,21 @@ void predict_helper(vector<double>& state,
 	// cout << "select_index: " << select_index << endl;
 
 	predict_wrapper->val_networks[select_index]->activate(state);
-	for (int o_index = 0; o_index < (int)state.size(); o_index++) {
-		state[o_index] += predict_wrapper->val_networks[select_index]->output->acti_vals[o_index];
+
+	vector<double> predicted_obs(wrapper->num_obs);
+	for (int o_index = 0; o_index < wrapper->num_obs; o_index++) {
+		predicted_obs[o_index] = predict_wrapper->val_networks[select_index]->output->acti_vals[o_index];
+	}
+
+	for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
+		vector<double> inputs;
+		for (int i_index = 0; i_index < (int)world_model->network_inputs[n_index].size(); i_index++) {
+			inputs.push_back(state[world_model->network_inputs[n_index][i_index]]);
+		}
+		inputs.insert(inputs.end(), predicted_obs.begin(), predicted_obs.end());
+		world_model->obs_networks[n_index]->activate(inputs);
+		for (int o_index = 0; o_index < (int)world_model->network_outputs[n_index].size(); o_index++) {
+			state[world_model->network_outputs[n_index][o_index]] += world_model->obs_networks[n_index]->output->acti_vals[o_index];
+		}
 	}
 }
