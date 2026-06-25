@@ -22,23 +22,6 @@ const int ITERS_PER_RAMP = 100;
 
 void update_helper(ScopeHistory* scope_history,
 				   double target_val) {
-	Scope* scope = scope_history->scope;
-
-	vector<int> run(scope_history->node_histories.size());
-	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
-			h_it != scope_history->node_histories.end(); h_it++) {
-		run[h_it->second->index] = h_it->second->node->id;
-	}
-	if (scope->run_history.size() < RUN_NUM_SAVE) {
-		scope->run_history.push_back(run);
-	} else {
-		scope->run_history[scope->run_history_index] = run;
-	}
-	scope->run_history_index++;
-	if (scope->run_history_index >= RUN_NUM_SAVE) {
-		scope->run_history_index = 0;
-	}
-
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
 		switch (h_it->second->node->type) {

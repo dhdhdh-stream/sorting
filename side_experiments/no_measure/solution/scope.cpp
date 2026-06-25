@@ -16,7 +16,7 @@
 using namespace std;
 
 Scope::Scope() {
-	this->run_history_index = 0;
+	// do nothing
 }
 
 Scope::~Scope() {
@@ -39,20 +39,14 @@ void Scope::save(ofstream& output_file) {
 
 	output_file << this->child_scopes.size() << endl;
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
-		output_file << this->child_scopes[c_index]->is_outer << endl;
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
 
-	output_file << this->num_improvements << endl;
-
-	output_file << this->run_history.size() << endl;
-	for (int h_index = 0; h_index < (int)this->run_history.size(); h_index++) {
-		output_file << this->run_history[h_index].size() << endl;
-		for (int i_index = 0; i_index < (int)this->run_history[h_index].size(); i_index++) {
-			output_file << this->run_history[h_index][i_index] << endl;
-		}
+	output_file << this->last_scores.size() << endl;
+	for (list<double>::iterator it = this->last_scores.begin();
+			it != this->last_scores.end(); it++) {
+		output_file << *it << endl;
 	}
-	output_file << this->run_history_index << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -128,44 +122,19 @@ void Scope::load(ifstream& input_file,
 	getline(input_file, num_child_scopes_line);
 	int num_child_scopes = stoi(num_child_scopes_line);
 	for (int c_index = 0; c_index < num_child_scopes; c_index++) {
-		string is_outer_line;
-		getline(input_file, is_outer_line);
-		bool is_outer = stoi(is_outer_line);
-
 		string scope_id_line;
 		getline(input_file, scope_id_line);
-		int scope_id = stoi(scope_id_line);
-
-		if (is_outer) {
-			this->child_scopes.push_back(parent_solution->outer_scopes[scope_id]);
-		} else {
-			this->child_scopes.push_back(parent_solution->scopes[scope_id]);
-		}
+		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
 
-	string num_improvements_line;
-	getline(input_file, num_improvements_line);
-	this->num_improvements = stoi(num_improvements_line);
-
-	string run_history_size_line;
-	getline(input_file, run_history_size_line);
-	int run_history_size = stoi(run_history_size_line);
-	for (int h_index = 0; h_index < run_history_size; h_index++) {
-		vector<int> run;
-		string run_size_line;
-		getline(input_file, run_size_line);
-		int run_size = stoi(run_size_line);
-		for (int i_index = 0; i_index < run_size; i_index++) {
-			string node_id_line;
-			getline(input_file, node_id_line);
-			run.push_back(stoi(node_id_line));
-		}
-		this->run_history.push_back(run);
+	string num_last_scores_line;
+	getline(input_file, num_last_scores_line);
+	int num_last_scores = stoi(num_last_scores_line);
+	for (int e_index = 0; e_index < num_last_scores; e_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->last_scores.push_back(stod(score_line));
 	}
-
-	string run_history_index_line;
-	getline(input_file, run_history_index_line);
-	this->run_history_index = stoi(run_history_index_line);
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -238,17 +207,12 @@ void Scope::copy_from(Scope* original,
 		}
 	}
 
-	this->num_improvements = original->num_improvements;
-
 	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
-		if (original->child_scopes[c_index]->is_outer) {
-			this->child_scopes.push_back(parent_solution->outer_scopes[
-				original->child_scopes[c_index]->id]);
-		} else {
-			this->child_scopes.push_back(parent_solution->scopes[
-				original->child_scopes[c_index]->id]);
-		}
+		this->child_scopes.push_back(parent_solution->scopes[
+			original->child_scopes[c_index]->id]);
 	}
+
+	this->last_scores = original->last_scores;
 }
 
 void Scope::save_for_display(ofstream& output_file) {

@@ -25,8 +25,6 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 	this->existing_network = NULL;
 	this->new_network = NULL;
 
-	this->best_new_scope = NULL;
-
 	this->sum_num_instances = 0;
 
 	this->create_iter = wrapper->iter;
@@ -43,10 +41,6 @@ ExploreExperiment::~ExploreExperiment() {
 	if (this->new_network != NULL) {
 		delete this->new_network;
 	}
-
-	if (this->best_new_scope != NULL) {
-		delete this->best_new_scope;
-	}
 }
 
 bool ExploreExperiment::further_than(ExploreExperiment* other) {
@@ -59,14 +53,6 @@ bool ExploreExperiment::further_than(ExploreExperiment* other) {
 
 ExploreExperimentHistory::ExploreExperimentHistory(ExploreExperiment* experiment) {
 	this->experiment = experiment;
-
-	this->curr_new_scope = NULL;
-}
-
-ExploreExperimentHistory::~ExploreExperimentHistory() {
-	if (this->curr_new_scope != NULL) {
-		delete this->curr_new_scope;
-	}
 }
 
 ExploreExperimentState::ExploreExperimentState(ExploreExperiment* experiment) {

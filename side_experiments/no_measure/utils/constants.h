@@ -27,9 +27,6 @@ const int TRAIN_ITERS = 300000;
 
 const int GENERALIZE_ITER = 3;
 
-const int NEW_SCOPE_MIN_NUM_NODES = 3;
-const int CREATE_NEW_SCOPE_NUM_TRIES = 50;
-
 /**
  * - simply give raw actions a fixed weight
  *   - cannot track success/count if continuous
@@ -39,8 +36,6 @@ const int RAW_ACTION_WEIGHT = 8;
 
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
-
-const int NEW_SCOPE_MIN_NODES = 10;
 
 const int RAMP_NUM_GEARS = 9;
 

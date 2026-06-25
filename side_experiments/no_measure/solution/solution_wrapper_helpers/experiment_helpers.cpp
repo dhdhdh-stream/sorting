@@ -16,10 +16,6 @@ using namespace std;
 
 const int STUCK_NUM_ITERS = 10;
 
-const int OUTER_ITERS = 8;
-
-const int TARGET_NODES_PER_EVAL = 20;
-
 void SolutionWrapper::experiment_init() {
 	this->iter++;
 
@@ -128,31 +124,19 @@ void SolutionWrapper::experiment_end(double result) {
 				}
 
 				this->solution->timestamp++;
-				// switch (this->solution->state) {
-				// case SOLUTION_STATE_NON_OUTER:
-				// 	if ((int)this->solution->clean_improvement_history.size() >= STUCK_NUM_ITERS) {
-				// 		double prev_val = this->solution->clean_improvement_history[this->solution->clean_improvement_history.size() - STUCK_NUM_ITERS];
-				// 		bool improved = false;
-				// 		for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
-				// 			if (this->solution->clean_improvement_history[this->solution->clean_improvement_history.size() - 1 - h_index] > prev_val) {
-				// 				improved = true;
-				// 				break;
-				// 			}
-				// 		}
-
-				// 		if (!improved) {
-				// 			this->solution->timestamp = -1;
+				// if ((int)this->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
+				// 	double prev_val = this->solution->improvement_history[this->solution->improvement_history.size() - STUCK_NUM_ITERS];
+				// 	bool improved = false;
+				// 	for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
+				// 		if (this->solution->improvement_history[this->solution->improvement_history.size() - 1 - h_index] > prev_val) {
+				// 			improved = true;
+				// 			break;
 				// 		}
 				// 	}
-				// 	break;
-				// case SOLUTION_STATE_OUTER:
-				// 	if (this->solution->timestamp >= OUTER_ITERS) {
-				// 		this->solution->state = SOLUTION_STATE_NON_OUTER;
-				// 		this->solution->timestamp = 0;
 
-				// 		this->solution->merge_outer();
+				// 	if (!improved) {
+				// 		this->solution->timestamp = -1;
 				// 	}
-				// 	break;
 				// }
 			}
 		}

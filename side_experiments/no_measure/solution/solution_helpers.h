@@ -18,16 +18,6 @@ class SolutionWrapper;
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper);
 
-void create_new_scope(AbstractNode* potential_start_node,
-					  AbstractNode* potential_end_node,
-					  Scope*& new_scope);
-Scope* create_new_scope(Scope* scope_context,
-						SolutionWrapper* wrapper);
-Scope* outer_create_new_scope(SolutionWrapper* wrapper);
-void recursive_add_child(Scope* curr_parent,
-						 SolutionWrapper* wrapper,
-						 Scope* new_scope);
-
 void clean_scope(Scope* scope);
 
 void update_helper(ScopeHistory* scope_history,

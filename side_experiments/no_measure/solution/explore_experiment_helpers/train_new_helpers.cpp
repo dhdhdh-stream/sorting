@@ -163,27 +163,27 @@ void ExploreExperiment::train_new_backprop(
 
 			bool is_success = false;
 			if (local_improvement > 0.0) {
-				if (wrapper->solution->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+				if (this->scope_context->last_scores.size() >= MIN_NUM_LAST_TRACK) {
 					int num_better_than = 0;
-					for (list<double>::iterator it = wrapper->solution->train_new_last_scores.begin();
-							it != wrapper->solution->train_new_last_scores.end(); it++) {
+					for (list<double>::iterator it = this->scope_context->last_scores.begin();
+							it != this->scope_context->last_scores.end(); it++) {
 						if (global_improvement >= *it) {
 							num_better_than++;
 						}
 					}
 
-					double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->train_new_last_scores.size();
+					double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->last_scores.size();
 
 					if (num_better_than >= target_better_than) {
 						is_success = true;
 					}
 
-					if (wrapper->solution->train_new_last_scores.size() >= NUM_LAST_TRACK) {
-						wrapper->solution->train_new_last_scores.pop_front();
+					if (this->scope_context->last_scores.size() >= NUM_LAST_TRACK) {
+						this->scope_context->last_scores.pop_front();
 					}
-					wrapper->solution->train_new_last_scores.push_back(global_improvement);
+					this->scope_context->last_scores.push_back(global_improvement);
 				} else {
-					wrapper->solution->train_new_last_scores.push_back(global_improvement);
+					this->scope_context->last_scores.push_back(global_improvement);
 				}
 			}
 
@@ -204,16 +204,6 @@ void ExploreExperiment::train_new_backprop(
 			if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
 				for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 					Scope* scope = wrapper->solution->scopes[s_index];
-					for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-							it != scope->nodes.end(); it++) {
-						if (it->second->experiment != NULL) {
-							delete it->second->experiment;
-							it->second->experiment = NULL;
-						}
-					}
-				}
-				for (int s_index = 0; s_index < (int)wrapper->solution->outer_scopes.size(); s_index++) {
-					Scope* scope = wrapper->solution->outer_scopes[s_index];
 					for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 							it != scope->nodes.end(); it++) {
 						if (it->second->experiment != NULL) {

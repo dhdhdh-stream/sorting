@@ -29,9 +29,6 @@ class ProblemType;
 class Scope;
 class ScopeHistory;
 
-const int SOLUTION_STATE_NON_OUTER = 0;
-const int SOLUTION_STATE_OUTER = 1;
-
 class Solution {
 public:
 	/**
@@ -40,26 +37,9 @@ public:
 	int timestamp;
 	double curr_score;
 
-	int state;
-
 	std::vector<Scope*> scopes;
-	std::vector<Scope*> outer_scopes;
 	Scope* starting_scope;
-
-	std::vector<int> outer_root_scope_ids;
-
-	/**
-	 * - even if experiment safe to add, doesn't mean should
-	 *   - noise leads to more noise
-	 * 
-	 * - but accept if no progress has been made recently
-	 * 
-	 * - don't track global
-	 *   - as solution becomes fractured, becomes dominated by noise
-	 *   - if experiment has good local, but poor global, will add anyways
-	 */
-	std::list<double> train_new_last_scores;
-	std::list<double> ramp_last_scores;
+	int starting_num_improvements;
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
@@ -74,8 +54,6 @@ public:
 	void load(std::ifstream& input_file);
 
 	void clean_scopes();
-
-	void merge_outer();
 
 	void save(std::ofstream& output_file);
 

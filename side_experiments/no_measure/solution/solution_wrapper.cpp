@@ -55,7 +55,8 @@ void SolutionWrapper::clean_scopes() {
 }
 
 void SolutionWrapper::combine(string other_path,
-							  string other_name) {
+							  string other_name,
+							  int starting_num_scopes) {
 	ifstream input_file;
 	input_file.open(other_path + other_name);
 
@@ -64,12 +65,10 @@ void SolutionWrapper::combine(string other_path,
 
 	input_file.close();
 
-	this->solution->outer_root_scope_ids.push_back(this->solution->outer_scopes.size());
-
 	for (int o_index = 0; o_index < (int)other->scopes.size(); o_index++) {
-		this->solution->outer_scopes.push_back(other->scopes[o_index]);
+		this->solution->scopes.push_back(other->scopes[o_index]);
 
-		for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+		for (int s_index = 0; s_index < starting_num_scopes; s_index++) {
 			this->solution->scopes[s_index]->child_scopes.push_back(other->scopes[o_index]);
 		}
 	}
@@ -78,15 +77,10 @@ void SolutionWrapper::combine(string other_path,
 
 	delete other;
 
-	for (int scope_index = 0; scope_index < (int)this->solution->outer_scopes.size(); scope_index++) {
-		this->solution->outer_scopes[scope_index]->is_outer = true;
-		this->solution->outer_scopes[scope_index]->id = scope_index;
+	for (int scope_index = 0; scope_index < (int)this->solution->scopes.size(); scope_index++) {
+		this->solution->scopes[scope_index]->id = scope_index;
 	}
 
-	this->solution->train_new_last_scores.clear();
-	this->solution->ramp_last_scores.clear();
-
-	this->solution->state = SOLUTION_STATE_OUTER;
 	this->solution->timestamp = 0;
 }
 

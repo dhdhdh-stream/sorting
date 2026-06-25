@@ -2,6 +2,7 @@
 #define SCOPE_H
 
 #include <fstream>
+#include <list>
 #include <map>
 #include <vector>
 
@@ -17,7 +18,6 @@ const int RUN_NUM_SAVE = 10;
 class ScopeHistory;
 class Scope {
 public:
-	bool is_outer;
 	int id;
 
 	int node_counter;
@@ -34,10 +34,7 @@ public:
 	 * - if goal is for explore to cover large distance, also have create_new_scope()
 	 */
 
-	int num_improvements;
-
-	std::vector<std::vector<int>> run_history;
-	int run_history_index;
+	std::list<double> last_scores;
 
 	Scope();
 	~Scope();
