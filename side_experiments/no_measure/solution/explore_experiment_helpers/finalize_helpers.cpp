@@ -435,5 +435,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		end_node->next_node = NULL;
 
 		wrapper->solution->starting_scope = new_scope;
+
+		wrapper->experiment_iter = EXPERIMENT_REFRESH_NUM_ITERS;
+		/**
+		 * - slightly increase chance of experiments in new scope
+		 */
 	}
 }

@@ -38,9 +38,9 @@ void SolutionWrapper::experiment_init() {
 		this->should_explore = false;
 	}
 
-	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
+	ScopeHistory* scope_history = new ScopeHistory(this->solution->starting_scope);
 	this->scope_histories.push_back(scope_history);
-	this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
+	this->node_context.push_back(this->solution->starting_scope->nodes[0]);
 	this->experiment_context.push_back(NULL);
 }
 

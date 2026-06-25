@@ -43,6 +43,8 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
 
+	output_file << this->num_improvements << endl;
+
 	output_file << this->run_history.size() << endl;
 	for (int h_index = 0; h_index < (int)this->run_history.size(); h_index++) {
 		output_file << this->run_history[h_index].size() << endl;
@@ -141,6 +143,10 @@ void Scope::load(ifstream& input_file,
 		}
 	}
 
+	string num_improvements_line;
+	getline(input_file, num_improvements_line);
+	this->num_improvements = stoi(num_improvements_line);
+
 	string run_history_size_line;
 	getline(input_file, run_history_size_line);
 	int run_history_size = stoi(run_history_size_line);
@@ -231,6 +237,8 @@ void Scope::copy_from(Scope* original,
 			break;
 		}
 	}
+
+	this->num_improvements = original->num_improvements;
 
 	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
 		if (original->child_scopes[c_index]->is_outer) {

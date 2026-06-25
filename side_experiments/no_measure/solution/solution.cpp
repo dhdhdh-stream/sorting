@@ -188,13 +188,13 @@ void Solution::load(ifstream& input_file) {
 		this->scopes[s_index]->link(this);
 	}
 
-	string starting_scope_id_line;
-	getline(input_file, starting_scope_id_line);
-	this->starting_scope = this->scopes[stoi(starting_scope_id_line)];
-
 	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
 		this->outer_scopes[s_index]->link(this);
 	}
+
+	string starting_scope_id_line;
+	getline(input_file, starting_scope_id_line);
+	this->starting_scope = this->scopes[stoi(starting_scope_id_line)];
 
 	string num_outer_root_scope_ids_line;
 	getline(input_file, num_outer_root_scope_ids_line);
@@ -328,8 +328,6 @@ void Solution::save(ofstream& output_file) {
 	output_file << this->state << endl;
 
 	output_file << this->scopes.size() << endl;
-	output_file << this->starting_scope->id << endl;
-
 	output_file << this->outer_scopes.size() << endl;
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
@@ -339,6 +337,8 @@ void Solution::save(ofstream& output_file) {
 	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
 		this->outer_scopes[s_index]->save(output_file);
 	}
+
+	output_file << this->starting_scope->id << endl;
 
 	output_file << this->outer_root_scope_ids.size() << endl;
 	for (int r_index = 0; r_index < (int)this->outer_root_scope_ids.size(); r_index++) {
