@@ -31,12 +31,12 @@ void ExploreExperiment::explore_check_activate(SolutionWrapper* wrapper) {
 	if (history->existing_predicted.size() == 0
 			&& this->num_instances_until_target <= 0) {
 		uniform_int_distribution<int> new_scope_distribution(0, 3);
-		if (wrapper->solution->state == SOLUTION_STATE_OUTER) {
-			history->curr_new_scope = outer_create_new_scope(wrapper);
-		} else if (new_scope_distribution(generator) == 0) {
-			history->curr_new_scope = create_new_scope(this->node_context->parent,
-													   wrapper);
-		}
+		// if (wrapper->solution->state == SOLUTION_STATE_OUTER) {
+		// 	history->curr_new_scope = outer_create_new_scope(wrapper);
+		// } else if (new_scope_distribution(generator) == 0) {
+		// 	history->curr_new_scope = create_new_scope(this->node_context->parent,
+		// 											   wrapper);
+		// }
 		if (history->curr_new_scope != NULL) {
 			history->curr_step_types.push_back(STEP_TYPE_SCOPE);
 			history->curr_actions.push_back(-1);
@@ -255,12 +255,6 @@ void ExploreExperiment::explore_backprop(double target_val,
 				this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
 				this->state_iter = 0;
 			} else {
-				if (wrapper->starting_experiment == this) {
-					cout << "STARTING_EXPERIMENT_STATE_DONE" << endl;
-					wrapper->starting_experiment = NULL;
-					wrapper->starting_experiment_state = STARTING_EXPERIMENT_STATE_DONE;
-				}
-
 				this->node_context->experiment = NULL;
 				delete this;
 			}

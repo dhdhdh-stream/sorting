@@ -388,4 +388,52 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
 	}
+
+	this->scope_context->num_improvements++;
+	if (this->scope_context->num_improvements == GENERALIZE_ITER) {
+		Scope* new_scope = new Scope();
+		new_scope->is_outer = false;
+		new_scope->id = wrapper->solution->scopes.size();
+		new_scope->node_counter = 0;
+		new_scope->num_improvements = 0;
+		wrapper->solution->scopes.push_back(new_scope);
+
+		new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
+		new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
+
+		StartNode* start_node = new StartNode();
+		start_node->parent = new_scope;
+		start_node->id = new_scope->node_counter;
+		new_scope->node_counter++;
+		new_scope->nodes[start_node->id] = start_node;
+
+		ScopeNode* scope_node = new ScopeNode();
+		scope_node->parent = new_scope;
+		scope_node->id = new_scope->node_counter;
+		new_scope->node_counter++;
+		new_scope->nodes[scope_node->id] = scope_node;
+
+		scope_node->scope = wrapper->solution->starting_scope;
+
+		ObsNode* end_node = new ObsNode();
+		end_node->parent = new_scope;
+		end_node->id = new_scope->node_counter;
+		new_scope->node_counter++;
+		new_scope->nodes[end_node->id] = end_node;
+
+		start_node->next_node_id = scope_node->id;
+		start_node->next_node = scope_node;
+
+		scope_node->ancestor_ids.push_back(start_node->id);
+
+		scope_node->next_node_id = end_node->id;
+		scope_node->next_node = end_node;
+
+		end_node->ancestor_ids.push_back(scope_node->id);
+
+		end_node->next_node_id = -1;
+		end_node->next_node = NULL;
+
+		wrapper->solution->starting_scope = new_scope;
+	}
 }

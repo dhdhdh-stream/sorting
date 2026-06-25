@@ -25,6 +25,8 @@ const int TRAIN_ITERS = 300000;
  */
 #endif /* MDEBUG */
 
+const int GENERALIZE_ITER = 3;
+
 const int NEW_SCOPE_MIN_NUM_NODES = 3;
 const int CREATE_NEW_SCOPE_NUM_TRIES = 50;
 

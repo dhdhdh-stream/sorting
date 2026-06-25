@@ -14,8 +14,6 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->history_index = 0;
 
-	this->starting_experiment = NULL;
-	this->starting_experiment_state = STARTING_EXPERIMENT_STATE_NOT_INIT;
 	this->experiment_iter = 0;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -35,8 +33,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 	this->history_index = 0;
 
-	this->starting_experiment = NULL;
-	this->starting_experiment_state = STARTING_EXPERIMENT_STATE_NOT_INIT;
 	this->experiment_iter = 0;
 
 	#if defined(MDEBUG) && MDEBUG

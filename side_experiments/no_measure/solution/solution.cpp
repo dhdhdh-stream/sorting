@@ -64,6 +64,8 @@ Solution::Solution(Solution* original) {
 		this->outer_scopes[s_index]->link(this);
 	}
 
+	this->starting_scope = this->scopes[original->starting_scope->id];
+
 	this->outer_root_scope_ids = original->outer_root_scope_ids;
 
 	this->train_new_last_scores = original->train_new_last_scores;
@@ -109,6 +111,7 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->is_outer = false;
 	new_scope->id = this->scopes.size();
 	new_scope->node_counter = 0;
+	new_scope->num_improvements = 0;
 	this->scopes.push_back(new_scope);
 
 	StartNode* start_node = new StartNode();
@@ -130,6 +133,8 @@ void Solution::init(ProblemType* problem_type) {
 
 	end_node->next_node_id = -1;
 	end_node->next_node = NULL;
+
+	this->starting_scope = new_scope;
 
 	this->num_experiments = 0;
 }
@@ -182,6 +187,10 @@ void Solution::load(ifstream& input_file) {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
 	}
+
+	string starting_scope_id_line;
+	getline(input_file, starting_scope_id_line);
+	this->starting_scope = this->scopes[stoi(starting_scope_id_line)];
 
 	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
 		this->outer_scopes[s_index]->link(this);
@@ -319,6 +328,8 @@ void Solution::save(ofstream& output_file) {
 	output_file << this->state << endl;
 
 	output_file << this->scopes.size() << endl;
+	output_file << this->starting_scope->id << endl;
+
 	output_file << this->outer_scopes.size() << endl;
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {

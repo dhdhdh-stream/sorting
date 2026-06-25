@@ -43,6 +43,7 @@ public:
 	int state;
 
 	std::vector<Scope*> scopes;
+	Scope* starting_scope;
 
 	std::vector<Scope*> outer_scopes;
 

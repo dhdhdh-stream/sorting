@@ -34,6 +34,8 @@ public:
 	 * - if goal is for explore to cover large distance, also have create_new_scope()
 	 */
 
+	int num_improvements;
+
 	std::vector<std::vector<int>> run_history;
 	int run_history_index;
 
