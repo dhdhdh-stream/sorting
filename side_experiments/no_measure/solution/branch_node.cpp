@@ -41,6 +41,9 @@ void BranchNode::save(ofstream& output_file) {
 	output_file << this->ramp << endl;
 	output_file << this->ramp_iter << endl;
 
+	output_file << this->consec_original << endl;
+	output_file << this->consec_branch << endl;
+
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
@@ -71,6 +74,14 @@ void BranchNode::load(ifstream& input_file,
 	string ramp_iter_line;
 	getline(input_file, ramp_iter_line);
 	this->ramp_iter = stoi(ramp_iter_line);
+
+	string consec_original_line;
+	getline(input_file, consec_original_line);
+	this->consec_original = stoi(consec_original_line);
+
+	string consec_branch_line;
+	getline(input_file, consec_branch_line);
+	this->consec_branch = stoi(consec_branch_line);
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);
@@ -110,6 +121,9 @@ void BranchNode::copy_from(BranchNode* original,
 
 	this->ramp = original->ramp;
 	this->ramp_iter = original->ramp_iter;
+
+	this->consec_original = original->consec_original;
+	this->consec_branch = original->consec_branch;
 
 	this->ancestor_ids = original->ancestor_ids;
 }

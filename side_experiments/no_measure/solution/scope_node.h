@@ -39,14 +39,6 @@ public:
 			  bool& is_next,
 			  SolutionWrapper* wrapper);
 	void exit_step(SolutionWrapper* wrapper);
-	void step(std::vector<double>& obs,
-			  int& action,
-			  bool& is_next,
-			  std::vector<ScopeHistory*>& scope_histories,
-			  std::vector<AbstractNode*>& node_context,
-			  int& num_actions);
-	void exit_step(std::vector<ScopeHistory*>& scope_histories,
-				   std::vector<AbstractNode*>& node_context);
 
 	void experiment_step(std::vector<double>& obs,
 						 int& action,

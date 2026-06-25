@@ -4,6 +4,8 @@
 #include <fstream>
 #include <vector>
 
+#include <Eigen/Dense>
+
 const int LINEAR_LAYER = 0;
 const int RELU_LAYER = 1;
 const int LEAKY_LAYER = 2;
@@ -13,14 +15,14 @@ class Layer {
 public:
 	int type;
 
-	std::vector<double> acti_vals;
-	std::vector<double> errors;
+	Eigen::VectorXf acti_vals;
+	Eigen::VectorXf errors;
 
 	std::vector<Layer*> input_layers;
 
-	std::vector<std::vector<std::vector<double>>> weights;
+	std::vector<std::vector<Eigen::VectorXf>> weights;
 	std::vector<double> constants;
-	std::vector<std::vector<std::vector<double>>> weight_updates;
+	std::vector<std::vector<Eigen::VectorXf>> weight_updates;
 	std::vector<double> constant_updates;
 
 	Layer(int type);
@@ -34,8 +36,6 @@ public:
 	void backprop();
 	void get_max_update(double& max_update_size);
 	void update_weights(double learning_rate);
-
-	void remove_input(int index);
 
 	void save_weights(std::ofstream& output_file);
 };

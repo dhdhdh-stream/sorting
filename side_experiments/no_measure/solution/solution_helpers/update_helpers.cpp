@@ -59,10 +59,16 @@ void update_helper(ScopeHistory* scope_history,
 						branch_node->branch_network->activate(branch_node_history->obs);
 						double error = target_val - branch_node->branch_network->output->acti_vals[0];
 						branch_node->branch_network->backprop(error);
+
+						branch_node->consec_original = 0;
+						branch_node->consec_branch++;
 					} else {
 						branch_node->original_network->activate(branch_node_history->obs);
 						double error = target_val - branch_node->original_network->output->acti_vals[0];
 						branch_node->original_network->backprop(error);
+
+						branch_node->consec_original++;
+						branch_node->consec_branch = 0;
 					}
 				} else {
 					if (branch_node_history->is_branch) {
@@ -95,6 +101,15 @@ void update_helper(ScopeHistory* scope_history,
 
 							// // temp
 							// cout << "branch_node->ramp: " << branch_node->ramp << endl;
+
+							if (branch_node->ramp >= RAMP_NUM_GEARS) {
+								branch_node->original_obs_history.clear();
+								branch_node->original_target_val_history.clear();
+								branch_node->original_index = 0;
+								branch_node->branch_obs_history.clear();
+								branch_node->branch_target_val_history.clear();
+								branch_node->branch_index = 0;
+							}
 						}
 					} else {
 						if (branch_node->original_obs_history.size() < RAMP_HISTORY_NUM_SAVE) {

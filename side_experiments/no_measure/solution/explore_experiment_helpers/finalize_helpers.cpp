@@ -355,6 +355,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	new_branch_node->ramp = 0;
 	new_branch_node->ramp_iter = 0;
 
+	new_branch_node->consec_original = 0;
+	new_branch_node->consec_branch = 0;
+
 	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
 		int next_node_id;
 		AbstractNode* next_node;

@@ -20,6 +20,8 @@ class SolutionWrapper;
 
 const int RAMP_HISTORY_NUM_SAVE = 100;
 
+const int CONSEC_DEPRECATE_LIMIT = 1000;
+
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
@@ -43,6 +45,9 @@ public:
 	std::vector<double> branch_target_val_history;
 	int branch_index;
 
+	int consec_original;
+	int consec_branch;
+
 	BranchNode();
 	~BranchNode();
 
@@ -50,12 +55,6 @@ public:
 			  int& action,
 			  bool& is_next,
 			  SolutionWrapper* wrapper);
-	void step(std::vector<double>& obs,
-			  int& action,
-			  bool& is_next,
-			  std::vector<ScopeHistory*>& scope_histories,
-			  std::vector<AbstractNode*>& node_context,
-			  int& num_actions);
 
 	void experiment_step(std::vector<double>& obs,
 						 int& action,
