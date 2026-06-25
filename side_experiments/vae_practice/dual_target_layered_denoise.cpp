@@ -1,0 +1,100 @@
+#include <chrono>
+#include <iostream>
+#include <map>
+#include <thread>
+#include <random>
+
+#include "network.h"
+
+using namespace std;
+
+int seed;
+
+default_random_engine generator;
+
+int main(int argc, char* argv[]) {
+	cout << "Starting..." << endl;
+
+	seed = (unsigned)time(NULL);
+	srand(seed);
+	generator.seed(seed);
+	cout << "Seed: " << seed << endl;
+
+	Network* noise_network_1 = new Network(2);
+	Network* noise_network_2 = new Network(2);
+	Network* noise_network_3 = new Network(2);
+	Network* noise_network_4 = new Network(2);
+
+	uniform_int_distribution<int> input_distribution(0, 1);
+	uniform_int_distribution<int> base_distribution(0, 1);
+	normal_distribution<double> noise_distribution(0, 1);
+	for (int iter_index = 0; iter_index < 10000000; iter_index++) {
+		double input = input_distribution(generator);
+		double base = -0.5 + 0.5 * input + base_distribution(generator);
+
+		double noise_1 = 0.1 * noise_distribution(generator);
+		double base_1 = base + noise_1;
+
+		double noise_2 = 0.2 * noise_distribution(generator);
+		double base_2 = base_1 + noise_2;
+
+		double noise_3 = 0.5 * noise_distribution(generator);
+		double base_3 = base_2 + noise_3;
+
+		double noise_4 = noise_distribution(generator);
+		double base_4 = base_3 + noise_4;
+
+		vector<double> inputs_4{input, base_4};
+		noise_network_4->activate(inputs_4);
+		double predicted_noise_4 = noise_network_4->output->acti_vals[0];
+		noise_network_4->backprop(noise_4 - predicted_noise_4);
+
+		double predicted_base_3 = base_4 - predicted_noise_4;
+
+		{
+			vector<double> inputs_3{input, base_3};
+			noise_network_3->activate(inputs_3);
+			noise_network_3->backprop(noise_3 - noise_network_3->output->acti_vals[0]);
+		}
+
+		vector<double> inputs_3{input, predicted_base_3};
+		noise_network_3->activate(inputs_3);
+		double predicted_noise_3 = noise_network_3->output->acti_vals[0];
+
+		double predicted_base_2 = predicted_base_3 - predicted_noise_3;
+
+		{
+			vector<double> inputs_2{input, base_2};
+			noise_network_2->activate(inputs_2);
+			noise_network_2->backprop(noise_2 - noise_network_2->output->acti_vals[0]);
+		}
+
+		vector<double> inputs_2{input, predicted_base_2};
+		noise_network_2->activate(inputs_2);
+		double predicted_noise_2 = noise_network_2->output->acti_vals[0];
+
+		double predicted_base_1 = predicted_base_2 - predicted_noise_2;
+
+		{
+			vector<double> inputs_1{input, base_1};
+			noise_network_1->activate(inputs_1);
+			noise_network_1->backprop(noise_1 - noise_network_1->output->acti_vals[0]);
+		}
+
+		vector<double> inputs_1{input, predicted_base_1};
+		noise_network_1->activate(inputs_1);
+		double predicted_noise_1 = noise_network_1->output->acti_vals[0];
+
+		double predicted_base = predicted_base_1 - predicted_noise_1;
+
+		if ((iter_index + 1) % 100000 == 0) {
+			cout << iter_index << endl;
+			cout << "input: " << input << endl;
+			cout << "base: " << base << endl;
+			cout << "predicted_base: " << predicted_base << endl;
+			cout << endl;
+		}
+	}
+
+	cout << "Done" << endl;
+}
