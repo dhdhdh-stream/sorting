@@ -134,8 +134,14 @@ void create_experiment(ScopeHistory* scope_history,
 			explore_node->parent,
 			explore_node,
 			explore_is_branch,
-			exit_next_node);
+			exit_next_node,
+			wrapper);
 		explore_node->experiment = new_experiment;
+
+		if (wrapper->starting_experiment_state == STARTING_EXPERIMENT_STATE_NOT_INIT) {
+			wrapper->starting_experiment = new_experiment;
+			wrapper->starting_experiment_state = STARTING_EXPERIMENT_STATE_INIT;
+		}
 
 		wrapper->solution->num_experiments++;
 	}

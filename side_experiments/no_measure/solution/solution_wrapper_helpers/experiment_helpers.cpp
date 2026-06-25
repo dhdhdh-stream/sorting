@@ -20,8 +20,6 @@ const int OUTER_ITERS = 8;
 
 const int TARGET_NODES_PER_EVAL = 20;
 
-const int EXPERIMENT_REFRESH_NUM_ITERS = 20;
-
 void SolutionWrapper::experiment_init() {
 	this->iter++;
 
@@ -93,31 +91,6 @@ void SolutionWrapper::set_action(int action) {
 void SolutionWrapper::experiment_end(double result) {
 	if (this->should_explore) {
 		if (this->explore_experiment_histories.size() == 0) {
-			if (this->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
-				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
-					Scope* scope = this->solution->scopes[s_index];
-					for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-							it != scope->nodes.end(); it++) {
-						if (it->second->experiment != NULL) {
-							delete it->second->experiment;
-							it->second->experiment = NULL;
-						}
-					}
-				}
-				for (int s_index = 0; s_index < (int)this->solution->outer_scopes.size(); s_index++) {
-					Scope* scope = this->solution->outer_scopes[s_index];
-					for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-							it != scope->nodes.end(); it++) {
-						if (it->second->experiment != NULL) {
-							delete it->second->experiment;
-							it->second->experiment = NULL;
-						}
-					}
-				}
-
-				this->experiment_iter = 0;
-			}
-
 			create_experiment(this->scope_histories[0],
 							  this);
 		} else if (this->explore_experiment_histories.size() >= 2) {

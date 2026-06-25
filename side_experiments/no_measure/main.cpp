@@ -1,4 +1,12 @@
-// TODO: remove branch if other side not accessed
+// - not good at generalization?
+
+// TODO: can't have starting experiment
+// - solution might change, causing starting experiment to never be hit
+
+// - generalization not good
+//   - becomes extremely fractured
+//     - many copies of similar BranchNodes
+//       - but separately updated
 
 #include <chrono>
 #include <iostream>

@@ -79,9 +79,19 @@ void BranchNode::load(ifstream& input_file,
 	getline(input_file, consec_original_line);
 	this->consec_original = stoi(consec_original_line);
 
+	// temp
+	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
+		cout << "this->consec_original >= CONSEC_DEPRECATE_LIMIT" << endl;
+	}
+
 	string consec_branch_line;
 	getline(input_file, consec_branch_line);
 	this->consec_branch = stoi(consec_branch_line);
+
+	// temp
+	if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {
+		cout << "this->consec_branch >= CONSEC_DEPRECATE_LIMIT" << endl;
+	}
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);

@@ -26,6 +26,8 @@ public:
 	int state;
 	int state_iter;
 
+	int create_iter;
+
 	std::vector<std::vector<double>> existing_obs_histories;
 	std::vector<double> existing_target_val_histories;
 
@@ -52,7 +54,8 @@ public:
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,
 					  bool is_branch,
-					  AbstractNode* exit_next_node);
+					  AbstractNode* exit_next_node,
+					  SolutionWrapper* wrapper);
 	~ExploreExperiment();
 
 	void experiment_check_activate(AbstractNode* experiment_node,

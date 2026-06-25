@@ -20,6 +20,10 @@ class Scope;
 class ScopeHistory;
 class Solution;
 
+const int STARTING_EXPERIMENT_STATE_NOT_INIT = 0;
+const int STARTING_EXPERIMENT_STATE_INIT = 1;
+const int STARTING_EXPERIMENT_STATE_DONE = 2;
+
 class SolutionWrapper {
 public:
 	Solution* solution;
@@ -29,6 +33,8 @@ public:
 	std::vector<double> score_histories;
 	int history_index;
 
+	AbstractExperiment* starting_experiment;
+	int starting_experiment_state;
 	int experiment_iter;
 	/**
 	 * - fully reset experiments every so often

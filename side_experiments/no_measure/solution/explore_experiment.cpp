@@ -1,5 +1,7 @@
 #include "explore_experiment.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "globals.h"
 #include "network.h"
@@ -13,7 +15,8 @@ using namespace std;
 ExploreExperiment::ExploreExperiment(Scope* scope_context,
 									 AbstractNode* node_context,
 									 bool is_branch,
-									 AbstractNode* exit_next_node) {
+									 AbstractNode* exit_next_node,
+									 SolutionWrapper* wrapper) {
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
@@ -25,6 +28,8 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 	this->best_new_scope = NULL;
 
 	this->sum_num_instances = 0;
+
+	this->create_iter = wrapper->iter;
 
 	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
@@ -45,16 +50,29 @@ ExploreExperiment::~ExploreExperiment() {
 }
 
 bool ExploreExperiment::further_than(ExploreExperiment* other) {
-	if (this->state < other->state) {
-		return false;
-	} else if (this->state > other->state) {
+	// if (this->state < other->state) {
+	// 	return false;
+	// } else if (this->state > other->state) {
+	// 	return true;
+	// } else {
+	// 	if (this->state_iter < other->state_iter) {
+	// 		return false;
+	// 	} else if (this->state_iter > other->state_iter) {
+	// 		return true;
+	// 	} else {
+	// 		uniform_int_distribution<int> distribution(0, 1);
+	// 		if (distribution(generator) == 0) {
+	// 			return false;
+	// 		} else {
+	// 			return true;
+	// 		}
+	// 	}
+	// }
+
+	if (this->create_iter < other->create_iter) {
 		return true;
 	} else {
-		if (this->state_iter <= other->state_iter) {
-			return false;
-		} else {
-			return true;
-		}
+		return false;
 	}
 }
 

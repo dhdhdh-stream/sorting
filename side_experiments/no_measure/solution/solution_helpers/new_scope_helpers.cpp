@@ -289,6 +289,9 @@ void create_new_scope(AbstractNode* potential_start_node,
 					new_branch_node->ramp = original_branch_node->ramp;
 					new_branch_node->ramp_iter = original_branch_node->ramp_iter;
 
+					new_branch_node->consec_original = original_branch_node->consec_original;
+					new_branch_node->consec_branch = original_branch_node->consec_branch;
+
 					map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings
 						.find(original_branch_node->original_next_node);
 					if (original_it == node_mappings.end()) {

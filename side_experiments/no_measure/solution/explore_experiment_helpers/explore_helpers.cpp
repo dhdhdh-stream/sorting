@@ -255,6 +255,12 @@ void ExploreExperiment::explore_backprop(double target_val,
 				this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
 				this->state_iter = 0;
 			} else {
+				if (wrapper->starting_experiment == this) {
+					cout << "STARTING_EXPERIMENT_STATE_DONE" << endl;
+					wrapper->starting_experiment = NULL;
+					wrapper->starting_experiment_state = STARTING_EXPERIMENT_STATE_DONE;
+				}
+
 				this->node_context->experiment = NULL;
 				delete this;
 			}

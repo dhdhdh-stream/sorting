@@ -76,6 +76,27 @@ void ExploreExperiment::train_new_exit_step(SolutionWrapper* wrapper) {
 	experiment_state->step_index++;
 }
 
+void count_helper(ScopeHistory* scope_history,
+				  int& zero_count,
+				  int& non_zero_count) {
+	if (scope_history->scope->id == 0) {
+		zero_count += (int)scope_history->node_histories.size();
+	} else {
+		non_zero_count += (int)scope_history->node_histories.size();
+	}
+
+	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
+			h_it != scope_history->node_histories.end(); h_it++) {
+		AbstractNode* node = h_it->second->node;
+		if (node->type == NODE_TYPE_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
+			count_helper(scope_node_history->scope_history,
+						 zero_count,
+						 non_zero_count);
+		}
+	}
+}
+
 void ExploreExperiment::train_new_backprop(
 		double target_val,
 		ExploreExperimentHistory* history,
@@ -161,6 +182,12 @@ void ExploreExperiment::train_new_backprop(
 			// cout << "local_improvement: " << local_improvement << endl;
 			// cout << "global_improvement: " << global_improvement << endl;
 
+			// temp
+			if (this->node_context->parent->id != 0) {
+				cout << "local_improvement: " << local_improvement << endl;
+				cout << "global_improvement: " << global_improvement << endl;
+			}
+
 			bool is_success = false;
 			if (local_improvement > 0.0) {
 				if (wrapper->solution->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
@@ -192,15 +219,59 @@ void ExploreExperiment::train_new_backprop(
 			#else
 			if (is_success) {
 			#endif /* MDEBUG */
+				// temp
+				int zero_count = 0;
+				int non_zero_count = 0;
+				count_helper(wrapper->scope_histories[0],
+							 zero_count,
+							 non_zero_count);
+				cout << "zero_count: " << zero_count << endl;
+				cout << "non_zero_count: " << non_zero_count << endl;
+
 				updated_scopes.insert(this->node_context->parent);
 
 				add(wrapper);
 			}
 
-			wrapper->experiment_iter++;
+			if (wrapper->starting_experiment == this) {
+				cout << "STARTING_EXPERIMENT_STATE_DONE" << endl;
+				wrapper->starting_experiment = NULL;
+				wrapper->starting_experiment_state = STARTING_EXPERIMENT_STATE_DONE;
+			}
 
 			this->node_context->experiment = NULL;
 			delete this;
+
+			wrapper->experiment_iter++;
+			// temp
+			cout << "wrapper->experiment_iter: " << wrapper->experiment_iter << endl;
+			if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS
+					&& wrapper->starting_experiment_state == STARTING_EXPERIMENT_STATE_DONE) {
+				for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+					Scope* scope = wrapper->solution->scopes[s_index];
+					for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+							it != scope->nodes.end(); it++) {
+						if (it->second->experiment != NULL) {
+							delete it->second->experiment;
+							it->second->experiment = NULL;
+						}
+					}
+				}
+				for (int s_index = 0; s_index < (int)wrapper->solution->outer_scopes.size(); s_index++) {
+					Scope* scope = wrapper->solution->outer_scopes[s_index];
+					for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+							it != scope->nodes.end(); it++) {
+						if (it->second->experiment != NULL) {
+							delete it->second->experiment;
+							it->second->experiment = NULL;
+						}
+					}
+				}
+
+				wrapper->starting_experiment = NULL;
+				wrapper->starting_experiment_state = STARTING_EXPERIMENT_STATE_NOT_INIT;
+				wrapper->experiment_iter = 0;
+			}
 		}
 	}
 }
