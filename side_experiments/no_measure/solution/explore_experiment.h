@@ -26,6 +26,9 @@ public:
 	int state;
 	int state_iter;
 
+	std::vector<std::vector<double>> existing_obs_histories;
+	std::vector<double> existing_target_val_histories;
+
 	Network* existing_network;
 
 	int sum_num_instances;
@@ -41,10 +44,10 @@ public:
 
 	int start_iter;
 
-	Network* new_network;
+	std::vector<std::vector<double>> new_obs_histories;
+	std::vector<double> new_target_val_histories;
 
-	std::vector<std::vector<double>> obs_histories;
-	std::vector<double> target_val_histories;
+	Network* new_network;
 
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,

@@ -10,9 +10,19 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 const double REGRESSION_WEIGHT_LIMIT = 100000.0;
 
 #if defined(MDEBUG) && MDEBUG
+const int EXPERIMENT_NUM_DATAPOINTS = 20;
+#else
+const int EXPERIMENT_NUM_DATAPOINTS = 5000;
+#endif /* MDEBUG */
+const double VERIFY_RATIO = 0.2;
+
+#if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;
 #else
 const int TRAIN_ITERS = 300000;
+/**
+ * - bare minimum needed to reach conclusions(?)
+ */
 #endif /* MDEBUG */
 
 const int NEW_SCOPE_MIN_NUM_NODES = 3;

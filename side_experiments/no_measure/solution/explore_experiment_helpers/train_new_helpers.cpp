@@ -17,14 +17,6 @@
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int TRAIN_NEW_NUM_DATAPOINTS = 20;
-#else
-const int TRAIN_NEW_NUM_DATAPOINTS = 5000;
-#endif /* MDEBUG */
-
-const double VERIFY_RATIO = 0.2;
-
 void ExploreExperiment::train_new_check_activate(
 		SolutionWrapper* wrapper) {
 	this->num_instances_until_target--;
@@ -47,7 +39,7 @@ void ExploreExperiment::train_new_step(vector<double>& obs,
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		this->obs_histories.push_back(obs);
+		this->new_obs_histories.push_back(obs);
 	}
 
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
@@ -89,48 +81,73 @@ void ExploreExperiment::train_new_backprop(
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper,
 		set<Scope*>& updated_scopes) {
-	if (this->obs_histories.size() > this->target_val_histories.size()) {
-		while (this->obs_histories.size() > this->target_val_histories.size()) {
-			this->target_val_histories.push_back(target_val);
+	if (this->new_obs_histories.size() > this->new_target_val_histories.size()) {
+		while (this->new_obs_histories.size() > this->new_target_val_histories.size()) {
+			this->new_target_val_histories.push_back(target_val);
 		}
 
 		this->state_iter++;
-		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS) {
+		if (this->state_iter >= EXPERIMENT_NUM_DATAPOINTS) {
 			{
 				default_random_engine generator_copy = generator;
-				shuffle(this->obs_histories.begin(), this->obs_histories.end(), generator_copy);
+				shuffle(this->new_obs_histories.begin(), this->new_obs_histories.end(), generator_copy);
 			}
 			{
 				default_random_engine generator_copy = generator;
-				shuffle(this->target_val_histories.begin(), this->target_val_histories.end(), generator_copy);
+				shuffle(this->new_target_val_histories.begin(), this->new_target_val_histories.end(), generator_copy);
 			}
 
-			this->new_network = new Network(this->obs_histories[0].size(),
-											NETWORK_SIZE_SMALL);
+			int num_new_train = (1.0 - VERIFY_RATIO) * (double)this->new_obs_histories.size();
 
-			int num_train = (1.0 - VERIFY_RATIO) * (double)this->obs_histories.size();
+			uniform_int_distribution<int> train_distribution(0, num_new_train-1);
 
-			uniform_int_distribution<int> distribution(0, num_train-1);
+			this->new_network = new Network(this->new_obs_histories[0].size());
+			double hidden_1_average_max_update = 0.0;
+			double hidden_2_average_max_update = 0.0;
+			double hidden_3_average_max_update = 0.0;
+			double output_average_max_update = 0.0;
 			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-				int rand_index = distribution(generator);
+				int rand_index = train_distribution(generator);
 
-				this->new_network->activate(this->obs_histories[rand_index]);
+				this->new_network->activate(this->new_obs_histories[rand_index]);
 
-				double error = this->target_val_histories[rand_index] - this->new_network->output->acti_vals[0];
+				double error = this->new_target_val_histories[rand_index] - this->new_network->output->acti_vals[0];
 
-				this->new_network->backprop(error);
+				this->new_network->init_backprop(error,
+												 hidden_1_average_max_update,
+												 hidden_2_average_max_update,
+												 hidden_3_average_max_update,
+												 output_average_max_update);
 			}
 
-			double sum_vals = 0.0;
-			for (int h_index = num_train; h_index < (int)this->obs_histories.size(); h_index++) {
-				this->existing_network->activate(this->obs_histories[h_index]);
-				this->new_network->activate(this->obs_histories[h_index]);
+			int num_existing_train = (1.0 - VERIFY_RATIO) * (double)this->existing_obs_histories.size();
 
+			double existing_sum_vals = 0.0;
+			int existing_count = 0;
+			for (int h_index = num_existing_train; h_index < (int)this->existing_obs_histories.size(); h_index++) {
+				this->existing_network->activate(this->existing_obs_histories[h_index]);
+				this->new_network->activate(this->existing_obs_histories[h_index]);
 				if (this->new_network->output->acti_vals[0] >= this->existing_network->output->acti_vals[0]) {
-					sum_vals += (this->target_val_histories[h_index] - this->existing_network->output->acti_vals[0]);
+					existing_sum_vals += this->existing_target_val_histories[h_index];
+					existing_count++;
 				}
 			}
-			double local_improvement = sum_vals / ((double)this->obs_histories.size() - (double)num_train);
+			double existing_average = existing_sum_vals / (double)existing_count;
+			double new_sum_vals = 0.0;
+			int new_count = 0;
+			for (int h_index = num_new_train; h_index < (int)this->new_obs_histories.size(); h_index++) {
+				this->existing_network->activate(this->new_obs_histories[h_index]);
+				this->new_network->activate(this->new_obs_histories[h_index]);
+				if (this->new_network->output->acti_vals[0] >= this->existing_network->output->acti_vals[0]) {
+					new_sum_vals += this->new_target_val_histories[h_index];
+					new_count++;
+				}
+			}
+			double new_average = new_sum_vals / (double)new_count;
+			double average_ratio = (existing_count + new_count)
+				/ ((double)this->existing_obs_histories.size() - num_existing_train
+					+ (double)this->new_obs_histories.size() - num_new_train);
+			double local_improvement = (new_average - existing_average) * average_ratio;
 
 			int total_iters = wrapper->iter - this->start_iter;
 			if (total_iters < 0) {

@@ -92,7 +92,8 @@ void ExploreExperiment::explore_check_activate(SolutionWrapper* wrapper) {
 					}
 				}
 				break;
-			case NODE_TYPE_OBS:
+			default:
+			// case NODE_TYPE_OBS:
 				{
 					ObsNode* obs_node = (ObsNode*)this->node_context;
 					if (this->exit_next_node == obs_node->next_node) {

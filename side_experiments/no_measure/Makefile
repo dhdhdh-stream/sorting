@@ -1,7 +1,14 @@
 CXX = g++
-CXXFLAGS = -g -std=c++17 -Wall -Werror -MMD \
+# CXXFLAGS = -g -std=c++17 -Wall -Werror -MMD \
+# 		   `pkg-config --cflags eigen3` \
+# 		   -DMDEBUG=0 \
+# 		   -Inn \
+# 		   -Isolution \
+# 		   -Iutils \
+# 		   -Iworld
+CXXFLAGS = -g -std=c++17 -Wall -Werror -MMD -march=native -mtune=native -O2 -DNDEBUG -ffast-math \
 		   `pkg-config --cflags eigen3` \
-		   -DMDEBUG=1 \
+		   -DMDEBUG=0 \
 		   -Inn \
 		   -Isolution \
 		   -Iutils \

@@ -20,8 +20,8 @@ char* get_time() {
 	sprintf(result, "%.3s %.3s%3d %.2d:%.2d:%.2d %d",
 		wday_name[datetime.tm_wday],
 		mon_name[datetime.tm_mon],
-		datetime.tm_mday, datetime.tm_hour,
-		datetime.tm_min, datetime.tm_sec,
-		1900 + datetime.tm_year);
+		(unsigned int)datetime.tm_mday % 1000, (unsigned int)datetime.tm_hour % 100,
+		(unsigned int)datetime.tm_min % 100, (unsigned int)datetime.tm_sec % 100,
+		((unsigned int)(1900 + datetime.tm_year)) % 10000);
 	return result;
 }
