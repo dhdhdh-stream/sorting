@@ -157,9 +157,10 @@ void ExploreExperiment::train_new_backprop(
 
 			double global_improvement = average_instances_per_run * local_improvement;
 
-			// temp
-			cout << "local_improvement: " << local_improvement << endl;
-			cout << "global_improvement: " << global_improvement << endl;
+			// // temp
+			// cout << "this->scope_context->id: " << this->scope_context->id << endl;
+			// cout << "local_improvement: " << local_improvement << endl;
+			// cout << "global_improvement: " << global_improvement << endl;
 
 			bool is_success = false;
 			if (local_improvement > 0.0) {

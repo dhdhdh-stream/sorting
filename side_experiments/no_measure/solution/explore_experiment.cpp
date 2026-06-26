@@ -25,9 +25,7 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 	this->existing_network = NULL;
 	this->new_network = NULL;
 
-	this->sum_num_instances = 0;
-
-	this->create_iter = wrapper->iter;
+	this->average_instances_per_run = 1.0;
 
 	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
@@ -44,15 +42,30 @@ ExploreExperiment::~ExploreExperiment() {
 }
 
 bool ExploreExperiment::further_than(ExploreExperiment* other) {
-	if (this->create_iter < other->create_iter) {
+	if (this->state < other->state) {
+		return false;
+	} else if (this->state > other->state) {
 		return true;
 	} else {
-		return false;
+		if (this->state_iter < other->state_iter) {
+			return false;
+		} else if (this->state_iter > other->state_iter) {
+			return true;
+		} else {
+			uniform_int_distribution<int> distribution(0, 1);
+			if (distribution(generator) == 0) {
+				return false;
+			} else {
+				return true;
+			}
+		}
 	}
 }
 
 ExploreExperimentHistory::ExploreExperimentHistory(ExploreExperiment* experiment) {
 	this->experiment = experiment;
+
+	this->num_instances = 0;
 }
 
 ExploreExperimentState::ExploreExperimentState(ExploreExperiment* experiment) {

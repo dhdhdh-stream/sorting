@@ -49,7 +49,7 @@ const int MIN_NUM_LAST_TRACK = 5;
 const double LAST_BETTER_THAN_RATIO = 0.8;
 #endif /* MDEBUG */
 
-const int EXPERIMENT_REFRESH_NUM_ITERS = 20;
+const int EXPERIMENT_REFRESH_NUM_ITERS = 10;
 
 #if defined(MDEBUG) && MDEBUG
 const int HISTORIES_NUM_SAVE = 100;

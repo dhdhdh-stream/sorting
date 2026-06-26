@@ -24,8 +24,6 @@ void ExploreExperiment::train_existing_step(
 		SolutionWrapper* wrapper) {
 	this->existing_obs_histories.push_back(obs);
 
-	this->sum_num_instances++;
-
 	delete wrapper->experiment_context.back();
 	wrapper->experiment_context.back() = NULL;
 }
@@ -40,8 +38,6 @@ void ExploreExperiment::train_existing_backprop(
 
 	this->state_iter++;
 	if (this->state_iter >= EXPERIMENT_NUM_DATAPOINTS) {
-		this->average_instances_per_run = (double)this->sum_num_instances / this->state_iter;
-
 		{
 			default_random_engine generator_copy = generator;
 			shuffle(this->existing_obs_histories.begin(), this->existing_obs_histories.end(), generator_copy);

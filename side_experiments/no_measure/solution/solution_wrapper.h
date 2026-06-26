@@ -42,6 +42,8 @@ public:
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;
 
+	std::map<BranchNode*, bool> ramp_mapping;
+
 	int num_actions;
 
 	bool should_explore;

@@ -167,4 +167,6 @@ void SolutionWrapper::experiment_end(double result) {
 	this->scope_histories.clear();
 	this->node_context.clear();
 	this->experiment_context.clear();
+
+	this->ramp_mapping.clear();
 }

@@ -26,14 +26,10 @@ public:
 	int state;
 	int state_iter;
 
-	int create_iter;
-
 	std::vector<std::vector<double>> existing_obs_histories;
 	std::vector<double> existing_target_val_histories;
 
 	Network* existing_network;
-
-	int sum_num_instances;
 
 	double average_instances_per_run;
 	int num_instances_until_target;
@@ -43,6 +39,7 @@ public:
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;
 
+	int sum_num_instances;
 	int start_iter;
 
 	std::vector<std::vector<double>> new_obs_histories;
@@ -112,6 +109,8 @@ public:
 class ExploreExperimentHistory {
 public:
 	ExploreExperiment* experiment;
+
+	int num_instances;
 
 	std::vector<double> existing_predicted;
 

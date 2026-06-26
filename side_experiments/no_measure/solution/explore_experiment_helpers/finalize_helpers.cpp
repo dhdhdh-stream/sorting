@@ -384,6 +384,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
 			new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
 
+			new_scope->last_scores = wrapper->solution->starting_scope->last_scores;
+
 			StartNode* start_node = new StartNode();
 			start_node->parent = new_scope;
 			start_node->id = new_scope->node_counter;

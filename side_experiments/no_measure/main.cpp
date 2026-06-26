@@ -1,3 +1,6 @@
+// TODO: still a bit unstable
+// - try continuously retraining existing
+
 #include <chrono>
 #include <iostream>
 #include <map>

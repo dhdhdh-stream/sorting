@@ -11,13 +11,14 @@
 
 using namespace std;
 
-const int RAMP_UPDATE_MIN_SAMPLES = 10;
 #if defined(MDEBUG) && MDEBUG
+const int RAMP_UPDATE_MIN_SAMPLES = 1;
 const int RAMP_UPDATE_NUM_TRAIN = 2;
 const int ITERS_PER_RAMP = 2;
 #else
-const int RAMP_UPDATE_NUM_TRAIN = 100;
-const int ITERS_PER_RAMP = 100;
+const int RAMP_UPDATE_MIN_SAMPLES = 20;
+const int RAMP_UPDATE_NUM_TRAIN = 200;
+const int ITERS_PER_RAMP = 200;
 #endif /* MDEBUG */
 
 void update_helper(ScopeHistory* scope_history,

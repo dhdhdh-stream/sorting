@@ -116,8 +116,14 @@ void create_experiment(ScopeHistory* scope_history,
 	gather_helper(scope_history,
 				  explore_contexts);
 
-	uniform_int_distribution<int> scope_distribution(0, explore_contexts.size()-1);
-	map<Scope*, ExploreContext>::iterator context_it = next(explore_contexts.begin(), scope_distribution(generator));
+	map<Scope*, ExploreContext>::iterator context_it;
+	uniform_int_distribution<int> root_distribution(0, 3);
+	if (root_distribution(generator) == 0) {
+		context_it = explore_contexts.find(wrapper->solution->starting_scope);
+	} else {
+		uniform_int_distribution<int> scope_distribution(0, explore_contexts.size()-1);
+		context_it = next(explore_contexts.begin(), scope_distribution(generator));
+	}
 	if (context_it->second.explore_node != NULL) {
 		geometric_distribution<int> exit_distribution(0.1);
 		int random_index;
