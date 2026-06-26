@@ -80,8 +80,7 @@ void ExploreExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 
 void ExploreExperiment::backprop(double target_val,
 								 ExploreExperimentHistory* history,
-								 SolutionWrapper* wrapper,
-								 set<Scope*>& updated_scopes) {
+								 SolutionWrapper* wrapper) {
 	this->average_instances_per_run = 0.99*this->average_instances_per_run + 0.01*history->num_instances;
 
 	switch (this->state) {
@@ -98,8 +97,7 @@ void ExploreExperiment::backprop(double target_val,
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
 						   history,
-						   wrapper,
-						   updated_scopes);
+						   wrapper);
 		break;
 	}
 }

@@ -373,6 +373,24 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
 	}
 
+	clean_scope(this->scope_context);
+
+	wrapper->solution->timestamp++;
+	if ((int)wrapper->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
+		double prev_val = wrapper->solution->improvement_history[wrapper->solution->improvement_history.size() - STUCK_NUM_ITERS];
+		bool improved = false;
+		for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
+			if (wrapper->solution->improvement_history[wrapper->solution->improvement_history.size() - 1 - h_index] > prev_val) {
+				improved = true;
+				break;
+			}
+		}
+
+		if (!improved) {
+			wrapper->solution->timestamp = -1;
+		}
+	}
+
 	if (this->scope_context == wrapper->solution->starting_scope) {
 		wrapper->solution->starting_num_improvements++;
 		if (wrapper->solution->starting_num_improvements >= GENERALIZE_ITER) {
@@ -421,11 +439,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 			wrapper->solution->starting_scope = new_scope;
 			wrapper->solution->starting_num_improvements = 0;
-
-			wrapper->experiment_iter = EXPERIMENT_REFRESH_NUM_ITERS;
-			/**
-			 * - slightly increase chance of experiments in new scope
-			 */
 		}
 	}
 }

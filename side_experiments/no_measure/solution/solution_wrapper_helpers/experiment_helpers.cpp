@@ -14,8 +14,6 @@
 
 using namespace std;
 
-const int STUCK_NUM_ITERS = 10;
-
 void SolutionWrapper::experiment_init() {
 	this->iter++;
 
@@ -85,70 +83,10 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	if (this->should_explore) {
-		if (this->explore_experiment_histories.size() == 0) {
-			create_experiment(this->scope_histories[0],
-							  this);
-		} else if (this->explore_experiment_histories.size() >= 2) {
-			ExploreExperiment* keep_experiment = NULL;
-			for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
-					it != this->explore_experiment_histories.end(); it++) {
-				if (keep_experiment == NULL) {
-					keep_experiment = it->first;
-				} else {
-					if (it->first->further_than(keep_experiment)) {
-						keep_experiment->node_context->experiment = NULL;
-						delete keep_experiment;
-
-						keep_experiment = it->first;
-					} else {
-						it->first->node_context->experiment = NULL;
-						delete it->first;
-					}
-				}
-			}
-		} else {
-			set<Scope*> updated_scopes;
-			for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
-					it != this->explore_experiment_histories.end(); it++) {
-				it->first->backprop(result,
-									it->second,
-									this,
-									updated_scopes);
-			}
-
-			if (updated_scopes.size() > 0) {
-				for (set<Scope*>::iterator it = updated_scopes.begin();
-						it != updated_scopes.end(); it++) {
-					clean_scope(*it);
-				}
-
-				this->solution->timestamp++;
-				// if ((int)this->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
-				// 	double prev_val = this->solution->improvement_history[this->solution->improvement_history.size() - STUCK_NUM_ITERS];
-				// 	bool improved = false;
-				// 	for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
-				// 		if (this->solution->improvement_history[this->solution->improvement_history.size() - 1 - h_index] > prev_val) {
-				// 			improved = true;
-				// 			break;
-				// 		}
-				// 	}
-
-				// 	if (!improved) {
-				// 		this->solution->timestamp = -1;
-				// 	}
-				// }
-			}
-		}
-
-		for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
-				it != this->explore_experiment_histories.end(); it++) {
-			delete it->second;
-		}
-		this->explore_experiment_histories.clear();
-	} else {
+	if (!this->should_explore) {
 		update_helper(this->scope_histories[0],
-					  result);
+					  result,
+					  this);
 
 		if (this->score_histories.size() < HISTORIES_NUM_SAVE) {
 			this->score_histories.push_back(result);
@@ -161,6 +99,42 @@ void SolutionWrapper::experiment_end(double result) {
 			}
 		}
 	}
+
+	if (this->explore_experiment_histories.size() == 0) {
+		create_experiment(this->scope_histories[0],
+						  this);
+	} else if (this->explore_experiment_histories.size() >= 2) {
+		ExploreExperiment* keep_experiment = NULL;
+		for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
+				it != this->explore_experiment_histories.end(); it++) {
+			if (keep_experiment == NULL) {
+				keep_experiment = it->first;
+			} else {
+				if (it->first->further_than(keep_experiment)) {
+					keep_experiment->node_context->experiment = NULL;
+					delete keep_experiment;
+
+					keep_experiment = it->first;
+				} else {
+					it->first->node_context->experiment = NULL;
+					delete it->first;
+				}
+			}
+		}
+	} else {
+		for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
+				it != this->explore_experiment_histories.end(); it++) {
+			it->first->backprop(result,
+								it->second,
+								this);
+		}
+	}
+
+	for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
+			it != this->explore_experiment_histories.end(); it++) {
+		delete it->second;
+	}
+	this->explore_experiment_histories.clear();
 
 	delete this->scope_histories[0];
 

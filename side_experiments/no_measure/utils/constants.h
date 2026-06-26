@@ -17,15 +17,15 @@ const int EXPERIMENT_NUM_DATAPOINTS = 5000;
 const double VERIFY_RATIO = 0.2;
 
 #if defined(MDEBUG) && MDEBUG
+const int UPDATE_ITERS = 10;
 const int TRAIN_ITERS = 30;
 #else
+const int UPDATE_ITERS = 100000;
 const int TRAIN_ITERS = 300000;
 /**
  * - bare minimum needed to reach conclusions(?)
  */
 #endif /* MDEBUG */
-
-const int GENERALIZE_ITER = 3;
 
 /**
  * - simply give raw actions a fixed weight
@@ -49,7 +49,11 @@ const int MIN_NUM_LAST_TRACK = 5;
 const double LAST_BETTER_THAN_RATIO = 0.8;
 #endif /* MDEBUG */
 
+const int GENERALIZE_ITER = 3;
+
 const int EXPERIMENT_REFRESH_NUM_ITERS = 10;
+
+const int STUCK_NUM_ITERS = 10;
 
 #if defined(MDEBUG) && MDEBUG
 const int HISTORIES_NUM_SAVE = 100;

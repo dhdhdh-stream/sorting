@@ -75,8 +75,7 @@ void BranchNode::experiment_step(vector<double>& obs,
 			wrapper->node_context.back() = this->original_next_node;
 		}
 
-		if (this->experiment != NULL
-				&& wrapper->should_explore) {
+		if (this->experiment != NULL) {
 			this->experiment->experiment_check_activate(
 				this,
 				is_branch,

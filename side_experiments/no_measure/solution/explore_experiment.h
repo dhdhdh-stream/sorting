@@ -67,8 +67,7 @@ public:
 	void experiment_exit_step(SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  ExploreExperimentHistory* history,
-				  SolutionWrapper* wrapper,
-				  std::set<Scope*>& updated_scopes);
+				  SolutionWrapper* wrapper);
 
 	void train_existing_check_activate(SolutionWrapper* wrapper);
 	void train_existing_step(std::vector<double>& obs,
@@ -98,8 +97,7 @@ public:
 	void train_new_exit_step(SolutionWrapper* wrapper);
 	void train_new_backprop(double target_val,
 							ExploreExperimentHistory* history,
-							SolutionWrapper* wrapper,
-							std::set<Scope*>& updated_scopes);
+							SolutionWrapper* wrapper);
 
 	void add(SolutionWrapper* wrapper);
 
@@ -111,6 +109,8 @@ public:
 	ExploreExperiment* experiment;
 
 	int num_instances;
+
+	std::vector<std::vector<double>> obs_histories;
 
 	std::vector<double> existing_predicted;
 

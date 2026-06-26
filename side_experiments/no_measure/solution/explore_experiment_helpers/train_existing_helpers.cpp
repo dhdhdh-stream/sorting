@@ -22,7 +22,8 @@ void ExploreExperiment::train_existing_check_activate(SolutionWrapper* wrapper) 
 void ExploreExperiment::train_existing_step(
 		vector<double>& obs,
 		SolutionWrapper* wrapper) {
-	this->existing_obs_histories.push_back(obs);
+	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
+	history->obs_histories.push_back(obs);
 
 	delete wrapper->experiment_context.back();
 	wrapper->experiment_context.back() = NULL;
@@ -32,7 +33,8 @@ void ExploreExperiment::train_existing_backprop(
 		double target_val,
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
-	while (this->existing_target_val_histories.size() < this->existing_obs_histories.size()) {
+	for (int i_index = 0; i_index < (int)history->obs_histories.size(); i_index++) {
+		this->existing_obs_histories.push_back(history->obs_histories[i_index]);
 		this->existing_target_val_histories.push_back(target_val);
 	}
 
@@ -69,6 +71,9 @@ void ExploreExperiment::train_existing_backprop(
 												  hidden_3_average_max_update,
 												  output_average_max_update);
 		}
+
+		this->existing_obs_histories.clear();
+		this->existing_target_val_histories.clear();
 
 		this->best_surprise = numeric_limits<double>::lowest();
 
