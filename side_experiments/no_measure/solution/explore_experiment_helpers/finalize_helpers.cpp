@@ -333,11 +333,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
 
-	new_branch_node->branch_end_node_id = exit_node_id;
-	new_branch_node->branch_end_node = exit_node;
-
 	new_branch_node->ramp = 0;
-	new_branch_node->ramp_iter = 0;
 
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;
@@ -376,20 +372,20 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	clean_scope(this->scope_context);
 
 	wrapper->solution->timestamp++;
-	if ((int)wrapper->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
-		double prev_val = wrapper->solution->improvement_history[wrapper->solution->improvement_history.size() - STUCK_NUM_ITERS];
-		bool improved = false;
-		for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
-			if (wrapper->solution->improvement_history[wrapper->solution->improvement_history.size() - 1 - h_index] > prev_val) {
-				improved = true;
-				break;
-			}
-		}
+	// if ((int)wrapper->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
+	// 	double prev_val = wrapper->solution->improvement_history[wrapper->solution->improvement_history.size() - STUCK_NUM_ITERS];
+	// 	bool improved = false;
+	// 	for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
+	// 		if (wrapper->solution->improvement_history[wrapper->solution->improvement_history.size() - 1 - h_index] > prev_val) {
+	// 			improved = true;
+	// 			break;
+	// 		}
+	// 	}
 
-		if (!improved) {
-			wrapper->solution->timestamp = -1;
-		}
-	}
+	// 	if (!improved) {
+	// 		wrapper->solution->timestamp = -1;
+	// 	}
+	// }
 
 	if (this->scope_context == wrapper->solution->starting_scope) {
 		wrapper->solution->starting_num_improvements++;
@@ -441,4 +437,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			wrapper->solution->starting_num_improvements = 0;
 		}
 	}
+
+	wrapper->experiment_iter = EXPERIMENT_REFRESH_NUM_ITERS;
+	/**
+	 * - reset all other experiments for stability(?)
+	 */
 }

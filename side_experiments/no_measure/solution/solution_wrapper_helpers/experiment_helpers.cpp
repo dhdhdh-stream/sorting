@@ -84,8 +84,7 @@ void SolutionWrapper::set_action(int action) {
 
 void SolutionWrapper::experiment_end(double result) {
 	if (!this->should_explore) {
-		update_helper(this->scope_histories[0],
-					  result,
+		update_helper(result,
 					  this);
 
 		if (this->score_histories.size() < HISTORIES_NUM_SAVE) {
@@ -141,6 +140,4 @@ void SolutionWrapper::experiment_end(double result) {
 	this->scope_histories.clear();
 	this->node_context.clear();
 	this->experiment_context.clear();
-
-	this->ramp_mapping.clear();
 }

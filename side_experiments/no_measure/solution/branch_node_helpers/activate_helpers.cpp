@@ -31,14 +31,8 @@ void BranchNode::step(vector<double>& obs,
 
 		bool is_branch;
 		if (this->ramp < RAMP_NUM_GEARS) {
-			map<BranchNode*, bool>::iterator mapping_it = wrapper->ramp_mapping.find(this);
-			if (mapping_it == wrapper->ramp_mapping.end()) {
-				uniform_int_distribution<int> on_distribution(0, RAMP_NUM_GEARS);
-				bool is_on = this->ramp >= on_distribution(generator);
-				mapping_it = wrapper->ramp_mapping.insert({this, is_on}).first;
-			}
-
-			if (mapping_it->second) {
+			uniform_int_distribution<int> on_distribution(0, RAMP_NUM_GEARS);
+			if (this->ramp >= on_distribution(generator)) {
 				this->original_network->activate(obs);
 				this->branch_network->activate(obs);
 				if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {

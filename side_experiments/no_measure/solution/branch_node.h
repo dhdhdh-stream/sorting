@@ -33,11 +33,14 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
-	int branch_end_node_id;
-	AbstractNode* branch_end_node;
-
 	int ramp;
 	int ramp_iter;
+	/**
+	 * - need to save samples to increase training speed
+	 *   - multiplying error on single samples washes away weights(?)
+	 * 
+	 * - need to increase training speed because initial networks don't match reality
+	 */
 	std::vector<std::vector<double>> original_obs_history;
 	std::vector<double> original_target_val_history;
 	int original_index;
@@ -75,8 +78,6 @@ public:
 class BranchNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_branch;
-
-	std::vector<double> obs;
 
 	BranchNodeHistory(BranchNode* node);
 };

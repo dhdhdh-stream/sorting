@@ -1,3 +1,7 @@
+/**
+ * TODO: need signals to update more effectively
+ */
+
 #include "solution_helpers.h"
 
 #include <iostream>
@@ -17,115 +21,96 @@ const int RAMP_UPDATE_MIN_SAMPLES = 1;
 const int RAMP_UPDATE_NUM_TRAIN = 2;
 const int ITERS_PER_RAMP = 2;
 #else
-const int RAMP_UPDATE_MIN_SAMPLES = 20;
-const int RAMP_UPDATE_NUM_TRAIN = 200;
-const int ITERS_PER_RAMP = 200;
+const int RAMP_UPDATE_MIN_SAMPLES = 5;
+const int RAMP_UPDATE_NUM_TRAIN = 10;
+const int ITERS_PER_RAMP = 2000;
 #endif /* MDEBUG */
 
-void update_helper(ScopeHistory* scope_history,
-				   double target_val,
+void update_helper(double target_val,
 				   SolutionWrapper* wrapper) {
-	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
-			h_it != scope_history->node_histories.end(); h_it++) {
-		switch (h_it->second->node->type) {
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
-				update_helper(scope_node_history->scope_history,
-							  target_val,
-							  wrapper);
+	for (map<BranchNode*, pair<int,pair<bool,vector<double>>>>::iterator it = wrapper->branch_node_samples.begin();
+			it != wrapper->branch_node_samples.end(); it++) {
+		if (it->first->ramp >= RAMP_NUM_GEARS) {
+			if (it->second.second.first) {
+				it->first->branch_network->activate(it->second.second.second);
+				double error = target_val - it->first->branch_network->output->acti_vals[0];
+				it->first->branch_network->backprop(error);
+
+				it->first->consec_original = 0;
+				it->first->consec_branch++;
+			} else {
+				it->first->original_network->activate(it->second.second.second);
+				double error = target_val - it->first->original_network->output->acti_vals[0];
+				it->first->original_network->backprop(error);
+
+				it->first->consec_original++;
+				it->first->consec_branch = 0;
 			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
-				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
-
-				if (branch_node->ramp >= RAMP_NUM_GEARS) {
-					if (branch_node_history->is_branch) {
-						branch_node->branch_network->activate(branch_node_history->obs);
-						double error = target_val - branch_node->branch_network->output->acti_vals[0];
-						branch_node->branch_network->backprop(error);
-
-						branch_node->consec_original = 0;
-						branch_node->consec_branch++;
-					} else {
-						branch_node->original_network->activate(branch_node_history->obs);
-						double error = target_val - branch_node->original_network->output->acti_vals[0];
-						branch_node->original_network->backprop(error);
-
-						branch_node->consec_original++;
-						branch_node->consec_branch = 0;
-					}
+		} else {
+			if (it->second.second.first) {
+				if (it->first->branch_obs_history.size() < RAMP_HISTORY_NUM_SAVE) {
+					it->first->branch_obs_history.push_back(it->second.second.second);
+					it->first->branch_target_val_history.push_back(target_val);
 				} else {
-					if (wrapper->ramp_mapping[branch_node]) {
-						if (branch_node_history->is_branch) {
-							if (branch_node->branch_obs_history.size() < RAMP_HISTORY_NUM_SAVE) {
-								branch_node->branch_obs_history.push_back(branch_node_history->obs);
-								branch_node->branch_target_val_history.push_back(target_val);
-							} else {
-								branch_node->branch_obs_history[branch_node->branch_index] = branch_node_history->obs;
-								branch_node->branch_target_val_history[branch_node->branch_index] = target_val;
-							}
-							branch_node->branch_index++;
-							if (branch_node->branch_index >= RAMP_HISTORY_NUM_SAVE) {
-								branch_node->branch_index = 0;
-							}
+					it->first->branch_obs_history[it->first->branch_index] = it->second.second.second;
+					it->first->branch_target_val_history[it->first->branch_index] = target_val;
+				}
+				it->first->branch_index++;
+				if (it->first->branch_index >= RAMP_HISTORY_NUM_SAVE) {
+					it->first->branch_index = 0;
+				}
 
-							if (branch_node->branch_obs_history.size() >= RAMP_UPDATE_MIN_SAMPLES) {
-								uniform_int_distribution<int> distribution(0, branch_node->branch_obs_history.size()-1);
-								for (int iter_index = 0; iter_index < RAMP_UPDATE_NUM_TRAIN; iter_index++) {
-									int index = distribution(generator);
-									branch_node->branch_network->activate(branch_node->branch_obs_history[index]);
-									double error = branch_node->branch_target_val_history[index] - branch_node->branch_network->output->acti_vals[0];
-									branch_node->branch_network->backprop(error);
-								}
-							}
-
-							branch_node->ramp_iter++;
-							if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
-								branch_node->ramp++;
-								branch_node->ramp_iter = 0;
-
-								// // temp
-								// cout << "branch_node->ramp: " << branch_node->ramp << endl;
-
-								if (branch_node->ramp >= RAMP_NUM_GEARS) {
-									branch_node->original_obs_history.clear();
-									branch_node->original_target_val_history.clear();
-									branch_node->original_index = 0;
-									branch_node->branch_obs_history.clear();
-									branch_node->branch_target_val_history.clear();
-									branch_node->branch_index = 0;
-								}
-							}
-						} else {
-							if (branch_node->original_obs_history.size() < RAMP_HISTORY_NUM_SAVE) {
-								branch_node->original_obs_history.push_back(branch_node_history->obs);
-								branch_node->original_target_val_history.push_back(target_val);
-							} else {
-								branch_node->original_obs_history[branch_node->original_index] = branch_node_history->obs;
-								branch_node->original_target_val_history[branch_node->original_index] = target_val;
-							}
-							branch_node->original_index++;
-							if (branch_node->original_index >= RAMP_HISTORY_NUM_SAVE) {
-								branch_node->original_index = 0;
-							}
-
-							if (branch_node->original_obs_history.size() >= RAMP_UPDATE_MIN_SAMPLES) {
-								uniform_int_distribution<int> distribution(0, branch_node->original_obs_history.size()-1);
-								for (int iter_index = 0; iter_index < RAMP_UPDATE_NUM_TRAIN; iter_index++) {
-									int index = distribution(generator);
-									branch_node->original_network->activate(branch_node->original_obs_history[index]);
-									double error = branch_node->original_target_val_history[index] - branch_node->original_network->output->acti_vals[0];
-									branch_node->original_network->backprop(error);
-								}
-							}
-						}
+				if (it->first->branch_obs_history.size() >= RAMP_UPDATE_MIN_SAMPLES) {
+					uniform_int_distribution<int> distribution(0, it->first->branch_obs_history.size()-1);
+					for (int iter_index = 0; iter_index < RAMP_UPDATE_NUM_TRAIN; iter_index++) {
+						int index = distribution(generator);
+						it->first->branch_network->activate(it->first->branch_obs_history[index]);
+						double error = it->first->branch_target_val_history[index] - it->first->branch_network->output->acti_vals[0];
+						it->first->branch_network->backprop(error);
 					}
 				}
+
+				it->first->consec_original = 0;
+				it->first->consec_branch++;
+			} else {
+				if (it->first->original_obs_history.size() < RAMP_HISTORY_NUM_SAVE) {
+					it->first->original_obs_history.push_back(it->second.second.second);
+					it->first->original_target_val_history.push_back(target_val);
+				} else {
+					it->first->original_obs_history[it->first->original_index] = it->second.second.second;
+					it->first->original_target_val_history[it->first->original_index] = target_val;
+				}
+				it->first->original_index++;
+				if (it->first->original_index >= RAMP_HISTORY_NUM_SAVE) {
+					it->first->original_index = 0;
+				}
+
+				if (it->first->original_obs_history.size() >= RAMP_UPDATE_MIN_SAMPLES) {
+					uniform_int_distribution<int> distribution(0, it->first->original_obs_history.size()-1);
+					for (int iter_index = 0; iter_index < RAMP_UPDATE_NUM_TRAIN; iter_index++) {
+						int index = distribution(generator);
+						it->first->original_network->activate(it->first->original_obs_history[index]);
+						double error = it->first->original_target_val_history[index] - it->first->original_network->output->acti_vals[0];
+						it->first->original_network->backprop(error);
+					}
+				}
+
+				uniform_int_distribution<int> on_distribution(0, RAMP_NUM_GEARS);
+				if (it->first->ramp >= on_distribution(generator)) {
+					it->first->consec_original++;
+				}
+				it->first->consec_branch = 0;
 			}
-			break;
+
+			it->first->ramp_iter++;
+			if (it->first->ramp_iter % ITERS_PER_RAMP == 0) {
+				it->first->ramp++;
+
+				// // temp
+				// cout << "it->first->ramp: " << it->first->ramp << endl;
+			}
 		}
 	}
+
+	wrapper->branch_node_samples.clear();
 }

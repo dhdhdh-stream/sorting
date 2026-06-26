@@ -37,7 +37,7 @@ const int RAW_ACTION_WEIGHT = 8;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
-const int RAMP_NUM_GEARS = 9;
+const int RAMP_NUM_GEARS = 19;
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_LAST_TRACK = 4;

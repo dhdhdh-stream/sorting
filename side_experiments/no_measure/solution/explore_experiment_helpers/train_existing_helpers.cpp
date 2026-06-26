@@ -33,10 +33,10 @@ void ExploreExperiment::train_existing_backprop(
 		double target_val,
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
-	for (int i_index = 0; i_index < (int)history->obs_histories.size(); i_index++) {
-		this->existing_obs_histories.push_back(history->obs_histories[i_index]);
-		this->existing_target_val_histories.push_back(target_val);
-	}
+	uniform_int_distribution<int> sample_distribution(0, history->obs_histories.size()-1);
+	int sample_index = sample_distribution(generator);
+	this->existing_obs_histories.push_back(history->obs_histories[sample_index]);
+	this->existing_target_val_histories.push_back(target_val);
 
 	this->state_iter++;
 	if (this->state_iter >= EXPERIMENT_NUM_DATAPOINTS) {

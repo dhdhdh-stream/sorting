@@ -42,7 +42,7 @@ public:
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;
 
-	std::map<BranchNode*, bool> ramp_mapping;
+	std::map<BranchNode*, std::pair<int, std::pair<bool,std::vector<double>>>> branch_node_samples;
 
 	int num_actions;
 

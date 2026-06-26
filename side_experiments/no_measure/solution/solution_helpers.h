@@ -2,11 +2,13 @@
 #define SOLUTION_HELPERS_H
 
 #include <map>
+#include <set>
 #include <utility>
 #include <vector>
 
 class AbstractNode;
 class BranchExperiment;
+class BranchNode;
 class Network;
 class Problem;
 class Scope;
@@ -20,8 +22,7 @@ void create_experiment(ScopeHistory* scope_history,
 
 void clean_scope(Scope* scope);
 
-void update_helper(ScopeHistory* scope_history,
-				   double target_val,
+void update_helper(double target_val,
 				   SolutionWrapper* wrapper);
 
 double get_existing_result(SolutionWrapper* wrapper);
