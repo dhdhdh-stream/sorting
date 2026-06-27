@@ -12,8 +12,9 @@ const double REGRESSION_WEIGHT_LIMIT = 100000.0;
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_NUM_DATAPOINTS = 20;
 #else
-const int EXPERIMENT_NUM_DATAPOINTS = 4000;
+const int EXPERIMENT_NUM_DATAPOINTS = 5000;
 #endif /* MDEBUG */
+const double VERIFY_RATIO = 0.2;
 
 #if defined(MDEBUG) && MDEBUG
 const int UPDATE_ITERS = 10;
@@ -35,6 +36,8 @@ const int RAW_ACTION_WEIGHT = 8;
 
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
+
+const int RAMP_NUM_GEARS = 9;
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_LAST_TRACK = 4;

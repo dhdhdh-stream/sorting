@@ -40,7 +40,18 @@ void ExploreExperiment::train_existing_backprop(
 
 	this->state_iter++;
 	if (this->state_iter >= EXPERIMENT_NUM_DATAPOINTS) {
-		uniform_int_distribution<int> train_distribution(0, this->existing_obs_histories.size()-1);
+		{
+			default_random_engine generator_copy = generator;
+			shuffle(this->existing_obs_histories.begin(), this->existing_obs_histories.end(), generator_copy);
+		}
+		{
+			default_random_engine generator_copy = generator;
+			shuffle(this->existing_target_val_histories.begin(), this->existing_target_val_histories.end(), generator_copy);
+		}
+
+		int num_existing_train = (1.0 - VERIFY_RATIO) * (double)this->existing_obs_histories.size();
+
+		uniform_int_distribution<int> train_distribution(0, num_existing_train-1);
 
 		this->existing_network = new Network(this->existing_obs_histories[0].size());
 		double hidden_1_average_max_update = 0.0;

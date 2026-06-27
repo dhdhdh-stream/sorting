@@ -1,5 +1,3 @@
-// - stability issue actually due to update step
-
 #include <chrono>
 #include <iostream>
 #include <map>

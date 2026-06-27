@@ -19,13 +19,6 @@ const int EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
  */
 const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
-const int EXPLORE_EXPERIMENT_STATE_MEASURE = 3;
-/**
- * - need measure step as bad decisions can be too damaging
- *   - can permanently shift existing BranchNodes, which may never recover
- * 
- * TODO: perhaps will no longer be the case with signals and predict
- */
 
 class ExploreExperimentHistory;
 class ExploreExperiment : public AbstractExperiment {
@@ -46,17 +39,12 @@ public:
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;
 
+	int start_iter;
+
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
 
 	Network* new_network;
-
-	double sum_existing_scores;
-	int existing_count;
-	double sum_new_scores;
-	int new_count;
-
-	int start_iter;
 
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,
@@ -109,16 +97,6 @@ public:
 	void train_new_backprop(double target_val,
 							ExploreExperimentHistory* history,
 							SolutionWrapper* wrapper);
-
-	void measure_check_activate(SolutionWrapper* wrapper);
-	void measure_step(std::vector<double>& obs,
-					  int& action,
-					  bool& is_next,
-					  SolutionWrapper* wrapper);
-	void measure_exit_step(SolutionWrapper* wrapper);
-	void measure_backprop(double target_val,
-						  ExploreExperimentHistory* history,
-						  SolutionWrapper* wrapper);
 
 	void add(SolutionWrapper* wrapper);
 

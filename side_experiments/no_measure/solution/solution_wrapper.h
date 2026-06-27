@@ -42,7 +42,8 @@ public:
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;
 
-	std::map<BranchNode*, std::pair<int, std::pair<bool,std::vector<double>>>> branch_node_samples;
+	std::map<BranchNode*, std::pair<int, std::vector<double>>> original_samples;
+	std::map<BranchNode*, std::pair<int, std::vector<double>>> branch_samples;
 
 	int num_actions;
 

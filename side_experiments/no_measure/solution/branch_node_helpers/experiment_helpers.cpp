@@ -27,12 +27,27 @@ void BranchNode::experiment_step(vector<double>& obs,
 		scope_history->node_histories[this->id] = history;
 
 		bool is_branch;
-		this->original_network->activate(obs);
-		this->branch_network->activate(obs);
-		if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
-			is_branch = true;
+		if (this->ramp < RAMP_NUM_GEARS) {
+			uniform_int_distribution<int> on_distribution(0, RAMP_NUM_GEARS);
+			if (this->ramp >= on_distribution(generator)) {
+				this->original_network->activate(obs);
+				this->branch_network->activate(obs);
+				if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+			} else {
+				is_branch = false;
+			}
 		} else {
-			is_branch = false;
+			this->original_network->activate(obs);
+			this->branch_network->activate(obs);
+			if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+				is_branch = true;
+			} else {
+				is_branch = false;
+			}
 		}
 
 		#if defined(MDEBUG) && MDEBUG
@@ -48,21 +63,26 @@ void BranchNode::experiment_step(vector<double>& obs,
 
 		if (!wrapper->should_explore) {
 			if (is_branch) {
-				this->branch_ratio = 0.999*this->branch_ratio + 0.001;
+				map<BranchNode*, pair<int,vector<double>>>::iterator it = wrapper->branch_samples.find(this);
+				if (it == wrapper->branch_samples.end()) {
+					it = wrapper->branch_samples.insert({this, {0, vector<double>()}}).first;
+				}
+				uniform_int_distribution<int> select_distribution(0, it->second.first);
+				if (select_distribution(generator) == 0) {
+					it->second.second = obs;
+				}
+				it->second.first++;
 			} else {
-				this->branch_ratio = 0.999*this->branch_ratio;
+				map<BranchNode*, pair<int,vector<double>>>::iterator it = wrapper->original_samples.find(this);
+				if (it == wrapper->original_samples.end()) {
+					it = wrapper->original_samples.insert({this, {0, vector<double>()}}).first;
+				}
+				uniform_int_distribution<int> select_distribution(0, it->second.first);
+				if (select_distribution(generator) == 0) {
+					it->second.second = obs;
+				}
+				it->second.first++;
 			}
-
-			map<BranchNode*, pair<int,pair<bool,vector<double>>>>::iterator it = wrapper->branch_node_samples.find(this);
-			if (it == wrapper->branch_node_samples.end()) {
-				it = wrapper->branch_node_samples.insert({this, {0, {false,vector<double>()}}}).first;
-			}
-			uniform_int_distribution<int> select_distribution(0, it->second.first);
-			if (select_distribution(generator) == 0) {
-				it->second.second.first = is_branch;
-				it->second.second.second = obs;
-			}
-			it->second.first++;
 		}
 
 		if (is_branch) {

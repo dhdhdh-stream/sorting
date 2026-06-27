@@ -333,7 +333,12 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
 
-	new_branch_node->branch_ratio = 0.5;
+	new_branch_node->ramp = 0;
+	new_branch_node->ramp_iter = 0;
+
+	new_branch_node->original_hits_per_run = 0.0;
+	new_branch_node->branch_hits_per_run = 0.0;
+
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;
 
@@ -436,9 +441,4 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			wrapper->solution->starting_num_improvements = 0;
 		}
 	}
-
-	wrapper->experiment_iter = EXPERIMENT_REFRESH_NUM_ITERS;
-	/**
-	 * - reset all other experiments for stability(?)
-	 */
 }
