@@ -6,6 +6,7 @@
 #include "scope.h"
 #include "solution.h"
 #include "solution_wrapper.h"
+#include "utilities.h"
 
 using namespace std;
 

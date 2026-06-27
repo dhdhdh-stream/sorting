@@ -31,6 +31,7 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
+	double branch_ratio;
 	int consec_original;
 	int consec_branch;
 

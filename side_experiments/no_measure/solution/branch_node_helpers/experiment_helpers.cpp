@@ -47,6 +47,12 @@ void BranchNode::experiment_step(vector<double>& obs,
 		history->is_branch = is_branch;
 
 		if (!wrapper->should_explore) {
+			if (is_branch) {
+				this->branch_ratio = 0.999*this->branch_ratio + 0.001;
+			} else {
+				this->branch_ratio = 0.999*this->branch_ratio;
+			}
+
 			map<BranchNode*, pair<int,pair<bool,vector<double>>>>::iterator it = wrapper->branch_node_samples.find(this);
 			if (it == wrapper->branch_node_samples.end()) {
 				it = wrapper->branch_node_samples.insert({this, {0, {false,vector<double>()}}}).first;
