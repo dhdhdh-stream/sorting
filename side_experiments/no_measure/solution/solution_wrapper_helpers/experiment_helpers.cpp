@@ -84,19 +84,14 @@ void SolutionWrapper::set_action(int action) {
 
 void SolutionWrapper::experiment_end(double result) {
 	if (!this->should_explore) {
-		update_helper(result,
-					  this);
-
-		if (this->score_histories.size() < HISTORIES_NUM_SAVE) {
-			this->score_histories.push_back(result);
-		} else {
-			this->score_histories[this->history_index] = result;
-
-			this->history_index++;
-			if (this->history_index >= HISTORIES_NUM_SAVE) {
-				this->history_index = 0;
-			}
-		}
+		set<BranchNode*> hit_original;
+		set<BranchNode*> hit_branch;
+		update_helper(this->scope_histories[0],
+					  result,
+					  hit_original,
+					  hit_branch);
+		update_helper(hit_original,
+					  hit_branch);
 	}
 
 	if (this->explore_experiment_histories.size() == 0) {

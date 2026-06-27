@@ -26,9 +26,6 @@ public:
 
 	int iter;
 
-	std::vector<double> score_histories;
-	int history_index;
-
 	int experiment_iter;
 	/**
 	 * - fully reset experiments every so often
@@ -41,9 +38,6 @@ public:
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;
-
-	std::map<BranchNode*, std::pair<int, std::vector<double>>> original_samples;
-	std::map<BranchNode*, std::pair<int, std::vector<double>>> branch_samples;
 
 	int num_actions;
 

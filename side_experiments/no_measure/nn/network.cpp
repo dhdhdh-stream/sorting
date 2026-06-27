@@ -8,7 +8,7 @@
 using namespace std;
 
 const double NETWORK_TARGET_MAX_UPDATE = 0.01;
-const int EPOCH_SIZE = 20;
+const int EPOCH_SIZE = 10;
 /**
  * - not meaningful to update weights more often(?)
  */
@@ -248,7 +248,9 @@ void Network::backprop(double error) {
 	this->hidden_3->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
+}
 
+void Network::update() {
 	this->epoch_iter++;
 	if (this->epoch_iter == EPOCH_SIZE) {
 		double max_update = 0.0;

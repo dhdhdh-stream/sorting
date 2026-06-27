@@ -121,6 +121,7 @@ void ExploreExperiment::train_new_backprop(
 					double error = this->existing_target_val_histories[rand_index] - this->existing_network->output->acti_vals[0];
 
 					this->existing_network->backprop(error);
+					this->existing_network->update();
 				}
 
 				{

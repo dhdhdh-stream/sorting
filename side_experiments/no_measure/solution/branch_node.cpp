@@ -14,13 +14,7 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->original_index = 0;
-	this->branch_index = 0;
-
 	this->experiment = NULL;
-
-	this->curr_original_hit = false;
-	this->curr_branch_hit = false;
 }
 
 BranchNode::~BranchNode() {
@@ -38,15 +32,6 @@ void BranchNode::save(ofstream& output_file) {
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
-
-	output_file << this->ramp << endl;
-	output_file << this->ramp_iter << endl;
-
-	output_file << this->original_hits_per_run << endl;
-	output_file << this->branch_hits_per_run << endl;
-
-	output_file << this->consec_original << endl;
-	output_file << this->consec_branch << endl;
 
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
@@ -66,40 +51,6 @@ void BranchNode::load(ifstream& input_file,
 	string branch_next_node_id_line;
 	getline(input_file, branch_next_node_id_line);
 	this->branch_next_node_id = stoi(branch_next_node_id_line);
-
-	string ramp_line;
-	getline(input_file, ramp_line);
-	this->ramp = stoi(ramp_line);
-
-	string ramp_iter_line;
-	getline(input_file, ramp_iter_line);
-	this->ramp_iter = stoi(ramp_iter_line);
-
-	string original_hits_per_run_line;
-	getline(input_file, original_hits_per_run_line);
-	this->original_hits_per_run = stod(original_hits_per_run_line);
-
-	string branch_hits_per_run_line;
-	getline(input_file, branch_hits_per_run_line);
-	this->branch_hits_per_run = stod(branch_hits_per_run_line);
-
-	string consec_original_line;
-	getline(input_file, consec_original_line);
-	this->consec_original = stoi(consec_original_line);
-
-	// temp
-	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
-		cout << "this->consec_original >= CONSEC_DEPRECATE_LIMIT" << endl;
-	}
-
-	string consec_branch_line;
-	getline(input_file, consec_branch_line);
-	this->consec_branch = stoi(consec_branch_line);
-
-	// temp
-	if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {
-		cout << "this->consec_branch >= CONSEC_DEPRECATE_LIMIT" << endl;
-	}
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);
@@ -132,15 +83,6 @@ void BranchNode::copy_from(BranchNode* original,
 
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
-
-	this->ramp = original->ramp;
-	this->ramp_iter = original->ramp_iter;
-
-	this->original_hits_per_run = original->original_hits_per_run;
-	this->branch_hits_per_run = original->branch_hits_per_run;
-
-	this->consec_original = original->consec_original;
-	this->consec_branch = original->consec_branch;
 
 	this->ancestor_ids = original->ancestor_ids;
 }

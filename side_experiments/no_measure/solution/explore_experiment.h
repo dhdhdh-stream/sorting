@@ -19,6 +19,12 @@ const int EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
  */
 const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
+/**
+ * - no measure step
+ *   - improvement not just the experiment change itself...
+ *     - ...but also the solution's adjustments to it
+ *       - so any results from a measure step less meaningful
+ */
 
 class ExploreExperimentHistory;
 class ExploreExperiment : public AbstractExperiment {

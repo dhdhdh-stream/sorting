@@ -44,15 +44,11 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
 	}
 
-	double sum_vals = 0.0;
-	for (int h_index = 0; h_index < (int)wrapper->score_histories.size(); h_index++) {
-		sum_vals += wrapper->score_histories[h_index];
-	}
-	double val_average = sum_vals / (double)wrapper->score_histories.size();
-	wrapper->solution->improvement_history.push_back(val_average);
-	cout << "val_average: " << val_average << endl;
+	double previous_val_average = measure_helper(wrapper);
+	wrapper->solution->improvement_history.push_back(previous_val_average);
+	cout << "previous_val_average: " << previous_val_average << endl;
 
-	wrapper->solution->curr_score = val_average;
+	wrapper->solution->curr_score = previous_val_average;
 
 	wrapper->solution->change_history.push_back(ss.str());
 
@@ -332,15 +328,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	this->existing_network = NULL;
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
-
-	new_branch_node->ramp = 0;
-	new_branch_node->ramp_iter = 0;
-
-	new_branch_node->original_hits_per_run = 0.0;
-	new_branch_node->branch_hits_per_run = 0.0;
-
-	new_branch_node->consec_original = 0;
-	new_branch_node->consec_branch = 0;
 
 	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
 		int next_node_id;

@@ -12,8 +12,6 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->iter = 0;
 
-	this->history_index = 0;
-
 	this->experiment_iter = 0;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -30,8 +28,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution->load(input_file);
 
 	this->iter = 0;
-
-	this->history_index = 0;
 
 	this->experiment_iter = 0;
 

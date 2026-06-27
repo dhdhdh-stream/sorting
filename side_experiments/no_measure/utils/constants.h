@@ -37,8 +37,6 @@ const int RAW_ACTION_WEIGHT = 8;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
-const int RAMP_NUM_GEARS = 9;
-
 #if defined(MDEBUG) && MDEBUG
 const int NUM_LAST_TRACK = 4;
 const int MIN_NUM_LAST_TRACK = 2;
@@ -54,11 +52,5 @@ const int GENERALIZE_ITER = 3;
 const int EXPERIMENT_REFRESH_NUM_ITERS = 10;
 
 const int STUCK_NUM_ITERS = 10;
-
-#if defined(MDEBUG) && MDEBUG
-const int HISTORIES_NUM_SAVE = 100;
-#else
-const int HISTORIES_NUM_SAVE = 4000;
-#endif /* MDEBUG */
 
 #endif /* CONSTANTS_H */

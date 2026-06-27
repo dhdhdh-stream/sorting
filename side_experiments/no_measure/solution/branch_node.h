@@ -18,10 +18,6 @@ class ScopeHistory;
 class Solution;
 class SolutionWrapper;
 
-const int RAMP_HISTORY_NUM_SAVE = 100;
-
-const int CONSEC_DEPRECATE_LIMIT = 1000;
-
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
@@ -32,29 +28,6 @@ public:
 	AbstractNode* original_next_node;
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
-
-	int ramp;
-	int ramp_iter;
-
-	double original_hits_per_run;
-	double branch_hits_per_run;
-
-	/**
-	 * - need to save samples to increase training speed
-	 *   - multiplying error on single samples washes away weights(?)
-	 */
-	std::vector<std::vector<double>> original_obs_history;
-	std::vector<double> original_target_val_history;
-	int original_index;
-	std::vector<std::vector<double>> branch_obs_history;
-	std::vector<double> branch_target_val_history;
-	int branch_index;
-
-	int consec_original;
-	int consec_branch;
-
-	bool curr_original_hit;
-	bool curr_branch_hit;
 
 	BranchNode();
 	~BranchNode();
@@ -83,6 +56,8 @@ public:
 class BranchNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_branch;
+
+	std::vector<double> obs;
 
 	BranchNodeHistory(BranchNode* node);
 };

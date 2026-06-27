@@ -22,9 +22,13 @@ void create_experiment(ScopeHistory* scope_history,
 
 void clean_scope(Scope* scope);
 
-void update_helper(double target_val,
-				   SolutionWrapper* wrapper);
+void update_helper(ScopeHistory* scope_history,
+				   double target_val,
+				   std::set<BranchNode*>& hit_original,
+				   std::set<BranchNode*>& hit_branch);
+void update_helper(std::set<BranchNode*>& hit_original,
+				   std::set<BranchNode*>& hit_branch);
 
-double get_existing_result(SolutionWrapper* wrapper);
+double measure_helper(SolutionWrapper* wrapper);
 
 #endif /* SOLUTION_HELPERS_H */
