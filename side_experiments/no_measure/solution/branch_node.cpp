@@ -14,11 +14,6 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->ramp_iter = 0;
-
-	this->original_index = 0;
-	this->branch_index = 0;
-
 	this->experiment = NULL;
 }
 
@@ -37,8 +32,6 @@ void BranchNode::save(ofstream& output_file) {
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
-
-	output_file << this->ramp << endl;
 
 	output_file << this->consec_original << endl;
 	output_file << this->consec_branch << endl;
@@ -61,10 +54,6 @@ void BranchNode::load(ifstream& input_file,
 	string branch_next_node_id_line;
 	getline(input_file, branch_next_node_id_line);
 	this->branch_next_node_id = stoi(branch_next_node_id_line);
-
-	string ramp_line;
-	getline(input_file, ramp_line);
-	this->ramp = stoi(ramp_line);
 
 	string consec_original_line;
 	getline(input_file, consec_original_line);
@@ -115,8 +104,6 @@ void BranchNode::copy_from(BranchNode* original,
 
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
-
-	this->ramp = original->ramp;
 
 	this->consec_original = original->consec_original;
 	this->consec_branch = original->consec_branch;

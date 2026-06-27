@@ -1,8 +1,3 @@
-// TODO: need measure step
-// - bad decisions too damaging
-//   - they can permanently shift existing BranchNode behavior
-//     - which never comes back
-
 #include <chrono>
 #include <iostream>
 #include <map>

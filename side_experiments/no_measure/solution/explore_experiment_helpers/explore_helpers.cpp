@@ -234,10 +234,6 @@ void ExploreExperiment::explore_backprop(double target_val,
 				#else
 				if (this->best_surprise >= 0.0) {
 				#endif /* MDEBUG */
-					this->sum_num_instances = 0;
-
-					this->start_iter = wrapper->iter;
-
 					this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
 					this->state_iter = 0;
 				} else {
