@@ -14,6 +14,13 @@ const int EPOCH_SIZE = 10;
  */
 
 Network::Network(int input_size) {
+	this->raw_input.resize(input_size);
+
+	this->input_means.resize(input_size);
+	this->input_means.setConstant(0.0);
+	this->input_deviations.resize(input_size);
+	this->input_deviations.setConstant(1.0);
+
 	this->input = new Layer(LINEAR_LAYER);
 	this->input->acti_vals.resize(input_size);
 	this->input->errors.resize(input_size);
@@ -57,6 +64,11 @@ Network::Network(int input_size) {
 }
 
 Network::Network(Network* original) {
+	this->raw_input = original->raw_input;
+
+	this->input_means = original->input_means;
+	this->input_deviations = original->input_deviations;
+
 	this->input = new Layer(LINEAR_LAYER);
 	this->input->acti_vals.resize(original->input->acti_vals.size());
 	this->input->errors.resize(original->input->errors.size());
@@ -104,10 +116,25 @@ Network::Network(Network* original) {
 }
 
 Network::Network(ifstream& input_file) {
-	this->input = new Layer(LINEAR_LAYER);
 	string input_size_line;
 	getline(input_file, input_size_line);
 	int input_size = stoi(input_size_line);
+
+	this->raw_input.resize(input_size);
+
+	this->input_means.resize(input_size);
+	this->input_deviations.resize(input_size);
+	for (int i_index = 0; i_index < input_size; i_index++) {
+		string mean_line;
+		getline(input_file, mean_line);
+		this->input_means(i_index) = stod(mean_line);
+
+		string deviation_line;
+		getline(input_file, deviation_line);
+		this->input_deviations(i_index) = stod(deviation_line);
+	}
+
+	this->input = new Layer(LINEAR_LAYER);
 	this->input->acti_vals.resize(input_size);
 	this->input->errors.resize(input_size);
 	this->input->errors.setConstant(0.0);
@@ -173,8 +200,11 @@ Network::~Network() {
 
 void Network::activate(vector<double>& input_vals) {
 	for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
-		this->input->acti_vals(i_index) = input_vals[i_index];
+		this->raw_input(i_index) = input_vals[i_index];
 	}
+
+	this->input->acti_vals = (this->raw_input - this->input_means).cwiseQuotient(this->input_deviations);
+
 	this->hidden_1->activate();
 	this->hidden_2->activate();
 	this->hidden_3->activate();
@@ -191,6 +221,10 @@ void Network::init_backprop(double error,
 	this->hidden_3->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
+
+	this->input_means = 0.999*this->input_means + 0.001*this->raw_input;
+	this->input_deviations = 0.999*this->input_deviations
+		+ 0.001*(this->raw_input - this->input_means).cwiseAbs();
 
 	this->epoch_iter++;
 	if (this->epoch_iter == EPOCH_SIZE) {
@@ -248,6 +282,10 @@ void Network::backprop(double error) {
 	this->hidden_3->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
+
+	this->input_means = 0.999*this->input_means + 0.001*this->raw_input;
+	this->input_deviations = 0.999*this->input_deviations
+		+ 0.001*(this->raw_input - this->input_means).cwiseAbs();
 }
 
 void Network::update() {
@@ -276,6 +314,12 @@ void Network::update() {
 
 void Network::save(ofstream& output_file) {
 	output_file << this->input->acti_vals.size() << endl;
+
+	for (int i_index = 0; i_index < (int)this->input->acti_vals.size(); i_index++) {
+		output_file << this->input_means[i_index] << endl;
+		output_file << this->input_deviations[i_index] << endl;
+	}
+
 	output_file << this->hidden_1->acti_vals.size() << endl;
 	output_file << this->hidden_2->acti_vals.size() << endl;
 	output_file << this->hidden_3->acti_vals.size() << endl;

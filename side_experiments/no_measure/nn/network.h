@@ -3,10 +3,17 @@
 
 #include <vector>
 
+#include <Eigen/Dense>
+
 #include "layer.h"
 
 class Network {
 public:
+	Eigen::VectorXf raw_input;
+
+	Eigen::VectorXf input_means;
+	Eigen::VectorXf input_deviations;
+
 	Layer* input;
 
 	Layer* hidden_1;
