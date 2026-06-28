@@ -18,6 +18,8 @@ class ScopeHistory;
 class Solution;
 class SolutionWrapper;
 
+const int CONSEC_DEPRECATE_LIMIT = 4000;
+
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
@@ -28,6 +30,13 @@ public:
 	AbstractNode* original_next_node;
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
+
+	int ramp;
+	int ramp_num_gears;
+	int ramp_iter;
+
+	int consec_original;
+	int consec_branch;
 
 	BranchNode();
 	~BranchNode();

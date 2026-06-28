@@ -115,7 +115,15 @@ void SolutionWrapper::experiment_end(double result) {
 				}
 			}
 		}
-	} else {
+	}
+
+	delete this->scope_histories[0];
+
+	this->scope_histories.clear();
+	this->node_context.clear();
+	this->experiment_context.clear();
+
+	if (this->explore_experiment_histories.size() == 1) {
 		for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
 				it != this->explore_experiment_histories.end(); it++) {
 			it->first->backprop(result,
@@ -129,10 +137,4 @@ void SolutionWrapper::experiment_end(double result) {
 		delete it->second;
 	}
 	this->explore_experiment_histories.clear();
-
-	delete this->scope_histories[0];
-
-	this->scope_histories.clear();
-	this->node_context.clear();
-	this->experiment_context.clear();
 }

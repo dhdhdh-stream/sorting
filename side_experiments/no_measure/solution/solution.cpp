@@ -166,45 +166,47 @@ void Solution::load(ifstream& input_file) {
 void Solution::clean_scopes() {
 	while (true) {
 		bool removed_scope = false;
-		for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
-			bool still_used = false;
-			for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
-				if (s_index != is_index) {
-					for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
-							it != this->scopes[is_index]->nodes.end(); it++) {
-						switch (it->second->type) {
-						case NODE_TYPE_SCOPE:
-							{
-								ScopeNode* scope_node = (ScopeNode*)it->second;
-								if (scope_node->scope == this->scopes[s_index]) {
-									still_used = true;
-									break;
-								}
-							}
-							break;
-						}
-					}
-				}
-
-				if (still_used) {
-					break;
-				}
-			}
-
-			if (!still_used) {
-				removed_scope = true;
-
+		for (int s_index = (int)this->scopes.size()-1; s_index >= 0; s_index--) {
+			if (s_index != this->starting_scope->id) {
+				bool still_used = false;
 				for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
-					for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
-						if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
-							this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
-							break;
+					if (s_index != is_index) {
+						for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
+								it != this->scopes[is_index]->nodes.end(); it++) {
+							switch (it->second->type) {
+							case NODE_TYPE_SCOPE:
+								{
+									ScopeNode* scope_node = (ScopeNode*)it->second;
+									if (scope_node->scope == this->scopes[s_index]) {
+										still_used = true;
+										break;
+									}
+								}
+								break;
+							}
 						}
+					}
+
+					if (still_used) {
+						break;
 					}
 				}
 
-				delete this->scopes[s_index];
-				this->scopes.erase(this->scopes.begin() + s_index);
+				if (!still_used) {
+					removed_scope = true;
+
+					for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
+						for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
+							if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
+								this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
+								break;
+							}
+						}
+					}
+
+					delete this->scopes[s_index];
+					this->scopes.erase(this->scopes.begin() + s_index);
+				}
 			}
 		}
 
@@ -213,7 +215,7 @@ void Solution::clean_scopes() {
 		}
 	}
 
-	for (int s_index = 1; s_index < (int)this->scopes.size(); s_index++) {
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->id = s_index;
 	}
 }

@@ -329,6 +329,13 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
 
+	new_branch_node->ramp = 0;
+	new_branch_node->ramp_num_gears = ceil(this->average_instances_per_run);
+	new_branch_node->ramp_iter = 0;
+
+	new_branch_node->consec_original = 0;
+	new_branch_node->consec_branch = 0;
+
 	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
 		int next_node_id;
 		AbstractNode* next_node;
@@ -376,6 +383,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	// 	if (!improved) {
 	// 		wrapper->solution->timestamp = -1;
 	// 	}
+	// }
+	// // temp
+	// if (wrapper->solution->timestamp >= 40) {
+	// 	wrapper->solution->timestamp = -1;
 	// }
 
 	if (this->scope_context == wrapper->solution->starting_scope) {
@@ -428,4 +439,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			wrapper->solution->starting_num_improvements = 0;
 		}
 	}
+
+	wrapper->experiment_iter = EXPERIMENT_REFRESH_NUM_ITERS;
+	/**
+	 * - reset all other experiments
+	 */
 }

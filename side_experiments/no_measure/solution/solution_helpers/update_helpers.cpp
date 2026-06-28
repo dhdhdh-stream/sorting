@@ -1,3 +1,7 @@
+/**
+ * TODO: tie RAMP_NUM_GEARS to average instances per run
+ */
+
 #include "solution_helpers.h"
 
 #include <iostream>
@@ -12,6 +16,12 @@
 #include "solution_wrapper.h"
 
 using namespace std;
+
+#if defined(MDEBUG) && MDEBUG
+const int ITERS_PER_RAMP = 2;
+#else
+const int ITERS_PER_RAMP = 4000;
+#endif /* MDEBUG */
 
 void update_helper(ScopeHistory* scope_history,
 				   double target_val,
@@ -59,11 +69,33 @@ void update_helper(set<BranchNode*>& hit_original,
 			it != hit_original.end(); it++) {
 		BranchNode* branch_node = *it;
 		branch_node->original_network->update();
+
+		if (branch_node->ramp < branch_node->ramp_num_gears) {
+			branch_node->ramp_iter++;
+			if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
+				branch_node->ramp++;
+				branch_node->ramp_iter = 0;
+
+				// // temp
+				// cout << "branch_node->ramp: " << branch_node->ramp << endl;
+			}
+		}
 	}
 
 	for (set<BranchNode*>::iterator it = hit_branch.begin();
 			it != hit_branch.end(); it++) {
 		BranchNode* branch_node = *it;
 		branch_node->branch_network->update();
+
+		if (branch_node->ramp < branch_node->ramp_num_gears) {
+			branch_node->ramp_iter++;
+			if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
+				branch_node->ramp++;
+				branch_node->ramp_iter = 0;
+
+				// // temp
+				// cout << "branch_node->ramp: " << branch_node->ramp << endl;
+			}
+		}
 	}
 }

@@ -93,10 +93,10 @@ void ExploreExperiment::train_new_backprop(
 		SolutionWrapper* wrapper) {
 	if (wrapper->should_explore) {
 		if (history->obs_histories.size() > 0) {
-			uniform_int_distribution<int> sample_distribution(0, history->obs_histories.size()-1);
-			int sample_index = sample_distribution(generator);
-			this->new_obs_histories.push_back(history->obs_histories[sample_index]);
-			this->new_target_val_histories.push_back(target_val);
+			for (int i_index = 0; i_index < (int)history->obs_histories.size(); i_index++) {
+				this->new_obs_histories.push_back(history->obs_histories[i_index]);
+				this->new_target_val_histories.push_back(target_val);
+			}
 
 			this->state_iter++;
 			if (this->state_iter >= EXPERIMENT_NUM_DATAPOINTS) {
@@ -251,9 +251,9 @@ void ExploreExperiment::train_new_backprop(
 			}
 		}
 	} else {
-		uniform_int_distribution<int> sample_distribution(0, history->obs_histories.size()-1);
-		int sample_index = sample_distribution(generator);
-		this->existing_obs_histories.push_back(history->obs_histories[sample_index]);
-		this->existing_target_val_histories.push_back(target_val);
+		for (int i_index = 0; i_index < (int)history->obs_histories.size(); i_index++) {
+			this->existing_obs_histories.push_back(history->obs_histories[i_index]);
+			this->existing_target_val_histories.push_back(target_val);
+		}
 	}
 }
