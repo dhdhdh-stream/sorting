@@ -37,6 +37,11 @@ void add_crazy_helper(Scope* scope_context,
 					  AbstractNode* exit_next_node,
 					  SolutionWrapper* wrapper);
 
+/**
+ * - not meaningful(?)
+ *   - can get explore trapped in lottery
+ *   - in the long run, networks are trained "perfectly" anyways
+ */
 double get_existing_result(SolutionWrapper* wrapper);
 
 #endif /* SOLUTION_HELPERS_H */

@@ -162,11 +162,7 @@ void add_crazy_helper(Scope* scope_context,
 		ss << "exit_next_node->id: " << exit_next_node->id << "; ";
 	}
 
-	double previous_val_average = measure_helper(wrapper);
-	wrapper->solution->improvement_history.push_back(previous_val_average);
-	cout << "previous_val_average: " << previous_val_average << endl;
-
-	wrapper->solution->curr_score = previous_val_average;
+	wrapper->solution->improvement_history.push_back(wrapper->solution->curr_score);
 
 	wrapper->solution->change_history.push_back(ss.str());
 

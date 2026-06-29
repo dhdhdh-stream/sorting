@@ -154,6 +154,9 @@ void ExploreExperiment::train_new_backprop(
 				vector<double> deviations(this->new_obs_histories[0].size());
 				for (int i_index = 0; i_index < (int)this->new_obs_histories[0].size(); i_index++) {
 					deviations[i_index] = sqrt(sum_variances[i_index] / num_new_train);
+					if (deviations[i_index] < MIN_STANDARD_DEVIATION) {
+						deviations[i_index] = MIN_STANDARD_DEVIATION;
+					}
 				}
 
 				this->new_network = new Network(this->new_obs_histories[0].size(),

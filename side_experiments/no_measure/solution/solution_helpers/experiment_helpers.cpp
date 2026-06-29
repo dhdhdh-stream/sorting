@@ -135,7 +135,15 @@ void create_experiment(ScopeHistory* scope_history,
 		}
 		AbstractNode* exit_next_node = context_it->second.explore_node_histories[random_index];
 
-		if ((wrapper->solution->timestamp+1)%10 == 0) {
+		#if defined(MDEBUG) && MDEBUG
+		if ((wrapper->solution->timestamp+1)%4 == 0) {
+		#else
+		/**
+		 * - recoverable(?)
+		 */
+		if ((wrapper->solution->timestamp+1)%8 == 0) {
+		#endif /* MDEBUG */
+		if (false) {
 			add_crazy_helper(context_it->second.explore_node->parent,
 							 context_it->second.explore_node,
 							 context_it->second.explore_is_branch,
