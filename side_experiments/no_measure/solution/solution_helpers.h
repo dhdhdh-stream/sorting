@@ -31,4 +31,10 @@ void update_helper(std::set<BranchNode*>& hit_original,
 
 double measure_helper(SolutionWrapper* wrapper);
 
+void add_crazy_helper(Scope* scope_context,
+					  AbstractNode* node_context,
+					  bool is_branch,
+					  AbstractNode* exit_next_node,
+					  SolutionWrapper* wrapper);
+
 #endif /* SOLUTION_HELPERS_H */

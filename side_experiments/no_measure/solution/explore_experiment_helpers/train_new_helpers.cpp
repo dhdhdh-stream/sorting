@@ -112,7 +112,6 @@ void ExploreExperiment::train_new_backprop(
 				int num_existing_train = (1.0 - VERIFY_RATIO) * (double)this->existing_obs_histories.size();
 
 				uniform_int_distribution<int> existing_train_distribution(0, num_existing_train-1);
-
 				for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
 					int rand_index = existing_train_distribution(generator);
 
@@ -135,9 +134,37 @@ void ExploreExperiment::train_new_backprop(
 
 				int num_new_train = (1.0 - VERIFY_RATIO) * (double)this->new_obs_histories.size();
 
-				uniform_int_distribution<int> new_train_distribution(0, num_new_train-1);
+				vector<double> sum_means(this->new_obs_histories[0].size(), 0.0);
+				for (int h_index = 0; h_index < num_new_train; h_index++) {
+					for (int i_index = 0; i_index < (int)this->new_obs_histories[0].size(); i_index++) {
+						sum_means[i_index] += this->new_obs_histories[h_index][i_index];
+					}
+				}
+				vector<double> means(this->new_obs_histories[0].size());
+				for (int i_index = 0; i_index < (int)this->new_obs_histories[0].size(); i_index++) {
+					means[i_index] = sum_means[i_index] / num_new_train;
+				}
+				vector<double> sum_variances(this->new_obs_histories[0].size(), 0.0);
+				for (int h_index = 0; h_index < num_new_train; h_index++) {
+					for (int i_index = 0; i_index < (int)this->new_obs_histories[0].size(); i_index++) {
+						sum_variances[i_index] += (this->new_obs_histories[h_index][i_index] - means[i_index])
+							* (this->new_obs_histories[h_index][i_index] - means[i_index]);
+					}
+				}
+				vector<double> deviations(this->new_obs_histories[0].size());
+				for (int i_index = 0; i_index < (int)this->new_obs_histories[0].size(); i_index++) {
+					deviations[i_index] = sqrt(sum_variances[i_index] / num_new_train);
+				}
 
-				this->new_network = new Network(this->new_obs_histories[0].size());
+				this->new_network = new Network(this->new_obs_histories[0].size(),
+												means,
+												deviations);
+				double hidden_1_average_max_update = 0.0;
+				double hidden_2_average_max_update = 0.0;
+				double hidden_3_average_max_update = 0.0;
+				double output_average_max_update = 0.0;
+
+				uniform_int_distribution<int> new_train_distribution(0, num_new_train-1);
 				for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 					int rand_index = new_train_distribution(generator);
 
@@ -145,8 +172,11 @@ void ExploreExperiment::train_new_backprop(
 
 					double error = this->new_target_val_histories[rand_index] - this->new_network->output->acti_vals[0];
 
-					this->new_network->backprop(error);
-					this->new_network->update();
+					this->new_network->init_backprop(error,
+													 hidden_1_average_max_update,
+													 hidden_2_average_max_update,
+													 hidden_3_average_max_update,
+													 output_average_max_update);
 				}
 
 				double existing_sum_vals = 0.0;

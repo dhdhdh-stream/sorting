@@ -135,14 +135,20 @@ void create_experiment(ScopeHistory* scope_history,
 		}
 		AbstractNode* exit_next_node = context_it->second.explore_node_histories[random_index];
 
-		ExploreExperiment* new_experiment = new ExploreExperiment(
-			context_it->second.explore_node->parent,
-			context_it->second.explore_node,
-			context_it->second.explore_is_branch,
-			exit_next_node,
-			wrapper);
-		context_it->second.explore_node->experiment = new_experiment;
-
-		wrapper->solution->num_experiments++;
+		if ((wrapper->solution->timestamp+1)%10 == 0) {
+			add_crazy_helper(context_it->second.explore_node->parent,
+							 context_it->second.explore_node,
+							 context_it->second.explore_is_branch,
+							 exit_next_node,
+							 wrapper);
+		} else {
+			ExploreExperiment* new_experiment = new ExploreExperiment(
+				context_it->second.explore_node->parent,
+				context_it->second.explore_node,
+				context_it->second.explore_is_branch,
+				exit_next_node,
+				wrapper);
+			context_it->second.explore_node->experiment = new_experiment;
+		}
 	}
 }

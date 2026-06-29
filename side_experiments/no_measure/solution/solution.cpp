@@ -50,8 +50,6 @@ Solution::Solution(Solution* original) {
 
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
-
-	this->num_experiments = original->num_experiments;
 }
 
 Solution::~Solution() {
@@ -105,8 +103,6 @@ void Solution::init(ProblemType* problem_type) {
 
 	this->starting_scope = new_scope;
 	this->starting_num_improvements = 0;
-
-	this->num_experiments = 0;
 }
 
 void Solution::load(ifstream& input_file) {
@@ -157,10 +153,6 @@ void Solution::load(ifstream& input_file) {
 		getline(input_file, change_line);
 		this->change_history.push_back(change_line);
 	}
-
-	string num_experiments_line;
-	getline(input_file, num_experiments_line);
-	this->num_experiments = stoi(num_experiments_line);
 }
 
 void Solution::clean_scopes() {
@@ -238,8 +230,6 @@ void Solution::save(ofstream& output_file) {
 		output_file << this->improvement_history[h_index] << endl;
 		output_file << this->change_history[h_index] << endl;
 	}
-
-	output_file << this->num_experiments << endl;
 }
 
 void Solution::save_for_display(ofstream& output_file) {

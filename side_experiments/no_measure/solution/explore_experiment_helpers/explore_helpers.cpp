@@ -31,7 +31,6 @@ void ExploreExperiment::explore_check_activate(SolutionWrapper* wrapper) {
 		this->num_instances_until_target--;
 		if (history->existing_predicted.size() == 0
 				&& this->num_instances_until_target <= 0) {
-			uniform_int_distribution<int> new_scope_distribution(0, 3);
 			bool exit_is_next;
 			switch (this->node_context->type) {
 			case NODE_TYPE_START:
