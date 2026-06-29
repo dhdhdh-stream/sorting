@@ -1,5 +1,3 @@
-// TODO: try with results
-
 #include <chrono>
 #include <iostream>
 #include <map>

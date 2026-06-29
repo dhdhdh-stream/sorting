@@ -37,4 +37,6 @@ void add_crazy_helper(Scope* scope_context,
 					  AbstractNode* exit_next_node,
 					  SolutionWrapper* wrapper);
 
+double get_existing_result(SolutionWrapper* wrapper);
+
 #endif /* SOLUTION_HELPERS_H */
