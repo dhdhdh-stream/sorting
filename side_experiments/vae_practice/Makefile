@@ -11,21 +11,29 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: dual_error simple dual_error_v2
+all: difficult no_additive deep normal_distribution_test deep_split
 
-dual_error: ${OBJECTS} dual_error.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} dual_error.o -o dual_error ${LIBS}
+difficult: ${OBJECTS} difficult.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} difficult.o -o difficult ${LIBS}
 
-simple: ${OBJECTS} simple.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} simple.o -o simple ${LIBS}
+no_additive: ${OBJECTS} no_additive.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} no_additive.o -o no_additive ${LIBS}
 
-dual_error_v2: ${OBJECTS} dual_error_v2.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} dual_error_v2.o -o dual_error_v2 ${LIBS}
+deep: ${OBJECTS} deep.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} deep.o -o deep ${LIBS}
 
--include ${DEPENDS} dual_error.d simple.d dual_error_v2.d
+normal_distribution_test: ${OBJECTS} normal_distribution_test.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} normal_distribution_test.o -o normal_distribution_test ${LIBS}
+
+deep_split: ${OBJECTS} deep_split.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} deep_split.o -o deep_split ${LIBS}
+
+-include ${DEPENDS} difficult.d no_additive.d deep.d normal_distribution_test.d deep_split.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	dual_error.o dual_error.d dual_error \
-	simple.o simple.d simple \
-	dual_error_v2.o dual_error_v2.d dual_error_v2
+	difficult.o difficult.d difficult \
+	no_additive.o no_additive.d no_additive \
+	deep.o deep.d deep \
+	normal_distribution_test.o normal_distribution_test.d normal_distribution_test \
+	deep_split.o deep_split.d deep_split

@@ -15,8 +15,8 @@ Layer::Layer(int type) {
 }
 
 void Layer::update_structure() {
-	// uniform_real_distribution<double> distribution(-0.01, 0.01);
-	uniform_real_distribution<double> distribution(-1.0, 1.0);
+	uniform_real_distribution<double> distribution(-0.01, 0.01);
+	// uniform_real_distribution<double> distribution(-1.0, 1.0);
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		if ((int)this->weights.size() < n_index+1) {
 			this->weights.push_back(vector<vector<double>>());
