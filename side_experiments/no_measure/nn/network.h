@@ -13,8 +13,15 @@ public:
 	Eigen::VectorXf input_means;
 	Eigen::VectorXf input_deviations;
 	/**
-	 * - just to help network initialize
-	 * - calculate once on init
+	 * - to help network initialize
+	 *   - but need to constantly update
+	 *     - otherwise, if e.g., init_deviation is small, bad when generalized
+	 *   - initialize to (0.0, 1.0)
+	 *     - if initialize to true, variance can become ~0.0, and cause instability when generalized
+	 *     - with 300000 iters of 0.99999 averaging:
+	 *       - if true is 0.0, resulting deviation is ~0.5
+	 *       - if true is 5.0, resulting deviation is ~4.8
+	 *       - if true is 50.0, resulting deviation si ~48.0
 	 * 
 	 * - do not normalize inner
 	 *   - gradually weakens signals
@@ -31,9 +38,7 @@ public:
 	int epoch_iter;
 	double average_max_update;
 
-	Network(int input_size,
-			std::vector<double>& init_means,
-			std::vector<double>& init_deviations);
+	Network(int input_size);
 	Network(Network* original);
 	Network(std::ifstream& input_file);
 	~Network();

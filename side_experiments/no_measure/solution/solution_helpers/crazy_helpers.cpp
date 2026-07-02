@@ -438,15 +438,9 @@ void add_crazy_helper(Scope* scope_context,
 	}
 	new_branch_node->ancestor_ids.push_back(node_context->id);
 
-	vector<double> means(25, 0.0);
-	vector<double> deviations(25, 1.0);
-	Network* existing_network = new Network(25,
-											means,
-											deviations);
+	Network* existing_network = new Network(25);
 	new_branch_node->original_network = existing_network;
-	Network* new_network = new Network(25,
-									   means,
-									   deviations);
+	Network* new_network = new Network(25);
 	new_branch_node->branch_network = new_network;
 
 	new_branch_node->ramp = 0;

@@ -13,20 +13,16 @@ const int EPOCH_SIZE = 10;
  * - not meaningful to update weights more often(?)
  */
 
-Network::Network(int input_size,
-				 vector<double>& init_means,
-				 vector<double>& init_deviations) {
+Network::Network(int input_size) {
 	this->raw_input = new Layer(LINEAR_LAYER);
 	this->raw_input->acti_vals.resize(input_size);
 	this->raw_input->errors.resize(input_size);
 	this->raw_input->errors.setConstant(0.0);
 
 	this->input_means.resize(input_size);
+	this->input_means.setConstant(0.0);
 	this->input_deviations.resize(input_size);
-	for (int i_index = 0; i_index < input_size; i_index++) {
-		this->input_means(i_index) = init_means[i_index];
-		this->input_deviations(i_index) = init_deviations[i_index];
-	}
+	this->input_deviations.setConstant(1.0);
 
 	this->input = new Layer(LINEAR_LAYER);
 	this->input->acti_vals.resize(input_size);
@@ -61,6 +57,9 @@ Network::Network(int input_size,
 	this->output->acti_vals.resize(1);
 	this->output->errors.resize(1);
 	this->output->errors.setConstant(0.0);
+	/**
+	 * - if directly connect input with no norm, can dominate hidden
+	 */
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->input_layers.push_back(this->hidden_3);
@@ -239,6 +238,10 @@ void Network::init_backprop(double error,
 	// this->raw_input->errors = this->input->errors.cwiseProduct(this->input_deviations);
 	// this->input->errors.setConstant(0.0);
 
+	this->input_means = 0.99999*this->input_means + 0.00001*this->raw_input->acti_vals;
+	this->input_deviations = 0.99999*this->input_deviations
+		+ 0.00001*(this->raw_input->acti_vals - this->input_means).cwiseAbs();
+
 	this->epoch_iter++;
 	if (this->epoch_iter == EPOCH_SIZE) {
 		double hidden_1_max_update = 0.0;
@@ -298,6 +301,10 @@ void Network::backprop(double error) {
 
 	// this->raw_input->errors = this->input->errors.cwiseProduct(this->input_deviations);
 	// this->input->errors.setConstant(0.0);
+
+	this->input_means = 0.99999*this->input_means + 0.00001*this->raw_input->acti_vals;
+	this->input_deviations = 0.99999*this->input_deviations
+		+ 0.00001*(this->raw_input->acti_vals - this->input_means).cwiseAbs();
 }
 
 void Network::update() {

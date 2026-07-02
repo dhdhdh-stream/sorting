@@ -134,34 +134,7 @@ void ExploreExperiment::train_new_backprop(
 
 				int num_new_train = (1.0 - VERIFY_RATIO) * (double)this->new_obs_histories.size();
 
-				vector<double> sum_means(this->new_obs_histories[0].size(), 0.0);
-				for (int h_index = 0; h_index < num_new_train; h_index++) {
-					for (int i_index = 0; i_index < (int)this->new_obs_histories[0].size(); i_index++) {
-						sum_means[i_index] += this->new_obs_histories[h_index][i_index];
-					}
-				}
-				vector<double> means(this->new_obs_histories[0].size());
-				for (int i_index = 0; i_index < (int)this->new_obs_histories[0].size(); i_index++) {
-					means[i_index] = sum_means[i_index] / num_new_train;
-				}
-				vector<double> sum_variances(this->new_obs_histories[0].size(), 0.0);
-				for (int h_index = 0; h_index < num_new_train; h_index++) {
-					for (int i_index = 0; i_index < (int)this->new_obs_histories[0].size(); i_index++) {
-						sum_variances[i_index] += (this->new_obs_histories[h_index][i_index] - means[i_index])
-							* (this->new_obs_histories[h_index][i_index] - means[i_index]);
-					}
-				}
-				vector<double> deviations(this->new_obs_histories[0].size());
-				for (int i_index = 0; i_index < (int)this->new_obs_histories[0].size(); i_index++) {
-					deviations[i_index] = sqrt(sum_variances[i_index] / num_new_train);
-					if (deviations[i_index] < MIN_STANDARD_DEVIATION) {
-						deviations[i_index] = MIN_STANDARD_DEVIATION;
-					}
-				}
-
-				this->new_network = new Network(this->new_obs_histories[0].size(),
-												means,
-												deviations);
+				this->new_network = new Network(this->new_obs_histories[0].size());
 				double hidden_1_average_max_update = 0.0;
 				double hidden_2_average_max_update = 0.0;
 				double hidden_3_average_max_update = 0.0;

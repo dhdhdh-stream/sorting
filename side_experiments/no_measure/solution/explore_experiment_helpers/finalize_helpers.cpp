@@ -329,6 +329,12 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	this->new_network = NULL;
 
 	new_branch_node->ramp = 0;
+	/**
+	 * - if ramp_num_gears too high, limits improvement?
+	 *   - maybe too easy for existing solution to negate impact
+	 *   - whereas if fully add immediately, forces dramatic adjustment
+	 *     - resulting in more improvement
+	 */
 	new_branch_node->ramp_num_gears = ceil(this->average_instances_per_run);
 	new_branch_node->ramp_iter = 0;
 
