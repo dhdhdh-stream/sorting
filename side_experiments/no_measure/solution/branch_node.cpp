@@ -14,15 +14,19 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->experiment = NULL;
+	this->original_experiment = NULL;
+	this->branch_experiment = NULL;
 }
 
 BranchNode::~BranchNode() {
 	delete this->original_network;
 	delete this->branch_network;
 
-	if (this->experiment != NULL) {
-		delete this->experiment;
+	if (this->original_experiment != NULL) {
+		delete this->original_experiment;
+	}
+	if (this->branch_experiment != NULL) {
+		delete this->branch_experiment;
 	}
 }
 

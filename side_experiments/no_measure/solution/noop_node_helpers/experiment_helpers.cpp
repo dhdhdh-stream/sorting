@@ -1,4 +1,4 @@
-#include "obs_node.h"
+#include "noop_node.h"
 
 #include <iostream>
 
@@ -10,13 +10,13 @@
 
 using namespace std;
 
-void ObsNode::experiment_step(vector<double>& obs,
-							  int& action,
-							  bool& is_next,
-							  SolutionWrapper* wrapper) {
+void NoopNode::experiment_step(vector<double>& obs,
+							   int& action,
+							   bool& is_next,
+							   SolutionWrapper* wrapper) {
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
-	ObsNodeHistory* history = new ObsNodeHistory(this);
+	NoopNodeHistory* history = new NoopNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
@@ -24,8 +24,7 @@ void ObsNode::experiment_step(vector<double>& obs,
 
 	if (this->experiment != NULL) {
 		this->experiment->experiment_check_activate(
-			this,
-			false,
+			obs,
 			wrapper);
 	}
 }

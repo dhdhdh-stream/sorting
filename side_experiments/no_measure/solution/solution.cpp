@@ -7,7 +7,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "obs_node.h"
+#include "noop_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -87,7 +87,7 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->node_counter++;
 	new_scope->nodes[start_node->id] = start_node;
 
-	ObsNode* end_node = new ObsNode();
+	NoopNode* end_node = new NoopNode();
 	end_node->parent = new_scope;
 	end_node->id = new_scope->node_counter;
 	new_scope->node_counter++;

@@ -23,8 +23,7 @@ void StartNode::experiment_step(vector<double>& obs,
 
 	if (this->experiment != NULL) {
 		this->experiment->experiment_check_activate(
-			this,
-			false,
+			obs,
 			wrapper);
 	}
 }

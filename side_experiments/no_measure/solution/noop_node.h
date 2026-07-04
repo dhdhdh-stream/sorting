@@ -1,5 +1,5 @@
-#ifndef OBS_NODE_H
-#define OBS_NODE_H
+#ifndef NOOP_NODE_H
+#define NOOP_NODE_H
 
 #include <fstream>
 #include <utility>
@@ -13,14 +13,16 @@ class ScopeHistory;
 class Solution;
 class SolutionWrapper;
 
-class ObsNodeHistory;
-class ObsNode : public AbstractNode {
+class NoopNodeHistory;
+class NoopNode : public AbstractNode {
 public:
 	int next_node_id;
 	AbstractNode* next_node;
 
-	ObsNode();
-	~ObsNode();
+	AbstractExperiment* experiment;
+
+	NoopNode();
+	~NoopNode();
 
 	void step(std::vector<double>& obs,
 			  int& action,
@@ -37,15 +39,15 @@ public:
 			  Solution* parent_solution);
 	void link(Solution* parent_solution);
 
-	void copy_from(ObsNode* original,
+	void copy_from(NoopNode* original,
 				   Solution* parent_solution);
 
 	void save_for_display(std::ofstream& output_file);
 };
 
-class ObsNodeHistory : public AbstractNodeHistory {
+class NoopNodeHistory : public AbstractNodeHistory {
 public:
-	ObsNodeHistory(ObsNode* node);
+	NoopNodeHistory(NoopNode* node);
 };
 
-#endif /* OBS_NODE_H */
+#endif /* NOOP_NODE_H */

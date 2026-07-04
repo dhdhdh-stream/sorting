@@ -8,7 +8,7 @@
 #include "branch_node.h"
 #include "globals.h"
 #include "network.h"
-#include "obs_node.h"
+#include "noop_node.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "start_node.h"
@@ -105,14 +105,14 @@ void Scope::load(ifstream& input_file,
 				this->nodes[branch_node->id] = branch_node;
 			}
 			break;
-		case NODE_TYPE_OBS:
+		case NODE_TYPE_NOOP:
 			{
-				ObsNode* obs_node = new ObsNode();
-				obs_node->parent = this;
-				obs_node->id = id;
-				obs_node->load(input_file,
-							   parent_solution);
-				this->nodes[obs_node->id] = obs_node;
+				NoopNode* noop_node = new NoopNode();
+				noop_node->parent = this;
+				noop_node->id = id;
+				noop_node->load(input_file,
+								parent_solution);
+				this->nodes[noop_node->id] = noop_node;
 			}
 			break;
 		}
@@ -193,15 +193,15 @@ void Scope::copy_from(Scope* original,
 				this->nodes[it->first] = branch_node;
 			}
 			break;
-		case NODE_TYPE_OBS:
+		case NODE_TYPE_NOOP:
 			{
-				ObsNode* original_obs_node = (ObsNode*)it->second;
-				ObsNode* obs_node = new ObsNode();
-				obs_node->parent = this;
-				obs_node->id = it->first;
-				obs_node->copy_from(original_obs_node,
-									parent_solution);
-				this->nodes[it->first] = obs_node;
+				NoopNode* original_noop_node = (NoopNode*)it->second;
+				NoopNode* noop_node = new NoopNode();
+				noop_node->parent = this;
+				noop_node->id = it->first;
+				noop_node->copy_from(original_noop_node,
+									 parent_solution);
+				this->nodes[it->first] = noop_node;
 			}
 			break;
 		}
@@ -270,10 +270,10 @@ ScopeHistory::ScopeHistory(ScopeHistory* original,
 				this->node_histories[it->first] = branch_node_history;
 			}
 			break;
-		case NODE_TYPE_OBS:
+		case NODE_TYPE_NOOP:
 			{
-				ObsNode* obs_node = (ObsNode*)this->scope->nodes[it->first];
-				this->node_histories[it->first] = new ObsNodeHistory(obs_node);
+				NoopNode* noop_node = (NoopNode*)this->scope->nodes[it->first];
+				this->node_histories[it->first] = new NoopNodeHistory(noop_node);
 			}
 			break;
 		}

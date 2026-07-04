@@ -7,7 +7,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
-#include "obs_node.h"
+#include "noop_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -24,13 +24,17 @@ const int EXPLORE_ITERS = 10;
 const int EXPLORE_ITERS = 400;
 #endif /* MDEBUG */
 
-void ExploreExperiment::explore_check_activate(SolutionWrapper* wrapper) {
+void ExploreExperiment::explore_check_activate(vector<double>& obs,
+											   ExploreExperimentHistory* history,
+											   SolutionWrapper* wrapper) {
 	if (wrapper->should_explore) {
-		ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
-
 		this->num_instances_until_target--;
 		if (history->existing_predicted.size() == 0
 				&& this->num_instances_until_target <= 0) {
+			this->existing_network->activate(obs);
+			history->existing_predicted.push_back(
+				this->existing_network->output->acti_vals[0]);
+
 			bool exit_is_next;
 			switch (this->node_context->type) {
 			case NODE_TYPE_START:
@@ -82,10 +86,10 @@ void ExploreExperiment::explore_check_activate(SolutionWrapper* wrapper) {
 				}
 				break;
 			default:
-			// case NODE_TYPE_OBS:
+			// case NODE_TYPE_NOOP:
 				{
-					ObsNode* obs_node = (ObsNode*)this->node_context;
-					if (this->exit_next_node == obs_node->next_node) {
+					NoopNode* noop_node = (NoopNode*)this->node_context;
+					if (this->exit_next_node == noop_node->next_node) {
 						exit_is_next = true;
 					} else {
 						exit_is_next = false;
@@ -157,12 +161,6 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
 	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
 
-	if (experiment_state->step_index == 0) {
-		this->existing_network->activate(obs);
-		history->existing_predicted.push_back(
-			this->existing_network->output->acti_vals[0]);
-	}
-
 	if (experiment_state->step_index >= (int)history->curr_step_types.size()) {
 		wrapper->node_context.back() = this->exit_next_node;
 
@@ -214,8 +212,6 @@ void ExploreExperiment::explore_backprop(double target_val,
 
 		if (history->existing_predicted.size() != 0) {
 			double curr_surprise = target_val - history->existing_predicted[0];
-			// double existing_result = get_existing_result(wrapper);
-			// double curr_surprise = target_val - existing_result;
 
 			#if defined(MDEBUG) && MDEBUG
 			if (curr_surprise > this->best_surprise || true) {
@@ -240,7 +236,42 @@ void ExploreExperiment::explore_backprop(double target_val,
 					this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
 					this->state_iter = 0;
 				} else {
-					this->node_context->experiment = NULL;
+					switch (this->node_context->type) {
+					case NODE_TYPE_START:
+						{
+							StartNode* start_node = (StartNode*)this->node_context;
+							start_node->experiment = NULL;
+						}
+						break;
+					case NODE_TYPE_ACTION:
+						{
+							ActionNode* action_node = (ActionNode*)this->node_context;
+							action_node->experiment = NULL;
+						}
+						break;
+					case NODE_TYPE_SCOPE:
+						{
+							ScopeNode* scope_node = (ScopeNode*)this->node_context;
+							scope_node->experiment = NULL;
+						}
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNode* branch_node = (BranchNode*)this->node_context;
+							if (this->is_branch) {
+								branch_node->branch_experiment = NULL;
+							} else {
+								branch_node->original_experiment = NULL;
+							}
+						}
+						break;
+					case NODE_TYPE_NOOP:
+						{
+							NoopNode* noop_node = (NoopNode*)this->node_context;
+							noop_node->experiment = NULL;
+						}
+						break;
+					}
 					delete this;
 				}
 			}

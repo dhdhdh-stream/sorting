@@ -1,4 +1,4 @@
-#include "obs_node.h"
+#include "noop_node.h"
 
 #include <iostream>
 
@@ -9,19 +9,19 @@
 
 using namespace std;
 
-ObsNode::ObsNode() {
-	this->type = NODE_TYPE_OBS;
+NoopNode::NoopNode() {
+	this->type = NODE_TYPE_NOOP;
 
 	this->experiment = NULL;
 }
 
-ObsNode::~ObsNode() {
+NoopNode::~NoopNode() {
 	if (this->experiment != NULL) {
 		delete this->experiment;
 	}
 }
 
-void ObsNode::save(ofstream& output_file) {
+void NoopNode::save(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 
 	output_file << this->ancestor_ids.size() << endl;
@@ -30,7 +30,7 @@ void ObsNode::save(ofstream& output_file) {
 	}
 }
 
-void ObsNode::load(ifstream& input_file,
+void NoopNode::load(ifstream& input_file,
 				   Solution* parent_solution) {
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
@@ -46,7 +46,7 @@ void ObsNode::load(ifstream& input_file,
 	}
 }
 
-void ObsNode::link(Solution* parent_solution) {
+void NoopNode::link(Solution* parent_solution) {
 	if (this->next_node_id == -1) {
 		this->next_node = NULL;
 	} else {
@@ -54,17 +54,17 @@ void ObsNode::link(Solution* parent_solution) {
 	}
 }
 
-void ObsNode::copy_from(ObsNode* original,
-						Solution* parent_solution) {
+void NoopNode::copy_from(NoopNode* original,
+						 Solution* parent_solution) {
 	this->next_node_id = original->next_node_id;
 
 	this->ancestor_ids = original->ancestor_ids;
 }
 
-void ObsNode::save_for_display(ofstream& output_file) {
+void NoopNode::save_for_display(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 }
 
-ObsNodeHistory::ObsNodeHistory(ObsNode* node) {
+NoopNodeHistory::NoopNodeHistory(NoopNode* node) {
 	this->node = node;
 }

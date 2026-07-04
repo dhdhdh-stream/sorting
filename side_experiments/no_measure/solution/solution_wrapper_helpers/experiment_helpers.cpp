@@ -2,14 +2,18 @@
 
 #include <iostream>
 
+#include "action_node.h"
+#include "branch_node.h"
 #include "constants.h"
 #include "explore_experiment.h"
 #include "globals.h"
+#include "noop_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "start_node.h"
 #include "utilities.h"
 
 using namespace std;
@@ -39,6 +43,14 @@ void SolutionWrapper::experiment_init() {
 }
 
 tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
+	if (this->experiment_context.back() == NULL
+			&& this->node_context.back() != NULL
+			&& this->node_context.back()->type == NODE_TYPE_ACTION) {
+		ActionNode* action_node = (ActionNode*)this->node_context.back();
+		action_node->experiment_step_callback(obs,
+											  this);
+	}
+
 	int action;
 	bool is_next = false;
 	bool is_done = false;
@@ -55,7 +67,8 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 					experiment->experiment_exit_step(this);
 				} else {
 					ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
-					scope_node->experiment_exit_step(this);
+					scope_node->experiment_exit_step(obs,
+													 this);
 				}
 			}
 		} else if (this->experiment_context.back() != NULL) {
@@ -105,12 +118,82 @@ void SolutionWrapper::experiment_end(double result) {
 				keep_experiment = it->first;
 			} else {
 				if (it->first->further_than(keep_experiment)) {
-					keep_experiment->node_context->experiment = NULL;
+					switch (keep_experiment->node_context->type) {
+					case NODE_TYPE_START:
+						{
+							StartNode* start_node = (StartNode*)keep_experiment->node_context;
+							start_node->experiment = NULL;
+						}
+						break;
+					case NODE_TYPE_ACTION:
+						{
+							ActionNode* action_node = (ActionNode*)keep_experiment->node_context;
+							action_node->experiment = NULL;
+						}
+						break;
+					case NODE_TYPE_SCOPE:
+						{
+							ScopeNode* scope_node = (ScopeNode*)keep_experiment->node_context;
+							scope_node->experiment = NULL;
+						}
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNode* branch_node = (BranchNode*)keep_experiment->node_context;
+							if (keep_experiment->is_branch) {
+								branch_node->branch_experiment = NULL;
+							} else {
+								branch_node->original_experiment = NULL;
+							}
+						}
+						break;
+					case NODE_TYPE_NOOP:
+						{
+							NoopNode* noop_node = (NoopNode*)keep_experiment->node_context;
+							noop_node->experiment = NULL;
+						}
+						break;
+					}
 					delete keep_experiment;
 
 					keep_experiment = it->first;
 				} else {
-					it->first->node_context->experiment = NULL;
+					switch (it->first->node_context->type) {
+					case NODE_TYPE_START:
+						{
+							StartNode* start_node = (StartNode*)it->first->node_context;
+							start_node->experiment = NULL;
+						}
+						break;
+					case NODE_TYPE_ACTION:
+						{
+							ActionNode* action_node = (ActionNode*)it->first->node_context;
+							action_node->experiment = NULL;
+						}
+						break;
+					case NODE_TYPE_SCOPE:
+						{
+							ScopeNode* scope_node = (ScopeNode*)it->first->node_context;
+							scope_node->experiment = NULL;
+						}
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNode* branch_node = (BranchNode*)it->first->node_context;
+							if (it->first->is_branch) {
+								branch_node->branch_experiment = NULL;
+							} else {
+								branch_node->original_experiment = NULL;
+							}
+						}
+						break;
+					case NODE_TYPE_NOOP:
+						{
+							NoopNode* noop_node = (NoopNode*)it->first->node_context;
+							noop_node->experiment = NULL;
+						}
+						break;
+					}
 					delete it->first;
 				}
 			}

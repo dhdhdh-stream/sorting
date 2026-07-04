@@ -13,8 +13,6 @@ class Problem;
 class Solution;
 class SolutionWrapper;
 
-const int RUN_NUM_SAVE = 10;
-
 class ScopeHistory;
 class Scope {
 public:
@@ -27,12 +25,6 @@ public:
 	 */
 
 	std::vector<Scope*> child_scopes;
-	/**
-	 * - main goal of reusing scopes is generalization
-	 *   - want to use the same scopes as often as possible
-	 *     - so for outer, only add if used
-	 * - if goal is for explore to cover large distance, also have create_new_scope()
-	 */
 
 	std::list<double> last_scores;
 

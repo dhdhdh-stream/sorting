@@ -59,8 +59,7 @@ public:
 					  SolutionWrapper* wrapper);
 	~ExploreExperiment();
 
-	void experiment_check_activate(AbstractNode* experiment_node,
-								   bool is_branch,
+	void experiment_check_activate(std::vector<double>& obs,
 								   SolutionWrapper* wrapper);
 	void experiment_step(std::vector<double>& obs,
 						 int& action,
@@ -74,14 +73,16 @@ public:
 				  ExploreExperimentHistory* history,
 				  SolutionWrapper* wrapper);
 
-	void train_existing_check_activate(SolutionWrapper* wrapper);
-	void train_existing_step(std::vector<double>& obs,
-							 SolutionWrapper* wrapper);
+	void train_existing_check_activate(std::vector<double>& obs,
+									   ExploreExperimentHistory* history,
+									   SolutionWrapper* wrapper);
 	void train_existing_backprop(double target_val,
 								 ExploreExperimentHistory* history,
 								 SolutionWrapper* wrapper);
 
-	void explore_check_activate(SolutionWrapper* wrapper);
+	void explore_check_activate(std::vector<double>& obs,
+								ExploreExperimentHistory* history,
+								SolutionWrapper* wrapper);
 	void explore_step(std::vector<double>& obs,
 					  int& action,
 					  bool& is_next,
@@ -94,7 +95,9 @@ public:
 						  ExploreExperimentHistory* history,
 						  SolutionWrapper* wrapper);
 
-	void train_new_check_activate(SolutionWrapper* wrapper);
+	void train_new_check_activate(std::vector<double>& obs,
+								  ExploreExperimentHistory* history,
+								  SolutionWrapper* wrapper);
 	void train_new_step(std::vector<double>& obs,
 						int& action,
 						bool& is_next,

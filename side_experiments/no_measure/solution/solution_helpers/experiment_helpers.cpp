@@ -7,7 +7,7 @@
 #include "constants.h"
 #include "explore_experiment.h"
 #include "globals.h"
-#include "obs_node.h"
+#include "noop_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -51,8 +51,8 @@ void gather_helper(ScopeHistory* scope_history,
 		switch (node->type) {
 		case NODE_TYPE_START:
 		case NODE_TYPE_ACTION:
-		case NODE_TYPE_OBS:
-			if (node->experiment == NULL) {
+		case NODE_TYPE_NOOP:
+			{
 				uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
 				context_it->second.node_count++;
 				if (select_distribution(generator) == 0) {
@@ -70,20 +70,18 @@ void gather_helper(ScopeHistory* scope_history,
 				gather_helper(scope_node_history->scope_history,
 							  explore_contexts);
 
-				if (node->experiment == NULL) {
-					uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
-					context_it->second.node_count++;
-					if (select_distribution(generator) == 0) {
-						context_it->second.explore_node = node;
-						context_it->second.explore_is_branch = false;
-						context_it->second.explore_node_histories = curr_node_histories;
-						context_it->second.explore_index = h_it->second->index;
-					}
+				uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
+				context_it->second.node_count++;
+				if (select_distribution(generator) == 0) {
+					context_it->second.explore_node = node;
+					context_it->second.explore_is_branch = false;
+					context_it->second.explore_node_histories = curr_node_histories;
+					context_it->second.explore_index = h_it->second->index;
 				}
 			}
 			break;
 		case NODE_TYPE_BRANCH:
-			if (node->experiment == NULL) {
+			{
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				if (branch_node_history->is_branch) {
 					uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
@@ -135,28 +133,47 @@ void create_experiment(ScopeHistory* scope_history,
 		}
 		AbstractNode* exit_next_node = context_it->second.explore_node_histories[random_index];
 
-		// #if defined(MDEBUG) && MDEBUG
-		// if ((wrapper->solution->timestamp+1)%4 == 0) {
-		// #else
-		// /**
-		//  * - recoverable(?)
-		//  */
-		// if ((wrapper->solution->timestamp+1)%8 == 0) {
-		// #endif /* MDEBUG */
-		if (false) {
-			add_crazy_helper(context_it->second.explore_node->parent,
-							 context_it->second.explore_node,
-							 context_it->second.explore_is_branch,
-							 exit_next_node,
-							 wrapper);
-		} else {
-			ExploreExperiment* new_experiment = new ExploreExperiment(
-				context_it->second.explore_node->parent,
-				context_it->second.explore_node,
-				context_it->second.explore_is_branch,
-				exit_next_node,
-				wrapper);
-			context_it->second.explore_node->experiment = new_experiment;
+		ExploreExperiment* new_experiment = new ExploreExperiment(
+			context_it->second.explore_node->parent,
+			context_it->second.explore_node,
+			context_it->second.explore_is_branch,
+			exit_next_node,
+			wrapper);
+		switch (context_it->second.explore_node->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)context_it->second.explore_node;
+				start_node->experiment = new_experiment;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)context_it->second.explore_node;
+				action_node->experiment = new_experiment;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)context_it->second.explore_node;
+				scope_node->experiment = new_experiment;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)context_it->second.explore_node;
+				if (context_it->second.explore_is_branch) {
+					branch_node->branch_experiment = new_experiment;
+				} else {
+					branch_node->original_experiment = new_experiment;
+				}
+			}
+			break;
+		case NODE_TYPE_NOOP:
+			{
+				NoopNode* noop_node = (NoopNode*)context_it->second.explore_node;
+				noop_node->experiment = new_experiment;
+			}
+			break;
 		}
 	}
 }

@@ -13,20 +13,11 @@
 
 using namespace std;
 
-void ExploreExperiment::train_existing_check_activate(SolutionWrapper* wrapper) {
-	ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
-	new_experiment_state->step_index = 0;
-	wrapper->experiment_context.back() = new_experiment_state;
-}
-
-void ExploreExperiment::train_existing_step(
+void ExploreExperiment::train_existing_check_activate(
 		vector<double>& obs,
+		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
-	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
 	history->obs_histories.push_back(obs);
-
-	delete wrapper->experiment_context.back();
-	wrapper->experiment_context.back() = NULL;
 }
 
 void ExploreExperiment::train_existing_backprop(

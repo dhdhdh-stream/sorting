@@ -8,7 +8,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "obs_node.h"
+#include "noop_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -78,25 +78,25 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		}
 	}
 
-	ObsNode* new_ending_node = NULL;
+	NoopNode* new_ending_node = NULL;
 
 	int exit_node_id;
 	AbstractNode* exit_node;
 	if (this->exit_next_node == NULL) {
-		new_ending_node = new ObsNode();
+		new_ending_node = new NoopNode();
 		new_ending_node->parent = this->scope_context;
 		new_ending_node->id = this->scope_context->node_counter;
 		this->scope_context->node_counter++;
 
 		for (map<int, AbstractNode*>::iterator it = this->scope_context->nodes.begin();
 				it != this->scope_context->nodes.end(); it++) {
-			if (it->second->type == NODE_TYPE_OBS) {
-				ObsNode* obs_node = (ObsNode*)it->second;
-				if (obs_node->next_node == NULL) {
-					obs_node->next_node_id = new_ending_node->id;
-					obs_node->next_node = new_ending_node;
+			if (it->second->type == NODE_TYPE_NOOP) {
+				NoopNode* noop_node = (NoopNode*)it->second;
+				if (noop_node->next_node == NULL) {
+					noop_node->next_node_id = new_ending_node->id;
+					noop_node->next_node = new_ending_node;
 
-					new_ending_node->ancestor_ids.push_back(obs_node->id);
+					new_ending_node->ancestor_ids.push_back(noop_node->id);
 
 					break;
 				}
@@ -204,31 +204,31 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			}
 		}
 		break;
-	case NODE_TYPE_OBS:
+	case NODE_TYPE_NOOP:
 		{
-			ObsNode* obs_node = (ObsNode*)this->node_context;
+			NoopNode* noop_node = (NoopNode*)this->node_context;
 
-			if (obs_node->next_node == NULL) {
+			if (noop_node->next_node == NULL) {
 				if (new_ending_node != NULL) {
 					new_ending_node->ancestor_ids.push_back(new_branch_node->id);
 
 					new_branch_node->original_next_node_id = new_ending_node->id;
 					new_branch_node->original_next_node = new_ending_node;
 				} else {
-					new_ending_node = new ObsNode();
+					new_ending_node = new NoopNode();
 					new_ending_node->parent = this->scope_context;
 					new_ending_node->id = this->scope_context->node_counter;
 					this->scope_context->node_counter++;
 
 					for (map<int, AbstractNode*>::iterator it = this->scope_context->nodes.begin();
 							it != this->scope_context->nodes.end(); it++) {
-						if (it->second->type == NODE_TYPE_OBS) {
-							ObsNode* p_obs_node = (ObsNode*)it->second;
-							if (p_obs_node->next_node == NULL) {
-								p_obs_node->next_node_id = new_ending_node->id;
-								p_obs_node->next_node = new_ending_node;
+						if (it->second->type == NODE_TYPE_NOOP) {
+							NoopNode* p_noop_node = (NoopNode*)it->second;
+							if (p_noop_node->next_node == NULL) {
+								p_noop_node->next_node_id = new_ending_node->id;
+								p_noop_node->next_node = new_ending_node;
 
-								new_ending_node->ancestor_ids.push_back(p_obs_node->id);
+								new_ending_node->ancestor_ids.push_back(p_noop_node->id);
 
 								break;
 							}
@@ -246,17 +246,17 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 					new_branch_node->original_next_node = new_ending_node;
 				}
 			} else {
-				for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
-					if (obs_node->next_node->ancestor_ids[a_index] == obs_node->id) {
-						obs_node->next_node->ancestor_ids.erase(
-							obs_node->next_node->ancestor_ids.begin() + a_index);
+				for (int a_index = 0; a_index < (int)noop_node->next_node->ancestor_ids.size(); a_index++) {
+					if (noop_node->next_node->ancestor_ids[a_index] == noop_node->id) {
+						noop_node->next_node->ancestor_ids.erase(
+							noop_node->next_node->ancestor_ids.begin() + a_index);
 						break;
 					}
 				}
-				obs_node->next_node->ancestor_ids.push_back(new_branch_node->id);
+				noop_node->next_node->ancestor_ids.push_back(new_branch_node->id);
 
-				new_branch_node->original_next_node_id = obs_node->next_node_id;
-				new_branch_node->original_next_node = obs_node->next_node;
+				new_branch_node->original_next_node_id = noop_node->next_node_id;
+				new_branch_node->original_next_node = noop_node->next_node;
 			}
 		}
 		break;
@@ -312,12 +312,12 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			}
 		}
 		break;
-	case NODE_TYPE_OBS:
+	case NODE_TYPE_NOOP:
 		{
-			ObsNode* obs_node = (ObsNode*)this->node_context;
+			NoopNode* noop_node = (NoopNode*)this->node_context;
 
-			obs_node->next_node_id = new_branch_node->id;
-			obs_node->next_node = new_branch_node;
+			noop_node->next_node_id = new_branch_node->id;
+			noop_node->next_node = new_branch_node;
 		}
 		break;
 	}
@@ -372,8 +372,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
 	}
 
-	clean_scope(this->scope_context);
-
 	wrapper->solution->timestamp++;
 	// if ((int)wrapper->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
 	// 	double prev_val = wrapper->solution->improvement_history[wrapper->solution->improvement_history.size() - STUCK_NUM_ITERS];
@@ -421,7 +419,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 			scope_node->scope = wrapper->solution->starting_scope;
 
-			ObsNode* end_node = new ObsNode();
+			NoopNode* end_node = new NoopNode();
 			end_node->parent = new_scope;
 			end_node->id = new_scope->node_counter;
 			new_scope->node_counter++;

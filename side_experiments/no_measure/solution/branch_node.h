@@ -38,6 +38,9 @@ public:
 	int consec_original;
 	int consec_branch;
 
+	AbstractExperiment* original_experiment;
+	AbstractExperiment* branch_experiment;
+
 	BranchNode();
 	~BranchNode();
 

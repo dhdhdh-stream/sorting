@@ -14,7 +14,7 @@ const int NODE_TYPE_START = 0;
 const int NODE_TYPE_ACTION = 1;
 const int NODE_TYPE_SCOPE = 2;
 const int NODE_TYPE_BRANCH = 3;
-const int NODE_TYPE_OBS = 4;
+const int NODE_TYPE_NOOP = 4;
 
 class AbstractNode {
 public:
@@ -27,8 +27,6 @@ public:
 	/**
 	 * - if both paths of BranchNode point to same node, add twice
 	 */
-
-	AbstractExperiment* experiment;
 
 	virtual ~AbstractNode() {};
 

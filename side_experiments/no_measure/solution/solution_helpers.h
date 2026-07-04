@@ -20,8 +20,6 @@ class SolutionWrapper;
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper);
 
-void clean_scope(Scope* scope);
-
 void update_helper(ScopeHistory* scope_history,
 				   double target_val,
 				   std::set<BranchNode*>& hit_original,
@@ -30,18 +28,5 @@ void update_helper(std::set<BranchNode*>& hit_original,
 				   std::set<BranchNode*>& hit_branch);
 
 double measure_helper(SolutionWrapper* wrapper);
-
-void add_crazy_helper(Scope* scope_context,
-					  AbstractNode* node_context,
-					  bool is_branch,
-					  AbstractNode* exit_next_node,
-					  SolutionWrapper* wrapper);
-
-/**
- * - not meaningful(?)
- *   - can get explore trapped in lottery
- *   - in the long run, networks are trained "perfectly" anyways
- */
-double get_existing_result(SolutionWrapper* wrapper);
 
 #endif /* SOLUTION_HELPERS_H */

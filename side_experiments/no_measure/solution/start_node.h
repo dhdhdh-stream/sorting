@@ -12,6 +12,8 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
+	AbstractExperiment* experiment;
+
 	StartNode();
 	~StartNode();
 

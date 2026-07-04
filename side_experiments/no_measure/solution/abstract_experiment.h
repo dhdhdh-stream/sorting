@@ -21,8 +21,7 @@ public:
 
 	virtual ~AbstractExperiment() {};
 
-	virtual void experiment_check_activate(AbstractNode* experiment_node,
-										   bool is_branch,
+	virtual void experiment_check_activate(std::vector<double>& obs,
 										   SolutionWrapper* wrapper) = 0;
 	virtual void experiment_step(std::vector<double>& obs,
 								 int& action,

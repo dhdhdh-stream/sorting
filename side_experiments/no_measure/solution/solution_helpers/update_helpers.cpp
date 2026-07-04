@@ -1,7 +1,3 @@
-/**
- * TODO: tie RAMP_NUM_GEARS to average instances per run
- */
-
 #include "solution_helpers.h"
 
 #include <iostream>
@@ -63,6 +59,10 @@ void update_helper(ScopeHistory* scope_history,
 	}
 }
 
+/**
+ * - for some reason, best to update each network individually as frequently as possible(?)
+ *   - vs. updating all networks in a balanced way
+ */
 void update_helper(set<BranchNode*>& hit_original,
 				   set<BranchNode*>& hit_branch) {
 	for (set<BranchNode*>::iterator it = hit_original.begin();

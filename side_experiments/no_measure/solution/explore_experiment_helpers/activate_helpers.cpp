@@ -9,29 +9,31 @@
 
 using namespace std;
 
-void ExploreExperiment::experiment_check_activate(
-		AbstractNode* experiment_node,
-		bool is_branch,
-		SolutionWrapper* wrapper) {
-	if (is_branch == this->is_branch) {
-		map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it =
-			wrapper->explore_experiment_histories.find(this);
-		if (it == wrapper->explore_experiment_histories.end()) {
-			it = wrapper->explore_experiment_histories.insert({this, new ExploreExperimentHistory(this)}).first;
-		}
-		it->second->num_instances++;
+void ExploreExperiment::experiment_check_activate(vector<double>& obs,
+												  SolutionWrapper* wrapper) {
+	map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it =
+		wrapper->explore_experiment_histories.find(this);
+	if (it == wrapper->explore_experiment_histories.end()) {
+		it = wrapper->explore_experiment_histories.insert({this, new ExploreExperimentHistory(this)}).first;
+	}
+	it->second->num_instances++;
 
-		switch (this->state) {
-		case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
-			train_existing_check_activate(wrapper);
-			break;
-		case EXPLORE_EXPERIMENT_STATE_EXPLORE:
-			explore_check_activate(wrapper);
-			break;
-		case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
-			train_new_check_activate(wrapper);
-			break;
-		}
+	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
+		train_existing_check_activate(obs,
+									  it->second,
+									  wrapper);
+		break;
+	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
+		explore_check_activate(obs,
+							   it->second,
+							   wrapper);
+		break;
+	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
+		train_new_check_activate(obs,
+								 it->second,
+								 wrapper);
+		break;
 	}
 }
 
@@ -41,10 +43,6 @@ void ExploreExperiment::experiment_step(vector<double>& obs,
 										bool& fetch_action,
 										SolutionWrapper* wrapper) {
 	switch (this->state) {
-	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
-		train_existing_step(obs,
-							wrapper);
-		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_step(obs,
 					 action,
