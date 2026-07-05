@@ -30,9 +30,16 @@ public:
 	 */
 	Layer* input;
 
+	// Layer* hidden_1;
+	// Layer* hidden_2;
+	// Layer* hidden_3;
+	// Layer* output;
+
 	Layer* hidden_1;
 	Layer* hidden_2;
 	Layer* hidden_3;
+	Layer* hidden_4;
+	Layer* hidden_5;
 	Layer* output;
 
 	int epoch_iter;
@@ -45,10 +52,18 @@ public:
 
 	void activate(std::vector<double>& input_vals);
 
+	// void init_backprop(double error,
+	// 				   double& hidden_1_average_max_update,
+	// 				   double& hidden_2_average_max_update,
+	// 				   double& hidden_3_average_max_update,
+	// 				   double& output_average_max_update);
+
 	void init_backprop(double error,
 					   double& hidden_1_average_max_update,
 					   double& hidden_2_average_max_update,
 					   double& hidden_3_average_max_update,
+					   double& hidden_4_average_max_update,
+					   double& hidden_5_average_max_update,
 					   double& output_average_max_update);
 
 	void backprop(double error);

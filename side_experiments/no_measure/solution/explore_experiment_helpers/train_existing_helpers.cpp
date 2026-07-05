@@ -46,6 +46,8 @@ void ExploreExperiment::train_existing_backprop(
 		double hidden_1_average_max_update = 0.0;
 		double hidden_2_average_max_update = 0.0;
 		double hidden_3_average_max_update = 0.0;
+		double hidden_4_average_max_update = 0.0;
+		double hidden_5_average_max_update = 0.0;
 		double output_average_max_update = 0.0;
 
 		uniform_int_distribution<int> train_distribution(0, num_existing_train-1);
@@ -56,10 +58,17 @@ void ExploreExperiment::train_existing_backprop(
 
 			double error = this->existing_target_val_histories[rand_index] - this->existing_network->output->acti_vals[0];
 
+			// this->existing_network->init_backprop(error,
+			// 									  hidden_1_average_max_update,
+			// 									  hidden_2_average_max_update,
+			// 									  hidden_3_average_max_update,
+			// 									  output_average_max_update);
 			this->existing_network->init_backprop(error,
 												  hidden_1_average_max_update,
 												  hidden_2_average_max_update,
 												  hidden_3_average_max_update,
+												  hidden_4_average_max_update,
+												  hidden_5_average_max_update,
 												  output_average_max_update);
 		}
 
