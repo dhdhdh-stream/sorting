@@ -16,9 +16,7 @@ ScopeNode::ScopeNode() {
 
 	this->sample_index = 0;
 
-	/**
-	 * - simply initialize to 0.0
-	 */
+	this->average_instances_per_hit = 1.0;
 	this->average_instances_per_run = 0.0;
 	this->experiment = NULL;
 
@@ -40,6 +38,7 @@ void ScopeNode::save(ofstream& output_file) {
 
 	this->network->save(output_file);
 
+	output_file << this->average_instances_per_hit << endl;
 	output_file << this->average_instances_per_run << endl;
 
 	output_file << this->ancestor_ids.size() << endl;
@@ -59,6 +58,10 @@ void ScopeNode::load(ifstream& input_file,
 	this->next_node_id = stoi(next_node_id_line);
 
 	this->network = new Network(input_file);
+
+	string average_instances_per_hit_line;
+	getline(input_file, average_instances_per_hit_line);
+	this->average_instances_per_hit = stod(average_instances_per_hit_line);
 
 	string average_instances_per_run_line;
 	getline(input_file, average_instances_per_run_line);
@@ -90,6 +93,7 @@ void ScopeNode::copy_from(ScopeNode* original,
 
 	this->network = new Network(original->network);
 
+	this->average_instances_per_hit = original->average_instances_per_hit;
 	this->average_instances_per_run = original->average_instances_per_run;
 
 	this->ancestor_ids = original->ancestor_ids;

@@ -228,38 +228,38 @@ void ExploreExperiment::explore_backprop(double target_val,
 										 ExploreExperimentHistory* history,
 										 SolutionWrapper* wrapper) {
 	if (wrapper->should_explore) {
-		double average_instances_per_run;
+		double average_instances_per_hit;
 		switch (this->node_context->type) {
 		case NODE_TYPE_NOOP:
 			{
 				NoopNode* noop_node = (NoopNode*)this->node_context;
-				average_instances_per_run = noop_node->average_instances_per_run;
+				average_instances_per_hit = noop_node->average_instances_per_hit;
 			}
 			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)this->node_context;
-				average_instances_per_run = action_node->average_instances_per_run;
+				average_instances_per_hit = action_node->average_instances_per_hit;
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
 				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				average_instances_per_run = scope_node->average_instances_per_run;
+				average_instances_per_hit = scope_node->average_instances_per_hit;
 			}
 			break;
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNode* branch_node = (BranchNode*)this->node_context;
 				if (this->is_branch) {
-					average_instances_per_run = branch_node->branch_average_instances_per_run;
+					average_instances_per_hit = branch_node->branch_average_instances_per_hit;
 				} else {
-					average_instances_per_run = branch_node->original_average_instances_per_run;
+					average_instances_per_hit = branch_node->original_average_instances_per_hit;
 				}
 			}
 			break;
 		}
-		uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_run);
+		uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
 		this->num_instances_until_target = until_distribution(generator);
 
 		if (history->existing_predicted.size() != 0) {

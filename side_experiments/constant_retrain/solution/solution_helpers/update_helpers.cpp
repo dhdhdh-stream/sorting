@@ -164,6 +164,8 @@ void update_helper(SolutionWrapper* wrapper) {
 					NoopNode* noop_node = (NoopNode*)it->second;
 					noop_node->average_instances_per_run = 0.999*noop_node->average_instances_per_run + 0.001*noop_node->curr_instances_per_run;
 					if (noop_node->curr_instances_per_run > 0) {
+						noop_node->average_instances_per_hit = 0.999*noop_node->average_instances_per_hit + 0.001*noop_node->curr_instances_per_run;
+
 						noop_node->network->update();
 
 						noop_node->curr_instances_per_run = 0;
@@ -175,6 +177,8 @@ void update_helper(SolutionWrapper* wrapper) {
 					ActionNode* action_node = (ActionNode*)it->second;
 					action_node->average_instances_per_run = 0.999*action_node->average_instances_per_run + 0.001*action_node->curr_instances_per_run;
 					if (action_node->curr_instances_per_run > 0) {
+						action_node->average_instances_per_hit = 0.999*action_node->average_instances_per_hit + 0.001*action_node->curr_instances_per_run;
+
 						action_node->network->update();
 
 						action_node->curr_instances_per_run = 0;
@@ -186,6 +190,8 @@ void update_helper(SolutionWrapper* wrapper) {
 					ScopeNode* scope_node = (ScopeNode*)it->second;
 					scope_node->average_instances_per_run = 0.999*scope_node->average_instances_per_run + 0.001*scope_node->curr_instances_per_run;
 					if (scope_node->curr_instances_per_run > 0) {
+						scope_node->average_instances_per_hit = 0.999*scope_node->average_instances_per_hit + 0.001*scope_node->curr_instances_per_run;
+
 						scope_node->network->update();
 
 						scope_node->curr_instances_per_run = 0;
@@ -197,6 +203,8 @@ void update_helper(SolutionWrapper* wrapper) {
 					BranchNode* branch_node = (BranchNode*)it->second;
 					branch_node->original_average_instances_per_run = 0.999*branch_node->original_average_instances_per_run + 0.001*branch_node->original_curr_instances_per_run;
 					if (branch_node->original_curr_instances_per_run > 0) {
+						branch_node->original_average_instances_per_hit = 0.999*branch_node->original_average_instances_per_hit + 0.001*branch_node->original_curr_instances_per_run;
+
 						branch_node->original_network->update();
 
 						if (branch_node->ramp < branch_node->ramp_num_gears) {
@@ -214,6 +222,8 @@ void update_helper(SolutionWrapper* wrapper) {
 					}
 					branch_node->branch_average_instances_per_run = 0.999*branch_node->branch_average_instances_per_run + 0.001*branch_node->branch_curr_instances_per_run;
 					if (branch_node->branch_curr_instances_per_run > 0) {
+						branch_node->branch_average_instances_per_hit = 0.999*branch_node->branch_average_instances_per_hit + 0.001*branch_node->branch_curr_instances_per_run;
+
 						branch_node->branch_network->update();
 
 						if (branch_node->ramp < branch_node->ramp_num_gears) {

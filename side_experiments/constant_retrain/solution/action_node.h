@@ -25,6 +25,7 @@ public:
 	std::vector<double> sample_target_vals;
 	int sample_index;
 
+	double average_instances_per_hit;
 	double average_instances_per_run;
 	AbstractExperiment* experiment;
 

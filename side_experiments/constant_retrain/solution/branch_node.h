@@ -45,8 +45,10 @@ public:
 	std::vector<double> branch_sample_target_vals;
 	int branch_sample_index;
 
+	double original_average_instances_per_hit;
 	double original_average_instances_per_run;
 	AbstractExperiment* original_experiment;
+	double branch_average_instances_per_hit;
 	double branch_average_instances_per_run;
 	AbstractExperiment* branch_experiment;
 

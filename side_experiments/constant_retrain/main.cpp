@@ -3,6 +3,9 @@
 // - will make state available at earliest moment
 //   - hopefully reducing amount of state needed in the long run
 
+// - stable, but initializing from scratch significant cost for new nodes
+//   - should be better with states though when can copy score network
+
 #include <chrono>
 #include <iostream>
 #include <map>

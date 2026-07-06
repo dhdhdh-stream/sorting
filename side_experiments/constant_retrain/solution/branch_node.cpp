@@ -17,14 +17,10 @@ BranchNode::BranchNode() {
 	this->original_sample_index = 0;
 	this->branch_sample_index = 0;
 
-	/**
-	 * - simply initialize to 0.0
-	 */
+	this->original_average_instances_per_hit = 1.0;
 	this->original_average_instances_per_run = 0.0;
 	this->original_experiment = NULL;
-	/**
-	 * - simply initialize to 0.0
-	 */
+	this->branch_average_instances_per_hit = 1.0;
 	this->branch_average_instances_per_run = 0.0;
 	this->branch_experiment = NULL;
 
@@ -58,7 +54,9 @@ void BranchNode::save(ofstream& output_file) {
 	output_file << this->consec_original << endl;
 	output_file << this->consec_branch << endl;
 
+	output_file << this->original_average_instances_per_hit << endl;
 	output_file << this->original_average_instances_per_run << endl;
+	output_file << this->branch_average_instances_per_hit << endl;
 	output_file << this->branch_average_instances_per_run << endl;
 
 	output_file << this->ancestor_ids.size() << endl;
@@ -113,9 +111,17 @@ void BranchNode::load(ifstream& input_file,
 		cout << "this->consec_branch >= CONSEC_DEPRECATE_LIMIT" << endl;
 	}
 
+	string original_average_instances_per_hit_line;
+	getline(input_file, original_average_instances_per_hit_line);
+	this->original_average_instances_per_hit = stod(original_average_instances_per_hit_line);
+
 	string original_average_instances_per_run_line;
 	getline(input_file, original_average_instances_per_run_line);
 	this->original_average_instances_per_run = stod(original_average_instances_per_run_line);
+
+	string branch_average_instances_per_hit_line;
+	getline(input_file, branch_average_instances_per_hit_line);
+	this->branch_average_instances_per_hit = stod(branch_average_instances_per_hit_line);
 
 	string branch_average_instances_per_run_line;
 	getline(input_file, branch_average_instances_per_run_line);
@@ -160,7 +166,9 @@ void BranchNode::copy_from(BranchNode* original,
 	this->consec_original = original->consec_original;
 	this->consec_branch = original->consec_branch;
 
+	this->original_average_instances_per_hit = original->original_average_instances_per_hit;
 	this->original_average_instances_per_run = original->original_average_instances_per_run;
+	this->branch_average_instances_per_hit = original->branch_average_instances_per_hit;
 	this->branch_average_instances_per_run = original->branch_average_instances_per_run;
 
 	this->ancestor_ids = original->ancestor_ids;
