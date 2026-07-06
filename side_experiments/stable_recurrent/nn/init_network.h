@@ -1,5 +1,5 @@
-#ifndef OBS_NETWORK_H
-#define OBS_NETWORK_H
+#ifndef INIT_NETWORK_H
+#define INIT_NETWORK_H
 
 #include <vector>
 
@@ -8,9 +8,11 @@
 #include "abstract_network.h"
 #include "layer.h"
 
-class ObsNetworkHistory;
-class ObsNetwork : public AbstractNetwork {
+class InitNetworkHistory;
+class InitNetwork : public AbstractNetwork {
 public:
+	std::vector<int> init_states;
+
 	Layer* state_input;
 
 	Layer* raw_obs_input;
@@ -39,19 +41,25 @@ public:
 	Layer* hidden_3;
 	Layer* output;
 
-	ObsNetwork(int num_states,
-			   int num_obs);
-	ObsNetwork(ObsNetwork* original);
-	ObsNetwork(std::ifstream& input_file);
-	~ObsNetwork();
+	InitNetwork(std::vector<int>& init_states,
+				int num_states,
+				int num_obs);
+	InitNetwork(InitNetwork* original);
+	InitNetwork(std::ifstream& input_file);
+	~InitNetwork();
 
 	void activate(std::vector<double>& state_vals,
 				  std::vector<double>& obs_input_vals);
 
-	void save(ObsNetworkHistory* history);
-	void load(ObsNetworkHistory* history);
+	void save(InitNetworkHistory* history);
+	void load(InitNetworkHistory* history);
 
 	void backprop(std::vector<double>& state_errors);
+
+	void init_update(double& hidden_1_average_max_update,
+					 double& hidden_2_average_max_update,
+					 double& hidden_3_average_max_update,
+					 double& output_average_max_update);
 
 	void get_max_update(double& max_update);
 	void update_weights(double learning_rate);
@@ -61,7 +69,7 @@ public:
 	void save(std::ofstream& output_file);
 };
 
-class ObsNetworkHistory : public AbstractNetworkHistory {
+class InitNetworkHistory : public AbstractNetworkHistory {
 public:
 	std::vector<double> state_input_history;
 	std::vector<double> raw_obs_input_history;
@@ -70,7 +78,7 @@ public:
 	std::vector<double> hidden_2_history;
 	std::vector<double> hidden_3_history;
 
-	ObsNetworkHistory(ObsNetwork* network);
+	InitNetworkHistory(InitNetwork* network);
 };
 
-#endif /* OBS_NETWORK_H */
+#endif /* INIT_NETWORK_H */

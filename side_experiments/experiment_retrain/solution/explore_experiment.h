@@ -1,3 +1,9 @@
+/**
+ * - too expensive to retrain networks
+ *   - means having to activate/backprop every network
+ *     - since affects error gradient
+ */
+
 #ifndef EXPLORE_EXPERIMENT_H
 #define EXPLORE_EXPERIMENT_H
 

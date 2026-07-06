@@ -7,6 +7,7 @@
 
 #include "abstract_node.h"
 
+class InitNetwork;
 class ObsNetwork;
 class Problem;
 class ScopeHistory;
@@ -18,6 +19,7 @@ public:
 	int action;
 
 	ObsNetwork* obs_network;
+	std::vector<InitNetwork*> init_networks;
 
 	int next_node_id;
 	AbstractNode* next_node;

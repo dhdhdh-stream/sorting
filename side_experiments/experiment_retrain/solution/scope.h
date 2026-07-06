@@ -8,6 +8,8 @@
 
 class AbstractNode;
 class AbstractNodeHistory;
+class InitNetwork;
+class NegateNetwork;
 class Network;
 class ObsNetwork;
 class Problem;
@@ -26,7 +28,9 @@ public:
 	 * TODO: can hardcode link to starting node
 	 */
 
+	std::vector<NegateNetwork*> start_negate_networks;
 	ObsNetwork* start_obs_network;
+	std::vector<InitNetwork*> start_init_networks;
 	ScoreNetwork* start_score_network;
 	ScoreNetwork* end_score_network;
 
