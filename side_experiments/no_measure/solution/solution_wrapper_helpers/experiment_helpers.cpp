@@ -13,7 +13,6 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
-#include "start_node.h"
 #include "utilities.h"
 
 using namespace std;
@@ -119,10 +118,10 @@ void SolutionWrapper::experiment_end(double result) {
 			} else {
 				if (it->first->further_than(keep_experiment)) {
 					switch (keep_experiment->node_context->type) {
-					case NODE_TYPE_START:
+					case NODE_TYPE_NOOP:
 						{
-							StartNode* start_node = (StartNode*)keep_experiment->node_context;
-							start_node->experiment = NULL;
+							NoopNode* noop_node = (NoopNode*)keep_experiment->node_context;
+							noop_node->experiment = NULL;
 						}
 						break;
 					case NODE_TYPE_ACTION:
@@ -147,22 +146,16 @@ void SolutionWrapper::experiment_end(double result) {
 							}
 						}
 						break;
-					case NODE_TYPE_NOOP:
-						{
-							NoopNode* noop_node = (NoopNode*)keep_experiment->node_context;
-							noop_node->experiment = NULL;
-						}
-						break;
 					}
 					delete keep_experiment;
 
 					keep_experiment = it->first;
 				} else {
 					switch (it->first->node_context->type) {
-					case NODE_TYPE_START:
+					case NODE_TYPE_NOOP:
 						{
-							StartNode* start_node = (StartNode*)it->first->node_context;
-							start_node->experiment = NULL;
+							NoopNode* noop_node = (NoopNode*)it->first->node_context;
+							noop_node->experiment = NULL;
 						}
 						break;
 					case NODE_TYPE_ACTION:
@@ -185,12 +178,6 @@ void SolutionWrapper::experiment_end(double result) {
 							} else {
 								branch_node->original_experiment = NULL;
 							}
-						}
-						break;
-					case NODE_TYPE_NOOP:
-						{
-							NoopNode* noop_node = (NoopNode*)it->first->node_context;
-							noop_node->experiment = NULL;
 						}
 						break;
 					}

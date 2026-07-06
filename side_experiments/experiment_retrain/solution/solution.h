@@ -50,11 +50,6 @@ public:
 	ActionNetwork* generic_action_network;
 	ObsNetwork* generic_obs_network;
 
-	std::vector<std::vector<std::vector<double>>> sample_obs_histories;
-	std::vector<std::vector<std::vector<AbstractNodeHistory*>>> sample_node_histories;
-	std::vector<double> sample_target_val_histories;
-	int sample_index;
-
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
 

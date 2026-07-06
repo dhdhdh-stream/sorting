@@ -51,23 +51,12 @@ InitNetwork::InitNetwork(vector<int>& init_states,
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure(NETWORK_INIT_MULTIPLIER);
 
-	this->hidden_3 = new Layer(LEAKY_LAYER);
-	this->hidden_3->acti_vals.resize(4);
-	this->hidden_3->errors.resize(4);
-	this->hidden_3->errors.setConstant(0.0);
-	this->hidden_3->input_layers.push_back(this->state_input);
-	this->hidden_3->input_layers.push_back(this->obs_input);
-	this->hidden_3->input_layers.push_back(this->hidden_1);
-	this->hidden_3->input_layers.push_back(this->hidden_2);
-	this->hidden_3->update_structure(NETWORK_INIT_MULTIPLIER);
-
 	this->output = new Layer(LINEAR_LAYER);
 	this->output->acti_vals.resize(this->init_states.size());
 	this->output->errors.resize(this->init_states.size());
 	this->output->errors.setConstant(0.0);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
-	this->output->input_layers.push_back(this->hidden_3);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 }
 
@@ -113,24 +102,12 @@ InitNetwork::InitNetwork(InitNetwork* original) {
 	this->hidden_2->update_structure(NETWORK_INIT_MULTIPLIER);
 	this->hidden_2->copy_weights_from(original->hidden_2);
 
-	this->hidden_3 = new Layer(LEAKY_LAYER);
-	this->hidden_3->acti_vals.resize(original->hidden_3->acti_vals.size());
-	this->hidden_3->errors.resize(original->hidden_3->errors.size());
-	this->hidden_3->errors.setConstant(0.0);
-	this->hidden_3->input_layers.push_back(this->state_input);
-	this->hidden_3->input_layers.push_back(this->obs_input);
-	this->hidden_3->input_layers.push_back(this->hidden_1);
-	this->hidden_3->input_layers.push_back(this->hidden_2);
-	this->hidden_3->update_structure(NETWORK_INIT_MULTIPLIER);
-	this->hidden_3->copy_weights_from(original->hidden_3);
-
 	this->output = new Layer(LINEAR_LAYER);
 	this->output->acti_vals.resize(original->output->acti_vals.size());
 	this->output->errors.resize(original->output->errors.size());
 	this->output->errors.setConstant(0.0);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
-	this->output->input_layers.push_back(this->hidden_3);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 	this->output->copy_weights_from(original->output);
 }
@@ -204,31 +181,16 @@ InitNetwork::InitNetwork(ifstream& input_file) {
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure(NETWORK_INIT_MULTIPLIER);
 
-	this->hidden_3 = new Layer(LEAKY_LAYER);
-	string hidden_3_size_line;
-	getline(input_file, hidden_3_size_line);
-	int hidden_3_size = stoi(hidden_3_size_line);
-	this->hidden_3->acti_vals.resize(hidden_3_size);
-	this->hidden_3->errors.resize(hidden_3_size);
-	this->hidden_3->errors.setConstant(0.0);
-	this->hidden_3->input_layers.push_back(this->state_input);
-	this->hidden_3->input_layers.push_back(this->obs_input);
-	this->hidden_3->input_layers.push_back(this->hidden_1);
-	this->hidden_3->input_layers.push_back(this->hidden_2);
-	this->hidden_3->update_structure(NETWORK_INIT_MULTIPLIER);
-
 	this->output = new Layer(LINEAR_LAYER);
 	this->output->acti_vals.resize(this->init_states.size());
 	this->output->errors.resize(this->init_states.size());
 	this->output->errors.setConstant(0.0);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
-	this->output->input_layers.push_back(this->hidden_3);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 
 	this->hidden_1->load_weights_from(input_file);
 	this->hidden_2->load_weights_from(input_file);
-	this->hidden_3->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
 }
 
@@ -238,7 +200,6 @@ InitNetwork::~InitNetwork() {
 	delete this->obs_input;
 	delete this->hidden_1;
 	delete this->hidden_2;
-	delete this->hidden_3;
 	delete this->output;
 }
 
@@ -255,7 +216,6 @@ void InitNetwork::activate(vector<double>& state_vals,
 
 	this->hidden_1->activate();
 	this->hidden_2->activate();
-	this->hidden_3->activate();
 	this->output->activate();
 
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
@@ -284,10 +244,6 @@ void InitNetwork::save(InitNetworkHistory* history) {
 	for (int h_index = 0; h_index < (int)this->hidden_2->acti_vals.size(); h_index++) {
 		history->hidden_2_history[h_index] = this->hidden_2->acti_vals(h_index);
 	}
-	history->hidden_3_history = vector<double>(this->hidden_3->acti_vals.size());
-	for (int h_index = 0; h_index < (int)this->hidden_3->acti_vals.size(); h_index++) {
-		history->hidden_3_history[h_index] = this->hidden_3->acti_vals(h_index);
-	}
 }
 
 void InitNetwork::load(InitNetworkHistory* history) {
@@ -306,9 +262,6 @@ void InitNetwork::load(InitNetworkHistory* history) {
 	for (int h_index = 0; h_index < (int)this->hidden_2->acti_vals.size(); h_index++) {
 		this->hidden_2->acti_vals(h_index) = history->hidden_2_history[h_index];
 	}
-	for (int h_index = 0; h_index < (int)this->hidden_3->acti_vals.size(); h_index++) {
-		this->hidden_3->acti_vals(h_index) = history->hidden_3_history[h_index];
-	}
 }
 
 void InitNetwork::backprop(vector<double>& state_errors) {
@@ -316,7 +269,6 @@ void InitNetwork::backprop(vector<double>& state_errors) {
 		this->output->errors(i_index) = state_errors[this->init_states[i_index]];
 	}
 	this->output->backprop();
-	this->hidden_3->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
 
@@ -332,7 +284,6 @@ void InitNetwork::backprop(vector<double>& state_errors) {
 
 void InitNetwork::init_update(double& hidden_1_average_max_update,
 							  double& hidden_2_average_max_update,
-							  double& hidden_3_average_max_update,
 							  double& output_average_max_update) {
 	double hidden_1_max_update = 0.0;
 	this->hidden_1->get_max_update(hidden_1_max_update);
@@ -356,17 +307,6 @@ void InitNetwork::init_update(double& hidden_1_average_max_update,
 		this->hidden_2->update_weights(hidden_2_learning_rate);
 	}
 
-	double hidden_3_max_update = 0.0;
-	this->hidden_3->get_max_update(hidden_3_max_update);
-	hidden_3_average_max_update = 0.999*hidden_3_average_max_update+0.001*hidden_3_max_update;
-	if (hidden_3_max_update > 0.0) {
-		double hidden_3_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/hidden_3_average_max_update;
-		if (hidden_3_learning_rate*hidden_3_max_update > NETWORK_TARGET_MAX_UPDATE) {
-			hidden_3_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_3_max_update;
-		}
-		this->hidden_3->update_weights(hidden_3_learning_rate);
-	}
-
 	double output_max_update = 0.0;
 	this->output->get_max_update(output_max_update);
 	output_average_max_update = 0.999*output_average_max_update+0.001*output_max_update;
@@ -382,14 +322,12 @@ void InitNetwork::init_update(double& hidden_1_average_max_update,
 void InitNetwork::get_max_update(double& max_update) {
 	this->hidden_1->get_max_update(max_update);
 	this->hidden_2->get_max_update(max_update);
-	this->hidden_3->get_max_update(max_update);
 	this->output->get_max_update(max_update);
 }
 
 void InitNetwork::update_weights(double learning_rate) {
 	this->hidden_1->update_weights(learning_rate);
 	this->hidden_2->update_weights(learning_rate);
-	this->hidden_3->update_weights(learning_rate);
 	this->output->update_weights(learning_rate);
 }
 
@@ -403,7 +341,6 @@ void InitNetwork::add_states(int new_num_states) {
 	 */
 	this->hidden_1->update_structure(0.0);
 	this->hidden_2->update_structure(0.0);
-	this->hidden_3->update_structure(0.0);
 }
 
 void InitNetwork::save(ofstream& output_file) {
@@ -423,11 +360,9 @@ void InitNetwork::save(ofstream& output_file) {
 
 	output_file << this->hidden_1->acti_vals.size() << endl;
 	output_file << this->hidden_2->acti_vals.size() << endl;
-	output_file << this->hidden_3->acti_vals.size() << endl;
 
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);
-	this->hidden_3->save_weights(output_file);
 	this->output->save_weights(output_file);
 }
 

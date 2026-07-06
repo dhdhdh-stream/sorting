@@ -56,6 +56,12 @@ class ScopeHistory {
 public:
 	Scope* scope;
 
+	std::vector<double> state;
+	/**
+	 * - after start
+	 */
+	std::vector<double> obs;
+
 	std::map<int, AbstractNodeHistory*> node_histories;
 
 	ScopeHistory(Scope* scope);

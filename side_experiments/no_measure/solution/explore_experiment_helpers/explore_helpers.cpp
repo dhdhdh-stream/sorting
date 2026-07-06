@@ -14,7 +14,6 @@
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
-#include "start_node.h"
 
 using namespace std;
 
@@ -37,10 +36,10 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 
 			bool exit_is_next;
 			switch (this->node_context->type) {
-			case NODE_TYPE_START:
+			case NODE_TYPE_NOOP:
 				{
-					StartNode* start_node = (StartNode*)this->node_context;
-					if (this->exit_next_node == start_node->next_node) {
+					NoopNode* noop_node = (NoopNode*)this->node_context;
+					if (this->exit_next_node == noop_node->next_node) {
 						exit_is_next = true;
 					} else {
 						exit_is_next = false;
@@ -67,7 +66,8 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 					}
 				}
 				break;
-			case NODE_TYPE_BRANCH:
+			default:
+			// case NODE_TYPE_BRANCH:
 				{
 					BranchNode* branch_node = (BranchNode*)this->node_context;
 					if (this->is_branch) {
@@ -82,17 +82,6 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 						} else {
 							exit_is_next = false;
 						}
-					}
-				}
-				break;
-			default:
-			// case NODE_TYPE_NOOP:
-				{
-					NoopNode* noop_node = (NoopNode*)this->node_context;
-					if (this->exit_next_node == noop_node->next_node) {
-						exit_is_next = true;
-					} else {
-						exit_is_next = false;
 					}
 				}
 				break;
@@ -237,10 +226,10 @@ void ExploreExperiment::explore_backprop(double target_val,
 					this->state_iter = 0;
 				} else {
 					switch (this->node_context->type) {
-					case NODE_TYPE_START:
+					case NODE_TYPE_NOOP:
 						{
-							StartNode* start_node = (StartNode*)this->node_context;
-							start_node->experiment = NULL;
+							NoopNode* noop_node = (NoopNode*)this->node_context;
+							noop_node->experiment = NULL;
 						}
 						break;
 					case NODE_TYPE_ACTION:
@@ -263,12 +252,6 @@ void ExploreExperiment::explore_backprop(double target_val,
 							} else {
 								branch_node->original_experiment = NULL;
 							}
-						}
-						break;
-					case NODE_TYPE_NOOP:
-						{
-							NoopNode* noop_node = (NoopNode*)this->node_context;
-							noop_node->experiment = NULL;
 						}
 						break;
 					}

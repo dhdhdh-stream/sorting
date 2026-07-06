@@ -12,7 +12,6 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_wrapper.h"
-#include "start_node.h"
 
 using namespace std;
 
@@ -49,7 +48,6 @@ void gather_helper(ScopeHistory* scope_history,
 			h_it != scope_history->node_histories.end(); h_it++) {
 		AbstractNode* node = h_it->second->node;
 		switch (node->type) {
-		case NODE_TYPE_START:
 		case NODE_TYPE_ACTION:
 		case NODE_TYPE_NOOP:
 			{
@@ -140,10 +138,10 @@ void create_experiment(ScopeHistory* scope_history,
 			exit_next_node,
 			wrapper);
 		switch (context_it->second.explore_node->type) {
-		case NODE_TYPE_START:
+		case NODE_TYPE_NOOP:
 			{
-				StartNode* start_node = (StartNode*)context_it->second.explore_node;
-				start_node->experiment = new_experiment;
+				NoopNode* noop_node = (NoopNode*)context_it->second.explore_node;
+				noop_node->experiment = new_experiment;
 			}
 			break;
 		case NODE_TYPE_ACTION:
@@ -166,12 +164,6 @@ void create_experiment(ScopeHistory* scope_history,
 				} else {
 					branch_node->original_experiment = new_experiment;
 				}
-			}
-			break;
-		case NODE_TYPE_NOOP:
-			{
-				NoopNode* noop_node = (NoopNode*)context_it->second.explore_node;
-				noop_node->experiment = new_experiment;
 			}
 			break;
 		}

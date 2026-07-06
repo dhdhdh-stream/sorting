@@ -15,7 +15,6 @@ public:
 
 	Layer* hidden_1;
 	Layer* hidden_2;
-	Layer* hidden_3;
 	Layer* output;
 
 	ScoreNetwork(int num_states);
@@ -33,7 +32,6 @@ public:
 
 	void init_update(double& hidden_1_average_max_update,
 					 double& hidden_2_average_max_update,
-					 double& hidden_3_average_max_update,
 					 double& output_average_max_update);
 
 	void get_max_update(double& max_update);
@@ -49,8 +47,7 @@ public:
 	std::vector<double> state_input_history;
 	std::vector<double> hidden_1_history;
 	std::vector<double> hidden_2_history;
-	std::vector<double> hidden_3_history;
-	std::vector<double> output_history;
+	double output_history;
 
 	ScoreNetworkHistory(ScoreNetwork* network);
 };

@@ -15,7 +15,6 @@
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
-#include "start_node.h"
 
 using namespace std;
 
@@ -130,8 +129,6 @@ void ExploreExperiment::train_new_backprop(
 				double hidden_1_average_max_update = 0.0;
 				double hidden_2_average_max_update = 0.0;
 				double hidden_3_average_max_update = 0.0;
-				double hidden_4_average_max_update = 0.0;
-				double hidden_5_average_max_update = 0.0;
 				double output_average_max_update = 0.0;
 
 				uniform_int_distribution<int> new_train_distribution(0, num_new_train-1);
@@ -142,17 +139,10 @@ void ExploreExperiment::train_new_backprop(
 
 					double error = this->new_target_val_histories[rand_index] - this->new_network->output->acti_vals[0];
 
-					// this->new_network->init_backprop(error,
-					// 								 hidden_1_average_max_update,
-					// 								 hidden_2_average_max_update,
-					// 								 hidden_3_average_max_update,
-					// 								 output_average_max_update);
 					this->new_network->init_backprop(error,
 													 hidden_1_average_max_update,
 													 hidden_2_average_max_update,
 													 hidden_3_average_max_update,
-													 hidden_4_average_max_update,
-													 hidden_5_average_max_update,
 													 output_average_max_update);
 				}
 
@@ -231,10 +221,10 @@ void ExploreExperiment::train_new_backprop(
 				}
 
 				switch (this->node_context->type) {
-				case NODE_TYPE_START:
+				case NODE_TYPE_NOOP:
 					{
-						StartNode* start_node = (StartNode*)this->node_context;
-						start_node->experiment = NULL;
+						NoopNode* noop_node = (NoopNode*)this->node_context;
+						noop_node->experiment = NULL;
 					}
 					break;
 				case NODE_TYPE_ACTION:
@@ -259,12 +249,6 @@ void ExploreExperiment::train_new_backprop(
 						}
 					}
 					break;
-				case NODE_TYPE_NOOP:
-					{
-						NoopNode* noop_node = (NoopNode*)this->node_context;
-						noop_node->experiment = NULL;
-					}
-					break;
 				}
 				delete this;
 
@@ -275,12 +259,12 @@ void ExploreExperiment::train_new_backprop(
 						for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 								it != scope->nodes.end(); it++) {
 							switch (it->second->type) {
-							case NODE_TYPE_START:
+							case NODE_TYPE_NOOP:
 								{
-									StartNode* start_node = (StartNode*)it->second;
-									if (start_node->experiment != NULL) {
-										delete start_node->experiment;
-										start_node->experiment = NULL;
+									NoopNode* noop_node = (NoopNode*)it->second;
+									if (noop_node->experiment != NULL) {
+										delete noop_node->experiment;
+										noop_node->experiment = NULL;
 									}
 								}
 								break;
@@ -312,15 +296,6 @@ void ExploreExperiment::train_new_backprop(
 									if (branch_node->branch_experiment != NULL) {
 										delete branch_node->branch_experiment;
 										branch_node->branch_experiment = NULL;
-									}
-								}
-								break;
-							case NODE_TYPE_NOOP:
-								{
-									NoopNode* noop_node = (NoopNode*)it->second;
-									if (noop_node->experiment != NULL) {
-										delete noop_node->experiment;
-										noop_node->experiment = NULL;
 									}
 								}
 								break;

@@ -12,7 +12,6 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_helpers.h"
-#include "start_node.h"
 
 using namespace std;
 
@@ -81,7 +80,7 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->node_counter = 0;
 	this->scopes.push_back(new_scope);
 
-	StartNode* start_node = new StartNode();
+	NoopNode* start_node = new NoopNode();
 	start_node->parent = new_scope;
 	start_node->id = new_scope->node_counter;
 	new_scope->node_counter++;

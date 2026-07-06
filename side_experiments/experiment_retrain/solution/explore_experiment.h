@@ -38,6 +38,16 @@ public:
 	int state;
 	int state_iter;
 
+	/**
+	 * - -1 if scope start
+	 */
+	std::vector<std::vector<int>> dependencies;
+
+	std::vector<std::vector<bool>> existing_dependencies_is_hit_histories;
+	std::vector<std::vector<std::vector<double>>> existing_dependencies_state_histories;
+	std::vector<std::vector<std::vector<double>>> existing_dependencies_obs_histories;
+	std::vector<std::vector<double>> existing_state_histories;
+
 	std::vector<std::vector<double>> existing_obs_histories;
 	std::vector<double> existing_target_val_histories;
 
@@ -52,6 +62,8 @@ public:
 	std::vector<Scope*> best_scopes;
 
 	int start_iter;
+
+	std::vector<std::vector<bool>> 
 
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
