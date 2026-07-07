@@ -16,14 +16,8 @@ void ExploreExperiment::experiment_check_activate(vector<double>& obs,
 	if (it == wrapper->explore_experiment_histories.end()) {
 		it = wrapper->explore_experiment_histories.insert({this, new ExploreExperimentHistory(this)}).first;
 	}
-	it->second->num_instances++;
 
 	switch (this->state) {
-	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
-		train_existing_check_activate(obs,
-									  it->second,
-									  wrapper);
-		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_check_activate(obs,
 							   it->second,
@@ -79,14 +73,7 @@ void ExploreExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 void ExploreExperiment::backprop(double target_val,
 								 ExploreExperimentHistory* history,
 								 SolutionWrapper* wrapper) {
-	this->average_instances_per_run = 0.99*this->average_instances_per_run + 0.01*history->num_instances;
-
 	switch (this->state) {
-	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
-		train_existing_backprop(target_val,
-								history,
-								wrapper);
-		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 history,

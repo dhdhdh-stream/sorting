@@ -14,7 +14,7 @@ const double NETWORK_INIT_MULTIPLIER = 0.01;
 const double NETWORK_TARGET_MAX_UPDATE = 0.01;
 const int EPOCH_SIZE = 10;
 /**
- * - not meaningful to update weights more often(?)
+ * - unstable to update weights more often(?)
  */
 
 #if defined(MDEBUG) && MDEBUG

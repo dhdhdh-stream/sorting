@@ -6,6 +6,7 @@
 #include "globals.h"
 #include "problem.h"
 #include "scope.h"
+#include "score_network.h"
 #include "solution.h"
 #include "solution_wrapper.h"
 
@@ -19,6 +20,9 @@ void ScopeNode::experiment_step(vector<double>& obs,
 	wrapper->scope_histories.push_back(inner_scope_history);
 	wrapper->node_context.push_back(this->scope->nodes[0]);
 	wrapper->experiment_context.push_back(NULL);
+
+	this->scope->experiment_start_activate(obs,
+										   wrapper);
 }
 
 void ScopeNode::experiment_exit_step(vector<double>& obs,
@@ -34,6 +38,13 @@ void ScopeNode::experiment_exit_step(vector<double>& obs,
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
+
+	if (!wrapper->should_explore) {
+		this->score_network->activate(wrapper->state);
+		ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->score_network);
+		this->score_network->save(score_network_history);
+		wrapper->network_histories.push_back(score_network_history);
+	}
 
 	wrapper->node_context.back() = this->next_node;
 

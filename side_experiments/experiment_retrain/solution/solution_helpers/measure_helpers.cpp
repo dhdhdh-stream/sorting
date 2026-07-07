@@ -19,17 +19,19 @@ double measure_helper(SolutionWrapper* wrapper) {
 		Problem* problem = problem_type->get_problem();
 		wrapper->problem = problem;
 
-		wrapper->init();
+		vector<double> obs = problem->get_observations();
+
+		wrapper->init(obs);
 
 		while (true) {
-			vector<double> obs = problem->get_observations();
-
 			pair<bool,int> next = wrapper->step(obs);
 			if (next.first) {
 				break;
 			} else {
 				problem->perform_action(next.second);
 			}
+
+			obs = problem->get_observations();
 		}
 
 		double target_val = problem->score_result();

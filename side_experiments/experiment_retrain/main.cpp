@@ -57,11 +57,11 @@ int main(int argc, char* argv[]) {
 			Problem* problem = problem_type->get_problem();
 			solution_wrapper->problem = problem;
 
-			solution_wrapper->experiment_init();
+			vector<double> obs = problem->get_observations();
+
+			solution_wrapper->experiment_init(obs);
 
 			while (true) {
-				vector<double> obs = problem->get_observations();
-
 				tuple<bool,bool,int> next = solution_wrapper->experiment_step(obs);
 				if (get<0>(next)) {
 					break;
@@ -75,6 +75,8 @@ int main(int argc, char* argv[]) {
 				} else {
 					problem->perform_action(get<2>(next));
 				}
+
+				obs = problem->get_observations();
 			}
 
 			double target_val = problem->score_result();

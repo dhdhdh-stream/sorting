@@ -4,9 +4,9 @@
 
 #include "constants.h"
 #include "globals.h"
-#include "network.h"
 #include "problem.h"
 #include "scope.h"
+#include "score_network.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
@@ -34,9 +34,9 @@ void BranchNode::step(vector<double>& obs,
 		scope_history->node_histories[this->id] = history;
 
 		bool is_branch;
-		this->original_network->activate(obs);
-		this->branch_network->activate(obs);
-		if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+		this->original_network->activate(wrapper->state);
+		this->branch_network->activate(wrapper->state);
+		if (this->branch_network->output->acti_vals(0) >= this->original_network->output->acti_vals(0)) {
 			is_branch = true;
 		} else {
 			is_branch = false;

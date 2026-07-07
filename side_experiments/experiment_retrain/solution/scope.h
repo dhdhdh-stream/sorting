@@ -41,13 +41,16 @@ public:
 	Scope();
 	~Scope();
 
+	void start_activate(std::vector<double>& obs,
+						SolutionWrapper* wrapper);
+
+	void experiment_start_activate(std::vector<double>& obs,
+								   SolutionWrapper* wrapper);
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);
 	void link(Solution* parent_solution);
-
-	void copy_from(Scope* original,
-				   Solution* parent_solution);
 
 	void save_for_display(std::ofstream& output_file);
 };
@@ -65,8 +68,6 @@ public:
 	std::map<int, AbstractNodeHistory*> node_histories;
 
 	ScopeHistory(Scope* scope);
-	ScopeHistory(ScopeHistory* original,
-				 Solution* parent_solution);
 	~ScopeHistory();
 };
 

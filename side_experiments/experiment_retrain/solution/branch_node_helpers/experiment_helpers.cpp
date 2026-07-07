@@ -3,8 +3,8 @@
 #include "abstract_experiment.h"
 #include "constants.h"
 #include "globals.h"
-#include "network.h"
 #include "scope.h"
+#include "score_network.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
 #include "utilities.h"
@@ -31,9 +31,9 @@ void BranchNode::experiment_step(vector<double>& obs,
 		scope_history->node_histories[this->id] = history;
 
 		bool is_branch;
-		this->original_network->activate(obs);
-		this->branch_network->activate(obs);
-		if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+		this->original_network->activate(wrapper->state);
+		this->branch_network->activate(wrapper->state);
+		if (this->branch_network->output->acti_vals(0) >= this->original_network->output->acti_vals(0)) {
 			is_branch = true;
 
 			if (!wrapper->should_explore) {
@@ -60,11 +60,13 @@ void BranchNode::experiment_step(vector<double>& obs,
 
 		history->is_branch = is_branch;
 
-		if (!wrapper->should_explore) {
-			history->obs = obs;
-		}
-
 		if (is_branch) {
+			if (!wrapper->should_explore) {
+				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->branch_network);
+				this->branch_network->save(score_network_history);
+				wrapper->network_histories.push_back(score_network_history);
+			}
+
 			wrapper->node_context.back() = this->branch_next_node;
 
 			if (this->branch_experiment != NULL) {
@@ -73,6 +75,12 @@ void BranchNode::experiment_step(vector<double>& obs,
 					wrapper);
 			}
 		} else {
+			if (!wrapper->should_explore) {
+				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->original_network);
+				this->original_network->save(score_network_history);
+				wrapper->network_histories.push_back(score_network_history);
+			}
+
 			wrapper->node_context.back() = this->original_next_node;
 
 			if (this->original_experiment != NULL) {

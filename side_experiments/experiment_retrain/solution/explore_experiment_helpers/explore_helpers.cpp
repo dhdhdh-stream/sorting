@@ -6,11 +6,11 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "network.h"
 #include "noop_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "score_network.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
@@ -30,9 +30,24 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 		this->num_instances_until_target--;
 		if (history->existing_predicted.size() == 0
 				&& this->num_instances_until_target <= 0) {
-			this->existing_network->activate(obs);
-			history->existing_predicted.push_back(
-				this->existing_network->output->acti_vals[0]);
+			switch (this->node_context->type) {
+			case NODE_TYPE_NOOP:
+
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)this->node_context;
+					action_node->score_network->activate(wrapper->state);
+					history->existing_predicted.push_back(action_node->score_network->output->acti_vals(0));
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+
+				break;
+			case NODE_TYPE_BRANCH:
+
+				break;
+			}
 
 			bool exit_is_next;
 			switch (this->node_context->type) {
@@ -196,7 +211,38 @@ void ExploreExperiment::explore_backprop(double target_val,
 										 ExploreExperimentHistory* history,
 										 SolutionWrapper* wrapper) {
 	if (wrapper->should_explore) {
-		uniform_int_distribution<int> until_distribution(1, 2 * this->average_instances_per_run);
+		double average_instances_per_hit;
+		switch (this->node_context->type) {
+		case NODE_TYPE_NOOP:
+			{
+				NoopNode* noop_node = (NoopNode*)this->node_context;
+				average_instances_per_hit = noop_node->average_instances_per_hit;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->node_context;
+				average_instances_per_hit = action_node->average_instances_per_hit;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)this->node_context;
+				average_instances_per_hit = scope_node->average_instances_per_hit;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)this->node_context;
+				if (this->is_branch) {
+					average_instances_per_hit = branch_node->branch_average_instances_per_hit;
+				} else {
+					average_instances_per_hit = branch_node->original_average_instances_per_hit;
+				}
+			}
+			break;
+		}
+		uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
 		this->num_instances_until_target = until_distribution(generator);
 
 		if (history->existing_predicted.size() != 0) {
@@ -220,8 +266,6 @@ void ExploreExperiment::explore_backprop(double target_val,
 				#else
 				if (this->best_surprise >= 0.0) {
 				#endif /* MDEBUG */
-					this->start_iter = wrapper->iter;
-
 					this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
 					this->state_iter = 0;
 				} else {

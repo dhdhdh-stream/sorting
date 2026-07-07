@@ -297,19 +297,50 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	new_branch_node->original_network = this->existing_network;
-	this->existing_network = NULL;
+	// new_branch_node->original_network = this->existing_network;
+	// this->existing_network = NULL;
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
 
 	new_branch_node->ramp = 0;
+	double average_instances_per_hit;
+	switch (this->node_context->type) {
+	case NODE_TYPE_NOOP:
+		{
+			NoopNode* noop_node = (NoopNode*)this->node_context;
+			average_instances_per_hit = noop_node->average_instances_per_hit;
+		}
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+			average_instances_per_hit = action_node->average_instances_per_hit;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)this->node_context;
+			average_instances_per_hit = scope_node->average_instances_per_hit;
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)this->node_context;
+			if (this->is_branch) {
+				average_instances_per_hit = branch_node->branch_average_instances_per_hit;
+			} else {
+				average_instances_per_hit = branch_node->original_average_instances_per_hit;
+			}
+		}
+		break;
+	}
 	/**
 	 * - if ramp_num_gears too high, limits improvement?
 	 *   - maybe too easy for existing solution to negate impact
 	 *   - whereas if fully add immediately, forces dramatic adjustment
 	 *     - resulting in more improvement
 	 */
-	new_branch_node->ramp_num_gears = ceil(this->average_instances_per_run);
+	new_branch_node->ramp_num_gears = ceil(average_instances_per_hit);
 	new_branch_node->ramp_iter = 0;
 
 	new_branch_node->consec_original = 0;

@@ -12,9 +12,9 @@
 
 #include "abstract_node.h"
 
-class Network;
 class Problem;
 class ScopeHistory;
+class ScoreNetwork;
 class Solution;
 class SolutionWrapper;
 
@@ -23,8 +23,8 @@ const int CONSEC_DEPRECATE_LIMIT = 4000;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	Network* original_network;
-	Network* branch_network;
+	ScoreNetwork* original_network;
+	ScoreNetwork* branch_network;
 
 	int original_next_node_id;
 	AbstractNode* original_next_node;
@@ -38,8 +38,15 @@ public:
 	int consec_original;
 	int consec_branch;
 
+	double original_average_instances_per_hit;
+	double original_average_instances_per_run;
 	AbstractExperiment* original_experiment;
+	double branch_average_instances_per_hit;
+	double branch_average_instances_per_run;
 	AbstractExperiment* branch_experiment;
+
+	int original_curr_num_instances;
+	int branch_curr_num_instances;
 
 	BranchNode();
 	~BranchNode();
@@ -59,17 +66,12 @@ public:
 			  Solution* parent_solution);
 	void link(Solution* parent_solution);
 
-	void copy_from(BranchNode* original,
-				   Solution* parent_solution);
-
 	void save_for_display(std::ofstream& output_file);
 };
 
 class BranchNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_branch;
-
-	std::vector<double> obs;
 
 	BranchNodeHistory(BranchNode* node);
 };

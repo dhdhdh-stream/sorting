@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "init_network.h"
+#include "obs_network.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution_wrapper.h"
@@ -22,6 +24,13 @@ void ActionNode::step(vector<double>& obs,
 	is_next = true;
 
 	wrapper->num_actions++;
+
+	this->obs_network->activate(wrapper->state,
+								obs);
+	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
+		this->init_networks[n_index]->activate(wrapper->state,
+											   obs);
+	}
 
 	wrapper->node_context.back() = this->next_node;
 }

@@ -17,9 +17,7 @@
 
 using namespace std;
 
-void SolutionWrapper::experiment_init() {
-	this->iter++;
-
+void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->num_actions = 1;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -39,6 +37,10 @@ void SolutionWrapper::experiment_init() {
 	this->scope_histories.push_back(scope_history);
 	this->node_context.push_back(this->solution->starting_scope->nodes[0]);
 	this->experiment_context.push_back(NULL);
+
+	this->solution->starting_scope->experiment_start_activate(
+		obs,
+		this);
 }
 
 tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
@@ -96,14 +98,9 @@ void SolutionWrapper::set_action(int action) {
 
 void SolutionWrapper::experiment_end(double result) {
 	if (!this->should_explore) {
-		set<BranchNode*> hit_original;
-		set<BranchNode*> hit_branch;
-		update_helper(this->scope_histories[0],
-					  result,
-					  hit_original,
-					  hit_branch);
-		update_helper(hit_original,
-					  hit_branch);
+		update_helper(this->scope_histories[0]);
+		update_helper(result,
+					  this);
 	}
 
 	if (this->explore_experiment_histories.size() == 0) {

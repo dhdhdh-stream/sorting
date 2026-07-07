@@ -4,8 +4,8 @@
 
 #include "abstract_experiment.h"
 #include "globals.h"
-#include "network.h"
 #include "scope.h"
+#include "score_network.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -19,6 +19,13 @@ void NoopNode::experiment_step(vector<double>& obs,
 	NoopNodeHistory* history = new NoopNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
+
+	if (!wrapper->should_explore) {
+		this->score_network->activate(wrapper->state);
+		ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->score_network);
+		this->score_network->save(score_network_history);
+		wrapper->network_histories.push_back(score_network_history);
+	}
 
 	wrapper->node_context.back() = this->next_node;
 

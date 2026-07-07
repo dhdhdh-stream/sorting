@@ -26,8 +26,6 @@ class SolutionWrapper {
 public:
 	Solution* solution;
 
-	int iter;
-
 	int experiment_iter;
 	/**
 	 * - fully reset experiments every so often
@@ -37,6 +35,8 @@ public:
 	/**
 	 * - run variables
 	 */
+	std::vector<double> state;
+
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;
@@ -45,9 +45,6 @@ public:
 
 	bool should_explore;
 	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_experiment_histories;
-
-	std::vector<std::vector<double>> obs_histories;
-	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
 
 	std::vector<AbstractNetworkHistory*> network_histories;
 
@@ -64,11 +61,11 @@ public:
 					std::string name);
 	~SolutionWrapper();
 
-	void init();
+	void init(std::vector<double> obs);
 	std::pair<bool,int> step(std::vector<double> obs);
 	void end();
 
-	void experiment_init();
+	void experiment_init(std::vector<double> obs);
 	std::tuple<bool,bool,int> experiment_step(std::vector<double> obs);
 	void set_action(int action);
 	void experiment_end(double result);

@@ -41,7 +41,8 @@ public:
 	double curr_score;
 
 	int num_obs;
-	int num_actions;
+
+	int num_states;
 
 	std::vector<Scope*> scopes;
 	Scope* starting_scope;
@@ -50,11 +51,12 @@ public:
 	ActionNetwork* generic_action_network;
 	ObsNetwork* generic_obs_network;
 
+	double average_max_update;
+
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
 
 	Solution();
-	Solution(Solution* original);
 	~Solution();
 
 	void init(ProblemType* problem_type);

@@ -20,6 +20,10 @@ class SolutionWrapper;
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper);
 
+void gather_dependencies_helper(ScopeHistory* scope_history,
+								std::vector<int>& curr_context,
+								int& count,
+								std::vector<int>& dependency);
 void fetch_dependency_helper(ScopeHistory* scope_history,
 							 std::vector<AbstractNode*>& dependencies,
 							 int l_index,
@@ -27,12 +31,9 @@ void fetch_dependency_helper(ScopeHistory* scope_history,
 							 std::vector<double>& state,
 							 std::vector<double>& obs);
 
-void update_helper(ScopeHistory* scope_history,
-				   double target_val,
-				   std::set<BranchNode*>& hit_original,
-				   std::set<BranchNode*>& hit_branch);
-void update_helper(std::set<BranchNode*>& hit_original,
-				   std::set<BranchNode*>& hit_branch);
+void update_helper(ScopeHistory* scope_history);
+void update_helper(double target_val,
+				   SolutionWrapper* wrapper);
 
 double measure_helper(SolutionWrapper* wrapper);
 

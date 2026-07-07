@@ -13,18 +13,11 @@
 #include "abstract_experiment.h"
 
 class AbstractNode;
-class Network;
+class ScoreNetwork;
 class SolutionWrapper;
 
-const int EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
-/**
- * - simply always retrain existing_network
- *   - solution is always changing, so keeping an overall existing_network updated significant cost
- *   - also much easier to make mistakes
- *     - in case branches not properly taken into account
- */
-const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
-const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
+const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 0;
+const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 1;
 /**
  * - no measure step
  *   - improvement not just the experiment change itself...
@@ -38,6 +31,13 @@ public:
 	int state;
 	int state_iter;
 
+	int num_instances_until_target;
+
+	double best_surprise;
+	std::vector<int> best_step_types;
+	std::vector<int> best_actions;
+	std::vector<Scope*> best_scopes;
+
 	/**
 	 * - -1 if scope start
 	 */
@@ -48,27 +48,15 @@ public:
 	std::vector<std::vector<std::vector<double>>> existing_dependencies_obs_histories;
 	std::vector<std::vector<double>> existing_state_histories;
 
-	std::vector<std::vector<double>> existing_obs_histories;
-	std::vector<double> existing_target_val_histories;
-
-	Network* existing_network;
-
-	double average_instances_per_run;
-	int num_instances_until_target;
-
-	double best_surprise;
-	std::vector<int> best_step_types;
-	std::vector<int> best_actions;
-	std::vector<Scope*> best_scopes;
-
-	int start_iter;
-
-	std::vector<std::vector<bool>> 
+	std::vector<std::vector<bool>> new_dependencies_is_hit_histories;
+	std::vector<std::vector<std::vector<double>>> new_dependencies_state_histories;
+	std::vector<std::vector<std::vector<double>>> new_dependencies_obs_histories;
+	std::vector<std::vector<double>> new_state_histories;
 
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
 
-	Network* new_network;
+	ScoreNetwork* new_network;
 
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,
@@ -90,13 +78,6 @@ public:
 	void backprop(double target_val,
 				  ExploreExperimentHistory* history,
 				  SolutionWrapper* wrapper);
-
-	void train_existing_check_activate(std::vector<double>& obs,
-									   ExploreExperimentHistory* history,
-									   SolutionWrapper* wrapper);
-	void train_existing_backprop(double target_val,
-								 ExploreExperimentHistory* history,
-								 SolutionWrapper* wrapper);
 
 	void explore_check_activate(std::vector<double>& obs,
 								ExploreExperimentHistory* history,
@@ -133,8 +114,6 @@ public:
 class ExploreExperimentHistory {
 public:
 	ExploreExperiment* experiment;
-
-	int num_instances;
 
 	std::vector<std::vector<double>> obs_histories;
 

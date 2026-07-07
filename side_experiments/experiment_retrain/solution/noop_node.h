@@ -10,16 +10,23 @@
 class Network;
 class Problem;
 class ScopeHistory;
+class ScoreNetwork;
 class Solution;
 class SolutionWrapper;
 
 class NoopNodeHistory;
 class NoopNode : public AbstractNode {
 public:
+	ScoreNetwork* score_network;
+
 	int next_node_id;
 	AbstractNode* next_node;
 
+	double average_instances_per_hit;
+	double average_instances_per_run;
 	AbstractExperiment* experiment;
+
+	int curr_num_instances;
 
 	NoopNode();
 	~NoopNode();
@@ -38,9 +45,6 @@ public:
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);
 	void link(Solution* parent_solution);
-
-	void copy_from(NoopNode* original,
-				   Solution* parent_solution);
 
 	void save_for_display(std::ofstream& output_file);
 };

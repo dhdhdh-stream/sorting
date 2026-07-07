@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "network.h"
 #include "scope.h"
 #include "solution_wrapper.h"
 

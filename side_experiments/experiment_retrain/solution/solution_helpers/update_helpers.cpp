@@ -2,12 +2,17 @@
 
 #include <iostream>
 
+#include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "network.h"
+#include "init_network.h"
+#include "negate_network.h"
+#include "noop_node.h"
+#include "obs_network.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "score_network.h"
 #include "solution.h"
 #include "solution_wrapper.h"
 
@@ -19,39 +24,40 @@ const int ITERS_PER_RAMP = 2;
 const int ITERS_PER_RAMP = 4000;
 #endif /* MDEBUG */
 
-void update_helper(ScopeHistory* scope_history,
-				   double target_val,
-				   set<BranchNode*>& hit_original,
-				   set<BranchNode*>& hit_branch) {
+void update_helper(ScopeHistory* scope_history) {
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
 		switch (h_it->second->node->type) {
+		case NODE_TYPE_NOOP:
+			{
+				NoopNode* noop_node = (NoopNode*)h_it->second->node;
+				noop_node->curr_num_instances++;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)h_it->second->node;
+				action_node->curr_num_instances++;
+			}
+			break;
 		case NODE_TYPE_SCOPE:
 			{
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
-				update_helper(scope_node_history->scope_history,
-							  target_val,
-							  hit_original,
-							  hit_branch);
+				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+
+				update_helper(scope_node_history->scope_history);
+
+				scope_node->curr_num_instances++;
 			}
 			break;
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
-
 				if (branch_node_history->is_branch) {
-					branch_node->branch_network->activate(branch_node_history->obs);
-					double error = target_val - branch_node->branch_network->output->acti_vals[0];
-					branch_node->branch_network->backprop(error);
-
-					hit_branch.insert(branch_node);
+					branch_node->branch_curr_num_instances++;
 				} else {
-					branch_node->original_network->activate(branch_node_history->obs);
-					double error = target_val - branch_node->original_network->output->acti_vals[0];
-					branch_node->original_network->backprop(error);
-
-					hit_original.insert(branch_node);
+					branch_node->original_curr_num_instances++;
 				}
 			}
 			break;
@@ -63,38 +69,194 @@ void update_helper(ScopeHistory* scope_history,
  * - for some reason, best to update each network individually as frequently as possible(?)
  *   - vs. updating all networks in a balanced way
  */
-void update_helper(set<BranchNode*>& hit_original,
-				   set<BranchNode*>& hit_branch) {
-	for (set<BranchNode*>::iterator it = hit_original.begin();
-			it != hit_original.end(); it++) {
-		BranchNode* branch_node = *it;
-		branch_node->original_network->update();
+void update_helper(double target_val,
+				   SolutionWrapper* wrapper) {
+	vector<double> state_errors(wrapper->solution->num_states, 0.0);
+	set<AbstractNetwork*> to_update;
+	for (int h_index = (int)wrapper->network_histories.size()-1; h_index >= 0; h_index--) {
+		switch (wrapper->network_histories[h_index]->network->type) {
+		case NETWORK_TYPE_OBS:
+			{
+				ObsNetworkHistory* obs_network_history = (ObsNetworkHistory*)wrapper->network_histories[h_index];
+				ObsNetwork* obs_network = (ObsNetwork*)obs_network_history->network;
+				obs_network->load(obs_network_history);
+				obs_network->backprop(state_errors);
+			}
+			break;
+		case NETWORK_TYPE_SCORE:
+			{
+				ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->network_histories[h_index];
+				ScoreNetwork* score_network = (ScoreNetwork*)score_network_history->network;
+				score_network->load(score_network_history);
+				score_network->backprop(target_val,
+										state_errors);
+			}
+			break;
+		case NETWORK_TYPE_INIT:
+			{
+				InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->network_histories[h_index];
+				InitNetwork* init_network = (InitNetwork*)init_network_history->network;
+				init_network->load(init_network_history);
+				init_network->backprop(state_errors);
+			}
+			break;
+		case NETWORK_TYPE_NEGATE:
+			{
+				NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->network_histories[h_index];
+				NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
+				negate_network->load(negate_network_history);
+				negate_network->backprop(state_errors);
+			}
+			break;
+		}
+		delete wrapper->network_histories[h_index];
+	}
+	wrapper->network_histories.clear();
 
-		if (branch_node->ramp < branch_node->ramp_num_gears) {
-			branch_node->ramp_iter++;
-			if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
-				branch_node->ramp++;
-				branch_node->ramp_iter = 0;
-
-				// // temp
-				// cout << "branch_node->ramp: " << branch_node->ramp << endl;
+	double max_update = 0.0;
+	for (set<AbstractNetwork*>::iterator it = to_update.begin();
+			it != to_update.end(); it++) {
+		AbstractNetwork* network = *it;
+		switch (network->type) {
+		case NETWORK_TYPE_OBS:
+			{
+				ObsNetwork* obs_network = (ObsNetwork*)network;
+				obs_network->get_max_update(max_update);
+			}
+			break;
+		case NETWORK_TYPE_INIT:
+			{
+				InitNetwork* init_network = (InitNetwork*)network;
+				init_network->get_max_update(max_update);
+			}
+			break;
+		case NETWORK_TYPE_NEGATE:
+			{
+				NegateNetwork* negate_network = (NegateNetwork*)network;
+				negate_network->get_max_update(max_update);
+			}
+			break;
+		}
+	}
+	wrapper->solution->average_max_update = 0.999*wrapper->solution->average_max_update + 0.001*max_update;
+	if (max_update > 0.0) {
+		double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/wrapper->solution->average_max_update;
+		if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
+			learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+		}
+		for (set<AbstractNetwork*>::iterator it = to_update.begin();
+				it != to_update.end(); it++) {
+			AbstractNetwork* network = *it;
+			switch (network->type) {
+			case NETWORK_TYPE_OBS:
+				{
+					ObsNetwork* obs_network = (ObsNetwork*)network;
+					obs_network->update_weights(learning_rate);
+				}
+				break;
+			case NETWORK_TYPE_INIT:
+				{
+					InitNetwork* init_network = (InitNetwork*)network;
+					init_network->update_weights(learning_rate);
+				}
+				break;
+			case NETWORK_TYPE_NEGATE:
+				{
+					NegateNetwork* negate_network = (NegateNetwork*)network;
+					negate_network->update_weights(learning_rate);
+				}
+				break;
 			}
 		}
 	}
 
-	for (set<BranchNode*>::iterator it = hit_branch.begin();
-			it != hit_branch.end(); it++) {
-		BranchNode* branch_node = *it;
-		branch_node->branch_network->update();
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			switch (it->second->type) {
+			case NODE_TYPE_NOOP:
+				{
+					NoopNode* noop_node = (NoopNode*)it->second;
+					noop_node->average_instances_per_run = 0.999*noop_node->average_instances_per_run + 0.001*noop_node->curr_num_instances;
+					if (noop_node->curr_num_instances > 0) {
+						noop_node->average_instances_per_hit = 0.999*noop_node->average_instances_per_hit + 0.001*noop_node->curr_num_instances;
 
-		if (branch_node->ramp < branch_node->ramp_num_gears) {
-			branch_node->ramp_iter++;
-			if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
-				branch_node->ramp++;
-				branch_node->ramp_iter = 0;
+						noop_node->score_network->update();
 
-				// // temp
-				// cout << "branch_node->ramp: " << branch_node->ramp << endl;
+						noop_node->curr_num_instances = 0;
+					}
+				}
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)it->second;
+					action_node->average_instances_per_run = 0.999*action_node->average_instances_per_run + 0.001*action_node->curr_num_instances;
+					if (action_node->curr_num_instances > 0) {
+						action_node->average_instances_per_hit = 0.999*action_node->average_instances_per_hit + 0.001*action_node->curr_num_instances;
+
+						action_node->score_network->update();
+
+						action_node->curr_num_instances = 0;
+					}
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)it->second;
+					scope_node->average_instances_per_run = 0.999*scope_node->average_instances_per_run + 0.001*scope_node->curr_num_instances;
+					if (scope_node->curr_num_instances > 0) {
+						scope_node->average_instances_per_hit = 0.999*scope_node->average_instances_per_hit + 0.001*scope_node->curr_num_instances;
+
+						scope_node->score_network->update();
+
+						scope_node->curr_num_instances = 0;
+					}
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)it->second;
+					branch_node->original_average_instances_per_run = 0.999*branch_node->original_average_instances_per_run + 0.001*branch_node->original_curr_num_instances;
+					if (branch_node->original_curr_num_instances > 0) {
+						branch_node->original_average_instances_per_hit = 0.999*branch_node->original_average_instances_per_hit + 0.001*branch_node->original_curr_num_instances;
+
+						branch_node->original_network->update();
+
+						if (branch_node->ramp < branch_node->ramp_num_gears) {
+							branch_node->ramp_iter++;
+							if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
+								branch_node->ramp++;
+								branch_node->ramp_iter = 0;
+
+								// // temp
+								// cout << "branch_node->ramp: " << branch_node->ramp << endl;
+							}
+						}
+
+						branch_node->original_curr_num_instances = 0;
+					}
+					branch_node->branch_average_instances_per_run = 0.999*branch_node->branch_average_instances_per_run + 0.001*branch_node->branch_curr_num_instances;
+					if (branch_node->branch_curr_num_instances > 0) {
+						branch_node->branch_average_instances_per_hit = 0.999*branch_node->branch_average_instances_per_hit + 0.001*branch_node->branch_curr_num_instances;
+
+						branch_node->branch_network->update();
+
+						if (branch_node->ramp < branch_node->ramp_num_gears) {
+							branch_node->ramp_iter++;
+							if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
+								branch_node->ramp++;
+								branch_node->ramp_iter = 0;
+
+								// // temp
+								// cout << "branch_node->ramp: " << branch_node->ramp << endl;
+							}
+						}
+
+						branch_node->branch_curr_num_instances = 0;
+					}
+				}
+				break;
 			}
 		}
 	}

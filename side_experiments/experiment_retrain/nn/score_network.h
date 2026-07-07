@@ -17,6 +17,9 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
+	int epoch_iter;
+	double average_max_update;
+
 	ScoreNetwork(int num_states);
 	ScoreNetwork(ScoreNetwork* original);
 	ScoreNetwork(std::ifstream& input_file);
@@ -34,8 +37,7 @@ public:
 					 double& hidden_2_average_max_update,
 					 double& output_average_max_update);
 
-	void get_max_update(double& max_update);
-	void update_weights(double learning_rate);
+	void update();
 
 	void add_states(int new_num_states);
 

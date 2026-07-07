@@ -22,33 +22,7 @@ const int INIT_MEASURE_ITERS = 4000;
 #endif /* MDEBUG */
 
 Solution::Solution() {
-	// do nothing
-}
-
-Solution::Solution(Solution* original) {
-	this->timestamp = original->timestamp;
-	this->curr_score = original->curr_score;
-
-	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
-		Scope* scope = new Scope();
-		scope->id = s_index;
-		this->scopes.push_back(scope);
-	}
-
-	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
-		this->scopes[s_index]->copy_from(original->scopes[s_index],
-										 this);
-	}
-
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->link(this);
-	}
-
-	this->starting_scope = this->scopes[original->starting_scope->id];
-	this->starting_num_improvements = original->starting_num_improvements;
-
-	this->improvement_history = original->improvement_history;
-	this->change_history = original->change_history;
+	this->average_max_update = 0.0;
 }
 
 Solution::~Solution() {
@@ -67,6 +41,10 @@ void Solution::init(ProblemType* problem_type) {
 
 	this->timestamp = 0;
 	this->curr_score = sum_score / INIT_MEASURE_ITERS;
+
+	this->num_obs = problem_type->num_obs();
+
+	this->num_states = 0;
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -112,6 +90,14 @@ void Solution::load(ifstream& input_file) {
 	string curr_score_line;
 	getline(input_file, curr_score_line);
 	this->curr_score = stod(curr_score_line);
+
+	string num_obs_line;
+	getline(input_file, num_obs_line);
+	this->num_obs = stoi(num_obs_line);
+
+	string num_states_line;
+	getline(input_file, num_states_line);
+	this->num_states = stoi(num_states_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -214,6 +200,10 @@ void Solution::clean_scopes() {
 void Solution::save(ofstream& output_file) {
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
+
+	output_file << this->num_obs << endl;
+
+	output_file << this->num_states << endl;
 
 	output_file << this->scopes.size() << endl;
 

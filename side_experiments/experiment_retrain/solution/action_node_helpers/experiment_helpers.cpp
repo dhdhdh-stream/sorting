@@ -4,8 +4,11 @@
 
 #include "abstract_experiment.h"
 #include "globals.h"
+#include "init_network.h"
+#include "obs_network.h"
 #include "problem.h"
 #include "scope.h"
+#include "score_network.h"
 #include "solution.h"
 #include "solution_wrapper.h"
 
@@ -28,6 +31,33 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 	ActionNodeHistory* history = new ActionNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
+
+	this->obs_network->activate(wrapper->state,
+								obs);
+	if (!wrapper->should_explore) {
+		ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(this->obs_network);
+		this->obs_network->save(obs_network_history);
+		wrapper->network_histories.push_back(obs_network_history);
+	}
+	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
+		this->init_networks[n_index]->activate(wrapper->state,
+											   obs);
+		if (!wrapper->should_explore) {
+			InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
+			this->init_networks[n_index]->save(init_network_history);
+			wrapper->network_histories.push_back(init_network_history);
+		}
+	}
+
+	history->state = wrapper->state;
+	history->obs = obs;
+
+	if (!wrapper->should_explore) {
+		this->score_network->activate(wrapper->state);
+		ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->score_network);
+		this->score_network->save(score_network_history);
+		wrapper->network_histories.push_back(score_network_history);
+	}
 
 	wrapper->node_context.back() = this->next_node;
 

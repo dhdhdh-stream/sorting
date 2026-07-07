@@ -7,7 +7,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
-#include "network.h"
 #include "noop_node.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -134,67 +133,6 @@ void Scope::link(Solution* parent_solution) {
 	}
 }
 
-void Scope::copy_from(Scope* original,
-					  Solution* parent_solution) {
-	this->node_counter = original->node_counter;
-
-	for (map<int, AbstractNode*>::iterator it = original->nodes.begin();
-			it != original->nodes.end(); it++) {
-		switch (it->second->type) {
-		case NODE_TYPE_NOOP:
-			{
-				NoopNode* original_noop_node = (NoopNode*)it->second;
-				NoopNode* noop_node = new NoopNode();
-				noop_node->parent = this;
-				noop_node->id = it->first;
-				noop_node->copy_from(original_noop_node,
-									 parent_solution);
-				this->nodes[it->first] = noop_node;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* original_action_node = (ActionNode*)it->second;
-				ActionNode* action_node = new ActionNode();
-				action_node->parent = this;
-				action_node->id = it->first;
-				action_node->copy_from(original_action_node);
-				this->nodes[it->first] = action_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* original_scope_node = (ScopeNode*)it->second;
-				ScopeNode* scope_node = new ScopeNode();
-				scope_node->parent = this;
-				scope_node->id = it->first;
-				scope_node->copy_from(original_scope_node,
-									  parent_solution);
-				this->nodes[it->first] = scope_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* original_branch_node = (BranchNode*)it->second;
-				BranchNode* branch_node = new BranchNode();
-				branch_node->parent = this;
-				branch_node->id = it->first;
-				branch_node->copy_from(original_branch_node,
-									   parent_solution);
-				this->nodes[it->first] = branch_node;
-			}
-			break;
-		}
-	}
-
-	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
-		this->child_scopes.push_back(parent_solution->scopes[
-			original->child_scopes[c_index]->id]);
-	}
-
-	this->last_scores = original->last_scores;
-}
-
 void Scope::save_for_display(ofstream& output_file) {
 	output_file << this->nodes.size() << endl;
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
@@ -207,51 +145,6 @@ void Scope::save_for_display(ofstream& output_file) {
 
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
-}
-
-ScopeHistory::ScopeHistory(ScopeHistory* original,
-						   Solution* parent_solution) {
-	this->scope = parent_solution->scopes[original->scope->id];
-
-	for (map<int, AbstractNodeHistory*>::iterator it = original->node_histories.begin();
-			it != original->node_histories.end(); it++) {
-		AbstractNode* node = it->second->node;
-		switch (node->type) {
-		case NODE_TYPE_NOOP:
-			{
-				NoopNode* noop_node = (NoopNode*)this->scope->nodes[it->first];
-				this->node_histories[it->first] = new NoopNodeHistory(noop_node);
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->scope->nodes[it->first];
-				this->node_histories[it->first] = new ActionNodeHistory(action_node);
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)it->second;
-
-				ScopeNode* scope_node = (ScopeNode*)this->scope->nodes[it->first];
-				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(scope_node);
-				scope_node_history->scope_history = new ScopeHistory(original_scope_node_history->scope_history,
-																	 parent_solution);
-				this->node_histories[it->first] = scope_node_history;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNodeHistory* original_branch_node_history = (BranchNodeHistory*)it->second;
-
-				BranchNode* branch_node = (BranchNode*)this->scope->nodes[it->first];
-				BranchNodeHistory* branch_node_history = new BranchNodeHistory(branch_node);
-				branch_node_history->is_branch = original_branch_node_history->is_branch;
-				this->node_histories[it->first] = branch_node_history;
-			}
-			break;
-		}
-	}
 }
 
 ScopeHistory::~ScopeHistory() {
