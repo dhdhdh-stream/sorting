@@ -12,8 +12,10 @@ void Scope::start_activate(vector<double>& obs,
 	for (int n_index = 0; n_index < (int)this->start_negate_networks.size(); n_index++) {
 		this->start_negate_networks[n_index]->activate(wrapper->state);
 	}
+
 	this->start_obs_network->activate(wrapper->state,
 									  obs);
+
 	for (int n_index = 0; n_index < (int)this->start_init_networks.size(); n_index++) {
 		this->start_init_networks[n_index]->activate(wrapper->state,
 													 obs);

@@ -7,6 +7,7 @@
 
 #include "abstract_node.h"
 
+class InitNetwork;
 class Network;
 class Problem;
 class ScopeHistory;
@@ -17,6 +18,8 @@ class SolutionWrapper;
 class NoopNodeHistory;
 class NoopNode : public AbstractNode {
 public:
+	std::vector<InitNetwork*> init_networks;
+
 	ScoreNetwork* score_network;
 
 	int next_node_id;

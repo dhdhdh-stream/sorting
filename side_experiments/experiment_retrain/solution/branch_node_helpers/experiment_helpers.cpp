@@ -3,6 +3,7 @@
 #include "abstract_experiment.h"
 #include "constants.h"
 #include "globals.h"
+#include "init_network.h"
 #include "scope.h"
 #include "score_network.h"
 #include "solution_helpers.h"
@@ -29,6 +30,22 @@ void BranchNode::experiment_step(vector<double>& obs,
 		BranchNodeHistory* history = new BranchNodeHistory(this);
 		history->index = (int)scope_history->node_histories.size();
 		scope_history->node_histories[this->id] = history;
+
+		for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
+			this->init_networks[n_index]->activate(wrapper->state,
+												   obs);
+			if (!wrapper->should_explore) {
+				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
+				this->init_networks[n_index]->save(init_network_history);
+				wrapper->network_histories.push_back(init_network_history);
+			}
+		}
+
+		if (this->dependencies.size() > 0
+				&& wrapper->should_explore) {
+			history->state = wrapper->state;
+			history->obs = obs;
+		}
 
 		bool is_branch;
 		this->original_network->activate(wrapper->state);

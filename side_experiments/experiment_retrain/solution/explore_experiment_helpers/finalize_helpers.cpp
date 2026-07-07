@@ -9,8 +9,10 @@
 #include "constants.h"
 #include "globals.h"
 #include "noop_node.h"
+#include "obs_network.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "score_network.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
@@ -18,7 +20,8 @@
 
 using namespace std;
 
-void ExploreExperiment::add(SolutionWrapper* wrapper) {
+void ExploreExperiment::add(ScoreNetwork* new_network,
+							SolutionWrapper* wrapper) {
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
@@ -52,6 +55,38 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 	cout << ss.str() << endl;
 
+	ScoreNetwork* existing_network;
+	switch (this->node_context->type) {
+	case NODE_TYPE_NOOP:
+		{
+			NoopNode* noop_node = (NoopNode*)this->node_context;
+			existing_network = noop_node->score_network;
+		}
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+			existing_network = action_node->score_network;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)this->node_context;
+			existing_network = scope_node->score_network;
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)this->node_context;
+			if (this->is_branch) {
+				existing_network = branch_node->branch_network;
+			} else {
+				existing_network = branch_node->original_network;
+			}
+		}
+		break;
+	}
+
 	vector<AbstractNode*> new_nodes;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -60,8 +95,11 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_action_node->id = scope_context->node_counter;
 			scope_context->node_counter++;
 			scope_context->nodes[new_action_node->id] = new_action_node;
+			new_action_node->score_network = new ScoreNetwork(new_network);
 
 			new_action_node->action = this->best_actions[s_index];
+			new_action_node->obs_network = new ObsNetwork(wrapper->solution->num_states,
+														  wrapper->solution->num_obs);
 
 			new_nodes.push_back(new_action_node);
 		} else {
@@ -70,6 +108,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope_node->id = scope_context->node_counter;
 			scope_context->node_counter++;
 			scope_context->nodes[new_scope_node->id] = new_scope_node;
+			new_scope_node->score_network = new ScoreNetwork(new_network);
 
 			new_scope_node->scope = this->best_scopes[s_index];
 
@@ -103,6 +142,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		}
 
 		this->scope_context->nodes[new_ending_node->id] = new_ending_node;
+		new_ending_node->score_network = new ScoreNetwork(existing_network);
 
 		new_ending_node->next_node_id = -1;
 		new_ending_node->next_node = NULL;
@@ -153,6 +193,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 					}
 
 					this->scope_context->nodes[new_ending_node->id] = new_ending_node;
+					new_ending_node->score_network = new ScoreNetwork(existing_network);
 
 					new_ending_node->next_node_id = -1;
 					new_ending_node->next_node = NULL;
@@ -297,10 +338,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	// new_branch_node->original_network = this->existing_network;
-	// this->existing_network = NULL;
-	new_branch_node->branch_network = this->new_network;
-	this->new_network = NULL;
+	new_branch_node->original_network = new ScoreNetwork(existing_network);
+	new_branch_node->branch_network = new_network;
 
 	new_branch_node->ramp = 0;
 	double average_instances_per_hit;
@@ -415,12 +454,25 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			start_node->id = new_scope->node_counter;
 			new_scope->node_counter++;
 			new_scope->nodes[start_node->id] = start_node;
+			start_node->score_network = new ScoreNetwork(wrapper->solution->num_states);
+
+			NoopNode* inner_ending_node;
+			for (map<int, AbstractNode*>::iterator it = wrapper->solution->starting_scope->nodes.begin();
+					it != wrapper->solution->starting_scope->nodes.end(); it++) {
+				if (it->second->type == NODE_TYPE_NOOP) {
+					NoopNode* noop_node = (NoopNode*)it->second;
+					if (noop_node->next_node == NULL) {
+						inner_ending_node = noop_node;
+					}
+				}
+			}
 
 			ScopeNode* scope_node = new ScopeNode();
 			scope_node->parent = new_scope;
 			scope_node->id = new_scope->node_counter;
 			new_scope->node_counter++;
 			new_scope->nodes[scope_node->id] = scope_node;
+			scope_node->score_network = new ScoreNetwork(inner_ending_node->score_network);
 
 			scope_node->scope = wrapper->solution->starting_scope;
 
@@ -429,6 +481,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			end_node->id = new_scope->node_counter;
 			new_scope->node_counter++;
 			new_scope->nodes[end_node->id] = end_node;
+			end_node->score_network = new ScoreNetwork(inner_ending_node->score_network);
 
 			start_node->next_node_id = scope_node->id;
 			start_node->next_node = scope_node;

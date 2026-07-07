@@ -6,6 +6,7 @@
 #include <map>
 #include <vector>
 
+class AbstractExperiment;
 class AbstractNode;
 class AbstractNodeHistory;
 class InitNetwork;
@@ -33,6 +34,8 @@ public:
 	std::vector<InitNetwork*> start_init_networks;
 	ScoreNetwork* start_score_network;
 	ScoreNetwork* end_score_network;
+
+	std::vector<AbstractExperiment*> dependencies;
 
 	std::vector<Scope*> child_scopes;
 

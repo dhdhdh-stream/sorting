@@ -47,6 +47,14 @@ public:
 	InitNetwork(std::ifstream& input_file);
 	~InitNetwork();
 
+	void init_activate(std::vector<double>& state_vals,
+					   std::vector<double>& new_state_vals,
+					   std::vector<double>& obs_input_vals);
+	void init_backprop(std::vector<double>& new_state_errors);
+	void init_update(double& hidden_1_average_max_update,
+					 double& hidden_2_average_max_update,
+					 double& output_average_max_update);
+
 	void activate(std::vector<double>& state_vals,
 				  std::vector<double>& obs_input_vals);
 
@@ -54,10 +62,6 @@ public:
 	void load(InitNetworkHistory* history);
 
 	void backprop(std::vector<double>& state_errors);
-
-	void init_update(double& hidden_1_average_max_update,
-					 double& hidden_2_average_max_update,
-					 double& output_average_max_update);
 
 	void get_max_update(double& max_update);
 	void update_weights(double learning_rate);

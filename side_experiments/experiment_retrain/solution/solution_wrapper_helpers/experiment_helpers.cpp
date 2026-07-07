@@ -114,70 +114,10 @@ void SolutionWrapper::experiment_end(double result) {
 				keep_experiment = it->first;
 			} else {
 				if (it->first->further_than(keep_experiment)) {
-					switch (keep_experiment->node_context->type) {
-					case NODE_TYPE_NOOP:
-						{
-							NoopNode* noop_node = (NoopNode*)keep_experiment->node_context;
-							noop_node->experiment = NULL;
-						}
-						break;
-					case NODE_TYPE_ACTION:
-						{
-							ActionNode* action_node = (ActionNode*)keep_experiment->node_context;
-							action_node->experiment = NULL;
-						}
-						break;
-					case NODE_TYPE_SCOPE:
-						{
-							ScopeNode* scope_node = (ScopeNode*)keep_experiment->node_context;
-							scope_node->experiment = NULL;
-						}
-						break;
-					case NODE_TYPE_BRANCH:
-						{
-							BranchNode* branch_node = (BranchNode*)keep_experiment->node_context;
-							if (keep_experiment->is_branch) {
-								branch_node->branch_experiment = NULL;
-							} else {
-								branch_node->original_experiment = NULL;
-							}
-						}
-						break;
-					}
 					delete keep_experiment;
 
 					keep_experiment = it->first;
 				} else {
-					switch (it->first->node_context->type) {
-					case NODE_TYPE_NOOP:
-						{
-							NoopNode* noop_node = (NoopNode*)it->first->node_context;
-							noop_node->experiment = NULL;
-						}
-						break;
-					case NODE_TYPE_ACTION:
-						{
-							ActionNode* action_node = (ActionNode*)it->first->node_context;
-							action_node->experiment = NULL;
-						}
-						break;
-					case NODE_TYPE_SCOPE:
-						{
-							ScopeNode* scope_node = (ScopeNode*)it->first->node_context;
-							scope_node->experiment = NULL;
-						}
-						break;
-					case NODE_TYPE_BRANCH:
-						{
-							BranchNode* branch_node = (BranchNode*)it->first->node_context;
-							if (it->first->is_branch) {
-								branch_node->branch_experiment = NULL;
-							} else {
-								branch_node->original_experiment = NULL;
-							}
-						}
-						break;
-					}
 					delete it->first;
 				}
 			}

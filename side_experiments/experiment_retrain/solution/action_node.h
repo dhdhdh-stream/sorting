@@ -20,6 +20,7 @@ public:
 	int action;
 
 	ObsNetwork* obs_network;
+
 	std::vector<InitNetwork*> init_networks;
 
 	ScoreNetwork* score_network;
@@ -57,12 +58,6 @@ public:
 
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
-	std::vector<double> state;
-	/**
-	 * - after update
-	 */
-	std::vector<double> obs;
-
 	ActionNodeHistory(ActionNode* node);
 };
 

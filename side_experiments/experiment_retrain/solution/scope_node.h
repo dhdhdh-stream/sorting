@@ -17,6 +17,7 @@
 
 #include "abstract_node.h"
 
+class InitNetwork;
 class Problem;
 class Scope;
 class ScopeHistory;
@@ -28,6 +29,8 @@ class ScopeNodeHistory;
 class ScopeNode : public AbstractNode {
 public:
 	Scope* scope;
+
+	std::vector<InitNetwork*> init_networks;
 
 	ScoreNetwork* score_network;
 
@@ -47,7 +50,8 @@ public:
 			  int& action,
 			  bool& is_next,
 			  SolutionWrapper* wrapper);
-	void exit_step(SolutionWrapper* wrapper);
+	void exit_step(std::vector<double>& obs,
+				   SolutionWrapper* wrapper);
 
 	void experiment_step(std::vector<double>& obs,
 						 int& action,

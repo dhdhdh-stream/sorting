@@ -11,6 +11,7 @@
 #include "scope_node.h"
 #include "score_network.h"
 #include "solution.h"
+#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -25,9 +26,14 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 	this->is_branch = is_branch;
 	this->exit_next_node = exit_next_node;
 
-	this->new_network = NULL;
-
 	this->best_surprise = numeric_limits<double>::lowest();
+
+	vector<int> dependency{this->node_context->id};
+	set_dependency_helper(this->scope_context,
+						  dependency,
+						  0,
+						  this);
+	this->dependencies.push_back(dependency);
 
 	double average_instances_per_hit;
 	switch (this->node_context->type) {
@@ -68,8 +74,42 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 }
 
 ExploreExperiment::~ExploreExperiment() {
-	if (this->new_network != NULL) {
-		delete this->new_network;
+	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+		clear_dependency_helper(this->scope_context,
+								this->dependencies[d_index],
+								0,
+								this);
+	}
+
+	switch (this->node_context->type) {
+	case NODE_TYPE_NOOP:
+		{
+			NoopNode* noop_node = (NoopNode*)this->node_context;
+			noop_node->experiment = NULL;
+		}
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+			action_node->experiment = NULL;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)this->node_context;
+			scope_node->experiment = NULL;
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)this->node_context;
+			if (this->is_branch) {
+				branch_node->branch_experiment = NULL;
+			} else {
+				branch_node->original_experiment = NULL;
+			}
+		}
+		break;
 	}
 }
 

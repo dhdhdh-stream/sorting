@@ -35,4 +35,11 @@ void Scope::experiment_start_activate(vector<double>& obs,
 			wrapper->network_histories.push_back(init_network_history);
 		}
 	}
+
+	if (this->dependencies.size() > 0
+			&& wrapper->should_explore) {
+		ScopeHistory* scope_history = wrapper->scope_histories.back();
+		scope_history->state = wrapper->state;
+		scope_history->obs = obs;
+	}
 }

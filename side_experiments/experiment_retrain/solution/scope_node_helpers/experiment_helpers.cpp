@@ -4,6 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "globals.h"
+#include "init_network.h"
 #include "problem.h"
 #include "scope.h"
 #include "score_network.h"
@@ -38,6 +39,22 @@ void ScopeNode::experiment_exit_step(vector<double>& obs,
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
+
+	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
+		this->init_networks[n_index]->activate(wrapper->state,
+											   obs);
+		if (!wrapper->should_explore) {
+			InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
+			this->init_networks[n_index]->save(init_network_history);
+			wrapper->network_histories.push_back(init_network_history);
+		}
+	}
+
+	if (this->dependencies.size() > 0
+			&& wrapper->should_explore) {
+		history->state = wrapper->state;
+		history->obs = obs;
+	}
 
 	if (!wrapper->should_explore) {
 		this->score_network->activate(wrapper->state);

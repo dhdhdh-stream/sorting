@@ -4,6 +4,7 @@
 
 #include "constants.h"
 #include "globals.h"
+#include "init_network.h"
 #include "problem.h"
 #include "scope.h"
 #include "score_network.h"
@@ -32,6 +33,11 @@ void BranchNode::step(vector<double>& obs,
 		BranchNodeHistory* history = new BranchNodeHistory(this);
 		history->index = (int)scope_history->node_histories.size();
 		scope_history->node_histories[this->id] = history;
+
+		for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
+			this->init_networks[n_index]->activate(wrapper->state,
+												   obs);
+		}
 
 		bool is_branch;
 		this->original_network->activate(wrapper->state);

@@ -27,6 +27,7 @@ void ActionNode::step(vector<double>& obs,
 
 	this->obs_network->activate(wrapper->state,
 								obs);
+
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
 		this->init_networks[n_index]->activate(wrapper->state,
 											   obs);

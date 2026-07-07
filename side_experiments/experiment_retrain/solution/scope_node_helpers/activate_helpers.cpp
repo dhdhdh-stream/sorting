@@ -4,6 +4,7 @@
 
 #include "constants.h"
 #include "globals.h"
+#include "init_network.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
@@ -23,7 +24,8 @@ void ScopeNode::step(vector<double>& obs,
 								wrapper);
 }
 
-void ScopeNode::exit_step(SolutionWrapper* wrapper) {
+void ScopeNode::exit_step(vector<double>& obs,
+						  SolutionWrapper* wrapper) {
 	ScopeHistory* scope_history = wrapper->scope_histories[wrapper->scope_histories.size() - 2];
 
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
@@ -34,6 +36,11 @@ void ScopeNode::exit_step(SolutionWrapper* wrapper) {
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
+
+	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
+		this->init_networks[n_index]->activate(wrapper->state,
+											   obs);
+	}
 
 	wrapper->node_context.back() = this->next_node;
 }

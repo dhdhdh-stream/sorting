@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+class AbstractExperiment;
 class AbstractNode;
 class BranchExperiment;
 class BranchNode;
@@ -24,8 +25,16 @@ void gather_dependencies_helper(ScopeHistory* scope_history,
 								std::vector<int>& curr_context,
 								int& count,
 								std::vector<int>& dependency);
+void set_dependency_helper(Scope* scope,
+						   std::vector<int>& dependency,
+						   int l_index,
+						   AbstractExperiment* experiment);
+void clear_dependency_helper(Scope* scope,
+							 std::vector<int>& dependency,
+							 int l_index,
+							 AbstractExperiment* experiment);
 void fetch_dependency_helper(ScopeHistory* scope_history,
-							 std::vector<AbstractNode*>& dependencies,
+							 std::vector<int>& dependency,
 							 int l_index,
 							 bool& is_hit,
 							 std::vector<double>& state,

@@ -4,6 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "globals.h"
+#include "init_network.h"
 #include "scope.h"
 #include "score_network.h"
 
@@ -20,6 +21,10 @@ NoopNode::NoopNode() {
 }
 
 NoopNode::~NoopNode() {
+	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
+		delete this->init_networks[n_index];
+	}
+
 	delete this->score_network;
 
 	if (this->experiment != NULL) {
@@ -28,6 +33,11 @@ NoopNode::~NoopNode() {
 }
 
 void NoopNode::save(ofstream& output_file) {
+	output_file << this->init_networks.size() << endl;
+	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
+		this->init_networks[n_index]->save(output_file);
+	}
+
 	this->score_network->save(output_file);
 
 	output_file << this->next_node_id << endl;
@@ -43,6 +53,13 @@ void NoopNode::save(ofstream& output_file) {
 
 void NoopNode::load(ifstream& input_file,
 				   Solution* parent_solution) {
+	string num_init_networks_line;
+	getline(input_file, num_init_networks_line);
+	int num_init_networks = stoi(num_init_networks_line);
+	for (int n_index = 0; n_index < num_init_networks; n_index++) {
+		this->init_networks.push_back(new InitNetwork(input_file));
+	}
+
 	this->score_network = new ScoreNetwork(input_file);
 
 	string next_node_id_line;

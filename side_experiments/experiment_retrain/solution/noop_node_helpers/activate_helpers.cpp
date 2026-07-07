@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "init_network.h"
 #include "scope.h"
 #include "solution_wrapper.h"
 
@@ -16,6 +17,11 @@ void NoopNode::step(vector<double>& obs,
 	NoopNodeHistory* history = new NoopNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
+
+	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
+		this->init_networks[n_index]->activate(wrapper->state,
+											   obs);
+	}
 
 	wrapper->node_context.back() = this->next_node;
 }

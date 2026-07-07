@@ -22,6 +22,8 @@ public:
 	Scope* parent;
 	int id;
 
+	std::vector<AbstractExperiment*> dependencies;
+
 	std::vector<int> ancestor_ids;
 	/**
 	 * - if both paths of BranchNode point to same node, add twice
@@ -48,6 +50,9 @@ class AbstractNodeHistory {
 public:
 	AbstractNode* node;
 	int index;
+
+	std::vector<double> state;
+	std::vector<double> obs;
 
 	virtual ~AbstractNodeHistory() {};
 };

@@ -11,6 +11,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "score_network.h"
 #include "solution_helpers.h"
 
 using namespace std;
@@ -63,12 +64,14 @@ void Solution::init(ProblemType* problem_type) {
 	start_node->id = new_scope->node_counter;
 	new_scope->node_counter++;
 	new_scope->nodes[start_node->id] = start_node;
+	start_node->score_network = new ScoreNetwork(this->num_states);
 
 	NoopNode* end_node = new NoopNode();
 	end_node->parent = new_scope;
 	end_node->id = new_scope->node_counter;
 	new_scope->node_counter++;
 	new_scope->nodes[end_node->id] = end_node;
+	end_node->score_network = new ScoreNetwork(this->num_states);
 
 	start_node->next_node_id = end_node->id;
 	start_node->next_node = end_node;

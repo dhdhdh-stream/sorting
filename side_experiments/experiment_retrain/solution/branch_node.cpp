@@ -5,6 +5,7 @@
 #include "abstract_experiment.h"
 #include "constants.h"
 #include "globals.h"
+#include "init_network.h"
 #include "scope.h"
 #include "score_network.h"
 #include "solution.h"
@@ -26,6 +27,10 @@ BranchNode::BranchNode() {
 }
 
 BranchNode::~BranchNode() {
+	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
+		delete this->init_networks[n_index];
+	}
+
 	delete this->original_network;
 	delete this->branch_network;
 
@@ -38,6 +43,11 @@ BranchNode::~BranchNode() {
 }
 
 void BranchNode::save(ofstream& output_file) {
+	output_file << this->init_networks.size() << endl;
+	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
+		this->init_networks[n_index]->save(output_file);
+	}
+
 	this->original_network->save(output_file);
 	this->branch_network->save(output_file);
 
@@ -64,6 +74,13 @@ void BranchNode::save(ofstream& output_file) {
 
 void BranchNode::load(ifstream& input_file,
 					  Solution* parent_solution) {
+	string num_init_networks_line;
+	getline(input_file, num_init_networks_line);
+	int num_init_networks = stoi(num_init_networks_line);
+	for (int n_index = 0; n_index < num_init_networks; n_index++) {
+		this->init_networks.push_back(new InitNetwork(input_file));
+	}
+
 	this->original_network = new ScoreNetwork(input_file);
 	this->branch_network = new ScoreNetwork(input_file);
 

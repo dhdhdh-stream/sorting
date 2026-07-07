@@ -47,16 +47,13 @@ public:
 	std::vector<std::vector<std::vector<double>>> existing_dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> existing_dependencies_obs_histories;
 	std::vector<std::vector<double>> existing_state_histories;
+	std::vector<double> existing_target_val_histories;
 
 	std::vector<std::vector<bool>> new_dependencies_is_hit_histories;
 	std::vector<std::vector<std::vector<double>>> new_dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> new_dependencies_obs_histories;
 	std::vector<std::vector<double>> new_state_histories;
-
-	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
-
-	ScoreNetwork* new_network;
 
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,
@@ -106,7 +103,10 @@ public:
 							ExploreExperimentHistory* history,
 							SolutionWrapper* wrapper);
 
-	void add(SolutionWrapper* wrapper);
+	void new_state_helper(SolutionWrapper* wrapper);
+
+	void add(ScoreNetwork* new_network,
+			 SolutionWrapper* wrapper);
 
 	bool further_than(ExploreExperiment* other);
 };
@@ -115,13 +115,16 @@ class ExploreExperimentHistory {
 public:
 	ExploreExperiment* experiment;
 
-	std::vector<std::vector<double>> obs_histories;
-
 	std::vector<double> existing_predicted;
 
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
+
+	std::vector<std::vector<bool>> dependencies_is_hit_histories;
+	std::vector<std::vector<std::vector<double>>> dependencies_state_histories;
+	std::vector<std::vector<std::vector<double>>> dependencies_obs_histories;
+	std::vector<std::vector<double>> state_histories;
 
 	ExploreExperimentHistory(ExploreExperiment* experiment);
 };

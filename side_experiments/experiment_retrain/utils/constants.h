@@ -25,14 +25,9 @@ const int EXPERIMENT_NUM_DATAPOINTS = 5000;
 const double VERIFY_RATIO = 0.2;
 
 #if defined(MDEBUG) && MDEBUG
-const int UPDATE_ITERS = 10;
 const int TRAIN_ITERS = 30;
 #else
-const int UPDATE_ITERS = 100000;
 const int TRAIN_ITERS = 300000;
-/**
- * - bare minimum needed to reach conclusions(?)
- */
 #endif /* MDEBUG */
 
 /**

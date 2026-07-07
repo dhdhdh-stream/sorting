@@ -23,6 +23,8 @@ const int EXPLORE_ITERS = 10;
 const int EXPLORE_ITERS = 400;
 #endif /* MDEBUG */
 
+const int MAX_NUM_DEPENDENCIES = 4;
+
 void ExploreExperiment::explore_check_activate(vector<double>& obs,
 											   ExploreExperimentHistory* history,
 											   SolutionWrapper* wrapper) {
@@ -30,9 +32,37 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 		this->num_instances_until_target--;
 		if (history->existing_predicted.size() == 0
 				&& this->num_instances_until_target <= 0) {
+			if (this->dependencies.size() < MAX_NUM_DEPENDENCIES) {
+				vector<int> curr_context;
+				int count = 0;
+				vector<int> dependency;
+				gather_dependencies_helper(wrapper->scope_histories.back(),
+										   curr_context,
+										   count,
+										   dependency);
+				bool matches_existing = false;
+				for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+					if (dependency == this->dependencies[d_index]) {
+						matches_existing = true;
+						break;
+					}
+				}
+				if (!matches_existing) {
+					set_dependency_helper(this->scope_context,
+										  dependency,
+										  0,
+										  this);
+					this->dependencies.push_back(dependency);
+				}
+			}
+
 			switch (this->node_context->type) {
 			case NODE_TYPE_NOOP:
-
+				{
+					NoopNode* noop_node = (NoopNode*)this->node_context;
+					noop_node->score_network->activate(wrapper->state);
+					history->existing_predicted.push_back(noop_node->score_network->output->acti_vals(0));
+				}
 				break;
 			case NODE_TYPE_ACTION:
 				{
@@ -42,10 +72,23 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 				}
 				break;
 			case NODE_TYPE_SCOPE:
-
+				{
+					ScopeNode* scope_node = (ScopeNode*)this->node_context;
+					scope_node->score_network->activate(wrapper->state);
+					history->existing_predicted.push_back(scope_node->score_network->output->acti_vals(0));
+				}
 				break;
 			case NODE_TYPE_BRANCH:
-
+				{
+					BranchNode* branch_node = (BranchNode*)this->node_context;
+					if (this->is_branch) {
+						branch_node->branch_network->activate(wrapper->state);
+						history->existing_predicted.push_back(branch_node->branch_network->output->acti_vals(0));
+					} else {
+						branch_node->original_network->activate(wrapper->state);
+						history->existing_predicted.push_back(branch_node->original_network->output->acti_vals(0));
+					}
+				}
 				break;
 			}
 
@@ -269,36 +312,6 @@ void ExploreExperiment::explore_backprop(double target_val,
 					this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
 					this->state_iter = 0;
 				} else {
-					switch (this->node_context->type) {
-					case NODE_TYPE_NOOP:
-						{
-							NoopNode* noop_node = (NoopNode*)this->node_context;
-							noop_node->experiment = NULL;
-						}
-						break;
-					case NODE_TYPE_ACTION:
-						{
-							ActionNode* action_node = (ActionNode*)this->node_context;
-							action_node->experiment = NULL;
-						}
-						break;
-					case NODE_TYPE_SCOPE:
-						{
-							ScopeNode* scope_node = (ScopeNode*)this->node_context;
-							scope_node->experiment = NULL;
-						}
-						break;
-					case NODE_TYPE_BRANCH:
-						{
-							BranchNode* branch_node = (BranchNode*)this->node_context;
-							if (this->is_branch) {
-								branch_node->branch_experiment = NULL;
-							} else {
-								branch_node->original_experiment = NULL;
-							}
-						}
-						break;
-					}
 					delete this;
 				}
 			}

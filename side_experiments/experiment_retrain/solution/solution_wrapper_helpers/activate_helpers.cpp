@@ -38,7 +38,8 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 				is_done = true;
 			} else {
 				ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
-				scope_node->exit_step(this);
+				scope_node->exit_step(obs,
+									  this);
 			}
 		} else {
 			this->node_context.back()->step(obs,
