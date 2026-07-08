@@ -66,7 +66,8 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 					average_instances_per_hit = scope_node->average_instances_per_hit;
 				}
 				break;
-			case NODE_TYPE_BRANCH:
+			default:
+			// case NODE_TYPE_BRANCH:
 				{
 					BranchNode* branch_node = (BranchNode*)this->node_context;
 					if (this->is_branch) {
@@ -185,7 +186,8 @@ void ExploreExperiment::train_new_backprop(
 						existing_network = scope_node->score_network;
 					}
 					break;
-				case NODE_TYPE_BRANCH:
+				default:
+				// case NODE_TYPE_BRANCH:
 					{
 						BranchNode* branch_node = (BranchNode*)this->node_context;
 						if (this->is_branch) {
@@ -289,7 +291,8 @@ void ExploreExperiment::train_new_backprop(
 						average_instances_per_run = scope_node->average_instances_per_run;
 					}
 					break;
-				case NODE_TYPE_BRANCH:
+				default:
+				// case NODE_TYPE_BRANCH:
 					{
 						BranchNode* branch_node = (BranchNode*)this->node_context;
 						if (this->is_branch) {
@@ -302,10 +305,11 @@ void ExploreExperiment::train_new_backprop(
 				}
 				double global_improvement = average_instances_per_run * local_improvement;
 
-				// // temp
-				// cout << "this->scope_context->id: " << this->scope_context->id << endl;
-				// cout << "local_improvement: " << local_improvement << endl;
-				// cout << "global_improvement: " << global_improvement << endl;
+				// temp
+				cout << "train_new" << endl;
+				cout << "this->scope_context->id: " << this->scope_context->id << endl;
+				cout << "local_improvement: " << local_improvement << endl;
+				cout << "global_improvement: " << global_improvement << endl;
 
 				bool is_success = false;
 				if (local_improvement > 0.0) {

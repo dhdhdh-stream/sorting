@@ -18,8 +18,6 @@ class SolutionWrapper;
 class NoopNodeHistory;
 class NoopNode : public AbstractNode {
 public:
-	std::vector<InitNetwork*> init_networks;
-
 	ScoreNetwork* score_network;
 
 	int next_node_id;

@@ -21,8 +21,6 @@ public:
 
 	ObsNetwork* obs_network;
 
-	std::vector<InitNetwork*> init_networks;
-
 	ScoreNetwork* score_network;
 
 	int next_node_id;

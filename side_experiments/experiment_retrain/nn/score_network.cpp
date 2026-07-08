@@ -218,6 +218,8 @@ void ScoreNetwork::init_backprop(double target_val,
 			}
 			this->output->update_weights(output_learning_rate);
 		}
+
+		this->epoch_iter = 0;
 	}
 }
 

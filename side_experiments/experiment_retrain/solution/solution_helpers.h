@@ -10,6 +10,7 @@ class AbstractExperiment;
 class AbstractNode;
 class BranchExperiment;
 class BranchNode;
+class InitNetwork;
 class Network;
 class Problem;
 class Scope;
@@ -39,6 +40,10 @@ void fetch_dependency_helper(ScopeHistory* scope_history,
 							 bool& is_hit,
 							 std::vector<double>& state,
 							 std::vector<double>& obs);
+void add_dependency_helper(Scope* scope,
+						   std::vector<int>& dependency,
+						   int l_index,
+						   InitNetwork* init_network);
 
 void update_helper(ScopeHistory* scope_history);
 void update_helper(double target_val,

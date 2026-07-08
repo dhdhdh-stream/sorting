@@ -11,13 +11,15 @@
 using namespace std;
 
 void SolutionWrapper::init(vector<double> obs) {
-	this->num_actions = 1;
-
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
 	this->starting_run_seed = this->run_index;
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
+
+	this->state = vector<double>(this->solution->num_states, 0.0);
+
+	this->num_actions = 1;
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->starting_scope);
 	this->scope_histories.push_back(scope_history);

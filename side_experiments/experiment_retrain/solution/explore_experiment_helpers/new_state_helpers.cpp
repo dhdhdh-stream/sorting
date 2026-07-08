@@ -1,17 +1,21 @@
 #include "explore_experiment.h"
 
+#include <iostream>
+
 #include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "init_network.h"
+#include "negate_network.h"
 #include "noop_node.h"
 #include "obs_network.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "score_network.h"
 #include "solution.h"
+#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -39,7 +43,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			existing_network = scope_node->score_network;
 		}
 		break;
-	case NODE_TYPE_BRANCH:
+	default:
+	// case NODE_TYPE_BRANCH:
 		{
 			BranchNode* branch_node = (BranchNode*)this->node_context;
 			if (this->is_branch) {
@@ -72,6 +77,24 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	int num_new_train = (1.0 - VERIFY_RATIO) * (double)this->new_dependencies_is_hit_histories.size();
 
 	uniform_int_distribution<int> new_train_distribution(0, num_new_train-1);
+	for (int iter_index = 0; iter_index < 100000; iter_index++) {
+		int rand_index = new_train_distribution(generator);
+
+		vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
+
+		vector<double> combined_state;
+		combined_state.insert(combined_state.end(), this->new_state_histories[rand_index].begin(), this->new_state_histories[rand_index].end());
+		combined_state.insert(combined_state.end(), new_state.begin(), new_state.end());
+		new_network->activate(combined_state);
+
+		new_network->init_backprop(this->new_target_val_histories[rand_index],
+								   hidden_1_average_max_update,
+								   hidden_2_average_max_update,
+								   output_average_max_update);
+	}
+	for (int i_index = 0; i_index < (int)new_network->state_input->errors.size(); i_index++) {
+		new_network->state_input->errors[i_index] = 0.0;
+	}
 	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 		int rand_index = new_train_distribution(generator);
 
@@ -165,7 +188,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		vector<double> combined_state;
 		combined_state.insert(combined_state.end(), this->new_state_histories[h_index].begin(), this->new_state_histories[h_index].end());
 		combined_state.insert(combined_state.end(), new_state.begin(), new_state.end());
-		new_network->activate(this->new_state_histories[h_index]);
+		new_network->activate(combined_state);
 
 		if (new_network->output->acti_vals[0] >= existing_network->output->acti_vals[0]) {
 			new_sum_vals += this->new_target_val_histories[h_index];
@@ -198,7 +221,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			average_instances_per_run = scope_node->average_instances_per_run;
 		}
 		break;
-	case NODE_TYPE_BRANCH:
+	default:
+	// case NODE_TYPE_BRANCH:
 		{
 			BranchNode* branch_node = (BranchNode*)this->node_context;
 			if (this->is_branch) {
@@ -211,10 +235,11 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	}
 	double global_improvement = average_instances_per_run * local_improvement;
 
-	// // temp
-	// cout << "this->scope_context->id: " << this->scope_context->id << endl;
-	// cout << "local_improvement: " << local_improvement << endl;
-	// cout << "global_improvement: " << global_improvement << endl;
+	// temp
+	cout << "new_state" << endl;
+	cout << "this->scope_context->id: " << this->scope_context->id << endl;
+	cout << "local_improvement: " << local_improvement << endl;
+	cout << "global_improvement: " << global_improvement << endl;
 
 	bool is_success = false;
 	if (local_improvement > 0.0) {
@@ -247,6 +272,11 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	#else
 	if (is_success) {
 	#endif /* MDEBUG */
+		for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
+			NegateNetwork* new_negate_network = new NegateNetwork(wrapper->solution->num_states + s_index);
+			this->scope_context->start_negate_networks.push_back(new_negate_network);
+		}
+
 		wrapper->solution->num_states += NEW_STATE_NUM_ADD;
 		// wrapper->solution->generic_action_network->add_states(wrapper->solution->num_states);
 		// wrapper->solution->generic_obs_network->add_states(wrapper->solution->num_states);
@@ -307,6 +337,13 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			}
 		}
 
+		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+			add_dependency_helper(this->scope_context,
+								  this->dependencies[d_index],
+								  0,
+								  init_networks[d_index]);
+		}
+
 		add(new_network,
 			wrapper);
 
@@ -359,6 +396,60 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 
 		wrapper->experiment_iter = 0;
 	} else {
+		for (int n_index = 0; n_index < (int)init_networks.size(); n_index++) {
+			delete init_networks[n_index];
+		}
 		delete new_network;
+
+		delete this;
+
+		wrapper->experiment_iter++;
+		if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
+			for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+				Scope* scope = wrapper->solution->scopes[s_index];
+				for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+						it != scope->nodes.end(); it++) {
+					switch (it->second->type) {
+					case NODE_TYPE_NOOP:
+						{
+							NoopNode* noop_node = (NoopNode*)it->second;
+							if (noop_node->experiment != NULL) {
+								delete noop_node->experiment;
+							}
+						}
+						break;
+					case NODE_TYPE_ACTION:
+						{
+							ActionNode* action_node = (ActionNode*)it->second;
+							if (action_node->experiment != NULL) {
+								delete action_node->experiment;
+							}
+						}
+						break;
+					case NODE_TYPE_SCOPE:
+						{
+							ScopeNode* scope_node = (ScopeNode*)it->second;
+							if (scope_node->experiment != NULL) {
+								delete scope_node->experiment;
+							}
+						}
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNode* branch_node = (BranchNode*)it->second;
+							if (branch_node->original_experiment != NULL) {
+								delete branch_node->original_experiment;
+							}
+							if (branch_node->branch_experiment != NULL) {
+								delete branch_node->branch_experiment;
+							}
+						}
+						break;
+					}
+				}
+			}
+
+			wrapper->experiment_iter = 0;
+		}
 	}
 }

@@ -55,7 +55,8 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 			average_instances_per_hit = scope_node->average_instances_per_hit;
 		}
 		break;
-	case NODE_TYPE_BRANCH:
+	default:
+	// case NODE_TYPE_BRANCH:
 		{
 			BranchNode* branch_node = (BranchNode*)this->node_context;
 			if (this->is_branch) {

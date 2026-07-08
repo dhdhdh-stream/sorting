@@ -122,3 +122,22 @@ void fetch_dependency_helper(ScopeHistory* scope_history,
 		}
 	}
 }
+
+void add_dependency_helper(Scope* scope,
+						   vector<int>& dependency,
+						   int l_index,
+						   InitNetwork* init_network) {
+	if (l_index == (int)dependency.size()-1) {
+		if (dependency[l_index] == -1) {
+			scope->start_init_networks.push_back(init_network);
+		} else {
+			scope->nodes[dependency[l_index]]->init_networks.push_back(init_network);
+		}
+	} else {
+		ScopeNode* scope_node = (ScopeNode*)scope->nodes[dependency[l_index]];
+		add_dependency_helper(scope_node->scope,
+							  dependency,
+							  l_index+1,
+							  init_network);
+	}
+}

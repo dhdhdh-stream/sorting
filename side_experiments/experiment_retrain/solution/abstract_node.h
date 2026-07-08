@@ -5,6 +5,7 @@
 #include <vector>
 
 class AbstractExperiment;
+class InitNetwork;
 class Scope;
 class ScopeHistory;
 class Solution;
@@ -22,6 +23,7 @@ public:
 	Scope* parent;
 	int id;
 
+	std::vector<InitNetwork*> init_networks;
 	std::vector<AbstractExperiment*> dependencies;
 
 	std::vector<int> ancestor_ids;

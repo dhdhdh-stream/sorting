@@ -1,5 +1,7 @@
 #include "scope.h"
 
+#include <iostream>
+
 #include "init_network.h"
 #include "negate_network.h"
 #include "obs_network.h"
@@ -36,8 +38,7 @@ void Scope::experiment_start_activate(vector<double>& obs,
 		}
 	}
 
-	if (this->dependencies.size() > 0
-			&& wrapper->should_explore) {
+	if (this->dependencies.size() > 0) {
 		ScopeHistory* scope_history = wrapper->scope_histories.back();
 		scope_history->state = wrapper->state;
 		scope_history->obs = obs;

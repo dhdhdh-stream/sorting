@@ -24,8 +24,6 @@ const int CONSEC_DEPRECATE_LIMIT = 4000;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	std::vector<InitNetwork*> init_networks;
-
 	ScoreNetwork* original_network;
 	ScoreNetwork* branch_network;
 

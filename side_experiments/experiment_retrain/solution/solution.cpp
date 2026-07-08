@@ -8,6 +8,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "noop_node.h"
+#include "obs_network.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -58,6 +59,8 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->id = this->scopes.size();
 	new_scope->node_counter = 0;
 	this->scopes.push_back(new_scope);
+	new_scope->start_obs_network = new ObsNetwork(this->num_states,
+												  this->num_obs);
 
 	NoopNode* start_node = new NoopNode();
 	start_node->parent = new_scope;

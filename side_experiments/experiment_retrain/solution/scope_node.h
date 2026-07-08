@@ -30,8 +30,6 @@ class ScopeNode : public AbstractNode {
 public:
 	Scope* scope;
 
-	std::vector<InitNetwork*> init_networks;
-
 	ScoreNetwork* score_network;
 
 	int next_node_id;

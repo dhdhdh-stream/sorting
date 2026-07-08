@@ -7,6 +7,9 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
+#include "init_network.h"
+#include "obs_network.h"
+#include "negate_network.h"
 #include "noop_node.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -22,6 +25,16 @@ Scope::~Scope() {
 			it != this->nodes.end(); it++) {
 		delete it->second;
 	}
+
+	for (int n_index = 0; n_index < (int)this->start_negate_networks.size(); n_index++) {
+		delete this->start_negate_networks[n_index];
+	}
+
+	delete this->start_obs_network;
+
+	for (int n_index = 0; n_index < (int)this->start_init_networks.size(); n_index++) {
+		delete this->start_init_networks[n_index];
+	}
 }
 
 void Scope::save(ofstream& output_file) {
@@ -33,6 +46,18 @@ void Scope::save(ofstream& output_file) {
 		output_file << it->first << endl;
 		output_file << it->second->type << endl;
 		it->second->save(output_file);
+	}
+
+	output_file << this->start_negate_networks.size() << endl;
+	for (int n_index = 0; n_index < (int)this->start_negate_networks.size(); n_index++) {
+		this->start_negate_networks[n_index]->save(output_file);
+	}
+
+	this->start_obs_network->save(output_file);
+
+	output_file << this->start_init_networks.size() << endl;
+	for (int n_index = 0; n_index < (int)this->start_init_networks.size(); n_index++) {
+		this->start_init_networks[n_index]->save(output_file);
 	}
 
 	output_file << this->child_scopes.size() << endl;
@@ -105,6 +130,22 @@ void Scope::load(ifstream& input_file,
 			}
 			break;
 		}
+	}
+
+	string num_start_negate_networks_line;
+	getline(input_file, num_start_negate_networks_line);
+	int num_start_negate_networks = stoi(num_start_negate_networks_line);
+	for (int n_index = 0; n_index < num_start_negate_networks; n_index++) {
+		this->start_negate_networks.push_back(new NegateNetwork(input_file));
+	}
+
+	this->start_obs_network = new ObsNetwork(input_file);
+
+	string num_start_init_networks_line;
+	getline(input_file, num_start_init_networks_line);
+	int num_start_init_networks = stoi(num_start_init_networks_line);
+	for (int n_index = 0; n_index < num_start_init_networks; n_index++) {
+		this->start_init_networks.push_back(new InitNetwork(input_file));
 	}
 
 	string num_child_scopes_line;

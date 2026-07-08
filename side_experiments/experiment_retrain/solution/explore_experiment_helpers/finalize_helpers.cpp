@@ -75,7 +75,8 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			existing_network = scope_node->score_network;
 		}
 		break;
-	case NODE_TYPE_BRANCH:
+	default:
+	// case NODE_TYPE_BRANCH:
 		{
 			BranchNode* branch_node = (BranchNode*)this->node_context;
 			if (this->is_branch) {
@@ -362,7 +363,8 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			average_instances_per_hit = scope_node->average_instances_per_hit;
 		}
 		break;
-	case NODE_TYPE_BRANCH:
+	default:
+	// case NODE_TYPE_BRANCH:
 		{
 			BranchNode* branch_node = (BranchNode*)this->node_context;
 			if (this->is_branch) {
@@ -443,6 +445,8 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			new_scope->id = wrapper->solution->scopes.size();
 			new_scope->node_counter = 0;
 			wrapper->solution->scopes.push_back(new_scope);
+			new_scope->start_obs_network = new ObsNetwork(wrapper->solution->num_states,
+														  wrapper->solution->num_obs);
 
 			new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
 			new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
@@ -456,7 +460,7 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			new_scope->nodes[start_node->id] = start_node;
 			start_node->score_network = new ScoreNetwork(wrapper->solution->num_states);
 
-			NoopNode* inner_ending_node;
+			NoopNode* inner_ending_node = NULL;
 			for (map<int, AbstractNode*>::iterator it = wrapper->solution->starting_scope->nodes.begin();
 					it != wrapper->solution->starting_scope->nodes.end(); it++) {
 				if (it->second->type == NODE_TYPE_NOOP) {

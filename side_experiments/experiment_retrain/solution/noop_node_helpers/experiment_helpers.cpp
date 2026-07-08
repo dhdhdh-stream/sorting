@@ -31,8 +31,7 @@ void NoopNode::experiment_step(vector<double>& obs,
 		}
 	}
 
-	if (this->dependencies.size() > 0
-			&& wrapper->should_explore) {
+	if (this->dependencies.size() > 0) {
 		history->state = wrapper->state;
 		history->obs = obs;
 	}
