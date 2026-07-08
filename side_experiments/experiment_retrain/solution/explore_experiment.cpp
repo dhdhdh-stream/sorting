@@ -28,13 +28,6 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 
 	this->best_surprise = numeric_limits<double>::lowest();
 
-	vector<int> dependency{this->node_context->id};
-	set_dependency_helper(this->scope_context,
-						  dependency,
-						  0,
-						  this);
-	this->dependencies.push_back(dependency);
-
 	double average_instances_per_hit;
 	switch (this->node_context->type) {
 	case NODE_TYPE_NOOP:
@@ -75,9 +68,9 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 }
 
 ExploreExperiment::~ExploreExperiment() {
-	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+	for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
 		clear_dependency_helper(this->scope_context,
-								this->dependencies[d_index],
+								this->best_dependencies[d_index],
 								0,
 								this);
 	}

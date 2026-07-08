@@ -24,15 +24,15 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 	if (wrapper->should_explore) {
 		this->num_instances_until_target--;
 		if (this->num_instances_until_target <= 0) {
-			vector<bool> curr_dependencies_is_hit(this->dependencies.size());
-			vector<vector<double>> curr_dependencies_state(this->dependencies.size());
-			vector<vector<double>> curr_dependencies_obs(this->dependencies.size());
-			for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+			vector<bool> curr_dependencies_is_hit(this->best_dependencies.size());
+			vector<vector<double>> curr_dependencies_state(this->best_dependencies.size());
+			vector<vector<double>> curr_dependencies_obs(this->best_dependencies.size());
+			for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
 				bool is_hit;
 				vector<double> state;
 				vector<double> obs;
 				fetch_dependency_helper(wrapper->scope_histories.back(),
-										this->dependencies[d_index],
+										this->best_dependencies[d_index],
 										0,
 										is_hit,
 										state,
@@ -86,15 +86,15 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 			wrapper->experiment_context.back() = new_experiment_state;
 		}
 	} else {
-		vector<bool> curr_dependencies_is_hit(this->dependencies.size());
-		vector<vector<double>> curr_dependencies_state(this->dependencies.size());
-		vector<vector<double>> curr_dependencies_obs(this->dependencies.size());
-		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+		vector<bool> curr_dependencies_is_hit(this->best_dependencies.size());
+		vector<vector<double>> curr_dependencies_state(this->best_dependencies.size());
+		vector<vector<double>> curr_dependencies_obs(this->best_dependencies.size());
+		for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
 			bool is_hit;
 			vector<double> state;
 			vector<double> obs;
 			fetch_dependency_helper(wrapper->scope_histories.back(),
-									this->dependencies[d_index],
+									this->best_dependencies[d_index],
 									0,
 									is_hit,
 									state,

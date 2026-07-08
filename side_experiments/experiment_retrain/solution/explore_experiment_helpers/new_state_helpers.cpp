@@ -56,19 +56,19 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		break;
 	}
 
-	vector<InitNetwork*> init_networks(this->dependencies.size());
+	vector<InitNetwork*> init_networks(this->best_dependencies.size());
 	vector<int> init_states;
 	for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
 		init_states.push_back(wrapper->solution->num_states + s_index);
 	}
-	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+	for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
 		init_networks[d_index] = new InitNetwork(init_states,
 												 wrapper->solution->num_states + NEW_STATE_NUM_ADD,
 												 wrapper->solution->num_obs);
 	}
-	vector<double> hidden_1_average_max_updates(this->dependencies.size(), 0.0);
-	vector<double> hidden_2_average_max_updates(this->dependencies.size(), 0.0);
-	vector<double> output_average_max_updates(this->dependencies.size(), 0.0);
+	vector<double> hidden_1_average_max_updates(this->best_dependencies.size(), 0.0);
+	vector<double> hidden_2_average_max_updates(this->best_dependencies.size(), 0.0);
+	vector<double> output_average_max_updates(this->best_dependencies.size(), 0.0);
 	ScoreNetwork* new_network = new ScoreNetwork(wrapper->solution->num_states + NEW_STATE_NUM_ADD);
 	double hidden_1_average_max_update = 0.0;
 	double hidden_2_average_max_update = 0.0;
@@ -77,30 +77,12 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	int num_new_train = (1.0 - VERIFY_RATIO) * (double)this->new_dependencies_is_hit_histories.size();
 
 	uniform_int_distribution<int> new_train_distribution(0, num_new_train-1);
-	for (int iter_index = 0; iter_index < 100000; iter_index++) {
-		int rand_index = new_train_distribution(generator);
-
-		vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
-
-		vector<double> combined_state;
-		combined_state.insert(combined_state.end(), this->new_state_histories[rand_index].begin(), this->new_state_histories[rand_index].end());
-		combined_state.insert(combined_state.end(), new_state.begin(), new_state.end());
-		new_network->activate(combined_state);
-
-		new_network->init_backprop(this->new_target_val_histories[rand_index],
-								   hidden_1_average_max_update,
-								   hidden_2_average_max_update,
-								   output_average_max_update);
-	}
-	for (int i_index = 0; i_index < (int)new_network->state_input->errors.size(); i_index++) {
-		new_network->state_input->errors[i_index] = 0.0;
-	}
 	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 		int rand_index = new_train_distribution(generator);
 
 		vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
 
-		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+		for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
 			if (this->new_dependencies_is_hit_histories[rand_index][d_index]) {
 				init_networks[d_index]->init_activate(this->new_dependencies_state_histories[rand_index][d_index],
 													  new_state,
@@ -125,21 +107,21 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			new_network->state_input->errors(wrapper->solution->num_states + s_index) = 0.0;
 		}
 
-		for (int d_index = (int)this->dependencies.size()-1; d_index >= 0; d_index--) {
+		for (int d_index = (int)this->best_dependencies.size()-1; d_index >= 0; d_index--) {
 			if (this->new_dependencies_is_hit_histories[rand_index][d_index]) {
 				init_networks[d_index]->init_backprop(new_state_errors);
 			}
 		}
 
 		if ((iter_index+1)%EPOCH_SIZE == 0) {
-			for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+			for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
 				init_networks[d_index]->init_update(hidden_1_average_max_updates[d_index],
 													hidden_2_average_max_updates[d_index],
 													output_average_max_updates[d_index]);
 			}
 		}
 	}
-	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+	for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
 		for (int i_index = 0; i_index < (int)init_networks[d_index]->state_input->errors.size(); i_index++) {
 			init_networks[d_index]->state_input->errors[i_index] = 0.0;
 		}
@@ -154,7 +136,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		existing_network->activate(this->existing_state_histories[h_index]);
 
 		vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
-		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+		for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
 			if (this->existing_dependencies_is_hit_histories[h_index][d_index]) {
 				init_networks[d_index]->init_activate(this->existing_dependencies_state_histories[h_index][d_index],
 													  new_state,
@@ -178,7 +160,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		existing_network->activate(this->new_state_histories[h_index]);
 
 		vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
-		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+		for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
 			if (this->new_dependencies_is_hit_histories[h_index][d_index]) {
 				init_networks[d_index]->init_activate(this->new_dependencies_state_histories[h_index][d_index],
 													  new_state,
@@ -337,9 +319,9 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			}
 		}
 
-		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+		for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
 			add_dependency_helper(this->scope_context,
-								  this->dependencies[d_index],
+								  this->best_dependencies[d_index],
 								  0,
 								  init_networks[d_index]);
 		}

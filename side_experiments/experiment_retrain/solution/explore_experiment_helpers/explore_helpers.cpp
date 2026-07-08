@@ -23,7 +23,23 @@ const int EXPLORE_ITERS = 10;
 const int EXPLORE_ITERS = 400;
 #endif /* MDEBUG */
 
+const int GATHER_DEPENDENCIES_NUM_TRIES = 10;
 const int MAX_NUM_DEPENDENCIES = 4;
+
+void compare_index(vector<int>& left, vector<int>& right, bool& right_later) {
+	int layer = 0;
+	while (true) {
+		if (left[layer] < right[layer]) {
+			right_later = true;
+			return;
+		} else if (left[layer] > right[layer]) {
+			right_later = false;
+			return;
+		} else {
+			layer++;
+		}
+	}
+}
 
 void ExploreExperiment::explore_check_activate(vector<double>& obs,
 											   ExploreExperimentHistory* history,
@@ -32,27 +48,44 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 		this->num_instances_until_target--;
 		if (history->existing_predicted.size() == 0
 				&& this->num_instances_until_target <= 0) {
-			if (this->dependencies.size() < MAX_NUM_DEPENDENCIES) {
+			history->curr_dependencies.push_back(vector<int>{this->node_context->id});
+			vector<vector<int>> indexes;
+			for (int try_index = 0; try_index < GATHER_DEPENDENCIES_NUM_TRIES; try_index++) {
 				vector<int> curr_context;
+				vector<int> curr_index;
 				int count = 0;
 				vector<int> dependency;
+				vector<int> index;
 				gather_dependencies_helper(wrapper->scope_histories.back(),
 										   curr_context,
+										   curr_index,
 										   count,
-										   dependency);
+										   dependency,
+										   index);
 				bool matches_existing = false;
-				for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
-					if (dependency == this->dependencies[d_index]) {
+				for (int d_index = 0; d_index < (int)history->curr_dependencies.size(); d_index++) {
+					if (dependency == history->curr_dependencies[d_index]) {
 						matches_existing = true;
 						break;
 					}
 				}
 				if (!matches_existing) {
-					set_dependency_helper(this->scope_context,
-										  dependency,
-										  0,
-										  this);
-					this->dependencies.push_back(dependency);
+					int insert_index = 0;
+					for (int i_index = 0; i_index < (int)indexes.size(); i_index++) {
+						bool existing_later;
+						compare_index(index, indexes[i_index], existing_later);
+						if (existing_later) {
+							break;
+						} else {
+							insert_index++;
+						}
+					}
+					indexes.insert(indexes.begin() + insert_index, index);
+					history->curr_dependencies.insert(history->curr_dependencies.begin() + insert_index, dependency);
+
+					if (history->curr_dependencies.size() >= MAX_NUM_DEPENDENCIES) {
+						break;
+					}
 				}
 			}
 
@@ -301,6 +334,7 @@ void ExploreExperiment::explore_backprop(double target_val,
 				this->best_step_types = history->curr_step_types;
 				this->best_actions = history->curr_actions;
 				this->best_scopes = history->curr_scopes;
+				this->best_dependencies = history->curr_dependencies;
 			}
 
 			this->state_iter++;
@@ -310,6 +344,13 @@ void ExploreExperiment::explore_backprop(double target_val,
 				#else
 				if (this->best_surprise >= 0.0) {
 				#endif /* MDEBUG */
+					for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
+						set_dependency_helper(this->scope_context,
+											  this->best_dependencies[d_index],
+											  0,
+											  this);
+					}
+
 					this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
 					this->state_iter = 0;
 				} else {

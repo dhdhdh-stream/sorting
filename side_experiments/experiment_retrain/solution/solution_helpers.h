@@ -24,8 +24,10 @@ void create_experiment(ScopeHistory* scope_history,
 
 void gather_dependencies_helper(ScopeHistory* scope_history,
 								std::vector<int>& curr_context,
+								std::vector<int>& curr_index,
 								int& count,
-								std::vector<int>& dependency);
+								std::vector<int>& dependency,
+								std::vector<int>& index);
 void set_dependency_helper(Scope* scope,
 						   std::vector<int>& dependency,
 						   int l_index,
