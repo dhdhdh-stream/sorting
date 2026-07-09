@@ -40,6 +40,8 @@ const int RAW_ACTION_WEIGHT = 8;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
+const int NEW_STATE_NUM_ADD = 4;
+
 #if defined(MDEBUG) && MDEBUG
 const int NUM_LAST_TRACK = 4;
 const int MIN_NUM_LAST_TRACK = 2;
