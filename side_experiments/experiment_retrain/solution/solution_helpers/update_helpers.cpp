@@ -72,6 +72,7 @@ void update_helper(ScopeHistory* scope_history) {
 void update_helper(double target_val,
 				   SolutionWrapper* wrapper) {
 	vector<double> state_errors(wrapper->solution->num_states, 0.0);
+	double max_diff = 0.0;
 	for (int h_index = (int)wrapper->network_histories.size()-1; h_index >= 0; h_index--) {
 		switch (wrapper->network_histories[h_index]->network->type) {
 		case NETWORK_TYPE_OBS:
@@ -87,6 +88,12 @@ void update_helper(double target_val,
 				ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->network_histories[h_index];
 				ScoreNetwork* score_network = (ScoreNetwork*)score_network_history->network;
 				score_network->load(score_network_history);
+
+				double diff = abs(target_val - score_network->output->acti_vals(0));
+				if (diff > max_diff) {
+					max_diff = diff;
+				}
+
 				score_network->backprop(target_val,
 										state_errors);
 			}
@@ -125,10 +132,7 @@ void update_helper(double target_val,
 			max_state_error = error_size;
 		}
 	}
-	max_state_error = max(abs(target_val), max_state_error);
-	/**
-	 * TODO: should be abs of diff between target_val and average
-	 */
+	max_state_error = max(max_diff, max_state_error);
 	double max_update = max_state_val * max_state_error;
 	wrapper->solution->average_max_update = 0.999*wrapper->solution->average_max_update + 0.001*max_update;
 	double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/wrapper->solution->average_max_update;

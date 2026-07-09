@@ -39,7 +39,8 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
-	std::list<double> last_scores;
+	std::list<double> reuse_last_scores;
+	std::list<double> new_state_last_scores;
 
 	Scope();
 	~Scope();

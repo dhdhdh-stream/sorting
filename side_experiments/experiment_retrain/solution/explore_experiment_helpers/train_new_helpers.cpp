@@ -312,87 +312,91 @@ void ExploreExperiment::train_new_backprop(
 				cout << "local_improvement: " << local_improvement << endl;
 				cout << "global_improvement: " << global_improvement << endl;
 
-				bool is_success = false;
 				if (local_improvement > 0.0) {
-					if (this->scope_context->last_scores.size() >= MIN_NUM_LAST_TRACK) {
+					bool is_success = false;
+					if (this->scope_context->reuse_last_scores.size() >= MIN_NUM_LAST_TRACK) {
 						int num_better_than = 0;
-						for (list<double>::iterator it = this->scope_context->last_scores.begin();
-								it != this->scope_context->last_scores.end(); it++) {
+						for (list<double>::iterator it = this->scope_context->reuse_last_scores.begin();
+								it != this->scope_context->reuse_last_scores.end(); it++) {
 							if (global_improvement >= *it) {
 								num_better_than++;
 							}
 						}
 
-						double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->last_scores.size();
+						double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->reuse_last_scores.size();
 
 						if (num_better_than >= target_better_than) {
 							is_success = true;
 						}
+
+						if (this->scope_context->reuse_last_scores.size() >= NUM_LAST_TRACK) {
+							this->scope_context->reuse_last_scores.pop_front();
+						}
+						this->scope_context->reuse_last_scores.push_back(global_improvement);
+					} else {
+						this->scope_context->reuse_last_scores.push_back(global_improvement);
 					}
-				}
 
-				#if defined(MDEBUG) && MDEBUG
-				if (is_success || rand()%3 != 0) {
-				#else
-				if (is_success) {
-				#endif /* MDEBUG */
-					if (this->scope_context->last_scores.size() >= NUM_LAST_TRACK) {
-						this->scope_context->last_scores.pop_front();
-					}
-					this->scope_context->last_scores.push_back(global_improvement);
+					#if defined(MDEBUG) && MDEBUG
+					if (is_success || rand()%3 != 0) {
+					#else
+					if (is_success) {
+					#endif /* MDEBUG */
+						add(new_network,
+							wrapper);
 
-					add(new_network,
-						wrapper);
+						delete this;
 
-					delete this;
-
-					wrapper->experiment_iter++;
-					if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
-						for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-							Scope* scope = wrapper->solution->scopes[s_index];
-							for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-									it != scope->nodes.end(); it++) {
-								switch (it->second->type) {
-								case NODE_TYPE_NOOP:
-									{
-										NoopNode* noop_node = (NoopNode*)it->second;
-										if (noop_node->experiment != NULL) {
-											delete noop_node->experiment;
+						wrapper->experiment_iter++;
+						if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
+							for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+								Scope* scope = wrapper->solution->scopes[s_index];
+								for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+										it != scope->nodes.end(); it++) {
+									switch (it->second->type) {
+									case NODE_TYPE_NOOP:
+										{
+											NoopNode* noop_node = (NoopNode*)it->second;
+											if (noop_node->experiment != NULL) {
+												delete noop_node->experiment;
+											}
 										}
+										break;
+									case NODE_TYPE_ACTION:
+										{
+											ActionNode* action_node = (ActionNode*)it->second;
+											if (action_node->experiment != NULL) {
+												delete action_node->experiment;
+											}
+										}
+										break;
+									case NODE_TYPE_SCOPE:
+										{
+											ScopeNode* scope_node = (ScopeNode*)it->second;
+											if (scope_node->experiment != NULL) {
+												delete scope_node->experiment;
+											}
+										}
+										break;
+									case NODE_TYPE_BRANCH:
+										{
+											BranchNode* branch_node = (BranchNode*)it->second;
+											if (branch_node->original_experiment != NULL) {
+												delete branch_node->original_experiment;
+											}
+											if (branch_node->branch_experiment != NULL) {
+												delete branch_node->branch_experiment;
+											}
+										}
+										break;
 									}
-									break;
-								case NODE_TYPE_ACTION:
-									{
-										ActionNode* action_node = (ActionNode*)it->second;
-										if (action_node->experiment != NULL) {
-											delete action_node->experiment;
-										}
-									}
-									break;
-								case NODE_TYPE_SCOPE:
-									{
-										ScopeNode* scope_node = (ScopeNode*)it->second;
-										if (scope_node->experiment != NULL) {
-											delete scope_node->experiment;
-										}
-									}
-									break;
-								case NODE_TYPE_BRANCH:
-									{
-										BranchNode* branch_node = (BranchNode*)it->second;
-										if (branch_node->original_experiment != NULL) {
-											delete branch_node->original_experiment;
-										}
-										if (branch_node->branch_experiment != NULL) {
-											delete branch_node->branch_experiment;
-										}
-									}
-									break;
 								}
 							}
-						}
 
-						wrapper->experiment_iter = 0;
+							wrapper->experiment_iter = 0;
+						}
+					} else {
+						delete new_network;
 					}
 				} else {
 					delete new_network;
