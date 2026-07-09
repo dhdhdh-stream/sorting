@@ -72,7 +72,6 @@ void update_helper(ScopeHistory* scope_history) {
 void update_helper(double target_val,
 				   SolutionWrapper* wrapper) {
 	vector<double> state_errors(wrapper->solution->num_states, 0.0);
-	set<AbstractNetwork*> to_update;
 	for (int h_index = (int)wrapper->network_histories.size()-1; h_index >= 0; h_index--) {
 		switch (wrapper->network_histories[h_index]->network->type) {
 		case NETWORK_TYPE_OBS:
@@ -109,66 +108,63 @@ void update_helper(double target_val,
 			}
 			break;
 		}
-		delete wrapper->network_histories[h_index];
 	}
-	wrapper->network_histories.clear();
 
-	double max_update = 0.0;
-	for (set<AbstractNetwork*>::iterator it = to_update.begin();
-			it != to_update.end(); it++) {
-		AbstractNetwork* network = *it;
-		switch (network->type) {
+	double max_state_val = 0.0;
+	for (int s_index = 0; s_index < (int)wrapper->state.size(); s_index++) {
+		double state_size = abs(wrapper->state[s_index]);
+		if (state_size > max_state_val) {
+			max_state_val = state_size;
+		}
+	}
+	double max_state_error = 0.0;
+	for (int e_index = 0; e_index < (int)state_errors.size(); e_index++) {
+		double error_size = abs(state_errors[e_index]);
+		if (error_size > max_state_error) {
+			max_state_error = error_size;
+		}
+	}
+	double max_update = max_state_val * max_state_error;
+	wrapper->solution->average_max_update = 0.999*wrapper->solution->average_max_update + 0.001*max_update;
+	double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/wrapper->solution->average_max_update;
+	if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
+		learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+	}
+
+	for (int h_index = (int)wrapper->network_histories.size()-1; h_index >= 0; h_index--) {
+		switch (wrapper->network_histories[h_index]->network->type) {
 		case NETWORK_TYPE_OBS:
 			{
-				ObsNetwork* obs_network = (ObsNetwork*)network;
-				obs_network->get_max_update(max_update);
+				ObsNetworkHistory* obs_network_history = (ObsNetworkHistory*)wrapper->network_histories[h_index];
+				ObsNetwork* obs_network = (ObsNetwork*)obs_network_history->network;
+				obs_network->update_weights(learning_rate);
+			}
+			break;
+		case NETWORK_TYPE_SCORE:
+			{
+				ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->network_histories[h_index];
+				ScoreNetwork* score_network = (ScoreNetwork*)score_network_history->network;
+				score_network->update_weights(learning_rate);
 			}
 			break;
 		case NETWORK_TYPE_INIT:
 			{
-				InitNetwork* init_network = (InitNetwork*)network;
-				init_network->get_max_update(max_update);
+				InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->network_histories[h_index];
+				InitNetwork* init_network = (InitNetwork*)init_network_history->network;
+				init_network->update_weights(learning_rate);
 			}
 			break;
 		case NETWORK_TYPE_NEGATE:
 			{
-				NegateNetwork* negate_network = (NegateNetwork*)network;
-				negate_network->get_max_update(max_update);
+				NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->network_histories[h_index];
+				NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
+				negate_network->update_weights(learning_rate);
 			}
 			break;
 		}
+		delete wrapper->network_histories[h_index];
 	}
-	wrapper->solution->average_max_update = 0.999*wrapper->solution->average_max_update + 0.001*max_update;
-	if (max_update > 0.0) {
-		double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/wrapper->solution->average_max_update;
-		if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
-			learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
-		}
-		for (set<AbstractNetwork*>::iterator it = to_update.begin();
-				it != to_update.end(); it++) {
-			AbstractNetwork* network = *it;
-			switch (network->type) {
-			case NETWORK_TYPE_OBS:
-				{
-					ObsNetwork* obs_network = (ObsNetwork*)network;
-					obs_network->update_weights(learning_rate);
-				}
-				break;
-			case NETWORK_TYPE_INIT:
-				{
-					InitNetwork* init_network = (InitNetwork*)network;
-					init_network->update_weights(learning_rate);
-				}
-				break;
-			case NETWORK_TYPE_NEGATE:
-				{
-					NegateNetwork* negate_network = (NegateNetwork*)network;
-					negate_network->update_weights(learning_rate);
-				}
-				break;
-			}
-		}
-	}
+	wrapper->network_histories.clear();
 
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		Scope* scope = wrapper->solution->scopes[s_index];
@@ -182,8 +178,6 @@ void update_helper(double target_val,
 					if (noop_node->curr_num_instances > 0) {
 						noop_node->average_instances_per_hit = 0.999*noop_node->average_instances_per_hit + 0.001*noop_node->curr_num_instances;
 
-						noop_node->score_network->update();
-
 						noop_node->curr_num_instances = 0;
 					}
 				}
@@ -194,8 +188,6 @@ void update_helper(double target_val,
 					action_node->average_instances_per_run = 0.999*action_node->average_instances_per_run + 0.001*action_node->curr_num_instances;
 					if (action_node->curr_num_instances > 0) {
 						action_node->average_instances_per_hit = 0.999*action_node->average_instances_per_hit + 0.001*action_node->curr_num_instances;
-
-						action_node->score_network->update();
 
 						action_node->curr_num_instances = 0;
 					}
@@ -208,8 +200,6 @@ void update_helper(double target_val,
 					if (scope_node->curr_num_instances > 0) {
 						scope_node->average_instances_per_hit = 0.999*scope_node->average_instances_per_hit + 0.001*scope_node->curr_num_instances;
 
-						scope_node->score_network->update();
-
 						scope_node->curr_num_instances = 0;
 					}
 				}
@@ -220,8 +210,6 @@ void update_helper(double target_val,
 					branch_node->original_average_instances_per_run = 0.999*branch_node->original_average_instances_per_run + 0.001*branch_node->original_curr_num_instances;
 					if (branch_node->original_curr_num_instances > 0) {
 						branch_node->original_average_instances_per_hit = 0.999*branch_node->original_average_instances_per_hit + 0.001*branch_node->original_curr_num_instances;
-
-						branch_node->original_network->update();
 
 						if (branch_node->ramp < branch_node->ramp_num_gears) {
 							branch_node->ramp_iter++;
@@ -239,8 +227,6 @@ void update_helper(double target_val,
 					branch_node->branch_average_instances_per_run = 0.999*branch_node->branch_average_instances_per_run + 0.001*branch_node->branch_curr_num_instances;
 					if (branch_node->branch_curr_num_instances > 0) {
 						branch_node->branch_average_instances_per_hit = 0.999*branch_node->branch_average_instances_per_hit + 0.001*branch_node->branch_curr_num_instances;
-
-						branch_node->branch_network->update();
 
 						if (branch_node->ramp < branch_node->ramp_num_gears) {
 							branch_node->ramp_iter++;

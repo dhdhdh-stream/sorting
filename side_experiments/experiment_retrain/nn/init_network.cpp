@@ -361,12 +361,6 @@ void InitNetwork::backprop(vector<double>& state_errors) {
 	}
 }
 
-void InitNetwork::get_max_update(double& max_update) {
-	this->hidden_1->get_max_update(max_update);
-	this->hidden_2->get_max_update(max_update);
-	this->output->get_max_update(max_update);
-}
-
 void InitNetwork::update_weights(double learning_rate) {
 	this->hidden_1->update_weights(learning_rate);
 	this->hidden_2->update_weights(learning_rate);

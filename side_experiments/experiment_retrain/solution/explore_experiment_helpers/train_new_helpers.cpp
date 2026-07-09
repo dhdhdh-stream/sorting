@@ -233,10 +233,13 @@ void ExploreExperiment::train_new_backprop(
 
 					new_network->activate(this->new_state_histories[rand_index]);
 
-					new_network->init_backprop(this->new_target_val_histories[rand_index],
-											   hidden_1_average_max_update,
-											   hidden_2_average_max_update,
-											   output_average_max_update);
+					new_network->init_backprop(this->new_target_val_histories[rand_index]);
+
+					if ((iter_index+1)%EPOCH_SIZE == 0) {
+						new_network->init_update(hidden_1_average_max_update,
+												 hidden_2_average_max_update,
+												 output_average_max_update);
+					}
 				}
 				for (int s_index = 0; s_index < (int)new_network->state_input->errors.size(); s_index++) {
 					new_network->state_input->errors(s_index) = 0.0;

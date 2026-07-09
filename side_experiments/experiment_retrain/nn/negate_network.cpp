@@ -59,13 +59,6 @@ void NegateNetwork::backprop(vector<double>& state_errors) {
 	this->weight_update += this->state_input * error;
 }
 
-void NegateNetwork::get_max_update(double& max_update) {
-	double update_size = abs(this->weight_update);
-	if (update_size > max_update) {
-		max_update = update_size;
-	}
-}
-
 void NegateNetwork::update_weights(double learning_rate) {
 	this->weight += learning_rate * this->weight_update;
 	this->weight_update = 0.0;

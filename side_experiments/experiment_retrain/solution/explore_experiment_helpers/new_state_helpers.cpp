@@ -93,10 +93,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		combined_state.insert(combined_state.end(), new_state.begin(), new_state.end());
 		new_network->activate(combined_state);
 
-		new_network->init_backprop(this->new_target_val_histories[rand_index],
-								   hidden_1_average_max_update,
-								   hidden_2_average_max_update,
-								   output_average_max_update);
+		new_network->init_backprop(this->new_target_val_histories[rand_index]);
 
 		vector<double> new_state_errors(NEW_STATE_NUM_ADD, 0.0);
 
@@ -117,6 +114,9 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 													hidden_2_average_max_updates[d_index],
 													output_average_max_updates[d_index]);
 			}
+			new_network->init_update(hidden_1_average_max_update,
+									 hidden_2_average_max_update,
+									 output_average_max_update);
 		}
 	}
 	for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
