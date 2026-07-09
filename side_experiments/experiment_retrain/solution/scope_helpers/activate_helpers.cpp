@@ -1,5 +1,7 @@
 #include "scope.h"
 
+#include <iostream>
+
 #include "init_network.h"
 #include "negate_network.h"
 #include "obs_network.h"

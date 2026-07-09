@@ -69,20 +69,8 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->nodes[start_node->id] = start_node;
 	start_node->score_network = new ScoreNetwork(this->num_states);
 
-	NoopNode* end_node = new NoopNode();
-	end_node->parent = new_scope;
-	end_node->id = new_scope->node_counter;
-	new_scope->node_counter++;
-	new_scope->nodes[end_node->id] = end_node;
-	end_node->score_network = new ScoreNetwork(this->num_states);
-
-	start_node->next_node_id = end_node->id;
-	start_node->next_node = end_node;
-
-	end_node->ancestor_ids.push_back(start_node->id);
-
-	end_node->next_node_id = -1;
-	end_node->next_node = NULL;
+	start_node->next_node_id = -1;
+	start_node->next_node = NULL;
 
 	this->starting_scope = new_scope;
 	this->starting_num_improvements = 0;

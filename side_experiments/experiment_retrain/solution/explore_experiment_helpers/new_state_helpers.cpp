@@ -123,11 +123,11 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	}
 	for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
 		for (int i_index = 0; i_index < (int)init_networks[d_index]->state_input->errors.size(); i_index++) {
-			init_networks[d_index]->state_input->errors[i_index] = 0.0;
+			init_networks[d_index]->state_input->errors(i_index) = 0.0;
 		}
 	}
 	for (int i_index = 0; i_index < (int)new_network->state_input->errors.size(); i_index++) {
-		new_network->state_input->errors[i_index] = 0.0;
+		new_network->state_input->errors(i_index) = 0.0;
 	}
 
 	double existing_sum_vals = 0.0;
@@ -148,7 +148,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		combined_state.insert(combined_state.end(), new_state.begin(), new_state.end());
 		new_network->activate(combined_state);
 
-		if (new_network->output->acti_vals[0] >= existing_network->output->acti_vals[0]) {
+		if (new_network->output->acti_vals(0) >= existing_network->output->acti_vals(0)) {
 			existing_sum_vals += this->existing_target_val_histories[h_index];
 			existing_count++;
 		}
@@ -172,7 +172,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		combined_state.insert(combined_state.end(), new_state.begin(), new_state.end());
 		new_network->activate(combined_state);
 
-		if (new_network->output->acti_vals[0] >= existing_network->output->acti_vals[0]) {
+		if (new_network->output->acti_vals(0) >= existing_network->output->acti_vals(0)) {
 			new_sum_vals += this->new_target_val_histories[h_index];
 			new_count++;
 		}

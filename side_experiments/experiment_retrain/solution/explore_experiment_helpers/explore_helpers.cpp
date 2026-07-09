@@ -29,7 +29,13 @@ const int MAX_NUM_DEPENDENCIES = 4;
 void compare_index(vector<int>& left, vector<int>& right, bool& right_later) {
 	int layer = 0;
 	while (true) {
-		if (left[layer] < right[layer]) {
+		if (layer >= (int)left.size()) {
+			right_later = false;
+			return;
+		} else if (layer >= (int)right.size()) {
+			right_later = true;
+			return;
+		} else if (left[layer] < right[layer]) {
 			right_later = true;
 			return;
 		} else if (left[layer] > right[layer]) {

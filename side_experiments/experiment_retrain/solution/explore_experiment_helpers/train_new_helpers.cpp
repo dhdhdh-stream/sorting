@@ -233,15 +233,13 @@ void ExploreExperiment::train_new_backprop(
 
 					new_network->activate(this->new_state_histories[rand_index]);
 
-					double error = this->new_target_val_histories[rand_index] - new_network->output->acti_vals[0];
-
-					new_network->init_backprop(error,
+					new_network->init_backprop(this->new_target_val_histories[rand_index],
 											   hidden_1_average_max_update,
 											   hidden_2_average_max_update,
 											   output_average_max_update);
 				}
 				for (int s_index = 0; s_index < (int)new_network->state_input->errors.size(); s_index++) {
-					new_network->state_input->errors[s_index] = 0.0;
+					new_network->state_input->errors(s_index) = 0.0;
 				}
 
 				double existing_sum_vals = 0.0;
@@ -249,7 +247,7 @@ void ExploreExperiment::train_new_backprop(
 				for (int h_index = 0; h_index < (int)this->existing_dependencies_is_hit_histories.size(); h_index++) {
 					existing_network->activate(this->existing_state_histories[h_index]);
 					new_network->activate(this->existing_state_histories[h_index]);
-					if (new_network->output->acti_vals[0] >= existing_network->output->acti_vals[0]) {
+					if (new_network->output->acti_vals(0) >= existing_network->output->acti_vals(0)) {
 						existing_sum_vals += this->existing_target_val_histories[h_index];
 						existing_count++;
 					}
