@@ -1,6 +1,8 @@
 #include "solution_helpers.h"
 
+#include "globals.h"
 #include "minesweeper.h"
+#include "solution.h"
 #include "solution_wrapper.h"
 
 using namespace std;

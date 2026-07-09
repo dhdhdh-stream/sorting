@@ -19,6 +19,11 @@ void BranchNode::step(vector<double>& obs,
 					  int& action,
 					  bool& is_next,
 					  SolutionWrapper* wrapper) {
+	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
+		this->init_networks[n_index]->activate(wrapper->state,
+											   obs);
+	}
+
 	uniform_int_distribution<int> on_distribution(0, this->ramp_num_gears);
 	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->original_next_node;
@@ -33,11 +38,6 @@ void BranchNode::step(vector<double>& obs,
 		BranchNodeHistory* history = new BranchNodeHistory(this);
 		history->index = (int)scope_history->node_histories.size();
 		scope_history->node_histories[this->id] = history;
-
-		for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
-			this->init_networks[n_index]->activate(wrapper->state,
-												   obs);
-		}
 
 		bool is_branch;
 		this->original_network->activate(wrapper->state);

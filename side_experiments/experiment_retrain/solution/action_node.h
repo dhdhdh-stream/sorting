@@ -39,6 +39,8 @@ public:
 			  int& action,
 			  bool& is_next,
 			  SolutionWrapper* wrapper);
+	void step_callback(std::vector<double>& obs,
+					   SolutionWrapper* wrapper);
 
 	void experiment_step(std::vector<double>& obs,
 						 int& action,

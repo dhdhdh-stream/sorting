@@ -51,7 +51,8 @@ void ExploreExperiment::measure_check_activate(vector<double>& obs,
 				existing_predicted = scope_node->score_network->output->acti_vals(0);
 			}
 			break;
-		case NODE_TYPE_BRANCH:
+		default:
+		// case NODE_TYPE_BRANCH:
 			{
 				BranchNode* branch_node = (BranchNode*)this->node_context;
 				if (this->is_branch) {
@@ -143,12 +144,49 @@ void ExploreExperiment::measure_backprop(double target_val,
 										 ExploreExperimentHistory* history,
 										 SolutionWrapper* wrapper) {
 	if (wrapper->should_explore) {
-		this->measure_sum_scores += target_val;
+		this->new_sum_scores += target_val;
+		this->new_count++;
 
 		this->state_iter++;
 		if (this->state_iter >= MEASURE_NUM_ITERS) {
-			double measure_average = this->measure_sum_scores / (double)this->state_iter;
-			cout << "measure_average: " << measure_average << endl;
+			double existing_average = this->existing_sum_scores / (double)this->existing_count;
+			cout << "existing_average: " << existing_average << endl;
+			double new_average = this->new_sum_scores / (double)this->new_count;
+			cout << "new_average: " << new_average << endl;
+
+			double average_instances_per_run;
+			switch (this->node_context->type) {
+			case NODE_TYPE_NOOP:
+				{
+					NoopNode* noop_node = (NoopNode*)this->node_context;
+					average_instances_per_run = noop_node->average_instances_per_run;
+				}
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)this->node_context;
+					average_instances_per_run = action_node->average_instances_per_run;
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)this->node_context;
+					average_instances_per_run = scope_node->average_instances_per_run;
+				}
+				break;
+			default:
+			// case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)this->node_context;
+					if (this->is_branch) {
+						average_instances_per_run = branch_node->branch_average_instances_per_run;
+					} else {
+						average_instances_per_run = branch_node->original_average_instances_per_run;
+					}
+				}
+				break;
+			}
+			cout << "average_instances_per_run: " << average_instances_per_run << endl;
 
 			for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
 				NegateNetwork* new_negate_network = new NegateNetwork(wrapper->solution->num_states + s_index);
@@ -274,5 +312,8 @@ void ExploreExperiment::measure_backprop(double target_val,
 
 			wrapper->experiment_iter = 0;
 		}
+	} else {
+		this->existing_sum_scores += target_val;
+		this->existing_count++;
 	}
 }

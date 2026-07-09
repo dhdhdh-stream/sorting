@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "action_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -30,6 +31,13 @@ void SolutionWrapper::init(vector<double> obs) {
 }
 
 pair<bool,int> SolutionWrapper::step(vector<double> obs) {
+	if (this->node_context.back() != NULL
+			&& this->node_context.back()->type == NODE_TYPE_ACTION) {
+		ActionNode* action_node = (ActionNode*)this->node_context.back();
+		action_node->step_callback(obs,
+								   this);
+	}
+
 	int action;
 	bool is_next = false;
 	bool is_done = false;

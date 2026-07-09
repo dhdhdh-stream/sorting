@@ -60,7 +60,10 @@ public:
 	// temp
 	std::vector<InitNetwork*> measure_init_networks;
 	ScoreNetwork* measure_new_network;
-	double measure_sum_scores;
+	double existing_sum_scores;
+	int existing_count;
+	double new_sum_scores;
+	int new_count;
 
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,

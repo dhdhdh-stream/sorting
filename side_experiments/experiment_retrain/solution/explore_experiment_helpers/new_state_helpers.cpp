@@ -378,7 +378,10 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 
 		this->measure_init_networks = init_networks;
 		this->measure_new_network = new_network;
-		this->measure_sum_scores = 0;
+		this->existing_sum_scores = 0.0;
+		this->existing_count = 0;
+		this->new_sum_scores = 0.0;
+		this->new_count = 0;
 
 		this->state = EXPLORE_EXPERIMENT_STATE_MEASURE;
 		this->state_iter = 0;
