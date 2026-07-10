@@ -59,9 +59,13 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 				it != scope->nodes.end(); it++) {
 			if (it->second->type == NODE_TYPE_BRANCH) {
 				BranchNode* branch_node = (BranchNode*)it->second;
-				delete branch_node->prev_original_network;
+				if (branch_node->prev_original_network != NULL) {
+					delete branch_node->prev_original_network;
+				}
 				branch_node->prev_original_network = new Network(branch_node->original_network);
-				delete branch_node->prev_branch_network;
+				if (branch_node->prev_branch_network != NULL) {
+					delete branch_node->prev_branch_network;
+				}
 				branch_node->prev_branch_network = new Network(branch_node->branch_network);
 			}
 		}
@@ -313,10 +317,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
 	new_branch_node->original_network = this->existing_network;
-	new_branch_node->prev_original_network = new Network(this->existing_network);
+	new_branch_node->prev_original_network = NULL;
 	this->existing_network = NULL;
 	new_branch_node->branch_network = this->new_network;
-	new_branch_node->prev_branch_network = new Network(this->new_network);
+	new_branch_node->prev_branch_network = NULL;
 	this->new_network = NULL;
 
 	new_branch_node->ramp = 0;

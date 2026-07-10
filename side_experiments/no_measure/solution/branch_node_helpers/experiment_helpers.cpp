@@ -1,5 +1,7 @@
 #include "branch_node.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "constants.h"
 #include "globals.h"
@@ -32,7 +34,8 @@ void BranchNode::experiment_step(vector<double>& obs,
 
 		bool is_branch;
 		uniform_int_distribution<int> maintain_distribution(0, 9);
-		if (maintain_distribution(generator) == 0) {
+		if (this->prev_original_network != NULL
+				&& maintain_distribution(generator) == 0) {
 			this->prev_original_network->activate(obs);
 			this->prev_branch_network->activate(obs);
 			if (this->prev_branch_network->output->acti_vals[0] >= this->prev_original_network->output->acti_vals[0]) {
