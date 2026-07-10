@@ -13,14 +13,15 @@ using namespace std;
 
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
-
-	this->original_experiment = NULL;
-	this->branch_experiment = NULL;
 }
 
 BranchNode::~BranchNode() {
-	delete this->original_network;
-	delete this->branch_network;
+	for (int n_index = 0; n_index < (int)this->original_networks.size(); n_index++) {
+		delete this->original_networks[n_index];
+	}
+	for (int n_index = 0; n_index < (int)this->branch_networks.size(); n_index++) {
+		delete this->branch_networks[n_index];
+	}
 
 	if (this->original_experiment != NULL) {
 		delete this->original_experiment;
@@ -31,8 +32,12 @@ BranchNode::~BranchNode() {
 }
 
 void BranchNode::save(ofstream& output_file) {
-	this->original_network->save(output_file);
-	this->branch_network->save(output_file);
+	output_file << this->original_networks.size() << endl;
+	for (int l_index = 0; l_index < (int)this->original_networks.size(); l_index++) {
+		this->original_networks[l_index]->save(output_file);
+		this->branch_networks[l_index]->save(output_file);
+		output_file << this->maintain_iters[l_index] << endl;
+	}
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
@@ -52,8 +57,17 @@ void BranchNode::save(ofstream& output_file) {
 
 void BranchNode::load(ifstream& input_file,
 					  Solution* parent_solution) {
-	this->original_network = new Network(input_file);
-	this->branch_network = new Network(input_file);
+	string num_layers_line;
+	getline(input_file, num_layers_line);
+	int num_layers = stoi(num_layers_line);
+	for (int l_index = 0; l_index < num_layers; l_index++) {
+		this->original_networks.push_back(new Network(input_file));
+		this->branch_networks.push_back(new Network(input_file));
+
+		string iters_line;
+		getline(input_file, iters_line);
+		this->maintain_iters.push_back(stoi(iters_line));
+	}
 
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
@@ -118,24 +132,6 @@ void BranchNode::link(Solution* parent_solution) {
 	} else {
 		this->branch_next_node = this->parent->nodes[this->branch_next_node_id];
 	}
-}
-
-void BranchNode::copy_from(BranchNode* original,
-						   Solution* parent_solution) {
-	this->original_network = new Network(original->original_network);
-	this->branch_network = new Network(original->branch_network);
-
-	this->original_next_node_id = original->original_next_node_id;
-	this->branch_next_node_id = original->branch_next_node_id;
-
-	this->ramp = original->ramp;
-	this->ramp_num_gears = original->ramp_num_gears;
-	this->ramp_iter = original->ramp_iter;
-
-	this->consec_original = original->consec_original;
-	this->consec_branch = original->consec_branch;
-
-	this->ancestor_ids = original->ancestor_ids;
 }
 
 void BranchNode::save_for_display(ofstream& output_file) {

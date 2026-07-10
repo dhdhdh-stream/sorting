@@ -39,9 +39,6 @@ public:
 			  Solution* parent_solution);
 	void link(Solution* parent_solution);
 
-	void copy_from(NoopNode* original,
-				   Solution* parent_solution);
-
 	void save_for_display(std::ofstream& output_file);
 };
 

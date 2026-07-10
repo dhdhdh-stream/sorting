@@ -61,15 +61,6 @@ void ScopeNode::link(Solution* parent_solution) {
 	}
 }
 
-void ScopeNode::copy_from(ScopeNode* original,
-						  Solution* parent_solution) {
-	this->scope = parent_solution->scopes[original->scope->id];
-
-	this->next_node_id = original->next_node_id;
-
-	this->ancestor_ids = original->ancestor_ids;
-}
-
 void ScopeNode::save_for_display(ofstream& output_file) {
 	output_file << this->scope->id << endl;
 

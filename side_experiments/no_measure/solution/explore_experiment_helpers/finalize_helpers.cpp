@@ -8,6 +8,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "network.h"
 #include "noop_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -51,6 +52,25 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	wrapper->solution->change_history.push_back(ss.str());
 
 	cout << ss.str() << endl;
+
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			if (it->second->type == NODE_TYPE_BRANCH) {
+				BranchNode* branch_node = (BranchNode*)it->second;
+				if (branch_node->consec_original < CONSEC_DEPRECATE_LIMIT
+						&& branch_node->consec_branch < CONSEC_DEPRECATE_LIMIT
+						&& branch_node->ramp >= branch_node->ramp_num_gears) {
+					Network* new_original_network = new Network(branch_node->original_networks.back());
+					branch_node->original_networks.push_back(new_original_network);
+					Network* new_branch_network = new Network(branch_node->branch_networks.back());
+					branch_node->branch_networks.push_back(new_branch_network);
+					branch_node->maintain_iters.push_back(0);
+				}
+			}
+		}
+	}
 
 	vector<AbstractNode*> new_nodes;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -297,10 +317,11 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	new_branch_node->original_network = this->existing_network;
+	new_branch_node->original_networks.push_back(this->existing_network);
 	this->existing_network = NULL;
-	new_branch_node->branch_network = this->new_network;
+	new_branch_node->branch_networks.push_back(this->new_network);
 	this->new_network = NULL;
+	new_branch_node->maintain_iters.push_back(0);	// value doesn't matter
 
 	new_branch_node->ramp = 0;
 	/**

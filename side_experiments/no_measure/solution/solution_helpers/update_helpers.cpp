@@ -41,15 +41,15 @@ void update_helper(ScopeHistory* scope_history,
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
 
 				if (branch_node_history->is_branch) {
-					branch_node->branch_network->activate(branch_node_history->obs);
-					double error = target_val - branch_node->branch_network->output->acti_vals[0];
-					branch_node->branch_network->backprop(error);
+					branch_node->branch_networks.back()->activate(branch_node_history->obs);
+					double error = target_val - branch_node->branch_networks.back()->output->acti_vals[0];
+					branch_node->branch_networks.back()->backprop(error);
 
 					hit_branch.insert(branch_node);
 				} else {
-					branch_node->original_network->activate(branch_node_history->obs);
-					double error = target_val - branch_node->original_network->output->acti_vals[0];
-					branch_node->original_network->backprop(error);
+					branch_node->original_networks.back()->activate(branch_node_history->obs);
+					double error = target_val - branch_node->original_networks.back()->output->acti_vals[0];
+					branch_node->original_networks.back()->backprop(error);
 
 					hit_original.insert(branch_node);
 				}
@@ -68,7 +68,7 @@ void update_helper(set<BranchNode*>& hit_original,
 	for (set<BranchNode*>::iterator it = hit_original.begin();
 			it != hit_original.end(); it++) {
 		BranchNode* branch_node = *it;
-		branch_node->original_network->update();
+		branch_node->original_networks.back()->update();
 
 		if (branch_node->ramp < branch_node->ramp_num_gears) {
 			branch_node->ramp_iter++;
@@ -80,12 +80,25 @@ void update_helper(set<BranchNode*>& hit_original,
 				// cout << "branch_node->ramp: " << branch_node->ramp << endl;
 			}
 		}
+
+		if (branch_node->original_networks.size() > 1) {
+			branch_node->maintain_iters.back()++;
+			if (branch_node->maintain_iters.back() >= MAINTAIN_NUM_ITERS) {
+				while (branch_node->original_networks.size() > 1) {
+					delete branch_node->original_networks[0];
+					branch_node->original_networks.erase(branch_node->original_networks.begin());
+					delete branch_node->branch_networks[0];
+					branch_node->branch_networks.erase(branch_node->branch_networks.begin());
+					branch_node->maintain_iters.erase(branch_node->maintain_iters.begin());
+				}
+			}
+		}
 	}
 
 	for (set<BranchNode*>::iterator it = hit_branch.begin();
 			it != hit_branch.end(); it++) {
 		BranchNode* branch_node = *it;
-		branch_node->branch_network->update();
+		branch_node->branch_networks.back()->update();
 
 		if (branch_node->ramp < branch_node->ramp_num_gears) {
 			branch_node->ramp_iter++;
@@ -95,6 +108,19 @@ void update_helper(set<BranchNode*>& hit_original,
 
 				// // temp
 				// cout << "branch_node->ramp: " << branch_node->ramp << endl;
+			}
+		}
+
+		if (branch_node->original_networks.size() > 1) {
+			branch_node->maintain_iters.back()++;
+			if (branch_node->maintain_iters.back() >= MAINTAIN_NUM_ITERS) {
+				while (branch_node->original_networks.size() > 1) {
+					delete branch_node->original_networks[0];
+					branch_node->original_networks.erase(branch_node->original_networks.begin());
+					delete branch_node->branch_networks[0];
+					branch_node->branch_networks.erase(branch_node->branch_networks.begin());
+					branch_node->maintain_iters.erase(branch_node->maintain_iters.begin());
+				}
 			}
 		}
 	}

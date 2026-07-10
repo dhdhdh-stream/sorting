@@ -31,21 +31,27 @@ void BranchNode::experiment_step(vector<double>& obs,
 		scope_history->node_histories[this->id] = history;
 
 		bool is_branch;
-		this->original_network->activate(obs);
-		this->branch_network->activate(obs);
-		if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
-			is_branch = true;
-
-			if (!wrapper->should_explore) {
-				this->consec_original = 0;
-				this->consec_branch++;
-			}
-		} else {
-			is_branch = false;
-
-			if (!wrapper->should_explore) {
-				this->consec_original++;
-				this->consec_branch = 0;
+		for (int l_index = (int)this->original_networks.size()-1; l_index >= 0; l_index--) {
+			if (l_index == 0) {
+				this->original_networks[l_index]->activate(obs);
+				this->branch_networks[l_index]->activate(obs);
+				if (this->branch_networks[l_index]->output->acti_vals[0] >= this->original_networks[l_index]->output->acti_vals[0]) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+			} else {
+				uniform_int_distribution<int> distribution(0, MAINTAIN_NUM_ITERS-1);
+				if (distribution(generator) <= this->maintain_iters[l_index]) {
+					this->original_networks[l_index]->activate(obs);
+					this->branch_networks[l_index]->activate(obs);
+					if (this->branch_networks[l_index]->output->acti_vals[0] >= this->original_networks[l_index]->output->acti_vals[0]) {
+						is_branch = true;
+					} else {
+						is_branch = false;
+					}
+					break;
+				}
 			}
 		}
 
@@ -65,6 +71,11 @@ void BranchNode::experiment_step(vector<double>& obs,
 		}
 
 		if (is_branch) {
+			if (!wrapper->should_explore) {
+				this->consec_original = 0;
+				this->consec_branch++;
+			}
+
 			wrapper->node_context.back() = this->branch_next_node;
 
 			if (this->branch_experiment != NULL) {
@@ -73,6 +84,11 @@ void BranchNode::experiment_step(vector<double>& obs,
 					wrapper);
 			}
 		} else {
+			if (!wrapper->should_explore) {
+				this->consec_original++;
+				this->consec_branch = 0;
+			}
+
 			wrapper->node_context.back() = this->original_next_node;
 
 			if (this->original_experiment != NULL) {

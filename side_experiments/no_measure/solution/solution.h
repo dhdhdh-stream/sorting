@@ -45,7 +45,6 @@ public:
 	std::vector<std::string> change_history;
 
 	Solution();
-	Solution(Solution* original);
 	~Solution();
 
 	void init(ProblemType* problem_type);

@@ -54,13 +54,6 @@ void NoopNode::link(Solution* parent_solution) {
 	}
 }
 
-void NoopNode::copy_from(NoopNode* original,
-						 Solution* parent_solution) {
-	this->next_node_id = original->next_node_id;
-
-	this->ancestor_ids = original->ancestor_ids;
-}
-
 void NoopNode::save_for_display(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 }
