@@ -18,20 +18,16 @@ class ScopeHistory;
 class Solution;
 class SolutionWrapper;
 
-const int MAINTAIN_NUM_ITERS = 20000;
-
 const int CONSEC_DEPRECATE_LIMIT = 4000;
 
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	std::vector<Network*> original_networks;
-	std::vector<Network*> branch_networks;
-	std::vector<int> maintain_iters;
-	/**
-	 * - on update, only update last layer/iters
-	 *   - so previous is an exact snapshot of when change happened
-	 */
+	Network* original_network;
+	Network* branch_network;
+
+	Network* prev_original_network;
+	Network* prev_branch_network;
 
 	int original_next_node_id;
 	AbstractNode* original_next_node;

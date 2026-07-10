@@ -34,27 +34,22 @@ void BranchNode::step(vector<double>& obs,
 		scope_history->node_histories[this->id] = history;
 
 		bool is_branch;
-		for (int l_index = (int)this->original_networks.size()-1; l_index >= 0; l_index--) {
-			if (l_index == 0) {
-				this->original_networks[l_index]->activate(obs);
-				this->branch_networks[l_index]->activate(obs);
-				if (this->branch_networks[l_index]->output->acti_vals[0] >= this->original_networks[l_index]->output->acti_vals[0]) {
-					is_branch = true;
-				} else {
-					is_branch = false;
-				}
+		uniform_int_distribution<int> maintain_distribution(0, 9);
+		if (maintain_distribution(generator) == 0) {
+			this->prev_original_network->activate(obs);
+			this->prev_branch_network->activate(obs);
+			if (this->prev_branch_network->output->acti_vals[0] >= this->prev_original_network->output->acti_vals[0]) {
+				is_branch = true;
 			} else {
-				uniform_int_distribution<int> distribution(0, MAINTAIN_NUM_ITERS-1);
-				if (distribution(generator) <= this->maintain_iters[l_index]) {
-					this->original_networks[l_index]->activate(obs);
-					this->branch_networks[l_index]->activate(obs);
-					if (this->branch_networks[l_index]->output->acti_vals[0] >= this->original_networks[l_index]->output->acti_vals[0]) {
-						is_branch = true;
-					} else {
-						is_branch = false;
-					}
-					break;
-				}
+				is_branch = false;
+			}
+		} else {
+			this->original_network->activate(obs);
+			this->branch_network->activate(obs);
+			if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+				is_branch = true;
+			} else {
+				is_branch = false;
 			}
 		}
 
