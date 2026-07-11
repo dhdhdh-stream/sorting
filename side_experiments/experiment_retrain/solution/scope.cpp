@@ -57,6 +57,12 @@ void Scope::save(ofstream& output_file) {
 
 	output_file << this->start_init_networks.size() << endl;
 	for (int n_index = 0; n_index < (int)this->start_init_networks.size(); n_index++) {
+		output_file << this->start_init_network_scope_contexts[n_index].size() << endl;
+		for (int l_index = 0; l_index < (int)this->start_init_network_scope_contexts[n_index].size(); l_index++) {
+			output_file << this->start_init_network_scope_contexts[n_index][l_index]->id << endl;
+			output_file << this->start_init_network_node_contexts[n_index][l_index] << endl;
+		}
+
 		this->start_init_networks[n_index]->save(output_file);
 	}
 
@@ -111,7 +117,8 @@ void Scope::load(ifstream& input_file,
 				ActionNode* action_node = new ActionNode();
 				action_node->parent = this;
 				action_node->id = id;
-				action_node->load(input_file);
+				action_node->load(input_file,
+								  parent_solution);
 				this->nodes[action_node->id] = action_node;
 			}
 			break;
@@ -151,6 +158,21 @@ void Scope::load(ifstream& input_file,
 	getline(input_file, num_start_init_networks_line);
 	int num_start_init_networks = stoi(num_start_init_networks_line);
 	for (int n_index = 0; n_index < num_start_init_networks; n_index++) {
+		string num_layers_line;
+		getline(input_file, num_layers_line);
+		int num_layers = stoi(num_layers_line);
+		this->start_init_network_scope_contexts.push_back(vector<Scope*>());
+		this->start_init_network_node_contexts.push_back(vector<int>());
+		for (int l_index = 0; l_index < num_layers; l_index++) {
+			string scope_id_line;
+			getline(input_file, scope_id_line);
+			this->start_init_network_scope_contexts[n_index].push_back(parent_solution->scopes[stoi(scope_id_line)]);
+
+			string node_id_line;
+			getline(input_file, node_id_line);
+			this->start_init_network_node_contexts[n_index].push_back(stoi(node_id_line));
+		}
+
 		this->start_init_networks.push_back(new InitNetwork(input_file));
 	}
 

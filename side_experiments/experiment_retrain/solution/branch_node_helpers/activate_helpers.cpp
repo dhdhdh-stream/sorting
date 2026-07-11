@@ -20,8 +20,12 @@ void BranchNode::step(vector<double>& obs,
 					  bool& is_next,
 					  SolutionWrapper* wrapper) {
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
-		this->init_networks[n_index]->activate(wrapper->state,
-											   obs);
+		if (match_dependency_helper(wrapper,
+									this->init_network_scope_contexts[n_index],
+									this->init_network_node_contexts[n_index])) {
+			this->init_networks[n_index]->activate(wrapper->state,
+												   obs);
+		}
 	}
 
 	// uniform_int_distribution<int> on_distribution(0, this->ramp_num_gears);

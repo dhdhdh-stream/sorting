@@ -43,9 +43,13 @@ void fetch_dependency_helper(ScopeHistory* scope_history,
 							 std::vector<double>& state,
 							 std::vector<double>& obs);
 void add_dependency_helper(Scope* scope,
+						   std::vector<Scope*>& init_network_scope_context,
 						   std::vector<int>& dependency,
 						   int l_index,
 						   InitNetwork* init_network);
+bool match_dependency_helper(SolutionWrapper* wrapper,
+							 std::vector<Scope*>& scope_contexts,
+							 std::vector<int>& node_contexts);
 
 void update_helper(ScopeHistory* scope_history);
 void update_helper(double target_val,

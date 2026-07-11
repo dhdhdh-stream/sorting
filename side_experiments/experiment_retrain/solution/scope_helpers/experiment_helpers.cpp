@@ -5,6 +5,7 @@
 #include "init_network.h"
 #include "negate_network.h"
 #include "obs_network.h"
+#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -29,12 +30,16 @@ void Scope::experiment_start_activate(vector<double>& obs,
 	}
 
 	for (int n_index = 0; n_index < (int)this->start_init_networks.size(); n_index++) {
-		this->start_init_networks[n_index]->activate(wrapper->state,
-													 obs);
-		if (!wrapper->should_explore) {
-			InitNetworkHistory* init_network_history = new InitNetworkHistory(this->start_init_networks[n_index]);
-			this->start_init_networks[n_index]->save(init_network_history);
-			wrapper->network_histories.push_back(init_network_history);
+		if (match_dependency_helper(wrapper,
+									this->start_init_network_scope_contexts[n_index],
+									this->start_init_network_node_contexts[n_index])) {
+			this->start_init_networks[n_index]->activate(wrapper->state,
+														 obs);
+			if (!wrapper->should_explore) {
+				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->start_init_networks[n_index]);
+				this->start_init_networks[n_index]->save(init_network_history);
+				wrapper->network_histories.push_back(init_network_history);
+			}
 		}
 	}
 

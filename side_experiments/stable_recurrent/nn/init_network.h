@@ -38,7 +38,6 @@ public:
 
 	Layer* hidden_1;
 	Layer* hidden_2;
-	Layer* hidden_3;
 	Layer* output;
 
 	InitNetwork(std::vector<int>& init_states,
@@ -48,6 +47,14 @@ public:
 	InitNetwork(std::ifstream& input_file);
 	~InitNetwork();
 
+	void init_activate(std::vector<double>& state_vals,
+					   std::vector<double>& new_state_vals,
+					   std::vector<double>& obs_input_vals);
+	void init_backprop(std::vector<double>& new_state_errors);
+	void init_update(double& hidden_1_average_max_update,
+					 double& hidden_2_average_max_update,
+					 double& output_average_max_update);
+
 	void activate(std::vector<double>& state_vals,
 				  std::vector<double>& obs_input_vals);
 
@@ -56,12 +63,6 @@ public:
 
 	void backprop(std::vector<double>& state_errors);
 
-	void init_update(double& hidden_1_average_max_update,
-					 double& hidden_2_average_max_update,
-					 double& hidden_3_average_max_update,
-					 double& output_average_max_update);
-
-	void get_max_update(double& max_update);
 	void update_weights(double learning_rate);
 
 	void add_states(int new_num_states);
@@ -76,7 +77,6 @@ public:
 	std::vector<double> obs_input_history;
 	std::vector<double> hidden_1_history;
 	std::vector<double> hidden_2_history;
-	std::vector<double> hidden_3_history;
 
 	InitNetworkHistory(InitNetwork* network);
 };

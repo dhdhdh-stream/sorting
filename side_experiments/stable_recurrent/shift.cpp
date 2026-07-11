@@ -1,3 +1,6 @@
+// - might even be too good at shifting
+//   - current learning rate too aggressive?
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -58,19 +61,24 @@ int main(int argc, char* argv[]) {
 	double score_output_average_max_update = 0.0;
 
 	uniform_int_distribution<int> input_distribution(-10, 10);
-
+	uniform_int_distribution<int> non_match_distribution(0, 3);
 	for (int iter_index = 0; iter_index < 100000; iter_index++) {
-		double val_1 = input_distribution(generator);
+		double target_val = input_distribution(generator);
+
+		double val_1;
+		if (non_match_distribution(generator) == 0) {
+			val_1 = input_distribution(generator);
+		} else {
+			val_1 = target_val;
+		}
 		double val_2 = input_distribution(generator);
 		double val_3 = input_distribution(generator);
 		double val_4 = input_distribution(generator);
 
 		// double o_val_1 = input_distribution(generator);
-		double o_val_2 = input_distribution(generator);
+		// double o_val_2 = input_distribution(generator);
 		// double o_val_3 = input_distribution(generator);
 		// double o_val_4 = input_distribution(generator);
-
-		double target_val = val_1 + val_4 + o_val_2;
 
 		vector<double> state_vals;
 		vector<double> new_state_vals(4, 0.0);
@@ -144,89 +152,25 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	for (int iter_index = 0; iter_index < 10; iter_index++) {
-		cout << iter_index << endl;
-
-		double val_1 = input_distribution(generator);
-		double val_2 = input_distribution(generator);
-		double val_3 = input_distribution(generator);
-		double val_4 = input_distribution(generator);
-
-		double o_val_1 = input_distribution(generator);
-		double o_val_2 = input_distribution(generator);
-		double o_val_3 = input_distribution(generator);
-		double o_val_4 = input_distribution(generator);
-
-		double target_val = val_1 + val_4 + o_val_2;
-		cout << "target_val: " << target_val << endl;
-
-		{
-			vector<double> state_vals(4, 0.0);
-
-			vector<double> obs_input_vals_1{val_1};
-			init_network_1->activate(state_vals,
-									 obs_input_vals_1);
-			vector<double> obs_input_vals_2{val_2};
-			init_network_2->activate(state_vals,
-									 obs_input_vals_2);
-			vector<double> obs_input_vals_3{val_3};
-			init_network_3->activate(state_vals,
-									 obs_input_vals_3);
-			vector<double> obs_input_vals_4{val_4};
-			init_network_4->activate(state_vals,
-									 obs_input_vals_4);
-			score_network->activate(state_vals);
-
-			cout << "w/o obs: " << score_network->output->acti_vals(0) << endl;
-		}
-
-		{
-			vector<double> state_vals(4, 0.0);
-
-			vector<double> obs_input_vals_1{val_1};
-			init_network_1->activate(state_vals,
-									 obs_input_vals_1);
-			vector<double> o_obs_input_vals_1{o_val_1};
-			obs_network_1->activate(state_vals,
-									o_obs_input_vals_1);
-			vector<double> obs_input_vals_2{val_2};
-			init_network_2->activate(state_vals,
-									 obs_input_vals_2);
-			vector<double> o_obs_input_vals_2{o_val_2};
-			obs_network_2->activate(state_vals,
-									o_obs_input_vals_2);
-			vector<double> obs_input_vals_3{val_3};
-			init_network_3->activate(state_vals,
-									 obs_input_vals_3);
-			vector<double> o_obs_input_vals_3{o_val_3};
-			obs_network_3->activate(state_vals,
-									o_obs_input_vals_3);
-			vector<double> obs_input_vals_4{val_4};
-			init_network_4->activate(state_vals,
-									 obs_input_vals_4);
-			vector<double> o_obs_input_vals_4{o_val_4};
-			obs_network_4->activate(state_vals,
-									o_obs_input_vals_4);
-			score_network->activate(state_vals);
-
-			cout << "w obs: " << score_network->output->acti_vals(0) << endl;
-		}
-	}
-
 	double average_max_update = 0.0;
 
 	for (int iter_index = 0; iter_index < 100000; iter_index++) {
-		double val_1 = input_distribution(generator);
+		double target_val = input_distribution(generator);
+
+		double val_1;
+		if (non_match_distribution(generator) == 0) {
+			val_1 = input_distribution(generator);
+		} else {
+			val_1 = target_val;
+		}
 		double val_2 = input_distribution(generator);
 		double val_3 = input_distribution(generator);
 		double val_4 = input_distribution(generator);
 
-		double o_val_1 = input_distribution(generator);
+		double o_val_1 = target_val;
 		double o_val_2 = input_distribution(generator);
 		double o_val_3 = input_distribution(generator);
 		double o_val_4 = input_distribution(generator);
-
-		double target_val = val_1 + val_4 + o_val_2;
 
 		vector<double> state_vals(4, 0.0);
 
@@ -315,116 +259,6 @@ int main(int argc, char* argv[]) {
 			cout << endl;
 		}
 	}
-
-	// InitNetwork* b_init_network_1 = new InitNetwork(init_network_1);
-	// b_init_network_1->add_states(8);
-	// ObsNetwork* b_obs_network_1 = new ObsNetwork(obs_network_1);
-	// b_obs_network_1->add_states(8);
-	// InitNetwork* b_init_network_2 = new InitNetwork(init_network_2);
-	// b_init_network_2->add_states(8);
-	// ObsNetwork* b_obs_network_2 = new ObsNetwork(obs_network_2);
-	// b_obs_network_2->add_states(8);
-	// InitNetwork* b_init_network_3 = new InitNetwork(init_network_3);
-	// b_init_network_3->add_states(8);
-	// ObsNetwork* b_obs_network_3 = new ObsNetwork(obs_network_3);
-	// b_obs_network_3->add_states(8);
-	// InitNetwork* b_init_network_4 = new InitNetwork(init_network_4);
-	// b_init_network_4->add_states(8);
-	// ObsNetwork* b_obs_network_4 = new ObsNetwork(obs_network_4);
-	// b_obs_network_4->add_states(8);
-	// ScoreNetwork* b_score_network = new ScoreNetwork(score_network);
-	// b_score_network->add_states(8);
-
-	// for (int iter_index = 0; iter_index < 10; iter_index++) {
-	// 	cout << iter_index << endl;
-
-	// 	double val_1 = input_distribution(generator);
-	// 	double val_2 = input_distribution(generator);
-	// 	double val_3 = input_distribution(generator);
-	// 	double val_4 = input_distribution(generator);
-
-	// 	double o_val_1 = input_distribution(generator);
-	// 	double o_val_2 = input_distribution(generator);
-	// 	double o_val_3 = input_distribution(generator);
-	// 	double o_val_4 = input_distribution(generator);
-
-	// 	double target_val = val_1 + val_4 + o_val_2;
-	// 	cout << "target_val: " << target_val << endl;
-
-	// 	{
-	// 		vector<double> state_vals(4, 0.0);
-
-	// 		vector<double> obs_input_vals_1{val_1};
-	// 		init_network_1->activate(state_vals,
-	// 								 obs_input_vals_1);
-	// 		vector<double> o_obs_input_vals_1{o_val_1};
-	// 		obs_network_1->activate(state_vals,
-	// 								o_obs_input_vals_1);
-	// 		vector<double> obs_input_vals_2{val_2};
-	// 		init_network_2->activate(state_vals,
-	// 								 obs_input_vals_2);
-	// 		vector<double> o_obs_input_vals_2{o_val_2};
-	// 		obs_network_2->activate(state_vals,
-	// 								o_obs_input_vals_2);
-	// 		vector<double> obs_input_vals_3{val_3};
-	// 		init_network_3->activate(state_vals,
-	// 								 obs_input_vals_3);
-	// 		vector<double> o_obs_input_vals_3{o_val_3};
-	// 		obs_network_3->activate(state_vals,
-	// 								o_obs_input_vals_3);
-	// 		vector<double> obs_input_vals_4{val_4};
-	// 		init_network_4->activate(state_vals,
-	// 								 obs_input_vals_4);
-	// 		vector<double> o_obs_input_vals_4{o_val_4};
-	// 		obs_network_4->activate(state_vals,
-	// 								o_obs_input_vals_4);
-	// 		score_network->activate(state_vals);
-
-	// 		cout << "w/0 new_state: " << score_network->output->acti_vals(0) << endl;
-	// 		cout << "state_vals:";
-	// 		for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
-	// 			cout << " " << state_vals[s_index];
-	// 		}
-	// 		cout << endl;
-	// 	}
-
-	// 	{
-	// 		vector<double> state_vals(8, 0.0);
-
-	// 		vector<double> obs_input_vals_1{val_1};
-	// 		b_init_network_1->activate(state_vals,
-	// 								 obs_input_vals_1);
-	// 		vector<double> o_obs_input_vals_1{o_val_1};
-	// 		b_obs_network_1->activate(state_vals,
-	// 								o_obs_input_vals_1);
-	// 		vector<double> obs_input_vals_2{val_2};
-	// 		b_init_network_2->activate(state_vals,
-	// 								 obs_input_vals_2);
-	// 		vector<double> o_obs_input_vals_2{o_val_2};
-	// 		b_obs_network_2->activate(state_vals,
-	// 								o_obs_input_vals_2);
-	// 		vector<double> obs_input_vals_3{val_3};
-	// 		b_init_network_3->activate(state_vals,
-	// 								 obs_input_vals_3);
-	// 		vector<double> o_obs_input_vals_3{o_val_3};
-	// 		b_obs_network_3->activate(state_vals,
-	// 								o_obs_input_vals_3);
-	// 		vector<double> obs_input_vals_4{val_4};
-	// 		b_init_network_4->activate(state_vals,
-	// 								 obs_input_vals_4);
-	// 		vector<double> o_obs_input_vals_4{o_val_4};
-	// 		b_obs_network_4->activate(state_vals,
-	// 								o_obs_input_vals_4);
-	// 		b_score_network->activate(state_vals);
-
-	// 		cout << "w new_state: " << b_score_network->output->acti_vals(0) << endl;
-	// 		cout << "state_vals:";
-	// 		for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
-	// 			cout << " " << state_vals[s_index];
-	// 		}
-	// 		cout << endl;
-	// 	}
-	// }
 
 	cout << "Done" << endl;
 }

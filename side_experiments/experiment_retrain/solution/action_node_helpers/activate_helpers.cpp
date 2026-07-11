@@ -6,6 +6,7 @@
 #include "obs_network.h"
 #include "problem.h"
 #include "scope.h"
+#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -32,8 +33,12 @@ void ActionNode::step_callback(vector<double>& obs,
 								obs);
 
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
-		this->init_networks[n_index]->activate(wrapper->state,
-											   obs);
+		if (match_dependency_helper(wrapper,
+									this->init_network_scope_contexts[n_index],
+									this->init_network_node_contexts[n_index])) {
+			this->init_networks[n_index]->activate(wrapper->state,
+												   obs);
+		}
 	}
 
 	wrapper->node_context.back() = this->next_node;

@@ -16,7 +16,6 @@ public:
 
 	Layer* hidden_1;
 	Layer* hidden_2;
-	Layer* hidden_3;
 	Layer* output;
 
 	ActionNetwork(int num_states,
@@ -33,7 +32,6 @@ public:
 
 	void backprop(std::vector<double>& state_errors);
 
-	void get_max_update(double& max_update);
 	void update_weights(double learning_rate);
 
 	void add_states(int new_num_states);
@@ -47,7 +45,6 @@ public:
 	std::vector<double> action_input_history;
 	std::vector<double> hidden_1_history;
 	std::vector<double> hidden_2_history;
-	std::vector<double> hidden_3_history;
 
 	ActionNetworkHistory(ActionNetwork* network);
 };

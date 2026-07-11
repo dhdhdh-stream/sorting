@@ -7,6 +7,7 @@
 #include "init_network.h"
 #include "scope.h"
 #include "score_network.h"
+#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -22,12 +23,16 @@ void NoopNode::experiment_step(vector<double>& obs,
 	scope_history->node_histories[this->id] = history;
 
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
-		this->init_networks[n_index]->activate(wrapper->state,
-											   obs);
-		if (!wrapper->should_explore) {
-			InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
-			this->init_networks[n_index]->save(init_network_history);
-			wrapper->network_histories.push_back(init_network_history);
+		if (match_dependency_helper(wrapper,
+									this->init_network_scope_contexts[n_index],
+									this->init_network_node_contexts[n_index])) {
+			this->init_networks[n_index]->activate(wrapper->state,
+												   obs);
+			if (!wrapper->should_explore) {
+				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
+				this->init_networks[n_index]->save(init_network_history);
+				wrapper->network_histories.push_back(init_network_history);
+			}
 		}
 	}
 

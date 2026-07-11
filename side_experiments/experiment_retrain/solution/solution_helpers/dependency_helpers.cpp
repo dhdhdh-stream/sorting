@@ -3,6 +3,7 @@
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
@@ -136,20 +137,50 @@ void fetch_dependency_helper(ScopeHistory* scope_history,
 }
 
 void add_dependency_helper(Scope* scope,
+						   vector<Scope*>& init_network_scope_context,
 						   vector<int>& dependency,
 						   int l_index,
 						   InitNetwork* init_network) {
+	init_network_scope_context.push_back(scope);
+
 	if (l_index == (int)dependency.size()-1) {
 		if (dependency[l_index] == -1) {
+			scope->start_init_network_scope_contexts.push_back(init_network_scope_context);
+			scope->start_init_network_node_contexts.push_back(dependency);
 			scope->start_init_networks.push_back(init_network);
 		} else {
+			scope->nodes[dependency[l_index]]->init_network_scope_contexts.push_back(init_network_scope_context);
+			scope->nodes[dependency[l_index]]->init_network_node_contexts.push_back(dependency);
 			scope->nodes[dependency[l_index]]->init_networks.push_back(init_network);
 		}
 	} else {
 		ScopeNode* scope_node = (ScopeNode*)scope->nodes[dependency[l_index]];
 		add_dependency_helper(scope_node->scope,
+							  init_network_scope_context,
 							  dependency,
 							  l_index+1,
 							  init_network);
+	}
+}
+
+bool match_dependency_helper(SolutionWrapper* wrapper,
+							 vector<Scope*>& scope_contexts,
+							 vector<int>& node_contexts) {
+	if (wrapper->scope_histories.size() < scope_contexts.size()) {
+		return false;
+	} else {
+		bool is_match = true;
+		for (int l_index = 0; l_index < (int)scope_contexts.size()-1; l_index++) {
+			int index = (int)wrapper->scope_histories.size() - (int)scope_contexts.size() + l_index;
+			if (wrapper->scope_histories[index]->scope != scope_contexts[l_index]) {
+				is_match = false;
+				break;
+			}
+			if (wrapper->node_context[index]->id != node_contexts[l_index]) {
+				is_match = false;
+				break;
+			}
+		}
+		return is_match;
 	}
 }

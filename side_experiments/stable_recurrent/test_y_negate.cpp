@@ -30,33 +30,28 @@ int main(int argc, char* argv[]) {
 												  1);
 	double init_1_hidden_1_average_max_update = 0.0;
 	double init_1_hidden_2_average_max_update = 0.0;
-	double init_1_hidden_3_average_max_update = 0.0;
 	double init_1_output_average_max_update = 0.0;
 	InitNetwork* init_network_2 = new InitNetwork(init_states,
 												  4,
 												  1);
 	double init_2_hidden_1_average_max_update = 0.0;
 	double init_2_hidden_2_average_max_update = 0.0;
-	double init_2_hidden_3_average_max_update = 0.0;
 	double init_2_output_average_max_update = 0.0;
 	InitNetwork* init_network_3 = new InitNetwork(init_states,
 												  4,
 												  1);
 	double init_3_hidden_1_average_max_update = 0.0;
 	double init_3_hidden_2_average_max_update = 0.0;
-	double init_3_hidden_3_average_max_update = 0.0;
 	double init_3_output_average_max_update = 0.0;
 	InitNetwork* init_network_4 = new InitNetwork(init_states,
 												  4,
 												  1);
 	double init_4_hidden_1_average_max_update = 0.0;
 	double init_4_hidden_2_average_max_update = 0.0;
-	double init_4_hidden_3_average_max_update = 0.0;
 	double init_4_output_average_max_update = 0.0;
 	ScoreNetwork* score_network = new ScoreNetwork(4);
 	double score_hidden_1_average_max_update = 0.0;
 	double score_hidden_2_average_max_update = 0.0;
-	double score_hidden_3_average_max_update = 0.0;
 	double score_output_average_max_update = 0.0;
 
 	NegateNetwork* negate_network_1 = new NegateNetwork(0);
@@ -82,30 +77,43 @@ int main(int argc, char* argv[]) {
 		double target_val_2 = val_5 + val_8;
 
 		{
-			vector<double> state_vals(4, 0.0);
+			vector<double> state_vals;
+			vector<double> new_state_vals(4, 0.0);
 
 			vector<double> obs_input_vals_1{val_1};
-			init_network_1->activate(state_vals,
-									 obs_input_vals_1);
+			init_network_1->init_activate(state_vals,
+										  new_state_vals,
+										  obs_input_vals_1);
 			vector<double> obs_input_vals_2{val_2};
-			init_network_2->activate(state_vals,
-									 obs_input_vals_2);
+			init_network_2->init_activate(state_vals,
+										  new_state_vals,
+										  obs_input_vals_2);
 			vector<double> obs_input_vals_3{val_3};
-			init_network_3->activate(state_vals,
-									 obs_input_vals_3);
+			init_network_3->init_activate(state_vals,
+										  new_state_vals,
+										  obs_input_vals_3);
 			vector<double> obs_input_vals_4{val_4};
-			init_network_4->activate(state_vals,
-									 obs_input_vals_4);
-			score_network->activate(state_vals);
+			init_network_4->init_activate(state_vals,
+										  new_state_vals,
+										  obs_input_vals_4);
+			vector<double> combined_state;
+			combined_state.insert(combined_state.end(), state_vals.begin(), state_vals.end());
+			combined_state.insert(combined_state.end(), new_state_vals.begin(), new_state_vals.end());
+			score_network->activate(combined_state);
 
-			vector<double> state_errors(4, 0.0);
+			score_network->init_backprop(target_val_1);
 
-			score_network->backprop(target_val_1,
-									state_errors);
-			init_network_4->backprop(state_errors);
-			init_network_3->backprop(state_errors);
-			init_network_2->backprop(state_errors);
-			init_network_1->backprop(state_errors);
+			vector<double> new_state_errors(4, 0.0);
+
+			for (int s_index = 0; s_index < 4; s_index++) {
+				new_state_errors[s_index] = score_network->state_input->errors(s_index);
+				score_network->state_input->errors(s_index) = 0.0;
+			}
+
+			init_network_4->init_backprop(new_state_errors);
+			init_network_3->init_backprop(new_state_errors);
+			init_network_2->init_backprop(new_state_errors);
+			init_network_1->init_backprop(new_state_errors);
 
 			if ((iter_index+1)%10000 == 0) {
 				cout << iter_index << endl;
@@ -121,30 +129,43 @@ int main(int argc, char* argv[]) {
 		}
 
 		{
-			vector<double> state_vals(4, 0.0);
+			vector<double> state_vals;
+			vector<double> new_state_vals(4, 0.0);
 
 			vector<double> obs_input_vals_1{val_5};
-			init_network_1->activate(state_vals,
-									 obs_input_vals_1);
+			init_network_1->init_activate(state_vals,
+										  new_state_vals,
+										  obs_input_vals_1);
 			vector<double> obs_input_vals_2{val_6};
-			init_network_2->activate(state_vals,
-									 obs_input_vals_2);
+			init_network_2->init_activate(state_vals,
+										  new_state_vals,
+										  obs_input_vals_2);
 			vector<double> obs_input_vals_3{val_7};
-			init_network_3->activate(state_vals,
-									 obs_input_vals_3);
+			init_network_3->init_activate(state_vals,
+										  new_state_vals,
+										  obs_input_vals_3);
 			vector<double> obs_input_vals_4{val_8};
-			init_network_4->activate(state_vals,
-									 obs_input_vals_4);
-			score_network->activate(state_vals);
+			init_network_4->init_activate(state_vals,
+										  new_state_vals,
+										  obs_input_vals_4);
+			vector<double> combined_state;
+			combined_state.insert(combined_state.end(), state_vals.begin(), state_vals.end());
+			combined_state.insert(combined_state.end(), new_state_vals.begin(), new_state_vals.end());
+			score_network->activate(combined_state);
 
-			vector<double> state_errors(4, 0.0);
+			score_network->init_backprop(target_val_2);
 
-			score_network->backprop(target_val_2,
-									state_errors);
-			init_network_4->backprop(state_errors);
-			init_network_3->backprop(state_errors);
-			init_network_2->backprop(state_errors);
-			init_network_1->backprop(state_errors);
+			vector<double> new_state_errors(4, 0.0);
+
+			for (int s_index = 0; s_index < 4; s_index++) {
+				new_state_errors[s_index] = score_network->state_input->errors(s_index);
+				score_network->state_input->errors(s_index) = 0.0;
+			}
+
+			init_network_4->init_backprop(new_state_errors);
+			init_network_3->init_backprop(new_state_errors);
+			init_network_2->init_backprop(new_state_errors);
+			init_network_1->init_backprop(new_state_errors);
 
 			if ((iter_index+1)%10000 == 0) {
 				cout << iter_index << endl;
@@ -162,23 +183,18 @@ int main(int argc, char* argv[]) {
 		if ((iter_index+1)%20 == 0) {
 			init_network_1->init_update(init_1_hidden_1_average_max_update,
 										init_1_hidden_2_average_max_update,
-										init_1_hidden_3_average_max_update,
 										init_1_output_average_max_update);
 			init_network_2->init_update(init_2_hidden_1_average_max_update,
 										init_2_hidden_2_average_max_update,
-										init_2_hidden_3_average_max_update,
 										init_2_output_average_max_update);
 			init_network_3->init_update(init_3_hidden_1_average_max_update,
 										init_3_hidden_2_average_max_update,
-										init_3_hidden_3_average_max_update,
 										init_3_output_average_max_update);
 			init_network_4->init_update(init_4_hidden_1_average_max_update,
 										init_4_hidden_2_average_max_update,
-										init_4_hidden_3_average_max_update,
 										init_4_output_average_max_update);
 			score_network->init_update(score_hidden_1_average_max_update,
 									   score_hidden_2_average_max_update,
-									   score_hidden_3_average_max_update,
 									   score_output_average_max_update);
 		}
 	}
@@ -289,6 +305,8 @@ int main(int argc, char* argv[]) {
 		ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(score_network);
 		score_network->save(score_network_history);
 
+		double diff_1 = abs(target_val_1 - score_network->output->acti_vals(0));
+
 		if ((iter_index+1)%10000 == 0) {
 			cout << "target_val_1: " << target_val_1 << endl;
 			cout << "score_network->output->acti_vals(0): " << score_network->output->acti_vals(0) << endl;
@@ -312,6 +330,8 @@ int main(int argc, char* argv[]) {
 		init_network_4->activate(state_vals,
 								 obs_input_vals_8);
 		score_network->activate(state_vals);
+
+		double diff_2 = abs(target_val_2 - score_network->output->acti_vals(0));
 
 		if ((iter_index+1)%10000 == 0) {
 			cout << "target_val_2: " << target_val_2 << endl;
@@ -347,34 +367,38 @@ int main(int argc, char* argv[]) {
 		delete init_network_history_1;
 		init_network_1->backprop(state_errors);
 
-		if ((iter_index+1)%20 == 0) {
-			double max_update = 0.0;
-			init_network_1->get_max_update(max_update);
-			init_network_2->get_max_update(max_update);
-			init_network_3->get_max_update(max_update);
-			init_network_4->get_max_update(max_update);
-			negate_network_1->get_max_update(max_update);
-			negate_network_2->get_max_update(max_update);
-			negate_network_3->get_max_update(max_update);
-			negate_network_4->get_max_update(max_update);
-			score_network->get_max_update(max_update);
-			average_max_update = 0.999*average_max_update + 0.001*max_update;
-			if (max_update > 0.0) {
-				double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/average_max_update;
-				if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
-					learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
-				}
-				init_network_1->update_weights(learning_rate);
-				init_network_2->update_weights(learning_rate);
-				init_network_3->update_weights(learning_rate);
-				init_network_4->update_weights(learning_rate);
-				negate_network_1->update_weights(learning_rate);
-				negate_network_2->update_weights(learning_rate);
-				negate_network_3->update_weights(learning_rate);
-				negate_network_4->update_weights(learning_rate);
-				score_network->update_weights(learning_rate);
+		double max_state_val = 0.0;
+		for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
+			double state_size = abs(state_vals[s_index]);
+			if (state_size > max_state_val) {
+				max_state_val = state_size;
 			}
 		}
+		max_state_val = max(1.0, max_state_val);
+		double max_state_error = 0.0;
+		for (int e_index = 0; e_index < (int)state_errors.size(); e_index++) {
+			double error_size = abs(state_errors[e_index]);
+			if (error_size > max_state_error) {
+				max_state_error = error_size;
+			}
+		}
+		max_state_error = max(max(diff_1, diff_2), max_state_error);
+		double max_update = max_state_val * max_state_error;
+		average_max_update = 0.999*average_max_update + 0.001*max_update;
+		double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/average_max_update;
+		if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
+			learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+		}
+
+		init_network_1->update_weights(learning_rate);
+		init_network_2->update_weights(learning_rate);
+		init_network_3->update_weights(learning_rate);
+		init_network_4->update_weights(learning_rate);
+		negate_network_1->update_weights(learning_rate);
+		negate_network_2->update_weights(learning_rate);
+		negate_network_3->update_weights(learning_rate);
+		negate_network_4->update_weights(learning_rate);
+		score_network->update_weights(learning_rate);
 
 		if ((iter_index+1)%10000 == 0) {
 			cout << "negate_network_1->weight: " << negate_network_1->weight << endl;
