@@ -62,6 +62,8 @@ const int NEW_STATE_MIN_NUM_LAST_TRACK = 10;
 const double NEW_STATE_LAST_BETTER_THAN_RATIO = 0.9;
 #endif /* MDEBUG */
 
+const int VERIFY_NUM_ITERS = 10;
+
 const int GENERALIZE_ITER = 3;
 
 const int EXPERIMENT_REFRESH_NUM_ITERS = 10;

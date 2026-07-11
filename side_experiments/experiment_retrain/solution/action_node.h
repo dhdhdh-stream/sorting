@@ -49,6 +49,13 @@ public:
 	void experiment_step_callback(std::vector<double>& obs,
 								  SolutionWrapper* wrapper);
 
+	void verify_step(std::vector<double>& obs,
+					 int& action,
+					 bool& is_next,
+					 SolutionWrapper* wrapper);
+	void verify_step_callback(std::vector<double>& obs,
+							  SolutionWrapper* wrapper);
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 	void link(Solution* parent_solution);

@@ -142,6 +142,8 @@ bool ExploreExperiment::further_than(ExploreExperiment* other) {
 
 ExploreExperimentHistory::ExploreExperimentHistory(ExploreExperiment* experiment) {
 	this->experiment = experiment;
+
+	this->new_node_verify_states = vector<vector<vector<double>>>(experiment->best_step_types.size());
 }
 
 ExploreExperimentState::ExploreExperimentState(ExploreExperiment* experiment) {

@@ -102,6 +102,8 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			new_action_node->obs_network = new ObsNetwork(wrapper->solution->num_states,
 														  wrapper->solution->num_obs);
 
+			new_action_node->verify_states = this->new_node_verify_states[s_index];
+
 			new_nodes.push_back(new_action_node);
 		} else {
 			ScopeNode* new_scope_node = new ScopeNode();
@@ -112,6 +114,8 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			new_scope_node->score_network = new ScoreNetwork(new_network);
 
 			new_scope_node->scope = this->best_scopes[s_index];
+
+			new_scope_node->verify_states = this->new_node_verify_states[s_index];
 
 			new_nodes.push_back(new_scope_node);
 		}
@@ -387,6 +391,8 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;
 
+	new_branch_node->verify_states = this->branch_node_verify_states;
+
 	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
 		int next_node_id;
 		AbstractNode* next_node;
@@ -417,6 +423,9 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 
 		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
 	}
+
+	wrapper->verify_problems = this->verify_problems;
+	wrapper->verify_starting_run_seeds = this->verify_starting_run_seeds;
 
 	wrapper->solution->timestamp++;
 	// if ((int)wrapper->solution->improvement_history.size() >= STUCK_NUM_ITERS) {

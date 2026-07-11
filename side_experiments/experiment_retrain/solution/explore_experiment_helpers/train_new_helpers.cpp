@@ -406,6 +406,8 @@ void ExploreExperiment::train_new_backprop(
 						this->new_sum_scores = 0.0;
 						this->new_count = 0;
 
+						this->new_node_verify_states = vector<vector<vector<double>>>(this->best_step_types.size());
+
 						this->state = EXPLORE_EXPERIMENT_STATE_MEASURE_REUSE;
 						this->state_iter = 0;
 					} else {

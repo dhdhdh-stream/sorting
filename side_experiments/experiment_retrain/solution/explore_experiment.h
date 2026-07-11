@@ -66,6 +66,13 @@ public:
 	double new_sum_scores;
 	int new_count;
 
+	std::vector<Problem*> verify_problems;
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<unsigned long> verify_starting_run_seeds;
+	#endif /* MDEBUG */
+	std::vector<std::vector<double>> branch_node_verify_states;
+	std::vector<std::vector<std::vector<double>>> new_node_verify_states;
+
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,
 					  bool is_branch,
@@ -162,12 +169,17 @@ public:
 	std::vector<std::vector<std::vector<double>>> dependencies_obs_histories;
 	std::vector<std::vector<double>> state_histories;
 
+	std::vector<std::vector<double>> branch_node_verify_states;
+	std::vector<std::vector<std::vector<double>>> new_node_verify_states;
+
 	ExploreExperimentHistory(ExploreExperiment* experiment);
 };
 
 class ExploreExperimentState : public AbstractExperimentState {
 public:
 	int step_index;
+
+	std::vector<double> new_state;
 
 	ExploreExperimentState(ExploreExperiment* experiment);
 };

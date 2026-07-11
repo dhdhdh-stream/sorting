@@ -31,6 +31,11 @@ public:
 	 * - if both paths of BranchNode point to same node, add twice
 	 */
 
+	std::vector<std::vector<double>> verify_states;
+	/**
+	 * - states on exit
+	 */
+
 	virtual ~AbstractNode() {};
 
 	virtual void step(std::vector<double>& obs,
@@ -42,6 +47,11 @@ public:
 								 int& action,
 								 bool& is_next,
 								 SolutionWrapper* wrapper) = 0;
+
+	virtual void verify_step(std::vector<double>& obs,
+							 int& action,
+							 bool& is_next,
+							 SolutionWrapper* wrapper) = 0;
 
 	virtual void save(std::ofstream& output_file) = 0;
 	virtual void link(Solution* parent_solution) = 0;

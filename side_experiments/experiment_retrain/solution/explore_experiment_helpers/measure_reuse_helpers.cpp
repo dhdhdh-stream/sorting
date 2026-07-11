@@ -9,6 +9,7 @@
 #include "negate_network.h"
 #include "noop_node.h"
 #include "obs_network.h"
+#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "score_network.h"
@@ -70,6 +71,8 @@ void ExploreExperiment::measure_reuse_check_activate(
 		this->measure_new_network->activate(wrapper->state);
 		double new_predicted = this->measure_new_network->output->acti_vals(0);
 
+		history->branch_node_verify_states.push_back(wrapper->state);
+
 		if (new_predicted >= existing_predicted) {
 			ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
 			new_experiment_state->step_index = 0;
@@ -83,13 +86,20 @@ void ExploreExperiment::measure_reuse_step(vector<double>& obs,
 										   bool& is_next,
 										   SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
+	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
 
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
+		history->new_node_verify_states[experiment_state->step_index-1].push_back(wrapper->state);
+
 		wrapper->node_context.back() = this->exit_next_node;
 
 		delete experiment_state;
 		wrapper->experiment_context.back() = NULL;
 	} else {
+		if (experiment_state->step_index > 0) {
+			history->new_node_verify_states[experiment_state->step_index-1].push_back(wrapper->state);
+		}
+
 		if (this->best_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
 			action = this->best_actions[experiment_state->step_index];
 			is_next = true;
@@ -126,6 +136,19 @@ void ExploreExperiment::measure_reuse_backprop(double target_val,
 											   ExploreExperimentHistory* history,
 											   SolutionWrapper* wrapper) {
 	if (wrapper->should_explore) {
+		if (this->state_iter < VERIFY_NUM_ITERS) {
+			this->verify_problems.push_back(wrapper->problem->copy_and_reset());
+			#if defined(MDEBUG) && MDEBUG
+			this->verify_starting_run_seeds.push_back(wrapper->starting_run_seed);
+			#endif /* MDEBUG */
+			this->branch_node_verify_states.insert(this->branch_node_verify_states.begin(),
+				history->branch_node_verify_states.begin(), history->branch_node_verify_states.end());
+			for (int a_index = 0; a_index < (int)this->best_step_types.size(); a_index++) {
+				this->new_node_verify_states[a_index].insert(this->new_node_verify_states[a_index].end(),
+					history->new_node_verify_states[a_index].begin(), history->new_node_verify_states[a_index].end());
+			}
+		}
+
 		this->new_sum_scores += target_val;
 		this->new_count++;
 

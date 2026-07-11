@@ -92,6 +92,31 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
+		while (solution_wrapper->verify_problems.size() > 0) {
+			Problem* problem = solution_wrapper->verify_problems[0];
+			solution_wrapper->verify_problems.erase(solution_wrapper->verify_problems.begin());
+			solution_wrapper->problem = problem;
+
+			vector<double> obs = problem->get_observations();
+
+			solution_wrapper->verify_init(obs);
+
+			while (true) {
+				pair<bool,int> next = solution_wrapper->verify_step(obs);
+				if (next.first) {
+					break;
+				} else {
+					problem->perform_action(next.second);
+				}
+
+				obs = problem->get_observations();
+			}
+
+			solution_wrapper->verify_end();
+
+			delete problem;
+		}
+
 		solution_wrapper->save("saves/", filename);
 
 		solution_wrapper->save_for_display("../", "display.txt");
