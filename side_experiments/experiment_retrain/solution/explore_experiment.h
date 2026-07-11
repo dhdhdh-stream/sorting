@@ -45,6 +45,9 @@ public:
 	 * - -1 if scope start
 	 */
 	std::vector<std::vector<int>> best_dependencies;
+	// TODO: issue here
+	// - do not add inner
+	//   - can trigger multiple times in a way that's not tracked by dependencies
 
 	std::vector<std::vector<bool>> existing_dependencies_is_hit_histories;
 	std::vector<std::vector<std::vector<double>>> existing_dependencies_state_histories;

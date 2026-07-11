@@ -26,8 +26,8 @@ void SolutionWrapper::verify_init(vector<double> obs) {
 	this->scope_histories.push_back(scope_history);
 	this->node_context.push_back(this->solution->starting_scope->nodes[0]);
 
-	this->solution->starting_scope->start_activate(obs,
-												   this);
+	this->solution->starting_scope->verify_start_activate(obs,
+														  this);
 }
 
 pair<bool,int> SolutionWrapper::verify_step(vector<double> obs) {

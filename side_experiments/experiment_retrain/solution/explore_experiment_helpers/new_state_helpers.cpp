@@ -252,6 +252,16 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	#else
 	if (is_success) {
 	#endif /* MDEBUG */
+		// temp
+		cout << "this->best_dependencies:" << endl;
+		for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
+			cout << d_index << ":";
+			for (int l_index = 0; l_index < (int)this->best_dependencies[d_index].size(); l_index++) {
+				cout << " " << this->best_dependencies[d_index][l_index];
+			}
+			cout << endl;
+		}
+
 		// for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
 		// 	NegateNetwork* new_negate_network = new NegateNetwork(wrapper->solution->num_states + s_index);
 		// 	this->scope_context->start_negate_networks.push_back(new_negate_network);

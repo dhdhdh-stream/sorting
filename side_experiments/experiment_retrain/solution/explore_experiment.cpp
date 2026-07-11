@@ -117,6 +117,10 @@ ExploreExperiment::~ExploreExperiment() {
 	if (this->measure_new_network != NULL) {
 		delete this->measure_new_network;
 	}
+
+	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
+		delete this->verify_problems[p_index];
+	}
 }
 
 bool ExploreExperiment::further_than(ExploreExperiment* other) {

@@ -16,6 +16,7 @@
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -73,7 +74,32 @@ void ExploreExperiment::measure_reuse_check_activate(
 
 		history->branch_node_verify_states.push_back(wrapper->state);
 
+		// temp
+		if (this->state_iter < VERIFY_NUM_ITERS) {
+			cout << "this->state_iter: " << this->state_iter << endl;
+			#if defined(MDEBUG) && MDEBUG
+			cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
+			#endif /* MDEBUG */
+			wrapper->problem->print();
+		}
+
+		bool is_branch;
 		if (new_predicted >= existing_predicted) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
+
+		#if defined(MDEBUG) && MDEBUG
+		if (wrapper->curr_run_seed%2 == 0) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
+		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
+		#endif /* MDEBUG */
+
+		if (is_branch) {
 			ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
 			new_experiment_state->step_index = 0;
 			wrapper->experiment_context.back() = new_experiment_state;
@@ -89,7 +115,9 @@ void ExploreExperiment::measure_reuse_step(vector<double>& obs,
 	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
 
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
-		history->new_node_verify_states[experiment_state->step_index-1].push_back(wrapper->state);
+		if (this->best_step_types.size() > 0) {
+			history->new_node_verify_states[experiment_state->step_index-1].push_back(wrapper->state);
+		}
 
 		wrapper->node_context.back() = this->exit_next_node;
 
@@ -141,7 +169,7 @@ void ExploreExperiment::measure_reuse_backprop(double target_val,
 			#if defined(MDEBUG) && MDEBUG
 			this->verify_starting_run_seeds.push_back(wrapper->starting_run_seed);
 			#endif /* MDEBUG */
-			this->branch_node_verify_states.insert(this->branch_node_verify_states.begin(),
+			this->branch_node_verify_states.insert(this->branch_node_verify_states.end(),
 				history->branch_node_verify_states.begin(), history->branch_node_verify_states.end());
 			for (int a_index = 0; a_index < (int)this->best_step_types.size(); a_index++) {
 				this->new_node_verify_states[a_index].insert(this->new_node_verify_states[a_index].end(),

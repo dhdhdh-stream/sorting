@@ -425,6 +425,7 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 	}
 
 	wrapper->verify_problems = this->verify_problems;
+	this->verify_problems.clear();
 	wrapper->verify_starting_run_seeds = this->verify_starting_run_seeds;
 
 	wrapper->solution->timestamp++;

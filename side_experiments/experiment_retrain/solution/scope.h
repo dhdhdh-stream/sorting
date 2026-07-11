@@ -51,6 +51,9 @@ public:
 	void experiment_start_activate(std::vector<double>& obs,
 								   SolutionWrapper* wrapper);
 
+	void verify_start_activate(std::vector<double>& obs,
+							   SolutionWrapper* wrapper);
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);

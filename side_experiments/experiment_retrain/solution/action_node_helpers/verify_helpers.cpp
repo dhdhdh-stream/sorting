@@ -36,8 +36,37 @@ void ActionNode::verify_step_callback(vector<double>& obs,
 											   obs);
 	}
 
+	// temp
+	if (wrapper->starting_run_seed == 131) {
+		cout << "this->id: " << this->id << endl;
+		cout << "wrapper->state:";
+		for (int s_index = 0; s_index < (int)wrapper->state.size(); s_index++) {
+			cout << " " << wrapper->state[s_index];
+		}
+		cout << endl;
+		cout << "obs:";
+		for (int o_index = 0; o_index < (int)obs.size(); o_index++) {
+			cout << " " << obs[o_index];
+		}
+		cout << endl;
+	}
+
 	if (this->verify_states.size() > 0) {
 		if (this->verify_states[0] != wrapper->state) {
+			#if defined(MDEBUG) && MDEBUG
+			cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
+			#endif /* MDEBUG */
+			wrapper->problem->print();
+			cout << "this->verify_states[0]:";
+			for (int s_index = 0; s_index < (int)this->verify_states[0].size(); s_index++) {
+				cout << " " << this->verify_states[0][s_index];
+			}
+			cout << endl;
+			cout << "wrapper->state:";
+			for (int s_index = 0; s_index < (int)wrapper->state.size(); s_index++) {
+				cout << " " << wrapper->state[s_index];
+			}
+			cout << endl;
 			throw invalid_argument("this->verify_states[0] != wrapper->state");
 		}
 		this->verify_states.erase(this->verify_states.begin());
