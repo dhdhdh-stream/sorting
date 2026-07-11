@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
+#include "init_network.h"
 #include "noop_node.h"
 #include "problem.h"
 #include "scope.h"
@@ -25,6 +26,9 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 	this->exit_next_node = exit_next_node;
+
+	// temp
+	this->measure_new_network = NULL;
 
 	this->best_surprise = numeric_limits<double>::lowest();
 
@@ -104,6 +108,14 @@ ExploreExperiment::~ExploreExperiment() {
 			}
 		}
 		break;
+	}
+
+	// temp
+	for (int n_index = 0; n_index < (int)this->measure_init_networks.size(); n_index++) {
+		delete this->measure_init_networks[n_index];
+	}
+	if (this->measure_new_network != NULL) {
+		delete this->measure_new_network;
 	}
 }
 
