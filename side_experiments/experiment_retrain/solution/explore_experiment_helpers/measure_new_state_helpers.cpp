@@ -88,20 +88,20 @@ void ExploreExperiment::measure_new_state_check_activate(
 																	obs);
 			}
 
-			// temp
-			if (wrapper->starting_run_seed == 1305) {
-				cout << "d_index: " << d_index << endl;
-				cout << "new_state:";
-				for (int s_index = 0; s_index < (int)new_state.size(); s_index++) {
-					cout << " " << new_state[s_index];
-				}
-				cout << endl;
-				cout << "obs:";
-				for (int o_index = 0; o_index < (int)obs.size(); o_index++) {
-					cout << " " << obs[o_index];
-				}
-				cout << endl;
-			}
+			// // temp
+			// if (wrapper->starting_run_seed == 1305) {
+			// 	cout << "d_index: " << d_index << endl;
+			// 	cout << "new_state:";
+			// 	for (int s_index = 0; s_index < (int)new_state.size(); s_index++) {
+			// 		cout << " " << new_state[s_index];
+			// 	}
+			// 	cout << endl;
+			// 	cout << "obs:";
+			// 	for (int o_index = 0; o_index < (int)obs.size(); o_index++) {
+			// 		cout << " " << obs[o_index];
+			// 	}
+			// 	cout << endl;
+			// }
 		}
 
 		vector<double> combined_state;
@@ -110,15 +110,15 @@ void ExploreExperiment::measure_new_state_check_activate(
 		this->measure_new_network->activate(combined_state);
 		double new_predicted = this->measure_new_network->output->acti_vals(0);
 
-		history->branch_node_verify_states.push_back(combined_state);
+		// history->branch_node_verify_states.push_back(combined_state);
 
-		if (wrapper->starting_run_seed == 630) {
-			cout << "combined_state:";
-			for (int s_index = 0; s_index < (int)combined_state.size(); s_index++) {
-				cout << " " << combined_state[s_index];
-			}
-			cout << endl;
-		}
+		// if (wrapper->starting_run_seed == 630) {
+		// 	cout << "combined_state:";
+		// 	for (int s_index = 0; s_index < (int)combined_state.size(); s_index++) {
+		// 		cout << " " << combined_state[s_index];
+		// 	}
+		// 	cout << endl;
+		// }
 
 		bool is_branch;
 		if (new_predicted >= existing_predicted) {
@@ -136,15 +136,15 @@ void ExploreExperiment::measure_new_state_check_activate(
 		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 		#endif /* MDEBUG */
 
-		// temp
-		if (this->state_iter < VERIFY_NUM_ITERS) {
-			cout << "this->state_iter: " << this->state_iter << endl;
-			#if defined(MDEBUG) && MDEBUG
-			cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
-			#endif /* MDEBUG */
-			wrapper->problem->print();
-			cout << "is_branch: " << is_branch << endl;
-		}
+		// // temp
+		// if (this->state_iter < VERIFY_NUM_ITERS) {
+		// 	cout << "this->state_iter: " << this->state_iter << endl;
+		// 	#if defined(MDEBUG) && MDEBUG
+		// 	cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
+		// 	#endif /* MDEBUG */
+		// 	wrapper->problem->print();
+		// 	cout << "is_branch: " << is_branch << endl;
+		// }
 
 		if (is_branch) {
 			ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
@@ -160,47 +160,47 @@ void ExploreExperiment::measure_new_state_step(vector<double>& obs,
 											   bool& is_next,
 											   SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
-	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
+	// ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
 
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
-		if (this->best_step_types.size() > 0) {
-			vector<double> combined_state;
-			combined_state.insert(combined_state.end(), wrapper->state.begin(), wrapper->state.end());
-			combined_state.insert(combined_state.end(), experiment_state->new_state.begin(), experiment_state->new_state.end());
-			history->new_node_verify_states[experiment_state->step_index-1].push_back(combined_state);
+		// if (this->best_step_types.size() > 0) {
+		// 	vector<double> combined_state;
+		// 	combined_state.insert(combined_state.end(), wrapper->state.begin(), wrapper->state.end());
+		// 	combined_state.insert(combined_state.end(), experiment_state->new_state.begin(), experiment_state->new_state.end());
+		// 	history->new_node_verify_states[experiment_state->step_index-1].push_back(combined_state);
 
-			// temp
-			if (wrapper->starting_run_seed == 1305) {
-				cout << "experiment_state->step_index: " << experiment_state->step_index << endl;
-				cout << "combined_state:";
-				for (int s_index = 0; s_index < (int)combined_state.size(); s_index++) {
-					cout << " " << combined_state[s_index];
-				}
-				cout << endl;
-			}
-		}
+		// 	// // temp
+		// 	// if (wrapper->starting_run_seed == 1305) {
+		// 	// 	cout << "experiment_state->step_index: " << experiment_state->step_index << endl;
+		// 	// 	cout << "combined_state:";
+		// 	// 	for (int s_index = 0; s_index < (int)combined_state.size(); s_index++) {
+		// 	// 		cout << " " << combined_state[s_index];
+		// 	// 	}
+		// 	// 	cout << endl;
+		// 	// }
+		// }
 
 		wrapper->node_context.back() = this->exit_next_node;
 
 		delete experiment_state;
 		wrapper->experiment_context.back() = NULL;
 	} else {
-		if (experiment_state->step_index > 0) {
-			vector<double> combined_state;
-			combined_state.insert(combined_state.end(), wrapper->state.begin(), wrapper->state.end());
-			combined_state.insert(combined_state.end(), experiment_state->new_state.begin(), experiment_state->new_state.end());
-			history->new_node_verify_states[experiment_state->step_index-1].push_back(combined_state);
+		// if (experiment_state->step_index > 0) {
+		// 	vector<double> combined_state;
+		// 	combined_state.insert(combined_state.end(), wrapper->state.begin(), wrapper->state.end());
+		// 	combined_state.insert(combined_state.end(), experiment_state->new_state.begin(), experiment_state->new_state.end());
+		// 	history->new_node_verify_states[experiment_state->step_index-1].push_back(combined_state);
 
-			// temp
-			if (wrapper->starting_run_seed == 1305) {
-				cout << "experiment_state->step_index: " << experiment_state->step_index << endl;
-				cout << "combined_state:";
-				for (int s_index = 0; s_index < (int)combined_state.size(); s_index++) {
-					cout << " " << combined_state[s_index];
-				}
-				cout << endl;
-			}
-		}
+		// 	// // temp
+		// 	// if (wrapper->starting_run_seed == 1305) {
+		// 	// 	cout << "experiment_state->step_index: " << experiment_state->step_index << endl;
+		// 	// 	cout << "combined_state:";
+		// 	// 	for (int s_index = 0; s_index < (int)combined_state.size(); s_index++) {
+		// 	// 		cout << " " << combined_state[s_index];
+		// 	// 	}
+		// 	// 	cout << endl;
+		// 	// }
+		// }
 
 		if (this->best_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
 			action = this->best_actions[experiment_state->step_index];
@@ -238,30 +238,30 @@ void ExploreExperiment::measure_new_state_backprop(double target_val,
 												   ExploreExperimentHistory* history,
 												   SolutionWrapper* wrapper) {
 	if (wrapper->should_explore) {
-		if (this->state_iter < VERIFY_NUM_ITERS) {
-			// temp
-			if (wrapper->starting_run_seed == 1305) {
-				cout << "this->new_node_verify_states[0]:" << endl;
-				for (int i_index = 0; i_index < (int)this->new_node_verify_states[0].size(); i_index++) {
-					cout << i_index << ":";
-					for (int s_index = 0; s_index < (int)this->new_node_verify_states[0][i_index].size(); s_index++) {
-						cout << " " << this->new_node_verify_states[0][i_index][s_index];
-					}
-					cout << endl;
-				}
-			}
+		// if (this->state_iter < VERIFY_NUM_ITERS) {
+		// 	// // temp
+		// 	// if (wrapper->starting_run_seed == 1305) {
+		// 	// 	cout << "this->new_node_verify_states[0]:" << endl;
+		// 	// 	for (int i_index = 0; i_index < (int)this->new_node_verify_states[0].size(); i_index++) {
+		// 	// 		cout << i_index << ":";
+		// 	// 		for (int s_index = 0; s_index < (int)this->new_node_verify_states[0][i_index].size(); s_index++) {
+		// 	// 			cout << " " << this->new_node_verify_states[0][i_index][s_index];
+		// 	// 		}
+		// 	// 		cout << endl;
+		// 	// 	}
+		// 	// }
 
-			this->verify_problems.push_back(wrapper->problem->copy_and_reset());
-			#if defined(MDEBUG) && MDEBUG
-			this->verify_starting_run_seeds.push_back(wrapper->starting_run_seed);
-			#endif /* MDEBUG */
-			this->branch_node_verify_states.insert(this->branch_node_verify_states.end(),
-				history->branch_node_verify_states.begin(), history->branch_node_verify_states.end());
-			for (int a_index = 0; a_index < (int)this->best_step_types.size(); a_index++) {
-				this->new_node_verify_states[a_index].insert(this->new_node_verify_states[a_index].end(),
-					history->new_node_verify_states[a_index].begin(), history->new_node_verify_states[a_index].end());
-			}
-		}
+		// 	this->verify_problems.push_back(wrapper->problem->copy_and_reset());
+		// 	#if defined(MDEBUG) && MDEBUG
+		// 	this->verify_starting_run_seeds.push_back(wrapper->starting_run_seed);
+		// 	#endif /* MDEBUG */
+		// 	this->branch_node_verify_states.insert(this->branch_node_verify_states.end(),
+		// 		history->branch_node_verify_states.begin(), history->branch_node_verify_states.end());
+		// 	for (int a_index = 0; a_index < (int)this->best_step_types.size(); a_index++) {
+		// 		this->new_node_verify_states[a_index].insert(this->new_node_verify_states[a_index].end(),
+		// 			history->new_node_verify_states[a_index].begin(), history->new_node_verify_states[a_index].end());
+		// 	}
+		// }
 
 		this->new_sum_scores += target_val;
 		this->new_count++;

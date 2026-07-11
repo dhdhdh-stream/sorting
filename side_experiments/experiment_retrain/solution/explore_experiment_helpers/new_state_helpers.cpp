@@ -328,7 +328,9 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		// }
 
 		// for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
+		// 	vector<Scope*> init_network_scope_context;
 		// 	add_dependency_helper(this->scope_context,
+		// 						  init_network_scope_context,
 		// 						  this->best_dependencies[d_index],
 		// 						  0,
 		// 						  init_networks[d_index]);

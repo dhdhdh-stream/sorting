@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -176,7 +178,8 @@ bool match_dependency_helper(SolutionWrapper* wrapper,
 				is_match = false;
 				break;
 			}
-			if (wrapper->node_context[index]->id != node_contexts[l_index]) {
+			if (wrapper->node_context[index] == NULL
+					|| wrapper->node_context[index]->id != node_contexts[l_index]) {
 				is_match = false;
 				break;
 			}
