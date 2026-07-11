@@ -134,6 +134,10 @@ void ExploreExperiment::train_new_step(vector<double>& obs,
 			wrapper->scope_histories.push_back(inner_scope_history);
 			wrapper->node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
+
+			this->best_scopes[experiment_state->step_index]->experiment_start_activate(
+				obs,
+				wrapper);
 		}
 	}
 }
@@ -314,7 +318,7 @@ void ExploreExperiment::train_new_backprop(
 
 				if (local_improvement > 0.0) {
 					bool is_success = false;
-					if (this->scope_context->reuse_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+					if (this->scope_context->reuse_last_scores.size() >= REUSE_MIN_NUM_LAST_TRACK) {
 						int num_better_than = 0;
 						for (list<double>::iterator it = this->scope_context->reuse_last_scores.begin();
 								it != this->scope_context->reuse_last_scores.end(); it++) {
@@ -323,13 +327,13 @@ void ExploreExperiment::train_new_backprop(
 							}
 						}
 
-						double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->reuse_last_scores.size();
+						double target_better_than = REUSE_LAST_BETTER_THAN_RATIO * (double)this->scope_context->reuse_last_scores.size();
 
 						if (num_better_than >= target_better_than) {
 							is_success = true;
 						}
 
-						if (this->scope_context->reuse_last_scores.size() >= NUM_LAST_TRACK) {
+						if (this->scope_context->reuse_last_scores.size() >= REUSE_NUM_LAST_TRACK) {
 							this->scope_context->reuse_last_scores.pop_front();
 						}
 						this->scope_context->reuse_last_scores.push_back(global_improvement);

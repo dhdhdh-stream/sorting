@@ -263,6 +263,10 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 			wrapper->scope_histories.push_back(inner_scope_history);
 			wrapper->node_context.push_back(history->curr_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
+
+			history->curr_scopes[experiment_state->step_index]->experiment_start_activate(
+				obs,
+				wrapper);
 		}
 	}
 }

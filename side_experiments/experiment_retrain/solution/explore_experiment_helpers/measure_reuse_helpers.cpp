@@ -21,7 +21,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_REUSE_NUM_ITERS = 20;
 #else
-const int MEASURE_REUSE_NUM_ITERS = 2000;
+const int MEASURE_REUSE_NUM_ITERS = 10000;
 #endif /* MDEBUG */
 
 void ExploreExperiment::measure_reuse_check_activate(
@@ -102,6 +102,10 @@ void ExploreExperiment::measure_reuse_step(vector<double>& obs,
 			wrapper->scope_histories.push_back(inner_scope_history);
 			wrapper->node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
+
+			this->best_scopes[experiment_state->step_index]->experiment_start_activate(
+				obs,
+				wrapper);
 		}
 	}
 }

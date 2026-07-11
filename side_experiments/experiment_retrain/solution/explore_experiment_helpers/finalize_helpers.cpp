@@ -510,4 +510,10 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 	/**
 	 * - reset all other experiments
 	 */
+
+	// temp
+	{
+		double val_average = measure_helper(wrapper);
+		cout << "post val_average: " << val_average << endl;
+	}
 }
