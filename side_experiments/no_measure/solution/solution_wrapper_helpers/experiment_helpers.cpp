@@ -95,16 +95,16 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	if (!this->should_explore) {
-		set<BranchNode*> hit_original;
-		set<BranchNode*> hit_branch;
-		update_helper(this->scope_histories[0],
-					  result,
-					  hit_original,
-					  hit_branch);
-		update_helper(hit_original,
-					  hit_branch);
-	}
+	set<BranchNode*> hit_original;
+	set<BranchNode*> hit_branch;
+	update_helper(this->scope_histories[0],
+				  result,
+				  this,
+				  hit_original,
+				  hit_branch);
+	update_helper(hit_original,
+				  hit_branch,
+				  this);
 
 	if (this->explore_experiment_histories.size() == 0) {
 		create_experiment(this->scope_histories[0],

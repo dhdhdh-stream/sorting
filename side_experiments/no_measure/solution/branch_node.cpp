@@ -27,6 +27,8 @@ BranchNode::~BranchNode() {
 	if (this->prev_branch_network != NULL) {
 		delete this->prev_branch_network;
 	}
+	delete this->explore_original_network;
+	delete this->explore_branch_network;
 
 	if (this->original_experiment != NULL) {
 		delete this->original_experiment;
@@ -48,6 +50,9 @@ void BranchNode::save(ofstream& output_file) {
 	if (this->prev_branch_network != NULL) {
 		this->prev_branch_network->save(output_file);
 	}
+
+	this->explore_original_network->save(output_file);
+	this->explore_branch_network->save(output_file);
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
@@ -86,6 +91,9 @@ void BranchNode::load(ifstream& input_file,
 	} else {
 		this->prev_branch_network = new Network(input_file);
 	}
+
+	this->explore_original_network = new Network(input_file);
+	this->explore_branch_network = new Network(input_file);
 
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);

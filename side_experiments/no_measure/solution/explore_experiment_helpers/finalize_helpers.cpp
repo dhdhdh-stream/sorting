@@ -319,9 +319,11 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	new_branch_node->original_network = this->existing_network;
 	new_branch_node->prev_original_network = NULL;
 	this->existing_network = NULL;
+	new_branch_node->explore_original_network = new Network(new_branch_node->original_network);
 	new_branch_node->branch_network = this->new_network;
 	new_branch_node->prev_branch_network = NULL;
 	this->new_network = NULL;
+	new_branch_node->explore_branch_network = new Network(new_branch_node->branch_network);
 
 	new_branch_node->ramp = 0;
 	/**

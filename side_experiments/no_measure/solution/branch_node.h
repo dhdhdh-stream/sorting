@@ -29,6 +29,9 @@ public:
 	Network* prev_original_network;
 	Network* prev_branch_network;
 
+	Network* explore_original_network;
+	Network* explore_branch_network;
+
 	int original_next_node_id;
 	AbstractNode* original_next_node;
 	int branch_next_node_id;
