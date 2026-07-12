@@ -1,0 +1,162 @@
+#include "branch_node.h"
+
+#include <iostream>
+
+#include "abstract_experiment.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "scope.h"
+#include "solution.h"
+
+using namespace std;
+
+BranchNode::BranchNode() {
+	this->type = NODE_TYPE_BRANCH;
+
+	this->original_experiment = NULL;
+	this->branch_experiment = NULL;
+}
+
+BranchNode::~BranchNode() {
+	delete this->original_network;
+	delete this->branch_network;
+	if (this->prev_original_network != NULL) {
+		delete this->prev_original_network;
+	}
+	if (this->prev_branch_network != NULL) {
+		delete this->prev_branch_network;
+	}
+
+	if (this->original_experiment != NULL) {
+		delete this->original_experiment;
+	}
+	if (this->branch_experiment != NULL) {
+		delete this->branch_experiment;
+	}
+}
+
+void BranchNode::save(ofstream& output_file) {
+	this->original_network->save(output_file);
+	this->branch_network->save(output_file);
+
+	output_file << (this->prev_original_network == NULL) << endl;
+	if (this->prev_original_network != NULL) {
+		this->prev_original_network->save(output_file);
+	}
+	output_file << (this->prev_branch_network == NULL) << endl;
+	if (this->prev_branch_network != NULL) {
+		this->prev_branch_network->save(output_file);
+	}
+
+	output_file << this->original_next_node_id << endl;
+	output_file << this->branch_next_node_id << endl;
+
+	output_file << this->ramp << endl;
+	output_file << this->ramp_num_gears << endl;
+	output_file << this->ramp_iter << endl;
+
+	output_file << this->consec_original << endl;
+	output_file << this->consec_branch << endl;
+
+	output_file << this->ancestor_ids.size() << endl;
+	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
+		output_file << this->ancestor_ids[a_index] << endl;
+	}
+}
+
+void BranchNode::load(ifstream& input_file,
+					  Solution* parent_solution) {
+	this->original_network = new Network(input_file);
+	this->branch_network = new Network(input_file);
+
+	string prev_original_network_is_null_line;
+	getline(input_file, prev_original_network_is_null_line);
+	bool prev_original_network_is_null = stoi(prev_original_network_is_null_line);
+	if (prev_original_network_is_null) {
+		this->prev_original_network = NULL;
+	} else {
+		this->prev_original_network = new Network(input_file);
+	}
+	string prev_branch_network_is_null_line;
+	getline(input_file, prev_branch_network_is_null_line);
+	bool prev_branch_network_is_null = stoi(prev_branch_network_is_null_line);
+	if (prev_branch_network_is_null) {
+		this->prev_branch_network = NULL;
+	} else {
+		this->prev_branch_network = new Network(input_file);
+	}
+
+	string original_next_node_id_line;
+	getline(input_file, original_next_node_id_line);
+	this->original_next_node_id = stoi(original_next_node_id_line);
+
+	string branch_next_node_id_line;
+	getline(input_file, branch_next_node_id_line);
+	this->branch_next_node_id = stoi(branch_next_node_id_line);
+
+	string ramp_line;
+	getline(input_file, ramp_line);
+	this->ramp = stoi(ramp_line);
+
+	string ramp_num_gears_line;
+	getline(input_file, ramp_num_gears_line);
+	this->ramp_num_gears = stoi(ramp_num_gears_line);
+
+	// temp
+	cout << "this->ramp_num_gears: " << this->ramp_num_gears << endl;
+
+	string ramp_iter_line;
+	getline(input_file, ramp_iter_line);
+	this->ramp_iter = stoi(ramp_iter_line);
+
+	string consec_original_line;
+	getline(input_file, consec_original_line);
+	this->consec_original = stoi(consec_original_line);
+
+	// temp
+	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
+		cout << "this->consec_original >= CONSEC_DEPRECATE_LIMIT" << endl;
+	}
+
+	string consec_branch_line;
+	getline(input_file, consec_branch_line);
+	this->consec_branch = stoi(consec_branch_line);
+
+	// temp
+	if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {
+		cout << "this->consec_branch >= CONSEC_DEPRECATE_LIMIT" << endl;
+	}
+
+	string num_ancestors_line;
+	getline(input_file, num_ancestors_line);
+	int num_ancestors = stoi(num_ancestors_line);
+	for (int a_index = 0; a_index < num_ancestors; a_index++) {
+		string ancestor_id_line;
+		getline(input_file, ancestor_id_line);
+		this->ancestor_ids.push_back(stoi(ancestor_id_line));
+	}
+}
+
+void BranchNode::link(Solution* parent_solution) {
+	if (this->original_next_node_id == -1) {
+		this->original_next_node = NULL;
+	} else {
+		this->original_next_node = this->parent->nodes[this->original_next_node_id];
+	}
+
+	if (this->branch_next_node_id == -1) {
+		this->branch_next_node = NULL;
+	} else {
+		this->branch_next_node = this->parent->nodes[this->branch_next_node_id];
+	}
+}
+
+void BranchNode::save_for_display(ofstream& output_file) {
+	output_file << this->original_next_node_id << endl;
+	output_file << this->branch_next_node_id << endl;
+}
+
+BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
+	this->node = node;
+}
