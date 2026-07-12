@@ -29,11 +29,18 @@ Scope::~Scope() {
 	for (int n_index = 0; n_index < (int)this->start_negate_networks.size(); n_index++) {
 		delete this->start_negate_networks[n_index];
 	}
+	for (int n_index = 0; n_index < (int)this->prev_start_negate_networks.size(); n_index++) {
+		delete this->prev_start_negate_networks[n_index];
+	}
 
 	delete this->start_obs_network;
+	delete this->prev_start_obs_network;
 
 	for (int n_index = 0; n_index < (int)this->start_init_networks.size(); n_index++) {
 		delete this->start_init_networks[n_index];
+	}
+	for (int n_index = 0; n_index < (int)this->prev_start_init_networks.size(); n_index++) {
+		delete this->prev_start_init_networks[n_index];
 	}
 }
 
@@ -52,8 +59,13 @@ void Scope::save(ofstream& output_file) {
 	for (int n_index = 0; n_index < (int)this->start_negate_networks.size(); n_index++) {
 		this->start_negate_networks[n_index]->save(output_file);
 	}
+	output_file << this->prev_start_negate_networks.size() << endl;
+	for (int n_index = 0; n_index < (int)this->prev_start_negate_networks.size(); n_index++) {
+		this->prev_start_negate_networks[n_index]->save(output_file);
+	}
 
 	this->start_obs_network->save(output_file);
+	this->prev_start_obs_network->save(output_file);
 
 	output_file << this->start_init_networks.size() << endl;
 	for (int n_index = 0; n_index < (int)this->start_init_networks.size(); n_index++) {
@@ -64,6 +76,7 @@ void Scope::save(ofstream& output_file) {
 		}
 
 		this->start_init_networks[n_index]->save(output_file);
+		this->prev_start_init_networks[n_index]->save(output_file);
 	}
 
 	output_file << this->child_scopes.size() << endl;
@@ -151,8 +164,15 @@ void Scope::load(ifstream& input_file,
 	for (int n_index = 0; n_index < num_start_negate_networks; n_index++) {
 		this->start_negate_networks.push_back(new NegateNetwork(input_file));
 	}
+	string num_prev_start_negate_networks_line;
+	getline(input_file, num_prev_start_negate_networks_line);
+	int num_prev_start_negate_networks = stoi(num_prev_start_negate_networks_line);
+	for (int n_index = 0; n_index < num_prev_start_negate_networks; n_index++) {
+		this->prev_start_negate_networks.push_back(new NegateNetwork(input_file));
+	}
 
 	this->start_obs_network = new ObsNetwork(input_file);
+	this->prev_start_obs_network = new ObsNetwork(input_file);
 
 	string num_start_init_networks_line;
 	getline(input_file, num_start_init_networks_line);
@@ -174,6 +194,7 @@ void Scope::load(ifstream& input_file,
 		}
 
 		this->start_init_networks.push_back(new InitNetwork(input_file));
+		this->prev_start_init_networks.push_back(new InitNetwork(input_file));
 	}
 
 	string num_child_scopes_line;

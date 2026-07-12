@@ -61,6 +61,7 @@ void Solution::init(ProblemType* problem_type) {
 	this->scopes.push_back(new_scope);
 	new_scope->start_obs_network = new ObsNetwork(this->num_states,
 												  this->num_obs);
+	new_scope->prev_start_obs_network = new ObsNetwork(new_scope->start_obs_network);
 
 	NoopNode* start_node = new NoopNode();
 	start_node->parent = new_scope;

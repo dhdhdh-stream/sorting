@@ -36,6 +36,7 @@ public:
 	 * - run variables
 	 */
 	std::vector<double> state;
+	std::vector<double> prev_state;
 
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<AbstractNode*> node_context;

@@ -30,9 +30,14 @@ BranchNode::~BranchNode() {
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
 		delete this->init_networks[n_index];
 	}
+	for (int n_index = 0; n_index < (int)this->prev_init_networks.size(); n_index++) {
+		delete this->prev_init_networks[n_index];
+	}
 
 	delete this->original_network;
 	delete this->branch_network;
+	delete this->prev_original_network;
+	delete this->prev_branch_network;
 
 	if (this->original_experiment != NULL) {
 		delete this->original_experiment;
@@ -52,10 +57,13 @@ void BranchNode::save(ofstream& output_file) {
 		}
 
 		this->init_networks[n_index]->save(output_file);
+		this->prev_init_networks[n_index]->save(output_file);
 	}
 
 	this->original_network->save(output_file);
 	this->branch_network->save(output_file);
+	this->prev_original_network->save(output_file);
+	this->prev_branch_network->save(output_file);
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
@@ -100,10 +108,13 @@ void BranchNode::load(ifstream& input_file,
 		}
 
 		this->init_networks.push_back(new InitNetwork(input_file));
+		this->prev_init_networks.push_back(new InitNetwork(input_file));
 	}
 
 	this->original_network = new ScoreNetwork(input_file);
 	this->branch_network = new ScoreNetwork(input_file);
+	this->prev_original_network = new ScoreNetwork(input_file);
+	this->prev_branch_network = new ScoreNetwork(input_file);
 
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);

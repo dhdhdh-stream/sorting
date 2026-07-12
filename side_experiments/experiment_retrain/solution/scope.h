@@ -30,10 +30,13 @@ public:
 	 */
 
 	std::vector<NegateNetwork*> start_negate_networks;
+	std::vector<NegateNetwork*> prev_start_negate_networks;
 	ObsNetwork* start_obs_network;
+	ObsNetwork* prev_start_obs_network;
 	std::vector<std::vector<Scope*>> start_init_network_scope_contexts;
 	std::vector<std::vector<int>> start_init_network_node_contexts;
 	std::vector<InitNetwork*> start_init_networks;
+	std::vector<InitNetwork*> prev_start_init_networks;
 	ScoreNetwork* start_score_network;
 	ScoreNetwork* end_score_network;
 

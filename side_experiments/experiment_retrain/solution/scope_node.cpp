@@ -26,6 +26,9 @@ ScopeNode::~ScopeNode() {
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
 		delete this->init_networks[n_index];
 	}
+	for (int n_index = 0; n_index < (int)this->prev_init_networks.size(); n_index++) {
+		delete this->prev_init_networks[n_index];
+	}
 
 	delete this->score_network;
 
@@ -46,6 +49,7 @@ void ScopeNode::save(ofstream& output_file) {
 		}
 
 		this->init_networks[n_index]->save(output_file);
+		this->prev_init_networks[n_index]->save(output_file);
 	}
 
 	this->score_network->save(output_file);
@@ -87,6 +91,7 @@ void ScopeNode::load(ifstream& input_file,
 		}
 
 		this->init_networks.push_back(new InitNetwork(input_file));
+		this->prev_init_networks.push_back(new InitNetwork(input_file));
 	}
 
 	this->score_network = new ScoreNetwork(input_file);

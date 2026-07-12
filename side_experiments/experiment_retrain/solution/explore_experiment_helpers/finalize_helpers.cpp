@@ -8,6 +8,8 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "init_network.h"
+#include "negate_network.h"
 #include "noop_node.h"
 #include "obs_network.h"
 #include "scope.h"
@@ -101,6 +103,7 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			new_action_node->action = this->best_actions[s_index];
 			new_action_node->obs_network = new ObsNetwork(wrapper->solution->num_states,
 														  wrapper->solution->num_obs);
+			new_action_node->prev_obs_network = new ObsNetwork(new_action_node->obs_network);
 
 			// new_action_node->verify_states = this->new_node_verify_states[s_index];
 
@@ -344,7 +347,9 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
 	new_branch_node->original_network = new ScoreNetwork(existing_network);
+	new_branch_node->prev_original_network = new ScoreNetwork(new_branch_node->original_network);
 	new_branch_node->branch_network = new_network;
+	new_branch_node->prev_branch_network = new ScoreNetwork(new_branch_node->branch_network);
 
 	new_branch_node->ramp = 0;
 	double average_instances_per_hit;
@@ -428,6 +433,60 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 	// this->verify_problems.clear();
 	// wrapper->verify_starting_run_seeds = this->verify_starting_run_seeds;
 
+	/**
+	 * - simply update maintain here and re-copy maintain networks for new nodes
+	 */
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+
+		for (int n_index = 0; n_index < (int)scope->prev_start_negate_networks.size(); n_index++) {
+			delete scope->prev_start_negate_networks[n_index];
+		}
+		scope->prev_start_negate_networks.clear();
+		for (int n_index = 0; n_index < (int)scope->start_negate_networks.size(); n_index++) {
+			scope->prev_start_negate_networks.push_back(new NegateNetwork(scope->start_negate_networks[n_index]));
+		}
+		delete scope->prev_start_obs_network;
+		scope->prev_start_obs_network = new ObsNetwork(scope->start_obs_network);
+		for (int n_index = 0; n_index < (int)scope->prev_start_init_networks.size(); n_index++) {
+			delete scope->prev_start_init_networks[n_index];
+		}
+		scope->prev_start_init_networks.clear();
+		for (int n_index = 0; n_index < (int)scope->start_init_networks.size(); n_index++) {
+			scope->prev_start_init_networks.push_back(new InitNetwork(scope->start_init_networks[n_index]));
+		}
+
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			for (int n_index = 0; n_index < (int)it->second->prev_init_networks.size(); n_index++) {
+				delete it->second->prev_init_networks[n_index];
+			}
+			it->second->prev_init_networks.clear();
+			for (int n_index = 0; n_index < (int)it->second->init_networks.size(); n_index++) {
+				it->second->prev_init_networks.push_back(new InitNetwork(it->second->init_networks[n_index]));
+			}
+
+			switch (it->second->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)it->second;
+					delete action_node->prev_obs_network;
+					action_node->prev_obs_network = new ObsNetwork(action_node->obs_network);
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)it->second;
+					delete branch_node->prev_original_network;
+					branch_node->prev_original_network = new ScoreNetwork(branch_node->original_network);
+					delete branch_node->prev_branch_network;
+					branch_node->prev_branch_network = new ScoreNetwork(branch_node->branch_network);
+				}
+				break;
+			}
+		}
+	}
+
 	wrapper->solution->timestamp++;
 	// if ((int)wrapper->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
 	// 	double prev_val = wrapper->solution->improvement_history[wrapper->solution->improvement_history.size() - STUCK_NUM_ITERS];
@@ -457,6 +516,7 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			wrapper->solution->scopes.push_back(new_scope);
 			new_scope->start_obs_network = new ObsNetwork(wrapper->solution->num_states,
 														  wrapper->solution->num_obs);
+			new_scope->prev_start_obs_network = new ObsNetwork(new_scope->start_obs_network);
 
 			new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
 			new_scope->child_scopes.push_back(wrapper->solution->starting_scope);

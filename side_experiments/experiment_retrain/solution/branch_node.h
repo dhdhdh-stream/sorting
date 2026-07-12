@@ -26,6 +26,8 @@ class BranchNode : public AbstractNode {
 public:
 	ScoreNetwork* original_network;
 	ScoreNetwork* branch_network;
+	ScoreNetwork* prev_original_network;
+	ScoreNetwork* prev_branch_network;
 
 	int original_next_node_id;
 	AbstractNode* original_next_node;

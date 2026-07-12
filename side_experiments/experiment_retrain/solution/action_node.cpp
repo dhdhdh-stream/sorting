@@ -24,9 +24,13 @@ ActionNode::ActionNode() {
 
 ActionNode::~ActionNode() {
 	delete this->obs_network;
+	delete this->prev_obs_network;
 
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
 		delete this->init_networks[n_index];
+	}
+	for (int n_index = 0; n_index < (int)this->prev_init_networks.size(); n_index++) {
+		delete this->prev_init_networks[n_index];
 	}
 
 	delete this->score_network;
@@ -40,6 +44,7 @@ void ActionNode::save(ofstream& output_file) {
 	output_file << this->action << endl;
 
 	this->obs_network->save(output_file);
+	this->prev_obs_network->save(output_file);
 
 	output_file << this->init_networks.size() << endl;
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
@@ -50,6 +55,7 @@ void ActionNode::save(ofstream& output_file) {
 		}
 
 		this->init_networks[n_index]->save(output_file);
+		this->prev_init_networks[n_index]->save(output_file);
 	}
 
 	this->score_network->save(output_file);
@@ -72,6 +78,7 @@ void ActionNode::load(ifstream& input_file,
 	this->action = stoi(action_line);
 
 	this->obs_network = new ObsNetwork(input_file);
+	this->prev_obs_network = new ObsNetwork(input_file);
 
 	string num_init_networks_line;
 	getline(input_file, num_init_networks_line);
@@ -93,6 +100,7 @@ void ActionNode::load(ifstream& input_file,
 		}
 
 		this->init_networks.push_back(new InitNetwork(input_file));
+		this->prev_init_networks.push_back(new InitNetwork(input_file));
 	}
 
 	this->score_network = new ScoreNetwork(input_file);

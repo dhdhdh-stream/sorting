@@ -30,6 +30,8 @@ void BranchNode::experiment_step(vector<double>& obs,
 				this->init_networks[n_index]->save(init_network_history);
 				wrapper->network_histories.push_back(init_network_history);
 			}
+			this->prev_init_networks[n_index]->activate(wrapper->prev_state,
+														obs);
 		}
 	}
 
@@ -57,19 +59,20 @@ void BranchNode::experiment_step(vector<double>& obs,
 		bool is_branch;
 		this->original_network->activate(wrapper->state);
 		this->branch_network->activate(wrapper->state);
-		if (this->branch_network->output->acti_vals(0) >= this->original_network->output->acti_vals(0)) {
-			is_branch = true;
-
-			if (!wrapper->should_explore) {
-				this->consec_original = 0;
-				this->consec_branch++;
+		uniform_int_distribution<int> maintain_distribution(0, 9);
+		if (maintain_distribution(generator) == 0) {
+			this->prev_original_network->activate(wrapper->prev_state);
+			this->prev_branch_network->activate(wrapper->prev_state);
+			if (this->prev_branch_network->output->acti_vals(0) >= this->prev_original_network->output->acti_vals(0)) {
+				is_branch = true;
+			} else {
+				is_branch = false;
 			}
 		} else {
-			is_branch = false;
-
-			if (!wrapper->should_explore) {
-				this->consec_original++;
-				this->consec_branch = 0;
+			if (this->branch_network->output->acti_vals(0) >= this->original_network->output->acti_vals(0)) {
+				is_branch = true;
+			} else {
+				is_branch = false;
 			}
 		}
 
@@ -86,6 +89,11 @@ void BranchNode::experiment_step(vector<double>& obs,
 
 		if (is_branch) {
 			if (!wrapper->should_explore) {
+				this->consec_original = 0;
+				this->consec_branch++;
+			}
+
+			if (!wrapper->should_explore) {
 				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->branch_network);
 				this->branch_network->save(score_network_history);
 				wrapper->network_histories.push_back(score_network_history);
@@ -99,6 +107,11 @@ void BranchNode::experiment_step(vector<double>& obs,
 					wrapper);
 			}
 		} else {
+			if (!wrapper->should_explore) {
+				this->consec_original++;
+				this->consec_branch = 0;
+			}
+
 			if (!wrapper->should_explore) {
 				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->original_network);
 				this->original_network->save(score_network_history);

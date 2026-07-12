@@ -20,6 +20,7 @@ public:
 	int action;
 
 	ObsNetwork* obs_network;
+	ObsNetwork* prev_obs_network;
 
 	ScoreNetwork* score_network;
 
