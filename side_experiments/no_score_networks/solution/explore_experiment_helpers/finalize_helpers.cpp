@@ -1,0 +1,549 @@
+#include "explore_experiment.h"
+
+#include <ctime>
+#include <iostream>
+#include <sstream>
+
+#include "action_network.h"
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "init_network.h"
+#include "negate_network.h"
+#include "noop_node.h"
+#include "obs_network.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "score_network.h"
+#include "solution.h"
+#include "solution_helpers.h"
+#include "solution_wrapper.h"
+#include "utilities.h"
+
+using namespace std;
+
+void ExploreExperiment::add(ScoreNetwork* new_network,
+							SolutionWrapper* wrapper) {
+	stringstream ss;
+	ss << get_time() << "; ";
+	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
+	ss << "Experiment" << "; ";
+	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
+	ss << "this->node_context->id: " << this->node_context->id << "; ";
+	ss << "this->is_branch: " << this->is_branch << "; ";
+	ss << "new explore path:";
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			ss << " " << this->best_actions[s_index];
+		} else {
+			ss << " E" << this->best_scopes[s_index]->id;
+		}
+	}
+	ss << "; ";
+
+	if (this->exit_next_node == NULL) {
+		ss << "this->exit_next_node->id: " << -1 << "; ";
+	} else {
+		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
+	}
+
+	double previous_val_average = measure_helper(wrapper);
+	wrapper->solution->improvement_history.push_back(previous_val_average);
+	cout << "previous_val_average: " << previous_val_average << endl;
+
+	wrapper->solution->curr_score = previous_val_average;
+
+	wrapper->solution->change_history.push_back(ss.str());
+
+	cout << ss.str() << endl;
+
+	vector<AbstractNode*> new_nodes;
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			ActionNode* new_action_node = new ActionNode();
+			new_action_node->parent = scope_context;
+			new_action_node->id = scope_context->node_counter;
+			scope_context->node_counter++;
+			scope_context->nodes[new_action_node->id] = new_action_node;
+
+			new_action_node->action = this->best_actions[s_index];
+
+			new_action_node->action_network = new ActionNetwork(
+				wrapper->solution->generic_action_networks[this->best_actions[s_index]]);
+			new_action_node->prev_action_network = new ActionNetwork(new_action_node->action_network);
+
+			new_action_node->obs_network = new ObsNetwork(wrapper->solution->generic_obs_network);
+			new_action_node->prev_obs_network = new ObsNetwork(new_action_node->obs_network);
+
+			// new_action_node->verify_states = this->new_node_verify_states[s_index];
+
+			new_nodes.push_back(new_action_node);
+		} else {
+			ScopeNode* new_scope_node = new ScopeNode();
+			new_scope_node->parent = scope_context;
+			new_scope_node->id = scope_context->node_counter;
+			scope_context->node_counter++;
+			scope_context->nodes[new_scope_node->id] = new_scope_node;
+
+			new_scope_node->scope = this->best_scopes[s_index];
+
+			// new_scope_node->verify_states = this->new_node_verify_states[s_index];
+
+			new_nodes.push_back(new_scope_node);
+		}
+	}
+
+	NoopNode* new_ending_node = NULL;
+
+	int exit_node_id;
+	AbstractNode* exit_node;
+	if (this->exit_next_node == NULL) {
+		new_ending_node = new NoopNode();
+		new_ending_node->parent = this->scope_context;
+		new_ending_node->id = this->scope_context->node_counter;
+		this->scope_context->node_counter++;
+
+		for (map<int, AbstractNode*>::iterator it = this->scope_context->nodes.begin();
+				it != this->scope_context->nodes.end(); it++) {
+			if (it->second->type == NODE_TYPE_NOOP) {
+				NoopNode* noop_node = (NoopNode*)it->second;
+				if (noop_node->next_node == NULL) {
+					noop_node->next_node_id = new_ending_node->id;
+					noop_node->next_node = new_ending_node;
+
+					new_ending_node->ancestor_ids.push_back(noop_node->id);
+
+					break;
+				}
+			}
+		}
+
+		this->scope_context->nodes[new_ending_node->id] = new_ending_node;
+
+		new_ending_node->next_node_id = -1;
+		new_ending_node->next_node = NULL;
+
+		exit_node_id = new_ending_node->id;
+		exit_node = new_ending_node;
+	} else {
+		exit_node_id = this->exit_next_node->id;
+		exit_node = this->exit_next_node;
+	}
+
+	BranchNode* new_branch_node = new BranchNode();
+	new_branch_node->parent = scope_context;
+	new_branch_node->id = scope_context->node_counter;
+	scope_context->node_counter++;
+	scope_context->nodes[new_branch_node->id] = new_branch_node;
+
+	switch (this->node_context->type) {
+	case NODE_TYPE_NOOP:
+		{
+			NoopNode* noop_node = (NoopNode*)this->node_context;
+
+			if (noop_node->next_node == NULL) {
+				if (new_ending_node != NULL) {
+					new_ending_node->ancestor_ids.push_back(new_branch_node->id);
+
+					new_branch_node->original_next_node_id = new_ending_node->id;
+					new_branch_node->original_next_node = new_ending_node;
+				} else {
+					new_ending_node = new NoopNode();
+					new_ending_node->parent = this->scope_context;
+					new_ending_node->id = this->scope_context->node_counter;
+					this->scope_context->node_counter++;
+
+					for (map<int, AbstractNode*>::iterator it = this->scope_context->nodes.begin();
+							it != this->scope_context->nodes.end(); it++) {
+						if (it->second->type == NODE_TYPE_NOOP) {
+							NoopNode* p_noop_node = (NoopNode*)it->second;
+							if (p_noop_node->next_node == NULL) {
+								p_noop_node->next_node_id = new_ending_node->id;
+								p_noop_node->next_node = new_ending_node;
+
+								new_ending_node->ancestor_ids.push_back(p_noop_node->id);
+
+								break;
+							}
+						}
+					}
+
+					this->scope_context->nodes[new_ending_node->id] = new_ending_node;
+
+					new_ending_node->next_node_id = -1;
+					new_ending_node->next_node = NULL;
+
+					new_ending_node->ancestor_ids.push_back(new_branch_node->id);
+
+					new_branch_node->original_next_node_id = new_ending_node->id;
+					new_branch_node->original_next_node = new_ending_node;
+				}
+			} else {
+				for (int a_index = 0; a_index < (int)noop_node->next_node->ancestor_ids.size(); a_index++) {
+					if (noop_node->next_node->ancestor_ids[a_index] == noop_node->id) {
+						noop_node->next_node->ancestor_ids.erase(
+							noop_node->next_node->ancestor_ids.begin() + a_index);
+						break;
+					}
+				}
+				noop_node->next_node->ancestor_ids.push_back(new_branch_node->id);
+
+				new_branch_node->original_next_node_id = noop_node->next_node_id;
+				new_branch_node->original_next_node = noop_node->next_node;
+			}
+		}
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+
+			for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
+				if (action_node->next_node->ancestor_ids[a_index] == action_node->id) {
+					action_node->next_node->ancestor_ids.erase(
+						action_node->next_node->ancestor_ids.begin() + a_index);
+					break;
+				}
+			}
+			action_node->next_node->ancestor_ids.push_back(new_branch_node->id);
+
+			new_branch_node->original_next_node_id = action_node->next_node_id;
+			new_branch_node->original_next_node = action_node->next_node;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)this->node_context;
+
+			for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
+				if (scope_node->next_node->ancestor_ids[a_index] == scope_node->id) {
+					scope_node->next_node->ancestor_ids.erase(
+						scope_node->next_node->ancestor_ids.begin() + a_index);
+					break;
+				}
+			}
+			scope_node->next_node->ancestor_ids.push_back(new_branch_node->id);
+
+			new_branch_node->original_next_node_id = scope_node->next_node_id;
+			new_branch_node->original_next_node = scope_node->next_node;
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)this->node_context;
+
+			if (this->is_branch) {
+				for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
+					if (branch_node->branch_next_node->ancestor_ids[a_index] == branch_node->id) {
+						branch_node->branch_next_node->ancestor_ids.erase(
+							branch_node->branch_next_node->ancestor_ids.begin() + a_index);
+						break;
+					}
+				}
+				branch_node->branch_next_node->ancestor_ids.push_back(new_branch_node->id);
+
+				new_branch_node->original_next_node_id = branch_node->branch_next_node_id;
+				new_branch_node->original_next_node = branch_node->branch_next_node;
+			} else {
+				for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
+					if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
+						branch_node->original_next_node->ancestor_ids.erase(
+							branch_node->original_next_node->ancestor_ids.begin() + a_index);
+						break;
+					}
+				}
+				branch_node->original_next_node->ancestor_ids.push_back(new_branch_node->id);
+
+				new_branch_node->original_next_node_id = branch_node->original_next_node_id;
+				new_branch_node->original_next_node = branch_node->original_next_node;
+			}
+		}
+		break;
+	}
+
+	if (this->best_step_types.size() == 0) {
+		exit_node->ancestor_ids.push_back(new_branch_node->id);
+
+		new_branch_node->branch_next_node_id = exit_node_id;
+		new_branch_node->branch_next_node = exit_node;
+	} else {
+		new_nodes[0]->ancestor_ids.push_back(new_branch_node->id);
+
+		new_branch_node->branch_next_node_id = new_nodes[0]->id;
+		new_branch_node->branch_next_node = new_nodes[0];
+	}
+
+	switch (this->node_context->type) {
+	case NODE_TYPE_NOOP:
+		{
+			NoopNode* noop_node = (NoopNode*)this->node_context;
+
+			noop_node->next_node_id = new_branch_node->id;
+			noop_node->next_node = new_branch_node;
+		}
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+
+			action_node->next_node_id = new_branch_node->id;
+			action_node->next_node = new_branch_node;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)this->node_context;
+
+			scope_node->next_node_id = new_branch_node->id;
+			scope_node->next_node = new_branch_node;
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)this->node_context;
+
+			if (this->is_branch) {
+				branch_node->branch_next_node_id = new_branch_node->id;
+				branch_node->branch_next_node = new_branch_node;
+			} else {
+				branch_node->original_next_node_id = new_branch_node->id;
+				branch_node->original_next_node = new_branch_node;
+			}
+		}
+		break;
+	}
+	new_branch_node->ancestor_ids.push_back(this->node_context->id);
+
+	new_branch_node->original_network = this->existing_network;
+	this->existing_network = NULL;
+	new_branch_node->prev_original_network = new ScoreNetwork(new_branch_node->original_network);
+	new_branch_node->branch_network = new_network;
+	new_branch_node->prev_branch_network = new ScoreNetwork(new_branch_node->branch_network);
+
+	new_branch_node->explore_original_network = new ScoreNetwork(new_branch_node->original_network);
+	new_branch_node->explore_branch_network = new ScoreNetwork(new_branch_node->branch_network);
+
+	new_branch_node->ramp = 0;
+	double average_instances_per_hit;
+	switch (this->node_context->type) {
+	case NODE_TYPE_NOOP:
+		{
+			NoopNode* noop_node = (NoopNode*)this->node_context;
+			average_instances_per_hit = noop_node->average_instances_per_hit;
+		}
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+			average_instances_per_hit = action_node->average_instances_per_hit;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)this->node_context;
+			average_instances_per_hit = scope_node->average_instances_per_hit;
+		}
+		break;
+	default:
+	// case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)this->node_context;
+			if (this->is_branch) {
+				average_instances_per_hit = branch_node->branch_average_instances_per_hit;
+			} else {
+				average_instances_per_hit = branch_node->original_average_instances_per_hit;
+			}
+		}
+		break;
+	}
+	/**
+	 * - if ramp_num_gears too high, limits improvement?
+	 *   - maybe too easy for existing solution to negate impact
+	 *   - whereas if fully add immediately, forces dramatic adjustment
+	 *     - resulting in more improvement
+	 */
+	new_branch_node->ramp_num_gears = ceil(average_instances_per_hit);
+	new_branch_node->ramp_iter = 0;
+
+	new_branch_node->consec_original = 0;
+	new_branch_node->consec_branch = 0;
+
+	// new_branch_node->verify_states = this->branch_node_verify_states;
+
+	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
+		int next_node_id;
+		AbstractNode* next_node;
+		if (n_index == (int)new_nodes.size()-1) {
+			next_node_id = exit_node_id;
+			next_node = exit_node;
+		} else {
+			next_node_id = new_nodes[n_index+1]->id;
+			next_node = new_nodes[n_index+1];
+		}
+
+		switch (new_nodes[n_index]->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)new_nodes[n_index];
+				action_node->next_node_id = next_node_id;
+				action_node->next_node = next_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)new_nodes[n_index];
+				scope_node->next_node_id = next_node_id;
+				scope_node->next_node = next_node;
+			}
+			break;
+		}
+
+		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
+	}
+
+	// wrapper->verify_problems = this->verify_problems;
+	// this->verify_problems.clear();
+	// wrapper->verify_starting_run_seeds = this->verify_starting_run_seeds;
+
+	/**
+	 * - simply update maintain here and re-copy maintain networks for new nodes
+	 */
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+
+		for (int n_index = 0; n_index < (int)scope->prev_start_negate_networks.size(); n_index++) {
+			delete scope->prev_start_negate_networks[n_index];
+		}
+		scope->prev_start_negate_networks.clear();
+		for (int n_index = 0; n_index < (int)scope->start_negate_networks.size(); n_index++) {
+			scope->prev_start_negate_networks.push_back(new NegateNetwork(scope->start_negate_networks[n_index]));
+		}
+		delete scope->prev_start_obs_network;
+		scope->prev_start_obs_network = new ObsNetwork(scope->start_obs_network);
+		for (int n_index = 0; n_index < (int)scope->prev_start_init_networks.size(); n_index++) {
+			delete scope->prev_start_init_networks[n_index];
+		}
+		scope->prev_start_init_networks.clear();
+		for (int n_index = 0; n_index < (int)scope->start_init_networks.size(); n_index++) {
+			scope->prev_start_init_networks.push_back(new InitNetwork(scope->start_init_networks[n_index]));
+		}
+
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			for (int n_index = 0; n_index < (int)it->second->prev_init_networks.size(); n_index++) {
+				delete it->second->prev_init_networks[n_index];
+			}
+			it->second->prev_init_networks.clear();
+			for (int n_index = 0; n_index < (int)it->second->init_networks.size(); n_index++) {
+				it->second->prev_init_networks.push_back(new InitNetwork(it->second->init_networks[n_index]));
+			}
+
+			switch (it->second->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)it->second;
+					delete action_node->prev_action_network;
+					action_node->prev_action_network = new ActionNetwork(action_node->action_network);
+					delete action_node->prev_obs_network;
+					action_node->prev_obs_network = new ObsNetwork(action_node->obs_network);
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)it->second;
+					delete branch_node->prev_original_network;
+					branch_node->prev_original_network = new ScoreNetwork(branch_node->original_network);
+					delete branch_node->prev_branch_network;
+					branch_node->prev_branch_network = new ScoreNetwork(branch_node->branch_network);
+				}
+				break;
+			}
+		}
+	}
+
+	wrapper->solution->timestamp++;
+	// if ((int)wrapper->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
+	// 	double prev_val = wrapper->solution->improvement_history[wrapper->solution->improvement_history.size() - STUCK_NUM_ITERS];
+	// 	bool improved = false;
+	// 	for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
+	// 		if (wrapper->solution->improvement_history[wrapper->solution->improvement_history.size() - 1 - h_index] > prev_val) {
+	// 			improved = true;
+	// 			break;
+	// 		}
+	// 	}
+
+	// 	if (!improved) {
+	// 		wrapper->solution->timestamp = -1;
+	// 	}
+	// }
+	// // temp
+	// if (wrapper->solution->timestamp >= 40) {
+	// 	wrapper->solution->timestamp = -1;
+	// }
+
+	if (this->scope_context == wrapper->solution->starting_scope) {
+		wrapper->solution->starting_num_improvements++;
+		if (wrapper->solution->starting_num_improvements >= GENERALIZE_ITER) {
+			Scope* new_scope = new Scope();
+			new_scope->id = wrapper->solution->scopes.size();
+			new_scope->node_counter = 0;
+			wrapper->solution->scopes.push_back(new_scope);
+			new_scope->start_obs_network = new ObsNetwork(wrapper->solution->num_states,
+														  wrapper->solution->num_obs);
+			new_scope->prev_start_obs_network = new ObsNetwork(new_scope->start_obs_network);
+
+			new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
+			new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
+
+			new_scope->reuse_last_scores = wrapper->solution->starting_scope->reuse_last_scores;
+			new_scope->new_state_last_scores = wrapper->solution->starting_scope->new_state_last_scores;
+
+			NoopNode* start_node = new NoopNode();
+			start_node->parent = new_scope;
+			start_node->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			new_scope->nodes[start_node->id] = start_node;
+
+			ScopeNode* scope_node = new ScopeNode();
+			scope_node->parent = new_scope;
+			scope_node->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			new_scope->nodes[scope_node->id] = scope_node;
+
+			scope_node->scope = wrapper->solution->starting_scope;
+
+			NoopNode* end_node = new NoopNode();
+			end_node->parent = new_scope;
+			end_node->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			new_scope->nodes[end_node->id] = end_node;
+
+			start_node->next_node_id = scope_node->id;
+			start_node->next_node = scope_node;
+
+			scope_node->ancestor_ids.push_back(start_node->id);
+
+			scope_node->next_node_id = end_node->id;
+			scope_node->next_node = end_node;
+
+			end_node->ancestor_ids.push_back(scope_node->id);
+
+			end_node->next_node_id = -1;
+			end_node->next_node = NULL;
+
+			wrapper->solution->starting_scope = new_scope;
+			wrapper->solution->starting_num_improvements = 0;
+		}
+	}
+
+	wrapper->experiment_iter = EXPERIMENT_REFRESH_NUM_ITERS;
+	/**
+	 * - reset all other experiments
+	 */
+
+	// temp
+	{
+		double val_average = measure_helper(wrapper);
+		cout << "post val_average: " << val_average << endl;
+	}
+}
