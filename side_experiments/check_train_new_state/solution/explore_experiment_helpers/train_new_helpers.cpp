@@ -126,6 +126,14 @@ void ExploreExperiment::train_new_backprop(
 			if (this->state_iter >= EXPERIMENT_NUM_DATAPOINTS) {
 				{
 					default_random_engine generator_copy = generator;
+					shuffle(this->existing_dependencies_is_hit_histories.begin(), this->existing_dependencies_is_hit_histories.end(), generator_copy);
+				}
+				{
+					default_random_engine generator_copy = generator;
+					shuffle(this->existing_dependencies_obs_histories.begin(), this->existing_dependencies_obs_histories.end(), generator_copy);
+				}
+				{
+					default_random_engine generator_copy = generator;
 					shuffle(this->existing_obs_histories.begin(), this->existing_obs_histories.end(), generator_copy);
 				}
 				{
@@ -147,6 +155,14 @@ void ExploreExperiment::train_new_backprop(
 					this->existing_network->update();
 				}
 
+				{
+					default_random_engine generator_copy = generator;
+					shuffle(this->new_dependencies_is_hit_histories.begin(), this->new_dependencies_is_hit_histories.end(), generator_copy);
+				}
+				{
+					default_random_engine generator_copy = generator;
+					shuffle(this->new_dependencies_obs_histories.begin(), this->new_dependencies_obs_histories.end(), generator_copy);
+				}
 				{
 					default_random_engine generator_copy = generator;
 					shuffle(this->new_obs_histories.begin(), this->new_obs_histories.end(), generator_copy);
@@ -179,40 +195,51 @@ void ExploreExperiment::train_new_backprop(
 													 output_average_max_update);
 				}
 
-				double existing_sum_vals = 0.0;
-				int existing_count = 0;
-				for (int h_index = num_existing_train; h_index < (int)this->existing_obs_histories.size(); h_index++) {
-					this->existing_network->activate(this->existing_obs_histories[h_index]);
-					this->new_network->activate(this->existing_obs_histories[h_index]);
-					if (this->new_network->output->acti_vals[0] >= this->existing_network->output->acti_vals[0]) {
-						existing_sum_vals += this->existing_target_val_histories[h_index];
-						existing_count++;
-					}
-				}
-				double existing_average = existing_sum_vals / (double)existing_count;
-				double new_sum_vals = 0.0;
-				int new_count = 0;
-				for (int h_index = num_new_train; h_index < (int)this->new_obs_histories.size(); h_index++) {
-					this->existing_network->activate(this->new_obs_histories[h_index]);
-					this->new_network->activate(this->new_obs_histories[h_index]);
-					if (this->new_network->output->acti_vals[0] >= this->existing_network->output->acti_vals[0]) {
-						new_sum_vals += this->new_target_val_histories[h_index];
-						new_count++;
-					}
-				}
-				double new_average = new_sum_vals / (double)new_count;
-				double average_ratio = (existing_count + new_count)
-					/ ((double)this->existing_obs_histories.size() - num_existing_train
-						+ (double)this->new_obs_histories.size() - num_new_train);
-				double local_improvement = (new_average - existing_average) * average_ratio;
+				// double sum_misguess = 0.0;
+				// for (int h_index = 0; h_index < num_new_train; h_index++) {
+				// 	this->new_network->activate(this->new_obs_histories[h_index]);
 
-				int total_iters = wrapper->iter - this->start_iter;
-				if (total_iters < 0) {
-					total_iters += numeric_limits<int>::max();
-				}
-				double average_instances_per_run = ((double)this->existing_obs_histories.size() + (double)this->new_obs_histories.size()) / (double)total_iters;
+				// 	sum_misguess += (this->new_target_val_histories[h_index] - this->new_network->output->acti_vals[0])
+				// 		* (this->new_target_val_histories[h_index] - this->new_network->output->acti_vals[0]);
+				// }
+				// double misguess_average = sum_misguess / num_new_train;
 
-				double global_improvement = average_instances_per_run * local_improvement;
+				// double existing_sum_vals = 0.0;
+				// int existing_count = 0;
+				// for (int h_index = num_existing_train; h_index < (int)this->existing_obs_histories.size(); h_index++) {
+				// 	this->existing_network->activate(this->existing_obs_histories[h_index]);
+				// 	this->new_network->activate(this->existing_obs_histories[h_index]);
+				// 	if (this->new_network->output->acti_vals[0] >= this->existing_network->output->acti_vals[0]) {
+				// 		existing_sum_vals += this->existing_target_val_histories[h_index];
+				// 		existing_count++;
+				// 	}
+				// }
+				// double existing_average = existing_sum_vals / (double)existing_count;
+				// double new_sum_vals = 0.0;
+				// int new_count = 0;
+				// for (int h_index = num_new_train; h_index < (int)this->new_obs_histories.size(); h_index++) {
+				// 	this->existing_network->activate(this->new_obs_histories[h_index]);
+				// 	this->new_network->activate(this->new_obs_histories[h_index]);
+				// 	if (this->new_network->output->acti_vals[0] >= this->existing_network->output->acti_vals[0]) {
+				// 		new_sum_vals += this->new_target_val_histories[h_index];
+				// 		new_count++;
+				// 	}
+				// }
+				// double new_average = new_sum_vals / (double)new_count;
+				// double average_ratio = (existing_count + new_count)
+				// 	/ ((double)this->existing_obs_histories.size() - num_existing_train
+				// 		+ (double)this->new_obs_histories.size() - num_new_train);
+				// double local_improvement = (new_average - existing_average) * average_ratio;
+
+				// int total_iters = wrapper->iter - this->start_iter;
+				// if (total_iters < 0) {
+				// 	total_iters += numeric_limits<int>::max();
+				// }
+				// double average_instances_per_run = ((double)this->existing_obs_histories.size() + (double)this->new_obs_histories.size()) / (double)total_iters;
+
+				// double global_improvement = average_instances_per_run * local_improvement;
+
+				double global_improvement = new_state_helper(wrapper);
 
 				// // temp
 				// cout << "this->scope_context->id: " << this->scope_context->id << endl;
@@ -220,7 +247,7 @@ void ExploreExperiment::train_new_backprop(
 				// cout << "global_improvement: " << global_improvement << endl;
 
 				bool is_success = false;
-				if (local_improvement > 0.0) {
+				if (global_improvement > 0.0) {
 					if (this->scope_context->last_scores.size() >= MIN_NUM_LAST_TRACK) {
 						int num_better_than = 0;
 						for (list<double>::iterator it = this->scope_context->last_scores.begin();
@@ -250,7 +277,21 @@ void ExploreExperiment::train_new_backprop(
 				#else
 				if (is_success) {
 				#endif /* MDEBUG */
-					new_state_helper(wrapper);
+					// temp
+					cout << "global_improvement: " << global_improvement << endl;
+
+					// // temp
+					// cout << "train_new" << endl;
+					// cout << "misguess_average: " << misguess_average << endl;
+					// cout << "this->scope_context->id: " << this->scope_context->id << endl;
+					// cout << "existing_average: " << existing_average << endl;
+					// cout << "existing_count: " << existing_count << endl;
+					// cout << "new_average: " << new_average << endl;
+					// cout << "new_count: " << new_count << endl;
+					// cout << "local_improvement: " << local_improvement << endl;
+					// cout << "global_improvement: " << global_improvement << endl;
+
+					// new_state_helper(wrapper);
 
 					add(wrapper);
 				}

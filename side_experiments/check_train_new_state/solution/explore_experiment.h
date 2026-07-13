@@ -113,7 +113,7 @@ public:
 							ExploreExperimentHistory* history,
 							SolutionWrapper* wrapper);
 
-	void new_state_helper(SolutionWrapper* wrapper);
+	double new_state_helper(SolutionWrapper* wrapper);
 
 	void add(SolutionWrapper* wrapper);
 

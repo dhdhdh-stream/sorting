@@ -32,6 +32,8 @@ ScoreNetwork::ScoreNetwork(int num_states) {
 	this->output->acti_vals.resize(1);
 	this->output->errors.resize(1);
 	this->output->errors.setConstant(0.0);
+	// // temp
+	// this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure();
