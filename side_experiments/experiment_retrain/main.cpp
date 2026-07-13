@@ -1,3 +1,6 @@
+// - still bad
+//   - maybe try with only BranchNodes score networks?
+
 #include <chrono>
 #include <iostream>
 #include <map>

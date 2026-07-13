@@ -39,7 +39,9 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 	this->action_network->save(action_network_history);
 	wrapper->network_histories.push_back(action_network_history);
 
-	this->prev_action_network->activate(wrapper->prev_state);
+	if (!wrapper->should_explore) {
+		this->prev_action_network->activate(wrapper->prev_state);
+	}
 
 	this->obs_network->activate(wrapper->state,
 								obs);
@@ -47,8 +49,10 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 	this->obs_network->save(obs_network_history);
 	wrapper->network_histories.push_back(obs_network_history);
 
-	this->prev_obs_network->activate(wrapper->prev_state,
-									 obs);
+	if (!wrapper->should_explore) {
+		this->prev_obs_network->activate(wrapper->prev_state,
+										 obs);
+	}
 
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
 		if (match_dependency_helper(wrapper,
@@ -60,8 +64,10 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 			this->init_networks[n_index]->save(init_network_history);
 			wrapper->network_histories.push_back(init_network_history);
 
-			this->prev_init_networks[n_index]->activate(wrapper->prev_state,
-														obs);
+			if (!wrapper->should_explore) {
+				this->prev_init_networks[n_index]->activate(wrapper->prev_state,
+															obs);
+			}
 		}
 	}
 

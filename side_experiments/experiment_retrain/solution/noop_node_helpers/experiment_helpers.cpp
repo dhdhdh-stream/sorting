@@ -32,8 +32,10 @@ void NoopNode::experiment_step(vector<double>& obs,
 			this->init_networks[n_index]->save(init_network_history);
 			wrapper->network_histories.push_back(init_network_history);
 
-			this->prev_init_networks[n_index]->activate(wrapper->prev_state,
-														obs);
+			if (!wrapper->should_explore) {
+				this->prev_init_networks[n_index]->activate(wrapper->prev_state,
+															obs);
+			}
 		}
 	}
 

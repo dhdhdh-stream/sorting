@@ -32,6 +32,11 @@ Solution::~Solution() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		delete this->scopes[s_index];
 	}
+
+	for (int a_index = 0; a_index < (int)this->generic_action_networks.size(); a_index++) {
+		delete this->generic_action_networks[a_index];
+	}
+	delete this->generic_obs_network;
 }
 
 void Solution::init(ProblemType* problem_type) {
@@ -70,6 +75,7 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->node_counter++;
 	new_scope->nodes[start_node->id] = start_node;
 	start_node->score_network = new ScoreNetwork(this->num_states);
+	start_node->explore_score_network = new ScoreNetwork(start_node->score_network);
 
 	start_node->next_node_id = -1;
 	start_node->next_node = NULL;

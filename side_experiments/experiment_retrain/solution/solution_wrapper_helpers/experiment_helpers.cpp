@@ -32,7 +32,11 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	}
 
 	this->state = vector<double>(this->solution->num_states, 0.0);
-	this->prev_state = vector<double>(this->solution->num_states, 0.0);
+	if (!this->should_explore) {
+		this->prev_state = vector<double>(this->solution->num_states, 0.0);
+	} else {
+		this->prev_state.clear();	// for debug
+	}
 
 	this->num_actions = 1;
 

@@ -100,6 +100,7 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			scope_context->node_counter++;
 			scope_context->nodes[new_action_node->id] = new_action_node;
 			new_action_node->score_network = new ScoreNetwork(new_network);
+			new_action_node->explore_score_network = new ScoreNetwork(new_action_node->score_network);
 
 			new_action_node->action = this->best_actions[s_index];
 
@@ -120,6 +121,7 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			scope_context->node_counter++;
 			scope_context->nodes[new_scope_node->id] = new_scope_node;
 			new_scope_node->score_network = new ScoreNetwork(new_network);
+			new_scope_node->explore_score_network = new ScoreNetwork(new_scope_node->score_network);
 
 			new_scope_node->scope = this->best_scopes[s_index];
 
@@ -156,6 +158,7 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 
 		this->scope_context->nodes[new_ending_node->id] = new_ending_node;
 		new_ending_node->score_network = new ScoreNetwork(existing_network);
+		new_ending_node->explore_score_network = new ScoreNetwork(new_ending_node->score_network);
 
 		new_ending_node->next_node_id = -1;
 		new_ending_node->next_node = NULL;
@@ -207,6 +210,7 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 
 					this->scope_context->nodes[new_ending_node->id] = new_ending_node;
 					new_ending_node->score_network = new ScoreNetwork(existing_network);
+					new_ending_node->explore_score_network = new ScoreNetwork(new_ending_node->score_network);
 
 					new_ending_node->next_node_id = -1;
 					new_ending_node->next_node = NULL;
@@ -355,6 +359,9 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 	new_branch_node->prev_original_network = new ScoreNetwork(new_branch_node->original_network);
 	new_branch_node->branch_network = new_network;
 	new_branch_node->prev_branch_network = new ScoreNetwork(new_branch_node->branch_network);
+
+	new_branch_node->explore_original_network = new ScoreNetwork(new_branch_node->original_network);
+	new_branch_node->explore_branch_network = new ScoreNetwork(new_branch_node->branch_network);
 
 	new_branch_node->ramp = 0;
 	double average_instances_per_hit;
@@ -537,6 +544,7 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			new_scope->node_counter++;
 			new_scope->nodes[start_node->id] = start_node;
 			start_node->score_network = new ScoreNetwork(wrapper->solution->num_states);
+			start_node->explore_score_network = new ScoreNetwork(start_node->score_network);
 
 			NoopNode* inner_ending_node = NULL;
 			for (map<int, AbstractNode*>::iterator it = wrapper->solution->starting_scope->nodes.begin();
@@ -555,6 +563,7 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			new_scope->node_counter++;
 			new_scope->nodes[scope_node->id] = scope_node;
 			scope_node->score_network = new ScoreNetwork(inner_ending_node->score_network);
+			scope_node->explore_score_network = new ScoreNetwork(scope_node->score_network);
 
 			scope_node->scope = wrapper->solution->starting_scope;
 
@@ -564,6 +573,7 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			new_scope->node_counter++;
 			new_scope->nodes[end_node->id] = end_node;
 			end_node->score_network = new ScoreNetwork(inner_ending_node->score_network);
+			end_node->explore_score_network = new ScoreNetwork(end_node->score_network);
 
 			start_node->next_node_id = scope_node->id;
 			start_node->next_node = scope_node;
