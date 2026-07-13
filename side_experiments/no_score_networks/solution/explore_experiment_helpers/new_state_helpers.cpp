@@ -20,6 +20,12 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int NEW_STATE_TRAIN_ITERS = 50;
+#else
+const int NEW_STATE_TRAIN_ITERS = 500000;
+#endif /* MDEBUG */
+
 void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	vector<InitNetwork*> init_networks(this->best_dependencies.size());
 	vector<int> init_states;
@@ -302,6 +308,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 								  0,
 								  init_networks[d_index]);
 		}
+
+		this->existing_network->add_states(wrapper->solution->num_states);
 
 		add(new_network,
 			wrapper);

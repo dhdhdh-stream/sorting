@@ -18,6 +18,11 @@ void ExploreExperiment::experiment_check_activate(vector<double>& obs,
 	}
 
 	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
+		train_existing_check_activate(obs,
+									  it->second,
+									  wrapper);
+		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_check_activate(obs,
 							   it->second,
@@ -88,6 +93,11 @@ void ExploreExperiment::backprop(double target_val,
 								 ExploreExperimentHistory* history,
 								 SolutionWrapper* wrapper) {
 	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
+		train_existing_backprop(target_val,
+								history,
+								wrapper);
+		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 history,

@@ -1,3 +1,6 @@
+// - currently, the way being trained on explore too damaging
+//   - explore needs to be random
+
 #include <chrono>
 #include <iostream>
 #include <map>

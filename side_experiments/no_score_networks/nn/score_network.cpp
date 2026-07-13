@@ -34,6 +34,7 @@ ScoreNetwork::ScoreNetwork(int num_states) {
 	this->output->acti_vals.resize(1);
 	this->output->errors.resize(1);
 	this->output->errors.setConstant(0.0);
+	this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
@@ -68,6 +69,7 @@ ScoreNetwork::ScoreNetwork(ScoreNetwork* original) {
 	this->output->acti_vals.resize(original->output->acti_vals.size());
 	this->output->errors.resize(original->output->errors.size());
 	this->output->errors.setConstant(0.0);
+	this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
@@ -110,6 +112,7 @@ ScoreNetwork::ScoreNetwork(ifstream& input_file) {
 	this->output->acti_vals.resize(1);
 	this->output->errors.resize(1);
 	this->output->errors.setConstant(0.0);
+	this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
@@ -237,6 +240,7 @@ void ScoreNetwork::add_states(int new_num_states) {
 
 	this->hidden_1->update_structure(0.0);
 	this->hidden_2->update_structure(0.0);
+	this->output->update_structure(0.0);
 }
 
 void ScoreNetwork::save(ofstream& output_file) {

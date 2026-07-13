@@ -36,8 +36,7 @@ void BranchNode::experiment_step(vector<double>& obs,
 		}
 	}
 
-	// uniform_int_distribution<int> on_distribution(0, this->ramp_num_gears);
-	uniform_int_distribution<int> on_distribution(0, this->ramp_num_gears-1);
+	uniform_int_distribution<int> on_distribution(0, this->ramp_num_gears);
 	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->original_next_node;
 	} else if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {

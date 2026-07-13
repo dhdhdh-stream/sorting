@@ -54,6 +54,9 @@ void ExploreExperiment::train_existing_backprop(
 													output_average_max_update);
 			}
 		}
+		for (int s_index = 0; s_index < (int)this->existing_network->state_input->errors.size(); s_index++) {
+			this->existing_network->state_input->errors(s_index) = 0.0;
+		}
 
 		this->existing_state_histories.clear();
 		this->existing_target_val_histories.clear();
