@@ -30,6 +30,8 @@ public:
 								 SolutionWrapper* wrapper) = 0;
 	virtual void set_action(int action,
 							SolutionWrapper* wrapper) = 0;
+	virtual void experiment_step_callback(std::vector<double>& obs,
+										  SolutionWrapper* wrapper) = 0;
 	virtual void experiment_exit_step(SolutionWrapper* wrapper) = 0;
 };
 

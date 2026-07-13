@@ -47,12 +47,16 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 }
 
 tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
-	if (this->experiment_context.back() == NULL
-			&& this->node_context.back() != NULL
-			&& this->node_context.back()->type == NODE_TYPE_ACTION) {
-		ActionNode* action_node = (ActionNode*)this->node_context.back();
-		action_node->experiment_step_callback(obs,
-											  this);
+	if (this->experiment_context.back() != NULL) {
+		AbstractExperiment* experiment = this->experiment_context.back()->experiment;
+		experiment->experiment_step_callback(obs,
+											 this);
+	} else {
+		if (this->node_context.back()->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)this->node_context.back();
+			action_node->experiment_step_callback(obs,
+												  this);
+		}
 	}
 
 	int action;
@@ -102,9 +106,9 @@ void SolutionWrapper::set_action(int action) {
 void SolutionWrapper::experiment_end(double result) {
 	if (!this->should_explore) {
 		update_helper(this->scope_histories[0]);
-		update_helper(result,
-					  this);
 	}
+	update_helper(result,
+				  this);
 
 	if (this->explore_experiment_histories.size() == 0) {
 		create_experiment(this->scope_histories[0],

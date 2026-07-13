@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "action_network.h"
 #include "init_network.h"
 #include "obs_network.h"
 #include "problem.h"
@@ -28,6 +29,8 @@ void ActionNode::verify_step_callback(vector<double>& obs,
 	ActionNodeHistory* history = new ActionNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
+
+	this->action_network->activate(wrapper->state);
 
 	this->obs_network->activate(wrapper->state,
 								obs);

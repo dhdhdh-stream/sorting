@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -208,6 +209,12 @@ void ExploreExperiment::measure_new_state_step(vector<double>& obs,
 
 			wrapper->num_actions++;
 
+			ActionNetwork* action_network = wrapper->solution->generic_action_networks[this->best_actions[experiment_state->step_index]];
+			action_network->activate(wrapper->state);
+			ActionNetworkHistory* action_network_history = new ActionNetworkHistory(action_network);
+			action_network->save(action_network_history);
+			wrapper->network_histories.push_back(action_network_history);
+
 			experiment_state->step_index++;
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);
@@ -220,6 +227,16 @@ void ExploreExperiment::measure_new_state_step(vector<double>& obs,
 				wrapper);
 		}
 	}
+}
+
+void ExploreExperiment::measure_new_state_callback(vector<double>& obs,
+												   SolutionWrapper* wrapper) {
+	ObsNetwork* obs_network = wrapper->solution->generic_obs_network;
+	obs_network->activate(wrapper->state,
+						  obs);
+	ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(obs_network);
+	obs_network->save(obs_network_history);
+	wrapper->network_histories.push_back(obs_network_history);
 }
 
 void ExploreExperiment::measure_new_state_exit_step(SolutionWrapper* wrapper) {

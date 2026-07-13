@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "action_network.h"
 #include "globals.h"
 #include "init_network.h"
 #include "obs_network.h"
@@ -33,13 +34,19 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
+	this->action_network->activate(wrapper->state);
+	ActionNetworkHistory* action_network_history = new ActionNetworkHistory(this->action_network);
+	this->action_network->save(action_network_history);
+	wrapper->network_histories.push_back(action_network_history);
+
+	this->prev_action_network->activate(wrapper->prev_state);
+
 	this->obs_network->activate(wrapper->state,
 								obs);
-	if (!wrapper->should_explore) {
-		ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(this->obs_network);
-		this->obs_network->save(obs_network_history);
-		wrapper->network_histories.push_back(obs_network_history);
-	}
+	ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(this->obs_network);
+	this->obs_network->save(obs_network_history);
+	wrapper->network_histories.push_back(obs_network_history);
+
 	this->prev_obs_network->activate(wrapper->prev_state,
 									 obs);
 
@@ -49,11 +56,10 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 									this->init_network_node_contexts[n_index])) {
 			this->init_networks[n_index]->activate(wrapper->state,
 												   obs);
-			if (!wrapper->should_explore) {
-				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
-				this->init_networks[n_index]->save(init_network_history);
-				wrapper->network_histories.push_back(init_network_history);
-			}
+			InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
+			this->init_networks[n_index]->save(init_network_history);
+			wrapper->network_histories.push_back(init_network_history);
+
 			this->prev_init_networks[n_index]->activate(wrapper->prev_state,
 														obs);
 		}
@@ -68,6 +74,11 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 		this->score_network->activate(wrapper->state);
 		ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->score_network);
 		this->score_network->save(score_network_history);
+		wrapper->network_histories.push_back(score_network_history);
+	} else {
+		this->explore_score_network->activate(wrapper->state);
+		ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->explore_score_network);
+		this->explore_score_network->save(score_network_history);
 		wrapper->network_histories.push_back(score_network_history);
 	}
 

@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -75,6 +76,13 @@ void Solution::init(ProblemType* problem_type) {
 
 	this->starting_scope = new_scope;
 	this->starting_num_improvements = 0;
+
+	int num_actions = problem_type->num_possible_actions();
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		this->generic_action_networks.push_back(new ActionNetwork(this->num_states));
+	}
+	this->generic_obs_network = new ObsNetwork(this->num_states,
+											   this->num_obs);
 }
 
 void Solution::load(ifstream& input_file) {
@@ -120,6 +128,14 @@ void Solution::load(ifstream& input_file) {
 	string starting_num_improvements_line;
 	getline(input_file, starting_num_improvements_line);
 	this->starting_num_improvements = stoi(starting_num_improvements_line);
+
+	string num_actions_line;
+	getline(input_file, num_actions_line);
+	int num_actions = stoi(num_actions_line);
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		this->generic_action_networks.push_back(new ActionNetwork(input_file));
+	}
+	this->generic_obs_network = new ObsNetwork(input_file);
 
 	string history_size_line;
 	getline(input_file, history_size_line);
@@ -208,6 +224,12 @@ void Solution::save(ofstream& output_file) {
 
 	output_file << this->starting_scope->id << endl;
 	output_file << this->starting_num_improvements << endl;
+
+	output_file << this->generic_action_networks.size() << endl;
+	for (int a_index = 0; a_index < (int)this->generic_action_networks.size(); a_index++) {
+		this->generic_action_networks[a_index]->save(output_file);
+	}
+	this->generic_obs_network->save(output_file);
 
 	output_file << this->improvement_history.size() << endl;
 	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {

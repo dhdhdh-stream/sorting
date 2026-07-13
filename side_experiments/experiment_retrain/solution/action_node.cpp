@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "action_network.h"
 #include "constants.h"
 #include "init_network.h"
 #include "obs_network.h"
@@ -23,6 +24,9 @@ ActionNode::ActionNode() {
 }
 
 ActionNode::~ActionNode() {
+	delete this->action_network;
+	delete this->prev_action_network;
+
 	delete this->obs_network;
 	delete this->prev_obs_network;
 
@@ -35,6 +39,8 @@ ActionNode::~ActionNode() {
 
 	delete this->score_network;
 
+	delete this->explore_score_network;
+
 	if (this->experiment != NULL) {
 		delete this->experiment;
 	}
@@ -42,6 +48,9 @@ ActionNode::~ActionNode() {
 
 void ActionNode::save(ofstream& output_file) {
 	output_file << this->action << endl;
+
+	this->action_network->save(output_file);
+	this->prev_action_network->save(output_file);
 
 	this->obs_network->save(output_file);
 	this->prev_obs_network->save(output_file);
@@ -60,6 +69,8 @@ void ActionNode::save(ofstream& output_file) {
 
 	this->score_network->save(output_file);
 
+	this->explore_score_network->save(output_file);
+
 	output_file << this->next_node_id << endl;
 
 	output_file << this->average_instances_per_hit << endl;
@@ -76,6 +87,9 @@ void ActionNode::load(ifstream& input_file,
 	string action_line;
 	getline(input_file, action_line);
 	this->action = stoi(action_line);
+
+	this->action_network = new ActionNetwork(input_file);
+	this->prev_action_network = new ActionNetwork(input_file);
 
 	this->obs_network = new ObsNetwork(input_file);
 	this->prev_obs_network = new ObsNetwork(input_file);
@@ -104,6 +118,8 @@ void ActionNode::load(ifstream& input_file,
 	}
 
 	this->score_network = new ScoreNetwork(input_file);
+
+	this->explore_score_network = new ScoreNetwork(input_file);
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);

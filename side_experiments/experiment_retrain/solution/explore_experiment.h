@@ -92,6 +92,8 @@ public:
 						 SolutionWrapper* wrapper);
 	void set_action(int action,
 					SolutionWrapper* wrapper);
+	void experiment_step_callback(std::vector<double>& obs,
+								  SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  ExploreExperimentHistory* history,
@@ -107,6 +109,8 @@ public:
 					  SolutionWrapper* wrapper);
 	void explore_set_action(int action,
 							SolutionWrapper* wrapper);
+	void explore_callback(std::vector<double>& obs,
+						  SolutionWrapper* wrapper);
 	void explore_exit_step(SolutionWrapper* wrapper);
 	void explore_backprop(double target_val,
 						  ExploreExperimentHistory* history,
@@ -119,6 +123,8 @@ public:
 						int& action,
 						bool& is_next,
 						SolutionWrapper* wrapper);
+	void train_new_callback(std::vector<double>& obs,
+							SolutionWrapper* wrapper);
 	void train_new_exit_step(SolutionWrapper* wrapper);
 	void train_new_backprop(double target_val,
 							ExploreExperimentHistory* history,
@@ -134,6 +140,8 @@ public:
 							int& action,
 							bool& is_next,
 							SolutionWrapper* wrapper);
+	void measure_reuse_callback(std::vector<double>& obs,
+								SolutionWrapper* wrapper);
 	void measure_reuse_exit_step(SolutionWrapper* wrapper);
 	void measure_reuse_backprop(double target_val,
 								ExploreExperimentHistory* history,
@@ -145,6 +153,8 @@ public:
 								int& action,
 								bool& is_next,
 								SolutionWrapper* wrapper);
+	void measure_new_state_callback(std::vector<double>& obs,
+									SolutionWrapper* wrapper);
 	void measure_new_state_exit_step(SolutionWrapper* wrapper);
 	void measure_new_state_backprop(double target_val,
 									ExploreExperimentHistory* history,

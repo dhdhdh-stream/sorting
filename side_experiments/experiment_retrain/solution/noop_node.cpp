@@ -31,6 +31,8 @@ NoopNode::~NoopNode() {
 
 	delete this->score_network;
 
+	delete this->explore_score_network;
+
 	if (this->experiment != NULL) {
 		delete this->experiment;
 	}
@@ -50,6 +52,8 @@ void NoopNode::save(ofstream& output_file) {
 	}
 
 	this->score_network->save(output_file);
+
+	this->explore_score_network->save(output_file);
 
 	output_file << this->next_node_id << endl;
 
@@ -88,6 +92,8 @@ void NoopNode::load(ifstream& input_file,
 	}
 
 	this->score_network = new ScoreNetwork(input_file);
+
+	this->explore_score_network = new ScoreNetwork(input_file);
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);

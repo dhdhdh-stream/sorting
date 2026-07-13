@@ -3,11 +3,13 @@
 #include <algorithm>
 #include <iostream>
 
+#include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "noop_node.h"
+#include "obs_network.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -128,6 +130,12 @@ void ExploreExperiment::train_new_step(vector<double>& obs,
 
 			wrapper->num_actions++;
 
+			ActionNetwork* action_network = wrapper->solution->generic_action_networks[this->best_actions[experiment_state->step_index]];
+			action_network->activate(wrapper->state);
+			ActionNetworkHistory* action_network_history = new ActionNetworkHistory(action_network);
+			action_network->save(action_network_history);
+			wrapper->network_histories.push_back(action_network_history);
+
 			experiment_state->step_index++;
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);
@@ -140,6 +148,16 @@ void ExploreExperiment::train_new_step(vector<double>& obs,
 				wrapper);
 		}
 	}
+}
+
+void ExploreExperiment::train_new_callback(vector<double>& obs,
+										   SolutionWrapper* wrapper) {
+	ObsNetwork* obs_network = wrapper->solution->generic_obs_network;
+	obs_network->activate(wrapper->state,
+						  obs);
+	ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(obs_network);
+	obs_network->save(obs_network_history);
+	wrapper->network_histories.push_back(obs_network_history);
 }
 
 void ExploreExperiment::train_new_exit_step(SolutionWrapper* wrapper) {
@@ -346,70 +364,70 @@ void ExploreExperiment::train_new_backprop(
 					#else
 					if (is_success) {
 					#endif /* MDEBUG */
-						// add(new_network,
-						// 	wrapper);
+						add(new_network,
+							wrapper);
 
-						// delete this;
+						delete this;
 
-						// wrapper->experiment_iter++;
-						// if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
-						// 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-						// 		Scope* scope = wrapper->solution->scopes[s_index];
-						// 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-						// 				it != scope->nodes.end(); it++) {
-						// 			switch (it->second->type) {
-						// 			case NODE_TYPE_NOOP:
-						// 				{
-						// 					NoopNode* noop_node = (NoopNode*)it->second;
-						// 					if (noop_node->experiment != NULL) {
-						// 						delete noop_node->experiment;
-						// 					}
-						// 				}
-						// 				break;
-						// 			case NODE_TYPE_ACTION:
-						// 				{
-						// 					ActionNode* action_node = (ActionNode*)it->second;
-						// 					if (action_node->experiment != NULL) {
-						// 						delete action_node->experiment;
-						// 					}
-						// 				}
-						// 				break;
-						// 			case NODE_TYPE_SCOPE:
-						// 				{
-						// 					ScopeNode* scope_node = (ScopeNode*)it->second;
-						// 					if (scope_node->experiment != NULL) {
-						// 						delete scope_node->experiment;
-						// 					}
-						// 				}
-						// 				break;
-						// 			case NODE_TYPE_BRANCH:
-						// 				{
-						// 					BranchNode* branch_node = (BranchNode*)it->second;
-						// 					if (branch_node->original_experiment != NULL) {
-						// 						delete branch_node->original_experiment;
-						// 					}
-						// 					if (branch_node->branch_experiment != NULL) {
-						// 						delete branch_node->branch_experiment;
-						// 					}
-						// 				}
-						// 				break;
-						// 			}
-						// 		}
-						// 	}
+						wrapper->experiment_iter++;
+						if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
+							for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+								Scope* scope = wrapper->solution->scopes[s_index];
+								for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+										it != scope->nodes.end(); it++) {
+									switch (it->second->type) {
+									case NODE_TYPE_NOOP:
+										{
+											NoopNode* noop_node = (NoopNode*)it->second;
+											if (noop_node->experiment != NULL) {
+												delete noop_node->experiment;
+											}
+										}
+										break;
+									case NODE_TYPE_ACTION:
+										{
+											ActionNode* action_node = (ActionNode*)it->second;
+											if (action_node->experiment != NULL) {
+												delete action_node->experiment;
+											}
+										}
+										break;
+									case NODE_TYPE_SCOPE:
+										{
+											ScopeNode* scope_node = (ScopeNode*)it->second;
+											if (scope_node->experiment != NULL) {
+												delete scope_node->experiment;
+											}
+										}
+										break;
+									case NODE_TYPE_BRANCH:
+										{
+											BranchNode* branch_node = (BranchNode*)it->second;
+											if (branch_node->original_experiment != NULL) {
+												delete branch_node->original_experiment;
+											}
+											if (branch_node->branch_experiment != NULL) {
+												delete branch_node->branch_experiment;
+											}
+										}
+										break;
+									}
+								}
+							}
 
-						// 	wrapper->experiment_iter = 0;
-						// }
+							wrapper->experiment_iter = 0;
+						}
 
-						this->measure_new_network = new_network;
-						this->existing_sum_scores = 0.0;
-						this->existing_count = 0;
-						this->new_sum_scores = 0.0;
-						this->new_count = 0;
+						// this->measure_new_network = new_network;
+						// this->existing_sum_scores = 0.0;
+						// this->existing_count = 0;
+						// this->new_sum_scores = 0.0;
+						// this->new_count = 0;
 
-						this->new_node_verify_states = vector<vector<vector<double>>>(this->best_step_types.size());
+						// this->new_node_verify_states = vector<vector<vector<double>>>(this->best_step_types.size());
 
-						this->state = EXPLORE_EXPERIMENT_STATE_MEASURE_REUSE;
-						this->state_iter = 0;
+						// this->state = EXPLORE_EXPERIMENT_STATE_MEASURE_REUSE;
+						// this->state_iter = 0;
 					} else {
 						delete new_network;
 					}

@@ -7,6 +7,7 @@
 
 #include "abstract_node.h"
 
+class ActionNetwork;
 class InitNetwork;
 class ObsNetwork;
 class Problem;
@@ -19,10 +20,15 @@ class ActionNode : public AbstractNode {
 public:
 	int action;
 
+	ActionNetwork* action_network;
+	ActionNetwork* prev_action_network;
+
 	ObsNetwork* obs_network;
 	ObsNetwork* prev_obs_network;
 
 	ScoreNetwork* score_network;
+
+	ScoreNetwork* explore_score_network;
 
 	int next_node_id;
 	AbstractNode* next_node;

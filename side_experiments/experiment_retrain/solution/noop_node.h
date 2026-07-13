@@ -20,6 +20,8 @@ class NoopNode : public AbstractNode {
 public:
 	ScoreNetwork* score_network;
 
+	ScoreNetwork* explore_score_network;
+
 	int next_node_id;
 	AbstractNode* next_node;
 

@@ -178,83 +178,85 @@ void update_helper(double target_val,
 	}
 	wrapper->network_histories.clear();
 
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		Scope* scope = wrapper->solution->scopes[s_index];
-		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-				it != scope->nodes.end(); it++) {
-			switch (it->second->type) {
-			case NODE_TYPE_NOOP:
-				{
-					NoopNode* noop_node = (NoopNode*)it->second;
-					noop_node->average_instances_per_run = 0.999*noop_node->average_instances_per_run + 0.001*noop_node->curr_num_instances;
-					if (noop_node->curr_num_instances > 0) {
-						noop_node->average_instances_per_hit = 0.999*noop_node->average_instances_per_hit + 0.001*noop_node->curr_num_instances;
+	if (!wrapper->should_explore) {
+		for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+			Scope* scope = wrapper->solution->scopes[s_index];
+			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+					it != scope->nodes.end(); it++) {
+				switch (it->second->type) {
+				case NODE_TYPE_NOOP:
+					{
+						NoopNode* noop_node = (NoopNode*)it->second;
+						noop_node->average_instances_per_run = 0.999*noop_node->average_instances_per_run + 0.001*noop_node->curr_num_instances;
+						if (noop_node->curr_num_instances > 0) {
+							noop_node->average_instances_per_hit = 0.999*noop_node->average_instances_per_hit + 0.001*noop_node->curr_num_instances;
 
-						noop_node->curr_num_instances = 0;
-					}
-				}
-				break;
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)it->second;
-					action_node->average_instances_per_run = 0.999*action_node->average_instances_per_run + 0.001*action_node->curr_num_instances;
-					if (action_node->curr_num_instances > 0) {
-						action_node->average_instances_per_hit = 0.999*action_node->average_instances_per_hit + 0.001*action_node->curr_num_instances;
-
-						action_node->curr_num_instances = 0;
-					}
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)it->second;
-					scope_node->average_instances_per_run = 0.999*scope_node->average_instances_per_run + 0.001*scope_node->curr_num_instances;
-					if (scope_node->curr_num_instances > 0) {
-						scope_node->average_instances_per_hit = 0.999*scope_node->average_instances_per_hit + 0.001*scope_node->curr_num_instances;
-
-						scope_node->curr_num_instances = 0;
-					}
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)it->second;
-					branch_node->original_average_instances_per_run = 0.999*branch_node->original_average_instances_per_run + 0.001*branch_node->original_curr_num_instances;
-					if (branch_node->original_curr_num_instances > 0) {
-						branch_node->original_average_instances_per_hit = 0.999*branch_node->original_average_instances_per_hit + 0.001*branch_node->original_curr_num_instances;
-
-						if (branch_node->ramp < branch_node->ramp_num_gears) {
-							branch_node->ramp_iter++;
-							if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
-								branch_node->ramp++;
-								branch_node->ramp_iter = 0;
-
-								// // temp
-								// cout << "branch_node->ramp: " << branch_node->ramp << endl;
-							}
+							noop_node->curr_num_instances = 0;
 						}
-
-						branch_node->original_curr_num_instances = 0;
 					}
-					branch_node->branch_average_instances_per_run = 0.999*branch_node->branch_average_instances_per_run + 0.001*branch_node->branch_curr_num_instances;
-					if (branch_node->branch_curr_num_instances > 0) {
-						branch_node->branch_average_instances_per_hit = 0.999*branch_node->branch_average_instances_per_hit + 0.001*branch_node->branch_curr_num_instances;
+					break;
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)it->second;
+						action_node->average_instances_per_run = 0.999*action_node->average_instances_per_run + 0.001*action_node->curr_num_instances;
+						if (action_node->curr_num_instances > 0) {
+							action_node->average_instances_per_hit = 0.999*action_node->average_instances_per_hit + 0.001*action_node->curr_num_instances;
 
-						if (branch_node->ramp < branch_node->ramp_num_gears) {
-							branch_node->ramp_iter++;
-							if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
-								branch_node->ramp++;
-								branch_node->ramp_iter = 0;
-
-								// // temp
-								// cout << "branch_node->ramp: " << branch_node->ramp << endl;
-							}
+							action_node->curr_num_instances = 0;
 						}
-
-						branch_node->branch_curr_num_instances = 0;
 					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)it->second;
+						scope_node->average_instances_per_run = 0.999*scope_node->average_instances_per_run + 0.001*scope_node->curr_num_instances;
+						if (scope_node->curr_num_instances > 0) {
+							scope_node->average_instances_per_hit = 0.999*scope_node->average_instances_per_hit + 0.001*scope_node->curr_num_instances;
+
+							scope_node->curr_num_instances = 0;
+						}
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)it->second;
+						branch_node->original_average_instances_per_run = 0.999*branch_node->original_average_instances_per_run + 0.001*branch_node->original_curr_num_instances;
+						if (branch_node->original_curr_num_instances > 0) {
+							branch_node->original_average_instances_per_hit = 0.999*branch_node->original_average_instances_per_hit + 0.001*branch_node->original_curr_num_instances;
+
+							if (branch_node->ramp < branch_node->ramp_num_gears) {
+								branch_node->ramp_iter++;
+								if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
+									branch_node->ramp++;
+									branch_node->ramp_iter = 0;
+
+									// // temp
+									// cout << "branch_node->ramp: " << branch_node->ramp << endl;
+								}
+							}
+
+							branch_node->original_curr_num_instances = 0;
+						}
+						branch_node->branch_average_instances_per_run = 0.999*branch_node->branch_average_instances_per_run + 0.001*branch_node->branch_curr_num_instances;
+						if (branch_node->branch_curr_num_instances > 0) {
+							branch_node->branch_average_instances_per_hit = 0.999*branch_node->branch_average_instances_per_hit + 0.001*branch_node->branch_curr_num_instances;
+
+							if (branch_node->ramp < branch_node->ramp_num_gears) {
+								branch_node->ramp_iter++;
+								if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
+									branch_node->ramp++;
+									branch_node->ramp_iter = 0;
+
+									// // temp
+									// cout << "branch_node->ramp: " << branch_node->ramp << endl;
+								}
+							}
+
+							branch_node->branch_curr_num_instances = 0;
+						}
+					}
+					break;
 				}
-				break;
 			}
 		}
 	}

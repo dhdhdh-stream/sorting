@@ -2,11 +2,13 @@
 
 #include <iostream>
 
+#include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "noop_node.h"
+#include "obs_network.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -278,7 +280,23 @@ void ExploreExperiment::explore_set_action(int action,
 
 	history->curr_actions[experiment_state->step_index] = action;
 
+	ActionNetwork* action_network = wrapper->solution->generic_action_networks[action];
+	action_network->activate(wrapper->state);
+	ActionNetworkHistory* action_network_history = new ActionNetworkHistory(action_network);
+	action_network->save(action_network_history);
+	wrapper->network_histories.push_back(action_network_history);
+
 	experiment_state->step_index++;
+}
+
+void ExploreExperiment::explore_callback(vector<double>& obs,
+										 SolutionWrapper* wrapper) {
+	ObsNetwork* obs_network = wrapper->solution->generic_obs_network;
+	obs_network->activate(wrapper->state,
+						  obs);
+	ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(obs_network);
+	obs_network->save(obs_network_history);
+	wrapper->network_histories.push_back(obs_network_history);
 }
 
 void ExploreExperiment::explore_exit_step(SolutionWrapper* wrapper) {

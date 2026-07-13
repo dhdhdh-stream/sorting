@@ -25,11 +25,10 @@ void BranchNode::experiment_step(vector<double>& obs,
 									this->init_network_node_contexts[n_index])) {
 			this->init_networks[n_index]->activate(wrapper->state,
 												   obs);
-			if (!wrapper->should_explore) {
-				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
-				this->init_networks[n_index]->save(init_network_history);
-				wrapper->network_histories.push_back(init_network_history);
-			}
+			InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
+			this->init_networks[n_index]->save(init_network_history);
+			wrapper->network_histories.push_back(init_network_history);
+
 			this->prev_init_networks[n_index]->activate(wrapper->prev_state,
 														obs);
 		}
@@ -97,6 +96,11 @@ void BranchNode::experiment_step(vector<double>& obs,
 				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->branch_network);
 				this->branch_network->save(score_network_history);
 				wrapper->network_histories.push_back(score_network_history);
+			} else {
+				this->explore_branch_network->activate(wrapper->state);
+				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->explore_branch_network);
+				this->explore_branch_network->save(score_network_history);
+				wrapper->network_histories.push_back(score_network_history);
 			}
 
 			wrapper->node_context.back() = this->branch_next_node;
@@ -115,6 +119,11 @@ void BranchNode::experiment_step(vector<double>& obs,
 			if (!wrapper->should_explore) {
 				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->original_network);
 				this->original_network->save(score_network_history);
+				wrapper->network_histories.push_back(score_network_history);
+			} else {
+				this->explore_original_network->activate(wrapper->state);
+				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->explore_original_network);
+				this->explore_original_network->save(score_network_history);
 				wrapper->network_histories.push_back(score_network_history);
 			}
 

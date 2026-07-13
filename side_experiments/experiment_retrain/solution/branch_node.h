@@ -29,6 +29,9 @@ public:
 	ScoreNetwork* prev_original_network;
 	ScoreNetwork* prev_branch_network;
 
+	ScoreNetwork* explore_original_network;
+	ScoreNetwork* explore_branch_network;
+
 	int original_next_node_id;
 	AbstractNode* original_next_node;
 	int branch_next_node_id;

@@ -14,21 +14,19 @@ void Scope::experiment_start_activate(vector<double>& obs,
 									  SolutionWrapper* wrapper) {
 	for (int n_index = 0; n_index < (int)this->start_negate_networks.size(); n_index++) {
 		this->start_negate_networks[n_index]->activate(wrapper->state);
-		if (!wrapper->should_explore) {
-			NegateNetworkHistory* negate_network_history = new NegateNetworkHistory(this->start_negate_networks[n_index]);
-			this->start_negate_networks[n_index]->save(negate_network_history);
-			wrapper->network_histories.push_back(negate_network_history);
-		}
+		NegateNetworkHistory* negate_network_history = new NegateNetworkHistory(this->start_negate_networks[n_index]);
+		this->start_negate_networks[n_index]->save(negate_network_history);
+		wrapper->network_histories.push_back(negate_network_history);
+
 		this->prev_start_negate_networks[n_index]->activate(wrapper->prev_state);
 	}
 
 	this->start_obs_network->activate(wrapper->state,
 									  obs);
-	if (!wrapper->should_explore) {
-		ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(this->start_obs_network);
-		this->start_obs_network->save(obs_network_history);
-		wrapper->network_histories.push_back(obs_network_history);
-	}
+	ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(this->start_obs_network);
+	this->start_obs_network->save(obs_network_history);
+	wrapper->network_histories.push_back(obs_network_history);
+
 	this->prev_start_obs_network->activate(wrapper->prev_state,
 										   obs);
 
@@ -38,11 +36,10 @@ void Scope::experiment_start_activate(vector<double>& obs,
 									this->start_init_network_node_contexts[n_index])) {
 			this->start_init_networks[n_index]->activate(wrapper->state,
 														 obs);
-			if (!wrapper->should_explore) {
-				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->start_init_networks[n_index]);
-				this->start_init_networks[n_index]->save(init_network_history);
-				wrapper->network_histories.push_back(init_network_history);
-			}
+			InitNetworkHistory* init_network_history = new InitNetworkHistory(this->start_init_networks[n_index]);
+			this->start_init_networks[n_index]->save(init_network_history);
+			wrapper->network_histories.push_back(init_network_history);
+
 			this->prev_start_init_networks[n_index]->activate(wrapper->prev_state,
 															  obs);
 		}

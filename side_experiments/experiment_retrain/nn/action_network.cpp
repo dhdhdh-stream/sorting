@@ -7,8 +7,7 @@
 
 using namespace std;
 
-ActionNetwork::ActionNetwork(int num_states,
-							 int num_actions) {
+ActionNetwork::ActionNetwork(int num_states) {
 	this->type = NETWORK_TYPE_ACTION;
 
 	this->state_input = new Layer(LINEAR_LAYER);
@@ -16,17 +15,11 @@ ActionNetwork::ActionNetwork(int num_states,
 	this->state_input->errors.resize(num_states);
 	this->state_input->errors.setConstant(0.0);
 
-	this->action_input = new Layer(LINEAR_LAYER);
-	this->action_input->acti_vals.resize(num_actions);
-	this->action_input->errors.resize(num_actions);
-	this->action_input->errors.setConstant(0.0);
-
 	this->hidden_1 = new Layer(LEAKY_LAYER);
 	this->hidden_1->acti_vals.resize(16);
 	this->hidden_1->errors.resize(16);
 	this->hidden_1->errors.setConstant(0.0);
 	this->hidden_1->input_layers.push_back(this->state_input);
-	this->hidden_1->input_layers.push_back(this->action_input);
 	this->hidden_1->update_structure(NETWORK_INIT_MULTIPLIER);
 
 	this->hidden_2 = new Layer(LEAKY_LAYER);
@@ -34,7 +27,6 @@ ActionNetwork::ActionNetwork(int num_states,
 	this->hidden_2->errors.resize(8);
 	this->hidden_2->errors.setConstant(0.0);
 	this->hidden_2->input_layers.push_back(this->state_input);
-	this->hidden_2->input_layers.push_back(this->action_input);
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure(NETWORK_INIT_MULTIPLIER);
 
@@ -55,17 +47,11 @@ ActionNetwork::ActionNetwork(ActionNetwork* original) {
 	this->state_input->errors.resize(original->state_input->errors.size());
 	this->state_input->errors.setConstant(0.0);
 
-	this->action_input = new Layer(LINEAR_LAYER);
-	this->action_input->acti_vals.resize(original->action_input->acti_vals.size());
-	this->action_input->errors.resize(original->action_input->errors.size());
-	this->action_input->errors.setConstant(0.0);
-
 	this->hidden_1 = new Layer(LEAKY_LAYER);
 	this->hidden_1->acti_vals.resize(original->hidden_1->acti_vals.size());
 	this->hidden_1->errors.resize(original->hidden_1->errors.size());
 	this->hidden_1->errors.setConstant(0.0);
 	this->hidden_1->input_layers.push_back(this->state_input);
-	this->hidden_1->input_layers.push_back(this->action_input);
 	this->hidden_1->update_structure(NETWORK_INIT_MULTIPLIER);
 	this->hidden_1->copy_weights_from(original->hidden_1);
 
@@ -74,7 +60,6 @@ ActionNetwork::ActionNetwork(ActionNetwork* original) {
 	this->hidden_2->errors.resize(original->hidden_2->errors.size());
 	this->hidden_2->errors.setConstant(0.0);
 	this->hidden_2->input_layers.push_back(this->state_input);
-	this->hidden_2->input_layers.push_back(this->action_input);
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure(NETWORK_INIT_MULTIPLIER);
 	this->hidden_2->copy_weights_from(original->hidden_2);
@@ -100,14 +85,6 @@ ActionNetwork::ActionNetwork(ifstream& input_file) {
 	this->state_input->errors.resize(num_states);
 	this->state_input->errors.setConstant(0.0);
 
-	this->action_input = new Layer(LINEAR_LAYER);
-	string num_actions_line;
-	getline(input_file, num_actions_line);
-	int num_actions = stoi(num_actions_line);
-	this->action_input->acti_vals.resize(num_actions);
-	this->action_input->errors.resize(num_actions);
-	this->action_input->errors.setConstant(0.0);
-
 	this->hidden_1 = new Layer(LEAKY_LAYER);
 	string hidden_1_size_line;
 	getline(input_file, hidden_1_size_line);
@@ -116,7 +93,6 @@ ActionNetwork::ActionNetwork(ifstream& input_file) {
 	this->hidden_1->errors.resize(hidden_1_size);
 	this->hidden_1->errors.setConstant(0.0);
 	this->hidden_1->input_layers.push_back(this->state_input);
-	this->hidden_1->input_layers.push_back(this->action_input);
 	this->hidden_1->update_structure(NETWORK_INIT_MULTIPLIER);
 
 	this->hidden_2 = new Layer(LEAKY_LAYER);
@@ -127,7 +103,6 @@ ActionNetwork::ActionNetwork(ifstream& input_file) {
 	this->hidden_2->errors.resize(hidden_2_size);
 	this->hidden_2->errors.setConstant(0.0);
 	this->hidden_2->input_layers.push_back(this->state_input);
-	this->hidden_2->input_layers.push_back(this->action_input);
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure(NETWORK_INIT_MULTIPLIER);
 
@@ -146,24 +121,14 @@ ActionNetwork::ActionNetwork(ifstream& input_file) {
 
 ActionNetwork::~ActionNetwork() {
 	delete this->state_input;
-	delete this->action_input;
 	delete this->hidden_1;
 	delete this->hidden_2;
 	delete this->output;
 }
 
-void ActionNetwork::activate(vector<double>& state_vals,
-							 int action) {
+void ActionNetwork::activate(vector<double>& state_vals) {
 	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
 		this->state_input->acti_vals(s_index) = state_vals[s_index];
-	}
-
-	for (int a_index = 0; a_index < (int)this->action_input->acti_vals.size(); a_index++) {
-		if (a_index == action) {
-			this->action_input->acti_vals(a_index) = 1.0;
-		} else {
-			this->action_input->acti_vals(a_index) = 0.0;
-		}
 	}
 
 	this->hidden_1->activate();
@@ -175,10 +140,6 @@ void ActionNetwork::save(ActionNetworkHistory* history) {
 	history->state_input_history = vector<double>(this->state_input->acti_vals.size());
 	for (int s_index = 0; s_index < (int)this->state_input->acti_vals.size(); s_index++) {
 		history->state_input_history[s_index] = this->state_input->acti_vals(s_index);
-	}
-	history->action_input_history = vector<double>(this->action_input->acti_vals.size());
-	for (int a_index = 0; a_index < (int)this->action_input->acti_vals.size(); a_index++) {
-		history->action_input_history[a_index] = this->action_input->acti_vals(a_index);
 	}
 	history->hidden_1_history = vector<double>(this->hidden_1->acti_vals.size());
 	for (int h_index = 0; h_index < (int)this->hidden_1->acti_vals.size(); h_index++) {
@@ -193,9 +154,6 @@ void ActionNetwork::save(ActionNetworkHistory* history) {
 void ActionNetwork::load(ActionNetworkHistory* history) {
 	for (int s_index = 0; s_index < (int)this->state_input->acti_vals.size(); s_index++) {
 		this->state_input->acti_vals(s_index) = history->state_input_history[s_index];
-	}
-	for (int a_index = 0; a_index < (int)this->action_input->acti_vals.size(); a_index++) {
-		this->action_input->acti_vals(a_index) = history->action_input_history[a_index];
 	}
 	for (int h_index = 0; h_index < (int)this->hidden_1->acti_vals.size(); h_index++) {
 		this->hidden_1->acti_vals(h_index) = history->hidden_1_history[h_index];
@@ -241,7 +199,6 @@ void ActionNetwork::add_states(int new_num_states) {
 
 void ActionNetwork::save(ofstream& output_file) {
 	output_file << this->state_input->acti_vals.size() << endl;
-	output_file << this->action_input->acti_vals.size() << endl;
 
 	output_file << this->hidden_1->acti_vals.size() << endl;
 	output_file << this->hidden_2->acti_vals.size() << endl;

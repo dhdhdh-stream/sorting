@@ -48,7 +48,7 @@ public:
 	Scope* starting_scope;
 	int starting_num_improvements;
 
-	ActionNetwork* generic_action_network;
+	std::vector<ActionNetwork*> generic_action_networks;
 	ObsNetwork* generic_obs_network;
 
 	double average_max_update;

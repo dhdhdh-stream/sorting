@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -101,8 +102,12 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			new_action_node->score_network = new ScoreNetwork(new_network);
 
 			new_action_node->action = this->best_actions[s_index];
-			new_action_node->obs_network = new ObsNetwork(wrapper->solution->num_states,
-														  wrapper->solution->num_obs);
+
+			new_action_node->action_network = new ActionNetwork(
+				wrapper->solution->generic_action_networks[this->best_actions[s_index]]);
+			new_action_node->prev_action_network = new ActionNetwork(new_action_node->action_network);
+
+			new_action_node->obs_network = new ObsNetwork(wrapper->solution->generic_obs_network);
 			new_action_node->prev_obs_network = new ObsNetwork(new_action_node->obs_network);
 
 			// new_action_node->verify_states = this->new_node_verify_states[s_index];
@@ -470,6 +475,8 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			case NODE_TYPE_ACTION:
 				{
 					ActionNode* action_node = (ActionNode*)it->second;
+					delete action_node->prev_action_network;
+					action_node->prev_action_network = new ActionNetwork(action_node->action_network);
 					delete action_node->prev_obs_network;
 					action_node->prev_obs_network = new ObsNetwork(action_node->obs_network);
 				}

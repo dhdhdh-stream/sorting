@@ -98,6 +98,28 @@ void ExploreExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 	}
 }
 
+void ExploreExperiment::experiment_step_callback(vector<double>& obs,
+												 SolutionWrapper* wrapper) {
+	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
+		explore_callback(obs,
+						 wrapper);
+		break;
+	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
+		train_new_callback(obs,
+						   wrapper);
+		break;
+	case EXPLORE_EXPERIMENT_STATE_MEASURE_REUSE:
+		measure_reuse_callback(obs,
+							   wrapper);
+		break;
+	case EXPLORE_EXPERIMENT_STATE_MEASURE_NEW_STATE:
+		measure_new_state_callback(obs,
+								   wrapper);
+		break;
+	}
+}
+
 void ExploreExperiment::backprop(double target_val,
 								 ExploreExperimentHistory* history,
 								 SolutionWrapper* wrapper) {

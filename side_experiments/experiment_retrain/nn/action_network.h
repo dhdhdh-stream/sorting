@@ -12,20 +12,17 @@ class ActionNetworkHistory;
 class ActionNetwork : public AbstractNetwork {
 public:
 	Layer* state_input;
-	Layer* action_input;
 
 	Layer* hidden_1;
 	Layer* hidden_2;
 	Layer* output;
 
-	ActionNetwork(int num_states,
-				  int num_actions);
+	ActionNetwork(int num_states);
 	ActionNetwork(ActionNetwork* original);
 	ActionNetwork(std::ifstream& input_file);
 	~ActionNetwork();
 
-	void activate(std::vector<double>& state_vals,
-				  int action);
+	void activate(std::vector<double>& state_vals);
 
 	void save(ActionNetworkHistory* history);
 	void load(ActionNetworkHistory* history);
@@ -42,7 +39,6 @@ public:
 class ActionNetworkHistory : public AbstractNetworkHistory {
 public:
 	std::vector<double> state_input_history;
-	std::vector<double> action_input_history;
 	std::vector<double> hidden_1_history;
 	std::vector<double> hidden_2_history;
 
