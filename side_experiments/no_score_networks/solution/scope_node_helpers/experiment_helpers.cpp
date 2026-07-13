@@ -18,6 +18,14 @@ void ScopeNode::experiment_step(vector<double>& obs,
 								int& action,
 								bool& is_next,
 								SolutionWrapper* wrapper) {
+	if (wrapper->run_type == RUN_TYPE_DAMAGE) {
+		uniform_int_distribution<int> damage_distribution(0, 19);
+		if (damage_distribution(generator) == 0) {
+			wrapper->node_context.back() = this->next_node;
+			return;
+		}
+	}
+
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->scope);
 	wrapper->scope_histories.push_back(inner_scope_history);
 	wrapper->node_context.push_back(this->scope->nodes[0]);
@@ -47,11 +55,13 @@ void ScopeNode::experiment_exit_step(vector<double>& obs,
 									this->init_network_node_contexts[n_index])) {
 			this->init_networks[n_index]->activate(wrapper->state,
 												   obs);
-			InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
-			this->init_networks[n_index]->save(init_network_history);
-			wrapper->network_histories.push_back(init_network_history);
+			if (wrapper->run_type != RUN_TYPE_EXPLORE) {
+				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
+				this->init_networks[n_index]->save(init_network_history);
+				wrapper->network_histories.push_back(init_network_history);
+			}
 
-			if (!wrapper->should_explore) {
+			if (wrapper->run_type == RUN_TYPE_EXISTING) {
 				this->prev_init_networks[n_index]->activate(wrapper->prev_state,
 															obs);
 			}

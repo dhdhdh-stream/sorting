@@ -25,11 +25,13 @@ void BranchNode::experiment_step(vector<double>& obs,
 									this->init_network_node_contexts[n_index])) {
 			this->init_networks[n_index]->activate(wrapper->state,
 												   obs);
-			InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
-			this->init_networks[n_index]->save(init_network_history);
-			wrapper->network_histories.push_back(init_network_history);
+			if (wrapper->run_type != RUN_TYPE_EXPLORE) {
+				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
+				this->init_networks[n_index]->save(init_network_history);
+				wrapper->network_histories.push_back(init_network_history);
+			}
 
-			if (!wrapper->should_explore) {
+			if (wrapper->run_type == RUN_TYPE_EXISTING) {
 				this->prev_init_networks[n_index]->activate(wrapper->prev_state,
 															obs);
 			}
@@ -60,7 +62,7 @@ void BranchNode::experiment_step(vector<double>& obs,
 		this->original_network->activate(wrapper->state);
 		this->branch_network->activate(wrapper->state);
 		uniform_int_distribution<int> maintain_distribution(0, 9);
-		if (!wrapper->should_explore
+		if (wrapper->run_type == RUN_TYPE_EXISTING
 				&& maintain_distribution(generator) == 0) {
 			this->prev_original_network->activate(wrapper->prev_state);
 			this->prev_branch_network->activate(wrapper->prev_state);
@@ -89,16 +91,18 @@ void BranchNode::experiment_step(vector<double>& obs,
 		history->is_branch = is_branch;
 
 		if (is_branch) {
-			if (!wrapper->should_explore) {
+			if (wrapper->run_type == RUN_TYPE_EXISTING) {
 				this->consec_original = 0;
 				this->consec_branch++;
 			}
 
-			if (!wrapper->should_explore) {
+			if (wrapper->run_type == RUN_TYPE_EXISTING) {
 				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->branch_network);
 				this->branch_network->save(score_network_history);
 				wrapper->network_histories.push_back(score_network_history);
-			} else {
+			}
+
+			if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 				this->explore_branch_network->activate(wrapper->state);
 				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->explore_branch_network);
 				this->explore_branch_network->save(score_network_history);
@@ -113,16 +117,18 @@ void BranchNode::experiment_step(vector<double>& obs,
 					wrapper);
 			}
 		} else {
-			if (!wrapper->should_explore) {
+			if (wrapper->run_type == RUN_TYPE_EXISTING) {
 				this->consec_original++;
 				this->consec_branch = 0;
 			}
 
-			if (!wrapper->should_explore) {
+			if (wrapper->run_type == RUN_TYPE_EXISTING) {
 				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->original_network);
 				this->original_network->save(score_network_history);
 				wrapper->network_histories.push_back(score_network_history);
-			} else {
+			}
+
+			if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 				this->explore_original_network->activate(wrapper->state);
 				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->explore_original_network);
 				this->explore_original_network->save(score_network_history);

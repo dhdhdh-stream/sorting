@@ -28,11 +28,13 @@ void NoopNode::experiment_step(vector<double>& obs,
 									this->init_network_node_contexts[n_index])) {
 			this->init_networks[n_index]->activate(wrapper->state,
 												   obs);
-			InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
-			this->init_networks[n_index]->save(init_network_history);
-			wrapper->network_histories.push_back(init_network_history);
+			if (wrapper->run_type != RUN_TYPE_EXPLORE) {
+				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
+				this->init_networks[n_index]->save(init_network_history);
+				wrapper->network_histories.push_back(init_network_history);
+			}
 
-			if (!wrapper->should_explore) {
+			if (wrapper->run_type == RUN_TYPE_EXISTING) {
 				this->prev_init_networks[n_index]->activate(wrapper->prev_state,
 															obs);
 			}

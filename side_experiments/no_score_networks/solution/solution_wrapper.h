@@ -22,6 +22,10 @@ class Scope;
 class ScopeHistory;
 class Solution;
 
+const int RUN_TYPE_EXISTING = 0;
+const int RUN_TYPE_EXPLORE = 1;
+const int RUN_TYPE_DAMAGE = 2;
+
 class SolutionWrapper {
 public:
 	Solution* solution;
@@ -44,7 +48,9 @@ public:
 
 	int num_actions;
 
-	bool should_explore;
+	int run_type;
+	bool last_was_damage;
+
 	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_experiment_histories;
 
 	std::vector<AbstractNetworkHistory*> network_histories;

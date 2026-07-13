@@ -2,12 +2,14 @@
 
 #include <iostream>
 
+#include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "explore_experiment.h"
 #include "globals.h"
 #include "noop_node.h"
+#include "obs_network.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -24,15 +26,11 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	uniform_int_distribution<int> explore_distribution(0, 1);
-	if (explore_distribution(generator) == 0) {
-		this->should_explore = true;
-	} else {
-		this->should_explore = false;
-	}
+	uniform_int_distribution<int> type_distribution(0, 2);
+	this->run_type = type_distribution(generator);
 
 	this->state = vector<double>(this->solution->num_states, 0.0);
-	if (!this->should_explore) {
+	if (this->run_type == RUN_TYPE_EXISTING) {
 		this->prev_state = vector<double>(this->solution->num_states, 0.0);
 	} else {
 		this->prev_state.clear();	// for debug
@@ -51,15 +49,44 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 }
 
 tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
-	if (this->experiment_context.back() != NULL) {
-		AbstractExperiment* experiment = this->experiment_context.back()->experiment;
-		experiment->experiment_step_callback(obs,
-											 this);
+	if (this->last_was_damage) {
+		ObsNetwork* obs_network = this->solution->generic_obs_network;
+		obs_network->activate(this->state,
+							  obs);
+		ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(obs_network);
+		obs_network->save(obs_network_history);
+		this->network_histories.push_back(obs_network_history);
+
+		this->last_was_damage = false;
 	} else {
-		if (this->node_context.back()->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)this->node_context.back();
-			action_node->experiment_step_callback(obs,
-												  this);
+		if (this->experiment_context.back() != NULL) {
+			AbstractExperiment* experiment = this->experiment_context.back()->experiment;
+			experiment->experiment_step_callback(obs,
+												 this);
+		} else {
+			if (this->node_context.back()->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)this->node_context.back();
+				action_node->experiment_step_callback(obs,
+													  this);
+			}
+		}
+	}
+
+	if (this->run_type == RUN_TYPE_DAMAGE) {
+		uniform_int_distribution<int> damage_distribution(0, 19);
+		if (damage_distribution(generator) == 0) {
+			uniform_int_distribution<int> action_distribution(0, this->solution->generic_action_networks.size()-1);
+			int action = action_distribution(generator);
+
+			ActionNetwork* action_network = this->solution->generic_action_networks[action];
+			action_network->activate(this->state);
+			ActionNetworkHistory* action_network_history = new ActionNetworkHistory(action_network);
+			action_network->save(action_network_history);
+			this->network_histories.push_back(action_network_history);
+
+			this->last_was_damage = true;
+
+			return tuple<bool,bool,int>{false, false, action};
 		}
 	}
 
@@ -108,7 +135,7 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	if (!this->should_explore) {
+	if (this->run_type == RUN_TYPE_EXISTING) {
 		update_helper(this->scope_histories[0]);
 	}
 	update_helper(result,

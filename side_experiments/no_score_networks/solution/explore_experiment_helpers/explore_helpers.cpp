@@ -52,7 +52,7 @@ void compare_index(vector<int>& left, vector<int>& right, bool& right_later) {
 void ExploreExperiment::explore_check_activate(vector<double>& obs,
 											   ExploreExperimentHistory* history,
 											   SolutionWrapper* wrapper) {
-	if (wrapper->should_explore) {
+	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
 		this->num_instances_until_target--;
 		if (history->existing_predicted.size() == 0
 				&& this->num_instances_until_target <= 0) {
@@ -249,9 +249,6 @@ void ExploreExperiment::explore_set_action(int action,
 
 	ActionNetwork* action_network = wrapper->solution->generic_action_networks[action];
 	action_network->activate(wrapper->state);
-	ActionNetworkHistory* action_network_history = new ActionNetworkHistory(action_network);
-	action_network->save(action_network_history);
-	wrapper->network_histories.push_back(action_network_history);
 
 	experiment_state->step_index++;
 }
@@ -261,9 +258,6 @@ void ExploreExperiment::explore_callback(vector<double>& obs,
 	ObsNetwork* obs_network = wrapper->solution->generic_obs_network;
 	obs_network->activate(wrapper->state,
 						  obs);
-	ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(obs_network);
-	obs_network->save(obs_network_history);
-	wrapper->network_histories.push_back(obs_network_history);
 }
 
 void ExploreExperiment::explore_exit_step(SolutionWrapper* wrapper) {
@@ -281,7 +275,7 @@ void ExploreExperiment::explore_exit_step(SolutionWrapper* wrapper) {
 void ExploreExperiment::explore_backprop(double target_val,
 										 ExploreExperimentHistory* history,
 										 SolutionWrapper* wrapper) {
-	if (wrapper->should_explore) {
+	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
 		double average_instances_per_hit;
 		switch (this->node_context->type) {
 		case NODE_TYPE_NOOP:

@@ -23,7 +23,7 @@ using namespace std;
 void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 												 ExploreExperimentHistory* history,
 												 SolutionWrapper* wrapper) {
-	if (wrapper->should_explore) {
+	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
 		this->num_instances_until_target--;
 		if (this->num_instances_until_target <= 0) {
 			vector<bool> curr_dependencies_is_hit(this->best_dependencies.size());
@@ -87,7 +87,7 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 			new_experiment_state->step_index = 0;
 			wrapper->experiment_context.back() = new_experiment_state;
 		}
-	} else {
+	} else if (wrapper->run_type == RUN_TYPE_EXISTING) {
 		vector<bool> curr_dependencies_is_hit(this->best_dependencies.size());
 		vector<vector<double>> curr_dependencies_state(this->best_dependencies.size());
 		vector<vector<double>> curr_dependencies_obs(this->best_dependencies.size());
@@ -132,9 +132,6 @@ void ExploreExperiment::train_new_step(vector<double>& obs,
 
 			ActionNetwork* action_network = wrapper->solution->generic_action_networks[this->best_actions[experiment_state->step_index]];
 			action_network->activate(wrapper->state);
-			ActionNetworkHistory* action_network_history = new ActionNetworkHistory(action_network);
-			action_network->save(action_network_history);
-			wrapper->network_histories.push_back(action_network_history);
 
 			experiment_state->step_index++;
 		} else {
@@ -155,9 +152,6 @@ void ExploreExperiment::train_new_callback(vector<double>& obs,
 	ObsNetwork* obs_network = wrapper->solution->generic_obs_network;
 	obs_network->activate(wrapper->state,
 						  obs);
-	ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(obs_network);
-	obs_network->save(obs_network_history);
-	wrapper->network_histories.push_back(obs_network_history);
 }
 
 void ExploreExperiment::train_new_exit_step(SolutionWrapper* wrapper) {
@@ -176,7 +170,7 @@ void ExploreExperiment::train_new_backprop(
 		double target_val,
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
-	if (wrapper->should_explore) {
+	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
 		if (history->dependencies_is_hit_histories.size() > 0) {
 			for (int i_index = 0; i_index < (int)history->dependencies_is_hit_histories.size(); i_index++) {
 				this->new_dependencies_is_hit_histories.push_back(history->dependencies_is_hit_histories[i_index]);
@@ -394,7 +388,7 @@ void ExploreExperiment::train_new_backprop(
 				}
 			}
 		}
-	} else {
+	} else if (wrapper->run_type == RUN_TYPE_EXISTING) {
 		uniform_int_distribution<int> distribution(0, history->dependencies_is_hit_histories.size()-1);
 		int index = distribution(generator);
 		this->existing_dependencies_is_hit_histories.push_back(history->dependencies_is_hit_histories[index]);
