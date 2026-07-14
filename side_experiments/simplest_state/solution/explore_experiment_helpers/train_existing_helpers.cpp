@@ -113,6 +113,23 @@ void ExploreExperiment::train_existing_backprop(
 			}
 		}
 
+		// // temp
+		// for (int h_index = 0; h_index < 10; h_index++) {
+		// 	vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
+		// 	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+		// 		if (this->existing_dependencies_is_hit_histories[h_index][d_index]) {
+		// 			this->existing_init_networks[d_index]->init_activate(
+		// 				new_state,
+		// 				this->existing_dependencies_obs_histories[h_index][d_index]);
+		// 		}
+		// 	}
+		// 	this->existing_network->init_activate(new_state);
+
+		// 	cout << h_index << endl;
+		// 	cout << "this->existing_network->output->acti_vals(0): " << this->existing_network->output->acti_vals(0) << endl;
+		// 	cout << "this->existing_target_val_histories[h_index]: " << this->existing_target_val_histories[h_index] << endl;
+		// }
+
 		this->existing_dependencies_is_hit_histories.clear();
 		this->existing_dependencies_obs_histories.clear();
 		this->existing_target_val_histories.clear();

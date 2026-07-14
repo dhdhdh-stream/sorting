@@ -30,6 +30,7 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 
 	this->existing_network = NULL;
 
+	this->dependencies = dependencies;
 	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 		set_dependency_helper(this->scope_context,
 							  this->dependencies[d_index],

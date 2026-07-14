@@ -6,6 +6,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "init_network.h"
 #include "noop_node.h"
 #include "problem.h"
 #include "scope.h"
@@ -30,7 +31,28 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 		this->num_instances_until_target--;
 		if (history->existing_predicted.size() == 0
 				&& this->num_instances_until_target <= 0) {
-			this->existing_network->activate(wrapper->state);
+			vector<bool> curr_dependencies_is_hit(this->dependencies.size());
+			vector<vector<double>> curr_dependencies_obs(this->dependencies.size());
+			for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+				bool is_hit;
+				vector<double> obs;
+				fetch_dependency_helper(wrapper->scope_histories.back(),
+										this->dependencies[d_index],
+										0,
+										is_hit,
+										obs);
+				curr_dependencies_is_hit[d_index] = is_hit;
+				curr_dependencies_obs[d_index] = obs;
+			}
+			vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
+			for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+				if (curr_dependencies_is_hit[d_index]) {
+					this->existing_init_networks[d_index]->init_activate(
+						new_state,
+						curr_dependencies_obs[d_index]);
+				}
+			}
+			this->existing_network->init_activate(new_state);
 			history->existing_predicted.push_back(this->existing_network->output->acti_vals(0));
 
 			bool exit_is_next;

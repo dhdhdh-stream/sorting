@@ -340,11 +340,11 @@ void ExploreExperiment::train_new_backprop(
 				}
 				double global_improvement = average_instances_per_run * local_improvement;
 
-				// temp
-				cout << "new_state" << endl;
-				cout << "this->scope_context->id: " << this->scope_context->id << endl;
-				cout << "local_improvement: " << local_improvement << endl;
-				cout << "global_improvement: " << global_improvement << endl;
+				// // temp
+				// cout << "new_state" << endl;
+				// cout << "this->scope_context->id: " << this->scope_context->id << endl;
+				// cout << "local_improvement: " << local_improvement << endl;
+				// cout << "global_improvement: " << global_improvement << endl;
 
 				bool is_success = false;
 				if (local_improvement > 0.0) {
@@ -377,14 +377,20 @@ void ExploreExperiment::train_new_backprop(
 				#else
 				if (is_success) {
 				#endif /* MDEBUG */
+					// // temp
+					// cout << "this->best_dependencies:" << endl;
+					// for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+					// 	cout << d_index << ":";
+					// 	for (int l_index = 0; l_index < (int)this->dependencies[d_index].size(); l_index++) {
+					// 		cout << " " << this->dependencies[d_index][l_index];
+					// 	}
+					// 	cout << endl;
+					// }
+
 					// temp
-					cout << "this->best_dependencies:" << endl;
-					for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
-						cout << d_index << ":";
-						for (int l_index = 0; l_index < (int)this->dependencies[d_index].size(); l_index++) {
-							cout << " " << this->dependencies[d_index][l_index];
-						}
-						cout << endl;
+					{
+						double val_average = measure_helper(wrapper);
+						cout << "pre add val_average: " << val_average << endl;
 					}
 
 					for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {

@@ -43,23 +43,13 @@ const int STEP_TYPE_SCOPE = 1;
 const int NEW_STATE_NUM_ADD = 4;
 
 #if defined(MDEBUG) && MDEBUG
-const int REUSE_NUM_LAST_TRACK = 4;
-const int REUSE_MIN_NUM_LAST_TRACK = 2;
-const double REUSE_LAST_BETTER_THAN_RATIO = 0.5;
-#else
-const int REUSE_NUM_LAST_TRACK = 20;
-const int REUSE_MIN_NUM_LAST_TRACK = 10;
-const double REUSE_LAST_BETTER_THAN_RATIO = 0.9;
-#endif /* MDEBUG */
-
-#if defined(MDEBUG) && MDEBUG
 const int NEW_STATE_NUM_LAST_TRACK = 4;
 const int NEW_STATE_MIN_NUM_LAST_TRACK = 2;
 const double NEW_STATE_LAST_BETTER_THAN_RATIO = 0.5;
 #else
 const int NEW_STATE_NUM_LAST_TRACK = 20;
-const int NEW_STATE_MIN_NUM_LAST_TRACK = 10;
-const double NEW_STATE_LAST_BETTER_THAN_RATIO = 0.9;
+const int NEW_STATE_MIN_NUM_LAST_TRACK = 5;
+const double NEW_STATE_LAST_BETTER_THAN_RATIO = 0.8;
 #endif /* MDEBUG */
 
 const int GENERALIZE_ITER = 3;

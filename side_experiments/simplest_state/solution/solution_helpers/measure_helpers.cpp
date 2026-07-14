@@ -10,7 +10,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_NUM_ITERS = 20;
 #else
-const int MEASURE_NUM_ITERS = 10000;
+const int MEASURE_NUM_ITERS = 2000;
 #endif /* MDEBUG */
 
 double measure_helper(SolutionWrapper* wrapper) {
