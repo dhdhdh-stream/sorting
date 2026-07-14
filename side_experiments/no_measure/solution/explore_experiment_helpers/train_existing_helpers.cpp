@@ -43,25 +43,31 @@ void ExploreExperiment::train_existing_backprop(
 		int num_existing_train = (1.0 - VERIFY_RATIO) * (double)this->existing_obs_histories.size();
 
 		this->existing_network = new Network(this->existing_obs_histories[0].size());
-		double hidden_1_average_max_update = 0.0;
-		double hidden_2_average_max_update = 0.0;
-		double hidden_3_average_max_update = 0.0;
-		double output_average_max_update = 0.0;
+		// double hidden_1_average_max_update = 0.0;
+		// double hidden_2_average_max_update = 0.0;
+		// double hidden_3_average_max_update = 0.0;
+		// double output_average_max_update = 0.0;
 
-		uniform_int_distribution<int> train_distribution(0, num_existing_train-1);
-		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-			int rand_index = train_distribution(generator);
+		// uniform_int_distribution<int> train_distribution(0, num_existing_train-1);
+		// for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+		// 	int rand_index = train_distribution(generator);
 
-			this->existing_network->activate(this->existing_obs_histories[rand_index]);
+		// 	this->existing_network->activate(this->existing_obs_histories[rand_index]);
 
-			double error = this->existing_target_val_histories[rand_index] - this->existing_network->output->acti_vals[0];
+		// 	double error = this->existing_target_val_histories[rand_index] - this->existing_network->output->acti_vals[0];
 
-			this->existing_network->init_backprop(error,
-												  hidden_1_average_max_update,
-												  hidden_2_average_max_update,
-												  hidden_3_average_max_update,
-												  output_average_max_update);
+		// 	this->existing_network->init_backprop(error,
+		// 										  hidden_1_average_max_update,
+		// 										  hidden_2_average_max_update,
+		// 										  hidden_3_average_max_update,
+		// 										  output_average_max_update);
+		// }
+
+		double sum_vals = 0.0;
+		for (int h_index = 0; h_index < num_existing_train; h_index++) {
+			sum_vals += this->existing_target_val_histories[h_index];
 		}
+		this->existing_average = sum_vals / num_existing_train;
 
 		this->existing_obs_histories.clear();
 		this->existing_target_val_histories.clear();

@@ -102,17 +102,17 @@ void ExploreExperiment::train_new_backprop(
 
 				int num_existing_train = (1.0 - VERIFY_RATIO) * (double)this->existing_obs_histories.size();
 
-				uniform_int_distribution<int> existing_train_distribution(0, num_existing_train-1);
-				for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
-					int rand_index = existing_train_distribution(generator);
+				// uniform_int_distribution<int> existing_train_distribution(0, num_existing_train-1);
+				// for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
+				// 	int rand_index = existing_train_distribution(generator);
 
-					this->existing_network->activate(this->existing_obs_histories[rand_index]);
+				// 	this->existing_network->activate(this->existing_obs_histories[rand_index]);
 
-					double error = this->existing_target_val_histories[rand_index] - this->existing_network->output->acti_vals[0];
+				// 	double error = this->existing_target_val_histories[rand_index] - this->existing_network->output->acti_vals[0];
 
-					this->existing_network->backprop(error);
-					this->existing_network->update();
-				}
+				// 	this->existing_network->backprop(error);
+				// 	this->existing_network->update();
+				// }
 
 				{
 					default_random_engine generator_copy = generator;
@@ -149,9 +149,10 @@ void ExploreExperiment::train_new_backprop(
 				double existing_sum_vals = 0.0;
 				int existing_count = 0;
 				for (int h_index = num_existing_train; h_index < (int)this->existing_obs_histories.size(); h_index++) {
-					this->existing_network->activate(this->existing_obs_histories[h_index]);
+					// this->existing_network->activate(this->existing_obs_histories[h_index]);
 					this->new_network->activate(this->existing_obs_histories[h_index]);
-					if (this->new_network->output->acti_vals[0] >= this->existing_network->output->acti_vals[0]) {
+					// if (this->new_network->output->acti_vals[0] >= this->existing_network->output->acti_vals[0]) {
+					if (this->new_network->output->acti_vals[0] >= this->existing_average) {
 						existing_sum_vals += this->existing_target_val_histories[h_index];
 						existing_count++;
 					}
@@ -160,9 +161,10 @@ void ExploreExperiment::train_new_backprop(
 				double new_sum_vals = 0.0;
 				int new_count = 0;
 				for (int h_index = num_new_train; h_index < (int)this->new_obs_histories.size(); h_index++) {
-					this->existing_network->activate(this->new_obs_histories[h_index]);
+					// this->existing_network->activate(this->new_obs_histories[h_index]);
 					this->new_network->activate(this->new_obs_histories[h_index]);
-					if (this->new_network->output->acti_vals[0] >= this->existing_network->output->acti_vals[0]) {
+					// if (this->new_network->output->acti_vals[0] >= this->existing_network->output->acti_vals[0]) {
+					if (this->new_network->output->acti_vals[0] >= this->existing_average) {
 						new_sum_vals += this->new_target_val_histories[h_index];
 						new_count++;
 					}

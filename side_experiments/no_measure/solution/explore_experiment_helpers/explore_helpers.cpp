@@ -30,9 +30,10 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 		this->num_instances_until_target--;
 		if (history->existing_predicted.size() == 0
 				&& this->num_instances_until_target <= 0) {
-			this->existing_network->activate(obs);
-			history->existing_predicted.push_back(
-				this->existing_network->output->acti_vals[0]);
+			// this->existing_network->activate(obs);
+			// history->existing_predicted.push_back(
+			// 	this->existing_network->output->acti_vals[0]);
+			history->existing_predicted.push_back(this->existing_average);
 
 			bool exit_is_next;
 			switch (this->node_context->type) {

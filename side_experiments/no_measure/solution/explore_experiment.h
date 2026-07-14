@@ -36,6 +36,7 @@ public:
 	std::vector<double> existing_target_val_histories;
 
 	Network* existing_network;
+	double existing_average;
 
 	double average_instances_per_run;
 	int num_instances_until_target;

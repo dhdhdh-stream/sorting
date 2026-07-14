@@ -33,33 +33,25 @@ void BranchNode::experiment_step(vector<double>& obs,
 		scope_history->node_histories[this->id] = history;
 
 		bool is_branch;
-		if (wrapper->should_explore) {
-			this->explore_original_network->activate(obs);
-			this->explore_branch_network->activate(obs);
-			if (this->explore_branch_network->output->acti_vals[0] >= this->explore_original_network->output->acti_vals[0]) {
+		uniform_int_distribution<int> maintain_distribution(0, 9);
+		if (this->prev_original_network != NULL
+				&& maintain_distribution(generator) == 0) {
+			// this->prev_original_network->activate(obs);
+			this->prev_branch_network->activate(obs);
+			// if (this->prev_branch_network->output->acti_vals[0] >= this->prev_original_network->output->acti_vals[0]) {
+			if (this->prev_branch_network->output->acti_vals[0] >= this->original_average) {
 				is_branch = true;
 			} else {
 				is_branch = false;
 			}
 		} else {
-			uniform_int_distribution<int> maintain_distribution(0, 9);
-			if (this->prev_original_network != NULL
-					&& maintain_distribution(generator) == 0) {
-				this->prev_original_network->activate(obs);
-				this->prev_branch_network->activate(obs);
-				if (this->prev_branch_network->output->acti_vals[0] >= this->prev_original_network->output->acti_vals[0]) {
-					is_branch = true;
-				} else {
-					is_branch = false;
-				}
+			// this->original_network->activate(obs);
+			this->branch_network->activate(obs);
+			// if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+			if (this->branch_network->output->acti_vals[0] >= this->original_average) {
+				is_branch = true;
 			} else {
-				this->original_network->activate(obs);
-				this->branch_network->activate(obs);
-				if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
-					is_branch = true;
-				} else {
-					is_branch = false;
-				}
+				is_branch = false;
 			}
 		}
 

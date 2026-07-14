@@ -27,8 +27,6 @@ BranchNode::~BranchNode() {
 	if (this->prev_branch_network != NULL) {
 		delete this->prev_branch_network;
 	}
-	delete this->explore_original_network;
-	delete this->explore_branch_network;
 
 	if (this->original_experiment != NULL) {
 		delete this->original_experiment;
@@ -40,6 +38,7 @@ BranchNode::~BranchNode() {
 
 void BranchNode::save(ofstream& output_file) {
 	this->original_network->save(output_file);
+	output_file << this->original_average << endl;
 	this->branch_network->save(output_file);
 
 	output_file << (this->prev_original_network == NULL) << endl;
@@ -50,9 +49,6 @@ void BranchNode::save(ofstream& output_file) {
 	if (this->prev_branch_network != NULL) {
 		this->prev_branch_network->save(output_file);
 	}
-
-	this->explore_original_network->save(output_file);
-	this->explore_branch_network->save(output_file);
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
@@ -73,6 +69,9 @@ void BranchNode::save(ofstream& output_file) {
 void BranchNode::load(ifstream& input_file,
 					  Solution* parent_solution) {
 	this->original_network = new Network(input_file);
+	string original_average_line;
+	getline(input_file, original_average_line);
+	this->original_average = stod(original_average_line);
 	this->branch_network = new Network(input_file);
 
 	string prev_original_network_is_null_line;
@@ -91,9 +90,6 @@ void BranchNode::load(ifstream& input_file,
 	} else {
 		this->prev_branch_network = new Network(input_file);
 	}
-
-	this->explore_original_network = new Network(input_file);
-	this->explore_branch_network = new Network(input_file);
 
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);

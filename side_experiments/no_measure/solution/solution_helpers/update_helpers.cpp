@@ -21,7 +21,6 @@ const int ITERS_PER_RAMP = 4000;
 
 void update_helper(ScopeHistory* scope_history,
 				   double target_val,
-				   SolutionWrapper* wrapper,
 				   set<BranchNode*>& hit_original,
 				   set<BranchNode*>& hit_branch) {
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
@@ -32,7 +31,6 @@ void update_helper(ScopeHistory* scope_history,
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
 				update_helper(scope_node_history->scope_history,
 							  target_val,
-							  wrapper,
 							  hit_original,
 							  hit_branch);
 			}
@@ -43,27 +41,17 @@ void update_helper(ScopeHistory* scope_history,
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
 
 				if (branch_node_history->is_branch) {
-					if (!wrapper->should_explore) {
-						branch_node->branch_network->activate(branch_node_history->obs);
-						double error = target_val - branch_node->branch_network->output->acti_vals[0];
-						branch_node->branch_network->backprop(error);
-					}
-
-					branch_node->explore_branch_network->activate(branch_node_history->obs);
-					double error = target_val - branch_node->explore_branch_network->output->acti_vals[0];
-					branch_node->explore_branch_network->backprop(error);
+					branch_node->branch_network->activate(branch_node_history->obs);
+					double error = target_val - branch_node->branch_network->output->acti_vals[0];
+					branch_node->branch_network->backprop(error);
 
 					hit_branch.insert(branch_node);
 				} else {
-					if (!wrapper->should_explore) {
-						branch_node->original_network->activate(branch_node_history->obs);
-						double error = target_val - branch_node->original_network->output->acti_vals[0];
-						branch_node->original_network->backprop(error);
-					}
+					// branch_node->original_network->activate(branch_node_history->obs);
+					// double error = target_val - branch_node->original_network->output->acti_vals[0];
+					// branch_node->original_network->backprop(error);
 
-					branch_node->explore_original_network->activate(branch_node_history->obs);
-					double error = target_val - branch_node->explore_original_network->output->acti_vals[0];
-					branch_node->explore_original_network->backprop(error);
+					branch_node->original_average = 0.9999*branch_node->original_average + 0.0001*target_val;
 
 					hit_original.insert(branch_node);
 				}
@@ -78,49 +66,40 @@ void update_helper(ScopeHistory* scope_history,
  *   - vs. updating all networks in a balanced way
  */
 void update_helper(set<BranchNode*>& hit_original,
-				   set<BranchNode*>& hit_branch,
-				   SolutionWrapper* wrapper) {
+				   set<BranchNode*>& hit_branch) {
 	for (set<BranchNode*>::iterator it = hit_original.begin();
 			it != hit_original.end(); it++) {
 		BranchNode* branch_node = *it;
 
-		if (!wrapper->should_explore) {
-			branch_node->original_network->update();
+		// branch_node->original_network->update();
 
-			if (branch_node->ramp < branch_node->ramp_num_gears) {
-				branch_node->ramp_iter++;
-				if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
-					branch_node->ramp++;
-					branch_node->ramp_iter = 0;
+		if (branch_node->ramp < branch_node->ramp_num_gears) {
+			branch_node->ramp_iter++;
+			if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
+				branch_node->ramp++;
+				branch_node->ramp_iter = 0;
 
-					// // temp
-					// cout << "branch_node->ramp: " << branch_node->ramp << endl;
-				}
+				// // temp
+				// cout << "branch_node->ramp: " << branch_node->ramp << endl;
 			}
 		}
-
-		branch_node->explore_original_network->update();
 	}
 
 	for (set<BranchNode*>::iterator it = hit_branch.begin();
 			it != hit_branch.end(); it++) {
 		BranchNode* branch_node = *it;
 
-		if (!wrapper->should_explore) {
-			branch_node->branch_network->update();
+		branch_node->branch_network->update();
 
-			if (branch_node->ramp < branch_node->ramp_num_gears) {
-				branch_node->ramp_iter++;
-				if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
-					branch_node->ramp++;
-					branch_node->ramp_iter = 0;
+		if (branch_node->ramp < branch_node->ramp_num_gears) {
+			branch_node->ramp_iter++;
+			if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
+				branch_node->ramp++;
+				branch_node->ramp_iter = 0;
 
-					// // temp
-					// cout << "branch_node->ramp: " << branch_node->ramp << endl;
-				}
+				// // temp
+				// cout << "branch_node->ramp: " << branch_node->ramp << endl;
 			}
 		}
-
-		branch_node->explore_branch_network->update();
 	}
 }
