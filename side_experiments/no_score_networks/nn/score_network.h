@@ -36,6 +36,9 @@ public:
 				  std::vector<double>& state_errors);
 	void update_weights(double learning_rate);
 
+	void backprop_through(double target_val,
+						  std::vector<double>& state_errors);
+
 	void add_states(int new_num_states);
 
 	void save(std::ofstream& output_file);

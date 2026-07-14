@@ -54,7 +54,8 @@ ObsNetwork::ObsNetwork(int num_states,
 	this->output->errors.setConstant(0.0);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
-	this->output->update_structure(0.0);
+	// this->output->update_structure(0.0);
+	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 }
 
 ObsNetwork::ObsNetwork(ObsNetwork* original) {
