@@ -408,6 +408,7 @@ void ExploreExperiment::train_new_backprop(
 											  0,
 											  this->existing_init_networks[d_index]);
 					}
+					this->existing_init_networks.clear();
 
 					for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
 						NegateNetwork* new_negate_network = new NegateNetwork(wrapper->solution->num_states + s_index);

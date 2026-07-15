@@ -81,6 +81,9 @@ ExploreExperiment::~ExploreExperiment() {
 		break;
 	}
 
+	for (int n_index = 0; n_index < (int)this->existing_init_networks.size(); n_index++) {
+		delete this->existing_init_networks[n_index];
+	}
 	if (this->existing_network != NULL) {
 		delete this->existing_network;
 	}

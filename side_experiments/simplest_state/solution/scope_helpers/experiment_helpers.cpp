@@ -24,15 +24,20 @@ void Scope::experiment_start_activate(vector<double>& obs,
 			this->prev_start_negate_networks[n_index]->activate(wrapper->prev_state);
 		}
 
-		// if (wrapper->run_type == RUN_TYPE_EXISTING) {
-		// 	uniform_int_distribution<int> partial_distribution(0, 9);
-		// 	if (partial_distribution(generator) != 0) {
-		// 		this->start_negate_networks[n_index]->activate(wrapper->partial_state);
-		// 		NegateNetworkHistory* negate_network_history = new NegateNetworkHistory(this->start_negate_networks[n_index]);
-		// 		this->start_negate_networks[n_index]->save(negate_network_history);
-		// 		wrapper->partial_network_histories.push_back(negate_network_history);
-		// 	}
-		// }
+		if (wrapper->run_type == RUN_TYPE_EXISTING) {
+			// uniform_int_distribution<int> partial_distribution(0, 9);
+			// if (partial_distribution(generator) != 0) {
+			// 	this->start_negate_networks[n_index]->activate(wrapper->partial_state);
+			// 	NegateNetworkHistory* negate_network_history = new NegateNetworkHistory(this->start_negate_networks[n_index]);
+			// 	this->start_negate_networks[n_index]->save(negate_network_history);
+			// 	wrapper->partial_network_histories.push_back(negate_network_history);
+			// }
+
+			this->start_negate_networks[n_index]->activate(wrapper->partial_state);
+			NegateNetworkHistory* negate_network_history = new NegateNetworkHistory(this->start_negate_networks[n_index]);
+			this->start_negate_networks[n_index]->save(negate_network_history);
+			wrapper->partial_network_histories.push_back(negate_network_history);
+		}
 	}
 
 	for (int n_index = 0; n_index < (int)this->start_init_networks.size(); n_index++) {
@@ -52,16 +57,16 @@ void Scope::experiment_start_activate(vector<double>& obs,
 																  obs);
 			}
 
-			// if (wrapper->run_type == RUN_TYPE_EXISTING) {
-			// 	uniform_int_distribution<int> partial_distribution(0, 9);
-			// 	if (partial_distribution(generator) != 0) {
-			// 		this->start_init_networks[n_index]->activate(wrapper->partial_state,
-			// 													 obs);
-			// 		InitNetworkHistory* init_network_history = new InitNetworkHistory(this->start_init_networks[n_index]);
-			// 		this->start_init_networks[n_index]->save(init_network_history);
-			// 		wrapper->partial_network_histories.push_back(init_network_history);
-			// 	}
-			// }
+			if (wrapper->run_type == RUN_TYPE_EXISTING) {
+				uniform_int_distribution<int> partial_distribution(0, 9);
+				if (partial_distribution(generator) != 0) {
+					this->start_init_networks[n_index]->activate(wrapper->partial_state,
+																 obs);
+					InitNetworkHistory* init_network_history = new InitNetworkHistory(this->start_init_networks[n_index]);
+					this->start_init_networks[n_index]->save(init_network_history);
+					wrapper->partial_network_histories.push_back(init_network_history);
+				}
+			}
 		}
 	}
 
