@@ -34,10 +34,9 @@ void BranchNode::step(vector<double>& obs,
 		scope_history->node_histories[this->id] = history;
 
 		bool is_branch;
-		// this->original_network->activate(obs);
+		this->original_network->activate(obs);
 		this->branch_network->activate(obs);
-		// if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
-		if (this->branch_network->output->acti_vals[0] >= this->original_average) {
+		if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
 			is_branch = true;
 		} else {
 			is_branch = false;

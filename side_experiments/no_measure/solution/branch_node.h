@@ -24,7 +24,6 @@ class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
 	Network* original_network;
-	double original_average;
 	Network* branch_network;
 
 	Network* prev_original_network;

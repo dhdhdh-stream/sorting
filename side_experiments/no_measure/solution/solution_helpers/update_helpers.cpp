@@ -47,11 +47,9 @@ void update_helper(ScopeHistory* scope_history,
 
 					hit_branch.insert(branch_node);
 				} else {
-					// branch_node->original_network->activate(branch_node_history->obs);
-					// double error = target_val - branch_node->original_network->output->acti_vals[0];
-					// branch_node->original_network->backprop(error);
-
-					branch_node->original_average = 0.9999*branch_node->original_average + 0.0001*target_val;
+					branch_node->original_network->activate(branch_node_history->obs);
+					double error = target_val - branch_node->original_network->output->acti_vals[0];
+					branch_node->original_network->backprop(error);
 
 					hit_original.insert(branch_node);
 				}
@@ -71,7 +69,7 @@ void update_helper(set<BranchNode*>& hit_original,
 			it != hit_original.end(); it++) {
 		BranchNode* branch_node = *it;
 
-		// branch_node->original_network->update();
+		branch_node->original_network->update();
 
 		if (branch_node->ramp < branch_node->ramp_num_gears) {
 			branch_node->ramp_iter++;

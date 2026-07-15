@@ -316,8 +316,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
+	this->existing_network->output->constants[0] = this->existing_average;
 	new_branch_node->original_network = this->existing_network;
-	new_branch_node->original_average = this->existing_average;
 	new_branch_node->prev_original_network = NULL;
 	this->existing_network = NULL;
 	new_branch_node->branch_network = this->new_network;

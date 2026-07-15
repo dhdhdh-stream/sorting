@@ -36,19 +36,17 @@ void BranchNode::experiment_step(vector<double>& obs,
 		uniform_int_distribution<int> maintain_distribution(0, 9);
 		if (this->prev_original_network != NULL
 				&& maintain_distribution(generator) == 0) {
-			// this->prev_original_network->activate(obs);
+			this->prev_original_network->activate(obs);
 			this->prev_branch_network->activate(obs);
-			// if (this->prev_branch_network->output->acti_vals[0] >= this->prev_original_network->output->acti_vals[0]) {
-			if (this->prev_branch_network->output->acti_vals[0] >= this->original_average) {
+			if (this->prev_branch_network->output->acti_vals[0] >= this->prev_original_network->output->acti_vals[0]) {
 				is_branch = true;
 			} else {
 				is_branch = false;
 			}
 		} else {
-			// this->original_network->activate(obs);
+			this->original_network->activate(obs);
 			this->branch_network->activate(obs);
-			// if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
-			if (this->branch_network->output->acti_vals[0] >= this->original_average) {
+			if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
 				is_branch = true;
 			} else {
 				is_branch = false;

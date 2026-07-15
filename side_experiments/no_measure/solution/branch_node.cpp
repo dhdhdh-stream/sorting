@@ -38,7 +38,6 @@ BranchNode::~BranchNode() {
 
 void BranchNode::save(ofstream& output_file) {
 	this->original_network->save(output_file);
-	output_file << this->original_average << endl;
 	this->branch_network->save(output_file);
 
 	output_file << (this->prev_original_network == NULL) << endl;
@@ -69,9 +68,6 @@ void BranchNode::save(ofstream& output_file) {
 void BranchNode::load(ifstream& input_file,
 					  Solution* parent_solution) {
 	this->original_network = new Network(input_file);
-	string original_average_line;
-	getline(input_file, original_average_line);
-	this->original_average = stod(original_average_line);
 	this->branch_network = new Network(input_file);
 
 	string prev_original_network_is_null_line;
