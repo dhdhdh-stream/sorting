@@ -26,17 +26,14 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	// uniform_int_distribution<int> type_distribution(0, 2);
-	uniform_int_distribution<int> type_distribution(0, 1);
+	uniform_int_distribution<int> type_distribution(0, 2);
 	this->run_type = type_distribution(generator);
 
 	this->state = vector<double>(this->solution->num_states, 0.0);
 	if (this->run_type == RUN_TYPE_EXISTING) {
 		this->prev_state = vector<double>(this->solution->num_states, 0.0);
-		this->partial_state = vector<double>(this->solution->num_states, 0.0);
 	} else {
 		this->prev_state.clear();		// for debug
-		this->partial_state.clear();	// for debug
 	}
 
 	this->num_actions = 1;

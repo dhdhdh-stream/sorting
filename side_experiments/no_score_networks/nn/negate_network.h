@@ -1,3 +1,8 @@
+/**
+ * - training (away from -1.0) leads to instability(?)
+ *   - and creates strong dependencies that can make it difficult to generalize(?)
+ */
+
 #ifndef NEGATE_NETWORK_H
 #define NEGATE_NETWORK_H
 
@@ -10,11 +15,6 @@ class NegateNetworkHistory;
 class NegateNetwork : public AbstractNetwork {
 public:
 	int state;
-	double weight;
-
-	double state_input;
-
-	double weight_update;
 
 	NegateNetwork(int state);
 	NegateNetwork(NegateNetwork* original);
@@ -22,20 +22,13 @@ public:
 
 	void activate(std::vector<double>& state_vals);
 
-	void save(NegateNetworkHistory* history);
-	void load(NegateNetworkHistory* history);
-
-	void backprop(std::vector<double>& state_errors);
-
-	void update_weights(double learning_rate);
+	void backprop_through(std::vector<double>& state_errors);
 
 	void save(std::ofstream& output_file);
 };
 
 class NegateNetworkHistory : public AbstractNetworkHistory {
 public:
-	double state_input_history;
-
 	NegateNetworkHistory(NegateNetwork* network);
 };
 

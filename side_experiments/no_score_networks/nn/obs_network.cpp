@@ -52,6 +52,8 @@ ObsNetwork::ObsNetwork(int num_states,
 	this->output->acti_vals.resize(num_states);
 	this->output->errors.resize(num_states);
 	this->output->errors.setConstant(0.0);
+	this->output->input_layers.push_back(this->state_input);
+	this->output->input_layers.push_back(this->obs_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(0.0);
@@ -101,6 +103,8 @@ ObsNetwork::ObsNetwork(ObsNetwork* original) {
 	this->output->acti_vals.resize(original->output->acti_vals.size());
 	this->output->errors.resize(original->output->errors.size());
 	this->output->errors.setConstant(0.0);
+	this->output->input_layers.push_back(this->state_input);
+	this->output->input_layers.push_back(this->obs_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(0.0);
@@ -171,6 +175,8 @@ ObsNetwork::ObsNetwork(ifstream& input_file) {
 	this->output->acti_vals.resize(num_states);
 	this->output->errors.resize(num_states);
 	this->output->errors.setConstant(0.0);
+	this->output->input_layers.push_back(this->state_input);
+	this->output->input_layers.push_back(this->obs_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(0.0);

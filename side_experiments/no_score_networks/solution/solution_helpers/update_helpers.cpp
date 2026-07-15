@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -101,6 +102,14 @@ void update_helper(double target_val,
 											state_errors);
 				}
 				break;
+			case NETWORK_TYPE_ACTION:
+				{
+					ActionNetworkHistory* action_network_history = (ActionNetworkHistory*)wrapper->network_histories[h_index];
+					ActionNetwork* action_network = (ActionNetwork*)action_network_history->network;
+					action_network->load(action_network_history);
+					action_network->backprop(state_errors);
+				}
+				break;
 			case NETWORK_TYPE_INIT:
 				{
 					InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->network_histories[h_index];
@@ -113,8 +122,7 @@ void update_helper(double target_val,
 				{
 					NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->network_histories[h_index];
 					NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
-					negate_network->load(negate_network_history);
-					negate_network->backprop(state_errors);
+					negate_network->backprop_through(state_errors);
 				}
 				break;
 			}
@@ -138,7 +146,7 @@ void update_helper(double target_val,
 		max_state_error = max(max_diff, max_state_error);
 		double max_update = max_state_val * max_state_error;
 		if (max_update != 0.0) {
-			wrapper->solution->average_max_update = 0.999*wrapper->solution->average_max_update + 0.001*max_update;
+			wrapper->solution->average_max_update = 0.99999*wrapper->solution->average_max_update + 0.00001*max_update;
 			double learning_rate = (0.3*SOLUTION_TARGET_MAX_UPDATE)/wrapper->solution->average_max_update;
 			if (learning_rate*max_update > SOLUTION_TARGET_MAX_UPDATE) {
 				learning_rate = SOLUTION_TARGET_MAX_UPDATE/max_update;
@@ -159,18 +167,18 @@ void update_helper(double target_val,
 						score_network->update_weights(learning_rate);
 					}
 					break;
+				case NETWORK_TYPE_ACTION:
+					{
+						ActionNetworkHistory* action_network_history = (ActionNetworkHistory*)wrapper->network_histories[h_index];
+						ActionNetwork* action_network = (ActionNetwork*)action_network_history->network;
+						action_network->update_weights(learning_rate);
+					}
+					break;
 				case NETWORK_TYPE_INIT:
 					{
 						InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->network_histories[h_index];
 						InitNetwork* init_network = (InitNetwork*)init_network_history->network;
 						init_network->update_weights(learning_rate);
-					}
-					break;
-				case NETWORK_TYPE_NEGATE:
-					{
-						NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->network_histories[h_index];
-						NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
-						negate_network->update_weights(learning_rate);
 					}
 					break;
 				}
@@ -180,108 +188,6 @@ void update_helper(double target_val,
 			delete wrapper->network_histories[h_index];
 		}
 		wrapper->network_histories.clear();
-	}
-
-	if (wrapper->run_type == RUN_TYPE_EXISTING) {
-		vector<double> state_errors(wrapper->solution->num_states, 0.0);
-		double max_diff = 0.0;
-		for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
-			switch (wrapper->partial_network_histories[h_index]->network->type) {
-			case NETWORK_TYPE_OBS:
-				{
-					ObsNetworkHistory* obs_network_history = (ObsNetworkHistory*)wrapper->partial_network_histories[h_index];
-					ObsNetwork* obs_network = (ObsNetwork*)obs_network_history->network;
-					obs_network->load(obs_network_history);
-					obs_network->backprop(state_errors);
-				}
-				break;
-			case NETWORK_TYPE_SCORE:
-				{
-					ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->partial_network_histories[h_index];
-					ScoreNetwork* score_network = (ScoreNetwork*)score_network_history->network;
-					score_network->load(score_network_history);
-
-					double diff = abs(target_val - score_network->output->acti_vals(0));
-					if (diff > max_diff) {
-						max_diff = diff;
-					}
-
-					score_network->backprop_through(target_val,
-													state_errors);
-				}
-				break;
-			case NETWORK_TYPE_INIT:
-				{
-					InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->partial_network_histories[h_index];
-					InitNetwork* init_network = (InitNetwork*)init_network_history->network;
-					init_network->load(init_network_history);
-					init_network->backprop(state_errors);
-				}
-				break;
-			case NETWORK_TYPE_NEGATE:
-				{
-					NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->partial_network_histories[h_index];
-					NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
-					negate_network->load(negate_network_history);
-					negate_network->backprop(state_errors);
-				}
-				break;
-			}
-		}
-
-		double max_state_val = 0.0;
-		for (int s_index = 0; s_index < (int)wrapper->partial_state.size(); s_index++) {
-			double state_size = abs(wrapper->partial_state[s_index]);
-			if (state_size > max_state_val) {
-				max_state_val = state_size;
-			}
-		}
-		max_state_val = max(1.0, max_state_val);
-		double max_state_error = 0.0;
-		for (int e_index = 0; e_index < (int)state_errors.size(); e_index++) {
-			double error_size = abs(state_errors[e_index]);
-			if (error_size > max_state_error) {
-				max_state_error = error_size;
-			}
-		}
-		max_state_error = max(max_diff, max_state_error);
-		double max_update = max_state_val * max_state_error;
-		if (max_update != 0.0) {
-			wrapper->solution->average_max_update = 0.999*wrapper->solution->average_max_update + 0.001*max_update;
-			double learning_rate = (0.3*SOLUTION_TARGET_MAX_UPDATE)/wrapper->solution->average_max_update;
-			if (learning_rate*max_update > SOLUTION_TARGET_MAX_UPDATE) {
-				learning_rate = SOLUTION_TARGET_MAX_UPDATE/max_update;
-			}
-			for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
-				switch (wrapper->partial_network_histories[h_index]->network->type) {
-				case NETWORK_TYPE_OBS:
-					{
-						ObsNetworkHistory* obs_network_history = (ObsNetworkHistory*)wrapper->partial_network_histories[h_index];
-						ObsNetwork* obs_network = (ObsNetwork*)obs_network_history->network;
-						obs_network->update_weights(learning_rate);
-					}
-					break;
-				case NETWORK_TYPE_INIT:
-					{
-						InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->partial_network_histories[h_index];
-						InitNetwork* init_network = (InitNetwork*)init_network_history->network;
-						init_network->update_weights(learning_rate);
-					}
-					break;
-				case NETWORK_TYPE_NEGATE:
-					{
-						NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->partial_network_histories[h_index];
-						NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
-						negate_network->update_weights(learning_rate);
-					}
-					break;
-				}
-			}
-		}
-		for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
-			delete wrapper->partial_network_histories[h_index];
-		}
-		wrapper->partial_network_histories.clear();
 	}
 
 	if (wrapper->run_type == RUN_TYPE_EXISTING) {
