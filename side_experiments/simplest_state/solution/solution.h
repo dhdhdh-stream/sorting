@@ -41,6 +41,8 @@ public:
 	int num_obs;
 
 	int num_states;
+	std::vector<double> state_means;
+	std::vector<double> state_diffs;
 
 	std::vector<Scope*> scopes;
 	Scope* starting_scope;

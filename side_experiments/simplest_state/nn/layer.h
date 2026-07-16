@@ -1,3 +1,7 @@
+/**
+ * TODO: use floats everywhere
+ */
+
 #ifndef LAYER_H
 #define LAYER_H
 

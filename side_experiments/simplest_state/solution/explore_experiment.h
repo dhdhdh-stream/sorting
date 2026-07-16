@@ -37,6 +37,8 @@ public:
 
 	std::vector<InitNetwork*> existing_init_networks;
 	ScoreNetwork* existing_network;
+	std::vector<double> existing_state_means;
+	std::vector<double> existing_state_diffs;
 
 	int num_instances_until_target;
 

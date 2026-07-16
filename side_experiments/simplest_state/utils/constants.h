@@ -25,9 +25,9 @@ const int EXPERIMENT_NUM_DATAPOINTS = 5000;
 const double VERIFY_RATIO = 0.2;
 
 #if defined(MDEBUG) && MDEBUG
-const int TRAIN_ITERS = 30;
+const int TRAIN_ITERS = 50;
 #else
-const int TRAIN_ITERS = 300000;
+const int TRAIN_ITERS = 500000;
 #endif /* MDEBUG */
 
 /**

@@ -5,6 +5,7 @@
 #include "globals.h"
 #include "init_network.h"
 #include "negate_network.h"
+#include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
 
@@ -12,6 +13,16 @@ using namespace std;
 
 void Scope::experiment_start_activate(vector<double>& obs,
 									  SolutionWrapper* wrapper) {
+	if (wrapper->run_type == RUN_TYPE_EXISTING) {
+		uniform_int_distribution<int> add_noise_distribution(0, 9);
+		if (add_noise_distribution(generator) == 0) {
+			for (int s_index = 0; s_index < wrapper->solution->num_states; s_index++) {
+				normal_distribution<double> distribution(0.0, wrapper->solution->state_diffs[s_index]);
+				wrapper->partial_state[s_index] += distribution(generator);
+			}
+		}
+	}
+
 	for (int n_index = 0; n_index < (int)this->start_negate_networks.size(); n_index++) {
 		this->start_negate_networks[n_index]->activate(wrapper->state);
 		if (wrapper->run_type != RUN_TYPE_EXPLORE) {
@@ -25,14 +36,6 @@ void Scope::experiment_start_activate(vector<double>& obs,
 		}
 
 		if (wrapper->run_type == RUN_TYPE_EXISTING) {
-			// uniform_int_distribution<int> partial_distribution(0, 9);
-			// if (partial_distribution(generator) != 0) {
-			// 	this->start_negate_networks[n_index]->activate(wrapper->partial_state);
-			// 	NegateNetworkHistory* negate_network_history = new NegateNetworkHistory(this->start_negate_networks[n_index]);
-			// 	this->start_negate_networks[n_index]->save(negate_network_history);
-			// 	wrapper->partial_network_histories.push_back(negate_network_history);
-			// }
-
 			this->start_negate_networks[n_index]->activate(wrapper->partial_state);
 			NegateNetworkHistory* negate_network_history = new NegateNetworkHistory(this->start_negate_networks[n_index]);
 			this->start_negate_networks[n_index]->save(negate_network_history);
@@ -58,14 +61,11 @@ void Scope::experiment_start_activate(vector<double>& obs,
 			}
 
 			if (wrapper->run_type == RUN_TYPE_EXISTING) {
-				uniform_int_distribution<int> partial_distribution(0, 9);
-				if (partial_distribution(generator) != 0) {
-					this->start_init_networks[n_index]->activate(wrapper->partial_state,
-																 obs);
-					InitNetworkHistory* init_network_history = new InitNetworkHistory(this->start_init_networks[n_index]);
-					this->start_init_networks[n_index]->save(init_network_history);
-					wrapper->partial_network_histories.push_back(init_network_history);
-				}
+				this->start_init_networks[n_index]->activate(wrapper->partial_state,
+															 obs);
+				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->start_init_networks[n_index]);
+				this->start_init_networks[n_index]->save(init_network_history);
+				wrapper->partial_network_histories.push_back(init_network_history);
 			}
 		}
 	}

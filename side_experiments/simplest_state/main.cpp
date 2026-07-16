@@ -1,5 +1,3 @@
-// TODO: action network was never updated
-
 #include <chrono>
 #include <iostream>
 #include <map>

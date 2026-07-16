@@ -18,6 +18,16 @@ void ActionNode::experiment_step(vector<double>& obs,
 								 int& action,
 								 bool& is_next,
 								 SolutionWrapper* wrapper) {
+	if (wrapper->run_type == RUN_TYPE_EXISTING) {
+		uniform_int_distribution<int> add_noise_distribution(0, 9);
+		if (add_noise_distribution(generator) == 0) {
+			for (int s_index = 0; s_index < wrapper->solution->num_states; s_index++) {
+				normal_distribution<double> distribution(0.0, wrapper->solution->state_diffs[s_index]);
+				wrapper->partial_state[s_index] += distribution(generator);
+			}
+		}
+	}
+
 	action = this->action;
 	is_next = true;
 
@@ -50,14 +60,11 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 			}
 
 			if (wrapper->run_type == RUN_TYPE_EXISTING) {
-				uniform_int_distribution<int> partial_distribution(0, 9);
-				if (partial_distribution(generator) != 0) {
-					this->init_networks[n_index]->activate(wrapper->partial_state,
-														   obs);
-					InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
-					this->init_networks[n_index]->save(init_network_history);
-					wrapper->partial_network_histories.push_back(init_network_history);
-				}
+				this->init_networks[n_index]->activate(wrapper->partial_state,
+													   obs);
+				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
+				this->init_networks[n_index]->save(init_network_history);
+				wrapper->partial_network_histories.push_back(init_network_history);
 			}
 		}
 	}

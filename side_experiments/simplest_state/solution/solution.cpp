@@ -88,6 +88,15 @@ void Solution::load(ifstream& input_file) {
 	string num_states_line;
 	getline(input_file, num_states_line);
 	this->num_states = stoi(num_states_line);
+	for (int s_index = 0; s_index < this->num_states; s_index++) {
+		string mean_line;
+		getline(input_file, mean_line);
+		this->state_means.push_back(stod(mean_line));
+
+		string diff_line;
+		getline(input_file, diff_line);
+		this->state_diffs.push_back(stod(diff_line));
+	}
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -194,6 +203,10 @@ void Solution::save(ofstream& output_file) {
 	output_file << this->num_obs << endl;
 
 	output_file << this->num_states << endl;
+	for (int s_index = 0; s_index < this->num_states; s_index++) {
+		output_file << this->state_means[s_index] << endl;
+		output_file << this->state_diffs[s_index] << endl;
+	}
 
 	output_file << this->scopes.size() << endl;
 

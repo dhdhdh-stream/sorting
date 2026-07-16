@@ -259,20 +259,6 @@ void ScoreNetwork::update_weights(double learning_rate) {
 	this->output->update_weights(learning_rate);
 }
 
-void ScoreNetwork::backprop_through(double target_val,
-									vector<double>& state_errors) {
-	this->output->errors(0) = target_val - this->output->acti_vals(0);
-
-	this->output->backprop_through();
-	this->hidden_2->backprop_through();
-	this->hidden_1->backprop_through();
-
-	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
-		state_errors[this->init_states[i_index]] += this->state_input->errors(i_index);
-		this->state_input->errors(i_index) = 0.0;
-	}
-}
-
 void ScoreNetwork::save(ofstream& output_file) {
 	output_file << this->init_states.size() << endl;
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
