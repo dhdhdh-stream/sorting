@@ -35,6 +35,8 @@ public:
 	 *   - to enable experiments in different places
 	 */
 
+	int iters_since_update;
+
 	/**
 	 * - run variables
 	 */

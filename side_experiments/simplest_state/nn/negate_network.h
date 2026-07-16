@@ -1,3 +1,6 @@
+// - never update away from -1.0
+//   - multiplicative effect too damaging
+
 #ifndef NEGATE_NETWORK_H
 #define NEGATE_NETWORK_H
 

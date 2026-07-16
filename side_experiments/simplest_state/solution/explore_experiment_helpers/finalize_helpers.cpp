@@ -46,11 +46,11 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
 	}
 
-	double previous_val_average = measure_helper(wrapper);
-	wrapper->solution->improvement_history.push_back(previous_val_average);
-	cout << "previous_val_average: " << previous_val_average << endl;
+	// double previous_val_average = measure_helper(wrapper);
+	// wrapper->solution->improvement_history.push_back(previous_val_average);
+	// cout << "previous_val_average: " << previous_val_average << endl;
 
-	wrapper->solution->curr_score = previous_val_average;
+	// wrapper->solution->curr_score = previous_val_average;
 
 	wrapper->solution->change_history.push_back(ss.str());
 
@@ -307,6 +307,10 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 	new_branch_node->branch_network = new_network;
 	new_branch_node->prev_branch_network = new ScoreNetwork(new_branch_node->branch_network);
 
+	// temp
+	new_branch_node->original_network->pair = new_branch_node->branch_network;
+	new_branch_node->branch_network->pair = new_branch_node->original_network;
+
 	new_branch_node->ramp = 0;
 	double average_instances_per_hit;
 	switch (this->node_context->type) {
@@ -511,9 +515,15 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 	 * - reset all other experiments
 	 */
 
+	wrapper->iters_since_update = 0;
+
 	// temp
 	{
 		double val_average = measure_helper(wrapper);
 		cout << "post val_average: " << val_average << endl;
+
+		// temp
+		wrapper->solution->improvement_history.push_back(val_average);
+		wrapper->solution->curr_score = val_average;
 	}
 }

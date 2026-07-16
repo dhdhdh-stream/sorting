@@ -72,11 +72,11 @@ void ExploreExperiment::train_existing_backprop(
 		this->existing_state_diffs = vector<double>(NEW_STATE_NUM_ADD, 1.0);
 
 		uniform_int_distribution<int> train_distribution(0, this->existing_dependencies_is_hit_histories.size()-1);
-		uniform_int_distribution<int> noise_run_distribution(0, 1);
+		uniform_int_distribution<int> noise_run_distribution(0, 3);
 		uniform_int_distribution<int> is_noise_distribution(0, 9);
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int rand_index = train_distribution(generator);
-			bool is_noise_run = noise_run_distribution(generator);
+			bool is_noise_run = noise_run_distribution(generator) == 0;
 
 			vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
 

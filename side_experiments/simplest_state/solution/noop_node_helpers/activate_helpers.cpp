@@ -25,6 +25,8 @@ void NoopNode::step(vector<double>& obs,
 									this->init_network_node_contexts[n_index])) {
 			this->init_networks[n_index]->activate(wrapper->state,
 												   obs);
+			// this->prev_init_networks[n_index]->activate(wrapper->state,
+			// 									   obs);
 		}
 	}
 

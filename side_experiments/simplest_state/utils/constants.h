@@ -52,6 +52,12 @@ const int NEW_STATE_MIN_NUM_LAST_TRACK = 5;
 const double NEW_STATE_LAST_BETTER_THAN_RATIO = 0.8;
 #endif /* MDEBUG */
 
+#if defined(MDEBUG) && MDEBUG
+const int ONLY_UPDATE_CONSTANT_NUM_ITERS = 40;
+#else
+const int ONLY_UPDATE_CONSTANT_NUM_ITERS = 4000;
+#endif /* MDEBUG */
+
 const int GENERALIZE_ITER = 3;
 
 const int EXPERIMENT_REFRESH_NUM_ITERS = 10;

@@ -116,6 +116,10 @@ void BranchNode::load(ifstream& input_file,
 	this->prev_original_network = new ScoreNetwork(input_file);
 	this->prev_branch_network = new ScoreNetwork(input_file);
 
+	// temp
+	this->original_network->pair = this->branch_network;
+	this->branch_network->pair = this->original_network;
+
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
 	this->original_next_node_id = stoi(original_next_node_id_line);

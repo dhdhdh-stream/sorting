@@ -12,6 +12,8 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->experiment_iter = 0;
 
+	this->iters_since_update = 0;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
@@ -26,6 +28,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution->load(input_file);
 
 	this->experiment_iter = 0;
+
+	this->iters_since_update = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;

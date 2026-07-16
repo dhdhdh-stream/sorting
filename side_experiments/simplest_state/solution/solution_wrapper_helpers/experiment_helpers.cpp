@@ -27,10 +27,27 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	uniform_int_distribution<int> type_distribution(0, 1);
 	this->run_type = type_distribution(generator);
 
+	if (this->run_type == RUN_TYPE_EXISTING) {
+		this->iters_since_update++;
+
+		if (this->iters_since_update == ONLY_UPDATE_CONSTANT_NUM_ITERS) {
+			double val_average = measure_helper(this);
+			cout << "update constant val_average: " << val_average << endl;
+		}
+	}
+
 	this->state = vector<double>(this->solution->num_states, 0.0);
 	if (this->run_type == RUN_TYPE_EXISTING) {
 		this->prev_state = vector<double>(this->solution->num_states, 0.0);
-		this->partial_state = vector<double>(this->solution->num_states, 0.0);
+
+		uniform_int_distribution<int> partial_distribution(0, 3);
+		// if (partial_distribution(generator) == 0
+		// 		&& this->iters_since_update > ONLY_UPDATE_CONSTANT_NUM_ITERS) {
+		if (false) {
+			this->partial_state = vector<double>(this->solution->num_states, 0.0);
+		} else {
+			this->partial_state.clear();
+		}
 	} else {
 		this->prev_state.clear();		// for debug
 		this->partial_state.clear();	// for debug

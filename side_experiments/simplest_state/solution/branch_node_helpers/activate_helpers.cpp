@@ -25,6 +25,8 @@ void BranchNode::step(vector<double>& obs,
 									this->init_network_node_contexts[n_index])) {
 			this->init_networks[n_index]->activate(wrapper->state,
 												   obs);
+			// this->prev_init_networks[n_index]->activate(wrapper->state,
+			// 										   obs);
 		}
 	}
 
@@ -47,6 +49,9 @@ void BranchNode::step(vector<double>& obs,
 		this->original_network->activate(wrapper->state);
 		this->branch_network->activate(wrapper->state);
 		if (this->branch_network->output->acti_vals(0) >= this->original_network->output->acti_vals(0)) {
+		// this->prev_original_network->activate(wrapper->state);
+		// this->prev_branch_network->activate(wrapper->state);
+		// if (this->prev_branch_network->output->acti_vals(0) >= this->prev_original_network->output->acti_vals(0)) {
 			is_branch = true;
 		} else {
 			is_branch = false;

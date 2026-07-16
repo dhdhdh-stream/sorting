@@ -58,7 +58,16 @@ void ScopeNode::experiment_exit_step(vector<double>& obs,
 															obs);
 			}
 
-			if (wrapper->run_type == RUN_TYPE_EXISTING) {
+			if (wrapper->partial_state.size() > 0) {
+				uniform_int_distribution<int> add_noise_distribution(0, 9);
+				if (add_noise_distribution(generator) == 0) {
+					for (int i_index = 0; i_index < (int)this->init_networks[n_index]->init_states.size(); i_index++) {
+						int state = this->init_networks[n_index]->init_states[i_index];
+						normal_distribution<double> distribution(0.0, wrapper->solution->state_diffs[state]);
+						wrapper->partial_state[state] += distribution(generator);
+					}
+				}
+
 				this->init_networks[n_index]->activate(wrapper->partial_state,
 													   obs);
 				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
