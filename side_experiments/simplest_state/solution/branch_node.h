@@ -26,17 +26,11 @@ class BranchNode : public AbstractNode {
 public:
 	ScoreNetwork* original_network;
 	ScoreNetwork* branch_network;
-	ScoreNetwork* prev_original_network;
-	ScoreNetwork* prev_branch_network;
 
 	int original_next_node_id;
 	AbstractNode* original_next_node;
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
-
-	int ramp;
-	int ramp_num_gears;
-	int ramp_iter;
 
 	int consec_original;
 	int consec_branch;
@@ -63,6 +57,9 @@ public:
 						 int& action,
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
+
+	void copy_from(BranchNode* original,
+				   Solution* parent_solution);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

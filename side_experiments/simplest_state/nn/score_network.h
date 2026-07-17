@@ -19,9 +19,6 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
-	// temp
-	ScoreNetwork* pair;
-
 	ScoreNetwork(std::vector<int>& init_states);
 	ScoreNetwork(ScoreNetwork* original);
 	ScoreNetwork(std::ifstream& input_file);
@@ -42,8 +39,6 @@ public:
 	void backprop(double target_val,
 				  std::vector<double>& state_errors);
 	void update_weights(double learning_rate);
-
-	void update_constant(double target_val);
 
 	void save(std::ofstream& output_file);
 };

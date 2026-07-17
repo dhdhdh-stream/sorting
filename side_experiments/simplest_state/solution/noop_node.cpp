@@ -25,13 +25,26 @@ NoopNode::~NoopNode() {
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
 		delete this->init_networks[n_index];
 	}
-	for (int n_index = 0; n_index < (int)this->prev_init_networks.size(); n_index++) {
-		delete this->prev_init_networks[n_index];
-	}
 
 	if (this->experiment != NULL) {
 		delete this->experiment;
 	}
+}
+
+void NoopNode::copy_from(NoopNode* original,
+						 Solution* parent_solution) {
+	this->init_network_scope_contexts = original->init_network_scope_contexts;
+	this->init_network_node_contexts = original->init_network_node_contexts;
+	for (int n_index = 0; n_index < (int)original->init_networks.size(); n_index++) {
+		this->init_networks.push_back(new InitNetwork(original->init_networks[n_index]));
+	}
+
+	this->next_node_id = original->next_node_id;
+
+	this->average_instances_per_hit = original->average_instances_per_hit;
+	this->average_instances_per_run = original->average_instances_per_run;
+
+	this->ancestor_ids = original->ancestor_ids;
 }
 
 void NoopNode::save(ofstream& output_file) {
@@ -44,7 +57,6 @@ void NoopNode::save(ofstream& output_file) {
 		}
 
 		this->init_networks[n_index]->save(output_file);
-		this->prev_init_networks[n_index]->save(output_file);
 	}
 
 	output_file << this->next_node_id << endl;
@@ -80,7 +92,6 @@ void NoopNode::load(ifstream& input_file,
 		}
 
 		this->init_networks.push_back(new InitNetwork(input_file));
-		this->prev_init_networks.push_back(new InitNetwork(input_file));
 	}
 
 	string next_node_id_line;

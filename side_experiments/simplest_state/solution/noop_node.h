@@ -40,6 +40,9 @@ public:
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
 
+	void copy_from(NoopNode* original,
+				   Solution* parent_solution);
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);

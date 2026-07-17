@@ -31,11 +31,6 @@ void BranchNode::experiment_step(vector<double>& obs,
 				wrapper->network_histories.push_back(init_network_history);
 			}
 
-			if (wrapper->run_type == RUN_TYPE_EXISTING) {
-				this->prev_init_networks[n_index]->activate(wrapper->prev_state,
-															obs);
-			}
-
 			if (wrapper->partial_state.size() > 0) {
 				uniform_int_distribution<int> add_noise_distribution(0, 9);
 				if (add_noise_distribution(generator) == 0) {
@@ -55,14 +50,10 @@ void BranchNode::experiment_step(vector<double>& obs,
 		}
 	}
 
-	uniform_int_distribution<int> on_distribution(0, this->ramp_num_gears);
 	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->original_next_node;
 	} else if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->branch_next_node;
-	} else if (this->ramp < this->ramp_num_gears
-			&& this->ramp < on_distribution(generator)) {
-		wrapper->node_context.back() = this->original_next_node;
 	} else {
 		ScopeHistory* scope_history = wrapper->scope_histories.back();
 
@@ -77,22 +68,10 @@ void BranchNode::experiment_step(vector<double>& obs,
 		bool is_branch;
 		this->original_network->activate(wrapper->state);
 		this->branch_network->activate(wrapper->state);
-		uniform_int_distribution<int> maintain_distribution(0, 9);
-		if (wrapper->run_type == RUN_TYPE_EXISTING
-				&& maintain_distribution(generator) == 0) {
-			this->prev_original_network->activate(wrapper->prev_state);
-			this->prev_branch_network->activate(wrapper->prev_state);
-			if (this->prev_branch_network->output->acti_vals(0) >= this->prev_original_network->output->acti_vals(0)) {
-				is_branch = true;
-			} else {
-				is_branch = false;
-			}
+		if (this->branch_network->output->acti_vals(0) >= this->original_network->output->acti_vals(0)) {
+			is_branch = true;
 		} else {
-			if (this->branch_network->output->acti_vals(0) >= this->original_network->output->acti_vals(0)) {
-				is_branch = true;
-			} else {
-				is_branch = false;
-			}
+			is_branch = false;
 		}
 
 		#if defined(MDEBUG) && MDEBUG

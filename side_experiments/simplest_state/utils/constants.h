@@ -25,9 +25,9 @@ const int EXPERIMENT_NUM_DATAPOINTS = 5000;
 const double VERIFY_RATIO = 0.2;
 
 #if defined(MDEBUG) && MDEBUG
-const int TRAIN_ITERS = 50;
+const int TRAIN_ITERS = 30;
 #else
-const int TRAIN_ITERS = 500000;
+const int TRAIN_ITERS = 300000;
 #endif /* MDEBUG */
 
 /**
@@ -53,9 +53,9 @@ const double NEW_STATE_LAST_BETTER_THAN_RATIO = 0.8;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int ONLY_UPDATE_CONSTANT_NUM_ITERS = 40;
+const int UPDATE_NUM_ITERS = 40;
 #else
-const int ONLY_UPDATE_CONSTANT_NUM_ITERS = 4000;
+const int UPDATE_NUM_ITERS = 40000;
 #endif /* MDEBUG */
 
 const int GENERALIZE_ITER = 3;

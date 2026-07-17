@@ -38,6 +38,8 @@ public:
 	int timestamp;
 	double curr_score;
 
+	int curr_num_resets;
+
 	int num_obs;
 
 	int num_states;
@@ -54,6 +56,7 @@ public:
 	std::vector<std::string> change_history;
 
 	Solution();
+	Solution(Solution* original);
 	~Solution();
 
 	void init(ProblemType* problem_type);

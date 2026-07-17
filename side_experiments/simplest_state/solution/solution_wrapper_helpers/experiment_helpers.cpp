@@ -24,32 +24,21 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	uniform_int_distribution<int> type_distribution(0, 1);
-	this->run_type = type_distribution(generator);
-
-	if (this->run_type == RUN_TYPE_EXISTING) {
-		this->iters_since_update++;
-
-		if (this->iters_since_update == ONLY_UPDATE_CONSTANT_NUM_ITERS) {
-			double val_average = measure_helper(this);
-			cout << "update constant val_average: " << val_average << endl;
-		}
+	if (this->iters_since_update < UPDATE_NUM_ITERS) {
+		this->run_type = RUN_TYPE_EXISTING;
+	} else {
+		this->run_type = RUN_TYPE_EXPLORE;
 	}
 
 	this->state = vector<double>(this->solution->num_states, 0.0);
 	if (this->run_type == RUN_TYPE_EXISTING) {
-		this->prev_state = vector<double>(this->solution->num_states, 0.0);
-
 		uniform_int_distribution<int> partial_distribution(0, 3);
-		// if (partial_distribution(generator) == 0
-		// 		&& this->iters_since_update > ONLY_UPDATE_CONSTANT_NUM_ITERS) {
-		if (false) {
+		if (partial_distribution(generator) == 0) {
 			this->partial_state = vector<double>(this->solution->num_states, 0.0);
 		} else {
 			this->partial_state.clear();
 		}
 	} else {
-		this->prev_state.clear();		// for debug
 		this->partial_state.clear();	// for debug
 	}
 
@@ -124,6 +113,8 @@ void SolutionWrapper::set_action(int action) {
 
 void SolutionWrapper::experiment_end(double result) {
 	if (this->run_type == RUN_TYPE_EXISTING) {
+		this->solution->curr_score = 0.999*this->solution->curr_score + 0.001*result;
+
 		update_helper(this->scope_histories[0]);
 	}
 	update_helper(result,
@@ -170,4 +161,27 @@ void SolutionWrapper::experiment_end(double result) {
 		delete it->second;
 	}
 	this->explore_experiment_histories.clear();
+
+	this->iters_since_update++;
+	if (this->iters_since_update == UPDATE_NUM_ITERS) {
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
+		if (this->prev_solution->curr_score > this->solution->curr_score) {
+		#endif /* MDEBUG */
+			// temp
+			cout << "reset" << endl;
+			cout << "this->prev_solution->curr_num_resets: " << this->prev_solution->curr_num_resets << endl;
+			cout << "this->prev_solution->curr_score: " << this->prev_solution->curr_score << endl;
+			cout << "this->solution->curr_score: " << this->solution->curr_score << endl;
+
+			this->prev_solution->curr_num_resets++;
+			if (this->prev_solution->curr_num_resets >= STUCK_NUM_ITERS) {
+				this->prev_solution->timestamp = -1;
+			}
+
+			delete this->solution;
+			this->solution = new Solution(this->prev_solution);
+		}
+	}
 }

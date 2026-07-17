@@ -53,11 +53,6 @@ void ScopeNode::experiment_exit_step(vector<double>& obs,
 				wrapper->network_histories.push_back(init_network_history);
 			}
 
-			if (wrapper->run_type == RUN_TYPE_EXISTING) {
-				this->prev_init_networks[n_index]->activate(wrapper->prev_state,
-															obs);
-			}
-
 			if (wrapper->partial_state.size() > 0) {
 				uniform_int_distribution<int> add_noise_distribution(0, 9);
 				if (add_noise_distribution(generator) == 0) {

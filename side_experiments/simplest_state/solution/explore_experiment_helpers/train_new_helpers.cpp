@@ -81,22 +81,6 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 			new_experiment_state->step_index = 0;
 			wrapper->experiment_context.back() = new_experiment_state;
 		}
-	} else if (wrapper->run_type == RUN_TYPE_EXISTING) {
-		vector<bool> curr_dependencies_is_hit(this->dependencies.size());
-		vector<vector<double>> curr_dependencies_obs(this->dependencies.size());
-		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
-			bool is_hit;
-			vector<double> obs;
-			fetch_dependency_helper(wrapper->scope_histories.back(),
-									this->dependencies[d_index],
-									0,
-									is_hit,
-									obs);
-			curr_dependencies_is_hit[d_index] = is_hit;
-			curr_dependencies_obs[d_index] = obs;
-		}
-		history->dependencies_is_hit_histories.push_back(curr_dependencies_is_hit);
-		history->dependencies_obs_histories.push_back(curr_dependencies_obs);
 	}
 }
 
@@ -163,6 +147,8 @@ void ExploreExperiment::train_new_backprop(
 
 			this->state_iter++;
 			if (this->state_iter >= EXPERIMENT_NUM_DATAPOINTS) {
+				int num_existing_train = (1.0 - VERIFY_RATIO) * (double)this->existing_dependencies_is_hit_histories.size();
+
 				{
 					default_random_engine generator_copy = generator;
 					shuffle(this->new_dependencies_is_hit_histories.begin(), this->new_dependencies_is_hit_histories.end(), generator_copy);
@@ -255,7 +241,7 @@ void ExploreExperiment::train_new_backprop(
 
 				double existing_sum_vals = 0.0;
 				int existing_count = 0;
-				for (int h_index = 0; h_index < (int)this->existing_dependencies_is_hit_histories.size(); h_index++) {
+				for (int h_index = num_existing_train; h_index < (int)this->existing_dependencies_is_hit_histories.size(); h_index++) {
 					{
 						vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
 						for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
@@ -318,7 +304,7 @@ void ExploreExperiment::train_new_backprop(
 				}
 				double new_average = new_sum_vals / (double)new_count;
 				double average_ratio = (existing_count + new_count)
-					/ ((double)this->existing_dependencies_is_hit_histories.size()
+					/ ((double)this->existing_dependencies_is_hit_histories.size() - num_existing_train
 						+ (double)this->new_dependencies_is_hit_histories.size() - num_new_train);
 				double local_improvement = (new_average - existing_average) * average_ratio;
 
@@ -402,12 +388,6 @@ void ExploreExperiment::train_new_backprop(
 					// 	}
 					// 	cout << endl;
 					// }
-
-					// temp
-					{
-						double val_average = measure_helper(wrapper);
-						cout << "pre add val_average: " << val_average << endl;
-					}
 
 					for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
 						NegateNetwork* new_negate_network = new NegateNetwork(wrapper->solution->num_states + s_index);
@@ -560,11 +540,5 @@ void ExploreExperiment::train_new_backprop(
 				}
 			}
 		}
-	} else if (wrapper->run_type == RUN_TYPE_EXISTING) {
-		uniform_int_distribution<int> distribution(0, history->dependencies_is_hit_histories.size()-1);
-		int index = distribution(generator);
-		this->existing_dependencies_is_hit_histories.push_back(history->dependencies_is_hit_histories[index]);
-		this->existing_dependencies_obs_histories.push_back(history->dependencies_obs_histories[index]);
-		this->existing_target_val_histories.push_back(target_val);
 	}
 }

@@ -259,16 +259,6 @@ void ScoreNetwork::update_weights(double learning_rate) {
 	this->output->update_weights(learning_rate);
 }
 
-void ScoreNetwork::update_constant(double target_val) {
-	double error = target_val - this->output->acti_vals(0);
-
-	double target_constant = this->output->constants[0] + error;
-	this->output->constants[0] = 0.999*this->output->constants[0] + 0.001*target_constant;
-
-	double pair_target_constant = this->pair->output->constants[0] + error;
-	this->pair->output->constants[0] = 0.999*this->pair->output->constants[0] + 0.001*pair_target_constant;
-}
-
 void ScoreNetwork::save(ofstream& output_file) {
 	output_file << this->init_states.size() << endl;
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {

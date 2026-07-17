@@ -28,6 +28,9 @@ const int RUN_TYPE_EXPLORE = 1;
 class SolutionWrapper {
 public:
 	Solution* solution;
+	Solution* prev_solution;
+
+	int iters_since_update;
 
 	int experiment_iter;
 	/**
@@ -35,13 +38,10 @@ public:
 	 *   - to enable experiments in different places
 	 */
 
-	int iters_since_update;
-
 	/**
 	 * - run variables
 	 */
 	std::vector<double> state;
-	std::vector<double> prev_state;
 	std::vector<double> partial_state;
 
 	std::vector<ScopeHistory*> scope_histories;

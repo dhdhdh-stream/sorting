@@ -55,6 +55,4 @@ void update_helper(ScopeHistory* scope_history);
 void update_helper(double target_val,
 				   SolutionWrapper* wrapper);
 
-double measure_helper(SolutionWrapper* wrapper);
-
 #endif /* SOLUTION_HELPERS_H */

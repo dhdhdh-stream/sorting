@@ -51,6 +51,21 @@ void ExploreExperiment::train_existing_backprop(
 
 	this->state_iter++;
 	if (this->state_iter >= EXPERIMENT_NUM_DATAPOINTS) {
+		{
+			default_random_engine generator_copy = generator;
+			shuffle(this->existing_dependencies_is_hit_histories.begin(), this->existing_dependencies_is_hit_histories.end(), generator_copy);
+		}
+		{
+			default_random_engine generator_copy = generator;
+			shuffle(this->existing_dependencies_obs_histories.begin(), this->existing_dependencies_obs_histories.end(), generator_copy);
+		}
+		{
+			default_random_engine generator_copy = generator;
+			shuffle(this->existing_target_val_histories.begin(), this->existing_target_val_histories.end(), generator_copy);
+		}
+
+		int num_existing_train = (1.0 - VERIFY_RATIO) * (double)this->existing_dependencies_is_hit_histories.size();
+
 		this->existing_init_networks = vector<InitNetwork*>(this->dependencies.size());
 		vector<int> init_states;
 		for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
@@ -71,7 +86,7 @@ void ExploreExperiment::train_existing_backprop(
 		this->existing_state_means = vector<double>(NEW_STATE_NUM_ADD, 0.0);
 		this->existing_state_diffs = vector<double>(NEW_STATE_NUM_ADD, 1.0);
 
-		uniform_int_distribution<int> train_distribution(0, this->existing_dependencies_is_hit_histories.size()-1);
+		uniform_int_distribution<int> train_distribution(0, num_existing_train-1);
 		uniform_int_distribution<int> noise_run_distribution(0, 3);
 		uniform_int_distribution<int> is_noise_distribution(0, 9);
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
@@ -145,10 +160,6 @@ void ExploreExperiment::train_existing_backprop(
 		// 	cout << "this->existing_network->output->acti_vals(0): " << this->existing_network->output->acti_vals(0) << endl;
 		// 	cout << "this->existing_target_val_histories[h_index]: " << this->existing_target_val_histories[h_index] << endl;
 		// }
-
-		this->existing_dependencies_is_hit_histories.clear();
-		this->existing_dependencies_obs_histories.clear();
-		this->existing_target_val_histories.clear();
 
 		this->best_surprise = numeric_limits<double>::lowest();
 
