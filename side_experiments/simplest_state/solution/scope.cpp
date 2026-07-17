@@ -92,7 +92,13 @@ void Scope::copy_from(Scope* original,
 		this->start_negate_networks.push_back(new NegateNetwork(original->start_negate_networks[n_index]));
 	}
 
-	this->start_init_network_scope_contexts = original->start_init_network_scope_contexts;
+	for (int n_index = 0; n_index < (int)original->start_init_network_scope_contexts.size(); n_index++) {
+		vector<Scope*> scope_context;
+		for (int l_index = 0; l_index < (int)original->start_init_network_scope_contexts[n_index].size(); l_index++) {
+			scope_context.push_back(parent_solution->scopes[original->start_init_network_scope_contexts[n_index][l_index]->id]);
+		}
+		this->start_init_network_scope_contexts.push_back(scope_context);
+	}
 	this->start_init_network_node_contexts = original->start_init_network_node_contexts;
 	for (int n_index = 0; n_index < (int)original->start_init_networks.size(); n_index++) {
 		this->start_init_networks.push_back(new InitNetwork(original->start_init_networks[n_index]));

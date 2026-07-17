@@ -44,7 +44,13 @@ BranchNode::~BranchNode() {
 
 void BranchNode::copy_from(BranchNode* original,
 						   Solution* parent_solution) {
-	this->init_network_scope_contexts = original->init_network_scope_contexts;
+	for (int n_index = 0; n_index < (int)original->init_network_scope_contexts.size(); n_index++) {
+		vector<Scope*> scope_context;
+		for (int l_index = 0; l_index < (int)original->init_network_scope_contexts[n_index].size(); l_index++) {
+			scope_context.push_back(parent_solution->scopes[original->init_network_scope_contexts[n_index][l_index]->id]);
+		}
+		this->init_network_scope_contexts.push_back(scope_context);
+	}
 	this->init_network_node_contexts = original->init_network_node_contexts;
 	for (int n_index = 0; n_index < (int)original->init_networks.size(); n_index++) {
 		this->init_networks.push_back(new InitNetwork(original->init_networks[n_index]));

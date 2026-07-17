@@ -56,6 +56,8 @@ Solution::Solution(Solution* original) {
 	this->starting_scope = this->scopes[original->starting_scope->id];
 	this->starting_num_improvements = original->starting_num_improvements;
 
+	this->average_max_update = 0.0;
+
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
 }
@@ -229,10 +231,10 @@ void Solution::clean_scopes() {
 		if (!removed_scope) {
 			break;
 		}
-	}
 
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->id = s_index;
+		for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+			this->scopes[s_index]->id = s_index;
+		}
 	}
 }
 

@@ -212,10 +212,10 @@ void Solution::clean_scopes() {
 		if (!removed_scope) {
 			break;
 		}
-	}
 
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->id = s_index;
+		for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+			this->scopes[s_index]->id = s_index;
+		}
 	}
 }
 
