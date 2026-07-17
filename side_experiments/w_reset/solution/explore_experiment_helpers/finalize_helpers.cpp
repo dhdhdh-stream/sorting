@@ -20,9 +20,15 @@
 using namespace std;
 
 void ExploreExperiment::add(SolutionWrapper* wrapper) {
+	if (wrapper->prev_solution != NULL) {
+		delete wrapper->prev_solution;
+	}
+	wrapper->prev_solution = new Solution(wrapper->solution);
+
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
+	ss << "curr_num_resets: " << wrapper->solution->curr_num_resets << "; ";
 	ss << "Experiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
@@ -335,24 +341,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	}
 
 	wrapper->solution->timestamp++;
-	// if ((int)wrapper->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
-	// 	double prev_val = wrapper->solution->improvement_history[wrapper->solution->improvement_history.size() - STUCK_NUM_ITERS];
-	// 	bool improved = false;
-	// 	for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
-	// 		if (wrapper->solution->improvement_history[wrapper->solution->improvement_history.size() - 1 - h_index] > prev_val) {
-	// 			improved = true;
-	// 			break;
-	// 		}
-	// 	}
-
-	// 	if (!improved) {
-	// 		wrapper->solution->timestamp = -1;
-	// 	}
-	// }
-	// // temp
-	// if (wrapper->solution->timestamp >= 40) {
-	// 	wrapper->solution->timestamp = -1;
-	// }
+	wrapper->solution->curr_num_resets = 0;
 
 	if (this->scope_context == wrapper->solution->starting_scope) {
 		wrapper->solution->starting_num_improvements++;
@@ -411,9 +400,4 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	 */
 
 	wrapper->iters_since_update = 0;
-
-	if (wrapper->prev_solution != NULL) {
-		delete wrapper->prev_solution;
-	}
-	wrapper->prev_solution = new Solution(wrapper->solution);
 }

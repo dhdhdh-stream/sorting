@@ -37,6 +37,8 @@ public:
 	int timestamp;
 	double curr_score;
 
+	int curr_num_resets;
+
 	std::vector<Scope*> scopes;
 	Scope* starting_scope;
 	int starting_num_improvements;

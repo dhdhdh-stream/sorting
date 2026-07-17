@@ -46,9 +46,9 @@ const double LAST_BETTER_THAN_RATIO = 0.8;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int UPDATE_NUM_ITERS = 20;
+const int UPDATE_NUM_ITERS = 40;
 #else
-const int UPDATE_NUM_ITERS = 20000;
+const int UPDATE_NUM_ITERS = 40000;
 #endif /* MDEBUG */
 
 const int GENERALIZE_ITER = 3;

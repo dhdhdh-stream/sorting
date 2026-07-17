@@ -45,6 +45,10 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
+
+	if (this->prev_solution != NULL) {
+		delete this->prev_solution;
+	}
 }
 
 bool SolutionWrapper::is_done() {
