@@ -21,9 +21,6 @@ public:
 	std::vector<AbstractNode*> node_contexts;
 	std::vector<bool> is_branch;
 
-	int state;
-	int state_iter;
-
 	std::vector<std::vector<double>> existing_obs_histories;
 	std::vector<double> existing_target_val_histories;
 
@@ -37,6 +34,7 @@ public:
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;
 
+	int total_num_instances;
 	int start_iter;
 
 	std::vector<std::vector<double>> new_obs_histories;

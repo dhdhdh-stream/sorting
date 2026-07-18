@@ -15,7 +15,7 @@
 using namespace std;
 
 Scope::Scope() {
-	// do nothing
+	this->run_history_index = 0;
 }
 
 Scope::~Scope() {
@@ -84,6 +84,16 @@ void Scope::copy_from(Scope* original,
 
 	this->last_scores = original->last_scores;
 	this->multi_last_scores = original->multi_last_scores;
+
+	for (int r_index = 0; r_index < (int)original->run_histories.size(); r_index++) {
+		vector<pair<AbstractNode*,bool>> curr_run;
+		for (int h_index = 0; h_index < (int)original->run_histories[r_index].size(); h_index++) {
+			curr_run.push_back({this->nodes[original->run_histories[r_index][h_index].first->id],
+				original->run_histories[r_index][h_index].second});
+		}
+		this->run_histories.push_back(curr_run);
+	}
+	this->run_history_index = original->run_history_index;
 }
 
 void Scope::save(ofstream& output_file) {

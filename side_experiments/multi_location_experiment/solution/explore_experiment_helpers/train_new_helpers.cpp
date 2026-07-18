@@ -22,6 +22,8 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 												 ExploreExperimentHistory* history,
 												 SolutionWrapper* wrapper) {
 	if (wrapper->should_explore) {
+		this->total_num_instances++;
+
 		this->num_instances_until_target--;
 		if (this->num_instances_until_target <= 0) {
 			history->obs_histories.push_back(obs);
@@ -154,7 +156,7 @@ void ExploreExperiment::train_new_backprop(
 				if (total_iters < 0) {
 					total_iters += numeric_limits<int>::max();
 				}
-				double average_instances_per_run = (double)this->new_obs_histories.size() / (double)total_iters;
+				double average_instances_per_run = (double)this->total_num_instances / (double)total_iters;
 
 				double global_improvement = average_instances_per_run * local_improvement;
 

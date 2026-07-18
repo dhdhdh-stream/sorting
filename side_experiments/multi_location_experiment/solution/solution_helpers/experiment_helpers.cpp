@@ -119,8 +119,53 @@ void random_node_helper(Scope* scope_context,
 	int run_index = run_distribution(generator);
 	uniform_int_distribution<int> node_history_distribution(0, scope_context->run_histories[run_index].size()-1);
 	int node_history_index = node_history_distribution(generator);
-	node_context = scope_context->run_histories[run_index][node_history_index].first;
-	is_branch = scope_context->run_histories[run_index][node_history_index].second;
+	AbstractNode* potential_node_context = scope_context->run_histories[run_index][node_history_index].first;
+	bool potential_is_branch = scope_context->run_histories[run_index][node_history_index].second;
+	switch (potential_node_context->type) {
+	case NODE_TYPE_NOOP:
+		{
+			NoopNode* noop_node = (NoopNode*)potential_node_context;
+			if (noop_node->experiment == NULL) {
+				node_context = potential_node_context;
+				is_branch = potential_is_branch;
+			}
+		}
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)potential_node_context;
+			if (action_node->experiment == NULL) {
+				node_context = potential_node_context;
+				is_branch = potential_is_branch;
+			}
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)potential_node_context;
+			if (scope_node->experiment == NULL) {
+				node_context = potential_node_context;
+				is_branch = potential_is_branch;
+			}
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)potential_node_context;
+			if (potential_is_branch) {
+				if (branch_node->branch_experiment == NULL) {
+					node_context = potential_node_context;
+					is_branch = potential_is_branch;
+				}
+			} else {
+				if (branch_node->original_experiment == NULL) {
+					node_context = potential_node_context;
+					is_branch = potential_is_branch;
+				}
+			}
+		}
+		break;
+	}
 }
 
 void create_experiment(ScopeHistory* scope_history,
@@ -151,25 +196,27 @@ void create_experiment(ScopeHistory* scope_history,
 			node_contexts.push_back(explore_node_context);
 			is_branch.push_back(explore_is_branch);
 			for (int try_index = 0; try_index < MULTI_RANDOM_NUM_TRIES; try_index++) {
-				AbstractNode* potential_node_context;
+				AbstractNode* potential_node_context = NULL;
 				bool potential_is_branch;
 				random_node_helper(explore_scope_context,
 								   potential_node_context,
 								   potential_is_branch);
-				bool matches_existing = false;
-				for (int c_index = 0; c_index < (int)node_contexts.size(); c_index++) {
-					if (node_contexts[c_index] == potential_node_context
-							&& is_branch[c_index] == potential_is_branch) {
-						matches_existing = true;
-						break;
+				if (potential_node_context != NULL) {
+					bool matches_existing = false;
+					for (int c_index = 0; c_index < (int)node_contexts.size(); c_index++) {
+						if (node_contexts[c_index] == potential_node_context
+								&& is_branch[c_index] == potential_is_branch) {
+							matches_existing = true;
+							break;
+						}
 					}
-				}
-				if (!matches_existing) {
-					node_contexts.push_back(potential_node_context);
-					is_branch.push_back(potential_is_branch);
+					if (!matches_existing) {
+						node_contexts.push_back(potential_node_context);
+						is_branch.push_back(potential_is_branch);
 
-					if (node_contexts.size() >= MULTI_TARGET_SIZE) {
-						break;
+						if (node_contexts.size() >= MULTI_TARGET_SIZE) {
+							break;
+						}
 					}
 				}
 			}
@@ -203,7 +250,7 @@ void create_experiment(ScopeHistory* scope_history,
 					case NODE_TYPE_BRANCH:
 						{
 							BranchNode* branch_node = (BranchNode*)node_contexts[c_index];
-							if (explore_is_branch) {
+							if (is_branch[c_index]) {
 								branch_node->branch_experiment = new_experiment;
 							} else {
 								branch_node->original_experiment = new_experiment;

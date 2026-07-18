@@ -1,5 +1,3 @@
-// TODO: try multi-location experiment
-
 #include <chrono>
 #include <iostream>
 #include <map>

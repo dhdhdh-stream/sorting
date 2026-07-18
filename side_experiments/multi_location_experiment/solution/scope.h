@@ -13,7 +13,11 @@ class Problem;
 class Solution;
 class SolutionWrapper;
 
+#if defined(MDEBUG) && MDEBUG
+const int RUN_HISTORIES_NUM_SAVE = 10;
+#else
 const int RUN_HISTORIES_NUM_SAVE = 100;
+#endif /* MDEBUG */
 
 class ScopeHistory;
 class Scope {

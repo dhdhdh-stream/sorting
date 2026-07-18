@@ -343,56 +343,56 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	wrapper->solution->timestamp++;
 	wrapper->solution->curr_num_resets = 0;
 
-	// if (this->scope_context == wrapper->solution->starting_scope) {
-	// 	wrapper->solution->starting_num_improvements++;
-	// 	if (wrapper->solution->starting_num_improvements >= GENERALIZE_ITER) {
-	// 		Scope* new_scope = new Scope();
-	// 		new_scope->id = wrapper->solution->scopes.size();
-	// 		new_scope->node_counter = 0;
-	// 		wrapper->solution->scopes.push_back(new_scope);
+	if (this->scope_context == wrapper->solution->starting_scope) {
+		wrapper->solution->starting_num_improvements++;
+		if (wrapper->solution->starting_num_improvements >= GENERALIZE_ITER) {
+			Scope* new_scope = new Scope();
+			new_scope->id = wrapper->solution->scopes.size();
+			new_scope->node_counter = 0;
+			wrapper->solution->scopes.push_back(new_scope);
 
-	// 		new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
-	// 		new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
+			new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
+			new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
 
-	// 		new_scope->last_scores = wrapper->solution->starting_scope->last_scores;
+			new_scope->last_scores = wrapper->solution->starting_scope->last_scores;
 
-	// 		NoopNode* start_node = new NoopNode();
-	// 		start_node->parent = new_scope;
-	// 		start_node->id = new_scope->node_counter;
-	// 		new_scope->node_counter++;
-	// 		new_scope->nodes[start_node->id] = start_node;
+			NoopNode* start_node = new NoopNode();
+			start_node->parent = new_scope;
+			start_node->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			new_scope->nodes[start_node->id] = start_node;
 
-	// 		ScopeNode* scope_node = new ScopeNode();
-	// 		scope_node->parent = new_scope;
-	// 		scope_node->id = new_scope->node_counter;
-	// 		new_scope->node_counter++;
-	// 		new_scope->nodes[scope_node->id] = scope_node;
+			ScopeNode* scope_node = new ScopeNode();
+			scope_node->parent = new_scope;
+			scope_node->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			new_scope->nodes[scope_node->id] = scope_node;
 
-	// 		scope_node->scope = wrapper->solution->starting_scope;
+			scope_node->scope = wrapper->solution->starting_scope;
 
-	// 		NoopNode* end_node = new NoopNode();
-	// 		end_node->parent = new_scope;
-	// 		end_node->id = new_scope->node_counter;
-	// 		new_scope->node_counter++;
-	// 		new_scope->nodes[end_node->id] = end_node;
+			NoopNode* end_node = new NoopNode();
+			end_node->parent = new_scope;
+			end_node->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			new_scope->nodes[end_node->id] = end_node;
 
-	// 		start_node->next_node_id = scope_node->id;
-	// 		start_node->next_node = scope_node;
+			start_node->next_node_id = scope_node->id;
+			start_node->next_node = scope_node;
 
-	// 		scope_node->ancestor_ids.push_back(start_node->id);
+			scope_node->ancestor_ids.push_back(start_node->id);
 
-	// 		scope_node->next_node_id = end_node->id;
-	// 		scope_node->next_node = end_node;
+			scope_node->next_node_id = end_node->id;
+			scope_node->next_node = end_node;
 
-	// 		end_node->ancestor_ids.push_back(scope_node->id);
+			end_node->ancestor_ids.push_back(scope_node->id);
 
-	// 		end_node->next_node_id = -1;
-	// 		end_node->next_node = NULL;
+			end_node->next_node_id = -1;
+			end_node->next_node = NULL;
 
-	// 		wrapper->solution->starting_scope = new_scope;
-	// 		wrapper->solution->starting_num_improvements = 0;
-	// 	}
-	// }
+			wrapper->solution->starting_scope = new_scope;
+			wrapper->solution->starting_num_improvements = 0;
+		}
+	}
 
 	wrapper->experiment_iter = EXPERIMENT_REFRESH_NUM_ITERS;
 	/**

@@ -47,6 +47,7 @@ public:
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;
 
+	int total_num_instances;
 	int start_iter;
 
 	std::vector<std::vector<double>> new_obs_histories;
