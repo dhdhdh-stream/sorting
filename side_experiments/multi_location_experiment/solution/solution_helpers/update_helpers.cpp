@@ -1,0 +1,120 @@
+#include "solution_helpers.h"
+
+#include <iostream>
+
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "solution_wrapper.h"
+
+using namespace std;
+
+void update_helper(ScopeHistory* scope_history,
+				   double target_val,
+				   set<BranchNode*>& hit_original,
+				   set<BranchNode*>& hit_branch,
+				   map<Scope*, pair<int,vector<pair<AbstractNode*,bool>>>>& run_tracker) {
+	vector<pair<AbstractNode*,bool>> curr_run(scope_history->node_histories.size());
+	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
+			h_it != scope_history->node_histories.end(); h_it++) {
+		switch (h_it->second->node->type) {
+		case NODE_TYPE_NOOP:
+		case NODE_TYPE_ACTION:
+		case NODE_TYPE_SCOPE:
+			curr_run[h_it->second->index] = {h_it->second->node, false};
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
+				curr_run[h_it->second->index] = {h_it->second->node, branch_node_history->is_branch};
+			}
+			break;
+		}
+	}
+	map<Scope*, pair<int,vector<pair<AbstractNode*,bool>>>>::iterator it = run_tracker.find(scope_history->scope);
+	if (it == run_tracker.end()) {
+		run_tracker[scope_history->scope] = {1, curr_run};
+	} else {
+		uniform_int_distribution<int> distribution(0, it->second.first);
+		it->second.first++;
+		if (distribution(generator) == 0) {
+			it->second.second = curr_run;
+		}
+	}
+
+	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
+			h_it != scope_history->node_histories.end(); h_it++) {
+		switch (h_it->second->node->type) {
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
+				update_helper(scope_node_history->scope_history,
+							  target_val,
+							  hit_original,
+							  hit_branch,
+							  run_tracker);
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
+				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
+
+				if (branch_node_history->is_branch) {
+					branch_node->branch_network->activate(branch_node_history->obs);
+					double error = target_val - branch_node->branch_network->output->acti_vals[0];
+					branch_node->branch_network->backprop(error);
+
+					hit_branch.insert(branch_node);
+				} else {
+					branch_node->original_network->activate(branch_node_history->obs);
+					double error = target_val - branch_node->original_network->output->acti_vals[0];
+					branch_node->original_network->backprop(error);
+
+					hit_original.insert(branch_node);
+				}
+			}
+			break;
+		}
+	}
+}
+
+/**
+ * - for some reason, best to update each network individually as frequently as possible(?)
+ *   - vs. updating all networks in a balanced way
+ */
+void update_helper(set<BranchNode*>& hit_original,
+				   set<BranchNode*>& hit_branch,
+				   map<Scope*, pair<int,vector<pair<AbstractNode*,bool>>>>& run_tracker) {
+	for (set<BranchNode*>::iterator it = hit_original.begin();
+			it != hit_original.end(); it++) {
+		BranchNode* branch_node = *it;
+
+		branch_node->original_network->update();
+	}
+
+	for (set<BranchNode*>::iterator it = hit_branch.begin();
+			it != hit_branch.end(); it++) {
+		BranchNode* branch_node = *it;
+
+		branch_node->branch_network->update();
+	}
+
+	for (map<Scope*, pair<int,vector<pair<AbstractNode*,bool>>>>::iterator it = run_tracker.begin();
+			it != run_tracker.end(); it++) {
+		Scope* scope = it->first;
+		if (scope->run_histories.size() < RUN_HISTORIES_NUM_SAVE) {
+			scope->run_histories.push_back(it->second.second);
+		} else {
+			scope->run_histories[scope->run_history_index] = it->second.second;
+		}
+		scope->run_history_index++;
+		if (scope->run_history_index >= RUN_HISTORIES_NUM_SAVE) {
+			scope->run_history_index = 0;
+		}
+	}
+}
