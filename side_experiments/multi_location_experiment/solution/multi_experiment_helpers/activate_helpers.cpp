@@ -38,6 +38,11 @@ void MultiExperiment::experiment_check_activate(vector<double>& obs,
 								 history,
 								 wrapper);
 		break;
+	case MULTI_EXPERIMENT_STATE_MEASURE:
+		measure_check_activate(obs,
+							   history,
+							   wrapper);
+		break;
 	}
 }
 
@@ -60,6 +65,12 @@ void MultiExperiment::experiment_step(vector<double>& obs,
 					   is_next,
 					   wrapper);
 		break;
+	case MULTI_EXPERIMENT_STATE_MEASURE:
+		measure_step(obs,
+					 action,
+					 is_next,
+					 wrapper);
+		break;
 	}
 }
 
@@ -76,6 +87,9 @@ void MultiExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 		break;
 	case MULTI_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_exit_step(wrapper);
+		break;
+	case MULTI_EXPERIMENT_STATE_MEASURE:
+		measure_exit_step(wrapper);
 		break;
 	}
 }
@@ -102,6 +116,11 @@ void MultiExperiment::backprop(double target_val,
 		train_new_backprop(target_val,
 						   multi_experiment_history,
 						   wrapper);
+		break;
+	case MULTI_EXPERIMENT_STATE_MEASURE:
+		measure_backprop(target_val,
+						 multi_experiment_history,
+						 wrapper);
 		break;
 	}
 }

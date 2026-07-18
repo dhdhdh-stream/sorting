@@ -369,4 +369,10 @@ void MultiExperiment::add(SolutionWrapper* wrapper) {
 	 */
 
 	wrapper->iters_since_update = 0;
+
+	// temp
+	{
+		double val_average = measure_helper(wrapper);
+		cout << "post val_average: " << val_average << endl;
+	}
 }

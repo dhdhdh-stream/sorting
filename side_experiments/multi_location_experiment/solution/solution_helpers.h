@@ -29,4 +29,6 @@ void update_helper(std::set<BranchNode*>& hit_original,
 				   std::set<BranchNode*>& hit_branch,
 				   std::map<Scope*, std::pair<int,std::vector<std::pair<AbstractNode*,bool>>>>& run_tracker);
 
+double measure_helper(SolutionWrapper* wrapper);
+
 #endif /* SOLUTION_HELPERS_H */

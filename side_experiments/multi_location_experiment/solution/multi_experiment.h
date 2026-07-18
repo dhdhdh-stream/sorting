@@ -13,6 +13,7 @@ class SolutionWrapper;
 const int MULTI_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int MULTI_EXPERIMENT_STATE_EXPLORE = 1;
 const int MULTI_EXPERIMENT_STATE_TRAIN_NEW = 2;
+const int MULTI_EXPERIMENT_STATE_MEASURE = 3;
 
 class MultiExperimentHistory;
 class MultiExperiment : public AbstractExperiment {
@@ -23,6 +24,9 @@ public:
 
 	std::vector<std::vector<double>> existing_obs_histories;
 	std::vector<double> existing_target_val_histories;
+
+	// temp
+	double existing_average;
 
 	Network* existing_network;
 
@@ -41,6 +45,9 @@ public:
 	std::vector<double> new_target_val_histories;
 
 	Network* new_network;
+
+	// temp
+	int sum_vals;
 
 	MultiExperiment(Scope* scope_context,
 					std::vector<AbstractNode*>& node_contexts,
@@ -95,6 +102,18 @@ public:
 	void train_new_backprop(double target_val,
 							MultiExperimentHistory* history,
 							SolutionWrapper* wrapper);
+
+	void measure_check_activate(std::vector<double>& obs,
+								MultiExperimentHistory* history,
+								SolutionWrapper* wrapper);
+	void measure_step(std::vector<double>& obs,
+					  int& action,
+					  bool& is_next,
+					  SolutionWrapper* wrapper);
+	void measure_exit_step(SolutionWrapper* wrapper);
+	void measure_backprop(double target_val,
+						  MultiExperimentHistory* history,
+						  SolutionWrapper* wrapper);
 
 	void add(SolutionWrapper* wrapper);
 };
