@@ -57,6 +57,11 @@ void MultiExperiment::add(SolutionWrapper* wrapper) {
 	new_scope->node_counter = 0;
 	wrapper->solution->scopes.push_back(new_scope);
 
+	new_scope->child_scopes = this->scope_context->child_scopes;
+
+	new_scope->last_scores = this->scope_context->last_scores;
+	new_scope->multi_last_scores = this->scope_context->multi_last_scores;
+
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		Scope* scope = wrapper->solution->scopes[s_index];
 		for (int c_index = 0; c_index < (int)scope->child_scopes.size(); c_index++) {

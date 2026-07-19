@@ -355,6 +355,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
 
 			new_scope->last_scores = wrapper->solution->starting_scope->last_scores;
+			new_scope->multi_last_scores = wrapper->solution->starting_scope->multi_last_scores;
 
 			NoopNode* start_node = new NoopNode();
 			start_node->parent = new_scope;

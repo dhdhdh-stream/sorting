@@ -1,3 +1,7 @@
+// - low impact?
+//   - anything found likely to be low risk, incidental, supporting stuff
+//     - won't be capturing/repeating critical section
+
 #ifndef MULTI_EXPERIMENT_H
 #define MULTI_EXPERIMENT_H
 
@@ -47,7 +51,7 @@ public:
 	Network* new_network;
 
 	// temp
-	int sum_vals;
+	double sum_vals;
 
 	MultiExperiment(Scope* scope_context,
 					std::vector<AbstractNode*>& node_contexts,

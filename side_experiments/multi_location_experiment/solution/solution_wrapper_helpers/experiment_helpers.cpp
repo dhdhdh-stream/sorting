@@ -164,9 +164,9 @@ void SolutionWrapper::experiment_end(double result) {
 			cout << "this->solution->curr_score: " << this->solution->curr_score << endl;
 
 			this->prev_solution->curr_num_resets++;
-			if (this->prev_solution->curr_num_resets >= STUCK_NUM_ITERS) {
-				this->prev_solution->timestamp = -1;
-			}
+			// if (this->prev_solution->curr_num_resets >= STUCK_NUM_ITERS) {
+			// 	this->prev_solution->timestamp = -1;
+			// }
 
 			delete this->solution;
 			this->solution = new Solution(this->prev_solution);

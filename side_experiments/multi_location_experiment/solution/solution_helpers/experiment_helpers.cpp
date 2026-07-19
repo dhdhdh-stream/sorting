@@ -174,21 +174,17 @@ void create_experiment(ScopeHistory* scope_history,
 	gather_helper(scope_history,
 				  explore_contexts);
 
-	map<Scope*, ExploreContext>::iterator context_it;
-	uniform_int_distribution<int> root_distribution(0, 3);
-	if (root_distribution(generator) == 0) {
-		context_it = explore_contexts.find(wrapper->solution->starting_scope);
-	} else {
+	uniform_int_distribution<int> multi_distribution(0, 1);
+	if (multi_distribution(generator) == 0) {
+		map<Scope*, ExploreContext>::iterator context_it;
 		uniform_int_distribution<int> scope_distribution(0, explore_contexts.size()-1);
 		context_it = next(explore_contexts.begin(), scope_distribution(generator));
-	}
-	if (context_it->second.explore_node != NULL) {
+
 		Scope* explore_scope_context = context_it->first;
 		AbstractNode* explore_node_context = context_it->second.explore_node;
 		bool explore_is_branch = context_it->second.explore_is_branch;
 
-		uniform_int_distribution<int> multi_distribution(0, 1);
-		if (multi_distribution(generator) == 0
+		if (explore_node_context != NULL
 				&& explore_scope_context->nodes.size() >= MULTI_SCOPE_MIN_NODES
 				&& explore_scope_context->run_histories.size() >= RUN_HISTORIES_NUM_SAVE) {
 			vector<AbstractNode*> node_contexts;
@@ -260,7 +256,21 @@ void create_experiment(ScopeHistory* scope_history,
 					}
 				}
 			}
+		}
+	} else {
+		map<Scope*, ExploreContext>::iterator context_it;
+		uniform_int_distribution<int> root_distribution(0, 3);
+		if (root_distribution(generator) == 0) {
+			context_it = explore_contexts.find(wrapper->solution->starting_scope);
 		} else {
+			uniform_int_distribution<int> scope_distribution(0, explore_contexts.size()-1);
+			context_it = next(explore_contexts.begin(), scope_distribution(generator));
+		}
+		if (context_it->second.explore_node != NULL) {
+			Scope* explore_scope_context = context_it->first;
+			AbstractNode* explore_node_context = context_it->second.explore_node;
+			bool explore_is_branch = context_it->second.explore_is_branch;
+
 			geometric_distribution<int> exit_distribution(0.1);
 			int random_index;
 			while (true) {
