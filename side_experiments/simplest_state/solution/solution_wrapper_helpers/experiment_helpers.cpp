@@ -33,7 +33,8 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->state = vector<double>(this->solution->num_states, 0.0);
 	if (this->run_type == RUN_TYPE_EXISTING) {
 		uniform_int_distribution<int> partial_distribution(0, 3);
-		if (partial_distribution(generator) == 0) {
+		// if (partial_distribution(generator) == 0) {
+		if (false) {
 			this->partial_state = vector<double>(this->solution->num_states, 0.0);
 		} else {
 			this->partial_state.clear();

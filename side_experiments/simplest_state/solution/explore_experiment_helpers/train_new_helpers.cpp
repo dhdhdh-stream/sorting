@@ -188,7 +188,8 @@ void ExploreExperiment::train_new_backprop(
 				uniform_int_distribution<int> is_noise_distribution(0, 9);
 				for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 					int rand_index = new_train_distribution(generator);
-					bool is_noise_run = noise_run_distribution(generator) == 0;
+					// bool is_noise_run = noise_run_distribution(generator) == 0;
+					bool is_noise_run = false;
 
 					vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
 

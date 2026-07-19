@@ -146,7 +146,7 @@ void update_helper(double target_val,
 				max_state_error = error_size;
 			}
 		}
-		max_state_error = max(1.0, max(max_diff, max(max_error, max_state_error)));
+		max_state_error = max(max_diff, max(max_error, max_state_error));
 		double max_update = max_state_val * max_state_error;
 		if (max_update != 0.0) {
 			wrapper->solution->average_max_update = 0.99999*wrapper->solution->average_max_update + 0.00001*max_update;
@@ -170,13 +170,13 @@ void update_helper(double target_val,
 						init_network->update_weights(learning_rate);
 					}
 					break;
-				case NETWORK_TYPE_NEGATE:
-					{
-						NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->network_histories[h_index];
-						NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
-						negate_network->update_weights(learning_rate);
-					}
-					break;
+				// case NETWORK_TYPE_NEGATE:
+				// 	{
+				// 		NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->network_histories[h_index];
+				// 		NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
+				// 		negate_network->update_weights(learning_rate);
+				// 	}
+				// 	break;
 				}
 			}
 		}
@@ -253,7 +253,7 @@ void update_helper(double target_val,
 				max_state_error = error_size;
 			}
 		}
-		max_state_error = max(1.0, max(max_diff, max(max_error, max_state_error)));
+		max_state_error = max(max_diff, max(max_error, max_state_error));
 		double max_update = max_state_val * max_state_error;
 		if (max_update != 0.0) {
 			wrapper->solution->average_max_update = 0.99999*wrapper->solution->average_max_update + 0.00001*max_update;
@@ -277,13 +277,13 @@ void update_helper(double target_val,
 						init_network->update_weights(learning_rate);
 					}
 					break;
-				case NETWORK_TYPE_NEGATE:
-					{
-						NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->partial_network_histories[h_index];
-						NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
-						negate_network->update_weights(learning_rate);
-					}
-					break;
+				// case NETWORK_TYPE_NEGATE:
+				// 	{
+				// 		NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->partial_network_histories[h_index];
+				// 		NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
+				// 		negate_network->update_weights(learning_rate);
+				// 	}
+				// 	break;
 				}
 			}
 		}
