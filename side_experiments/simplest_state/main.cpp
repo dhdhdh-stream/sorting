@@ -1,10 +1,3 @@
-// - maybe zero-ing is better than noise
-//   - with noise, still learns to utilize early
-//     - but zero-ing will remove the dependency where able
-
-// - maybe have no dependency on state
-//   - especially since each state network distinct
-
 #include <chrono>
 #include <iostream>
 #include <map>

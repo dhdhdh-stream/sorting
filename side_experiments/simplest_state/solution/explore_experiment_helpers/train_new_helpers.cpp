@@ -178,44 +178,25 @@ void ExploreExperiment::train_new_backprop(
 				double hidden_1_average_max_update = 0.0;
 				double hidden_2_average_max_update = 0.0;
 				double output_average_max_update = 0.0;
-				vector<double> new_state_means(NEW_STATE_NUM_ADD, 0.0);
-				vector<double> new_state_diffs(NEW_STATE_NUM_ADD, 1.0);
 
 				int num_new_train = (1.0 - VERIFY_RATIO) * (double)this->new_dependencies_is_hit_histories.size();
 
 				uniform_int_distribution<int> new_train_distribution(0, num_new_train-1);
-				uniform_int_distribution<int> noise_run_distribution(0, 3);
-				uniform_int_distribution<int> is_noise_distribution(0, 9);
+				uniform_int_distribution<int> include_distribution(1, this->dependencies.size());
 				for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 					int rand_index = new_train_distribution(generator);
-					// bool is_noise_run = noise_run_distribution(generator) == 0;
-					bool is_noise_run = false;
 
 					vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
 
 					vector<bool> is_activate(this->dependencies.size(), false);
 					for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 						if (this->new_dependencies_is_hit_histories[rand_index][d_index]) {
-							if (is_noise_run
-									&& is_noise_distribution(generator) == 0) {
-								for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
-									normal_distribution<double> distribution(0.0, new_state_diffs[s_index]);
-									new_state[s_index] += distribution(generator);
-								}
-							}
-
 							init_networks[d_index]->init_activate(new_state,
 																  this->new_dependencies_obs_histories[rand_index][d_index]);
 						}
 					}
 
 					new_network->init_activate(new_state);
-
-					for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
-						new_state_means[s_index] = 0.99999*new_state_means[s_index] + 0.00001*new_state[s_index];
-						double curr_diff = abs(new_state[s_index] - new_state_means[s_index]);
-						new_state_diffs[s_index] = 0.99999*new_state_diffs[s_index] + 0.00001*curr_diff;
-					}
 
 					vector<double> new_state_errors(NEW_STATE_NUM_ADD, 0.0);
 
@@ -225,6 +206,34 @@ void ExploreExperiment::train_new_backprop(
 					for (int d_index = (int)this->dependencies.size()-1; d_index >= 0; d_index--) {
 						if (this->new_dependencies_is_hit_histories[rand_index][d_index]) {
 							init_networks[d_index]->init_backprop(new_state_errors);
+						}
+					}
+
+					{
+						int include_index = include_distribution(generator);
+
+						vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
+
+						vector<bool> is_activate(this->dependencies.size(), false);
+						for (int d_index = include_index; d_index < (int)this->dependencies.size(); d_index++) {
+							if (this->new_dependencies_is_hit_histories[rand_index][d_index]) {
+								for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
+									new_state[s_index] += init_networks[d_index]->output->acti_vals(0);
+								}
+							}
+						}
+
+						new_network->init_activate(new_state);
+
+						vector<double> new_state_errors(NEW_STATE_NUM_ADD, 0.0);
+
+						new_network->init_backprop(this->new_target_val_histories[rand_index],
+												   new_state_errors);
+
+						for (int d_index = (int)this->dependencies.size()-1; d_index >= include_index; d_index--) {
+							if (this->new_dependencies_is_hit_histories[rand_index][d_index]) {
+								init_networks[d_index]->init_backprop(new_state_errors);
+							}
 						}
 					}
 
@@ -390,16 +399,12 @@ void ExploreExperiment::train_new_backprop(
 					// 	cout << endl;
 					// }
 
-					for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
-						NegateNetwork* new_negate_network = new NegateNetwork(wrapper->solution->num_states + s_index);
+					{
+						NegateNetwork* new_negate_network = new NegateNetwork(this->existing_network->init_states);
 						this->scope_context->start_negate_networks.push_back(new_negate_network);
 					}
 
 					wrapper->solution->num_states += NEW_STATE_NUM_ADD;
-					wrapper->solution->state_means.insert(wrapper->solution->state_means.end(),
-						this->existing_state_means.begin(), this->existing_state_means.end());
-					wrapper->solution->state_diffs.insert(wrapper->solution->state_diffs.end(),
-						this->existing_state_diffs.begin(), this->existing_state_diffs.end());
 
 					for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 						vector<Scope*> init_network_scope_context;
@@ -411,16 +416,12 @@ void ExploreExperiment::train_new_backprop(
 					}
 					this->existing_init_networks.clear();
 
-					for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
-						NegateNetwork* new_negate_network = new NegateNetwork(wrapper->solution->num_states + s_index);
+					{
+						NegateNetwork* new_negate_network = new NegateNetwork(new_network->init_states);
 						this->scope_context->start_negate_networks.push_back(new_negate_network);
 					}
 
 					wrapper->solution->num_states += NEW_STATE_NUM_ADD;
-					wrapper->solution->state_means.insert(wrapper->solution->state_means.end(),
-						new_state_means.begin(), new_state_means.end());
-					wrapper->solution->state_diffs.insert(wrapper->solution->state_diffs.end(),
-						new_state_diffs.begin(), new_state_diffs.end());
 
 					for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 						vector<Scope*> init_network_scope_context;

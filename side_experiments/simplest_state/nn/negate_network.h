@@ -1,6 +1,3 @@
-// - never update away from -1.0
-//   - multiplicative effect too damaging
-
 #ifndef NEGATE_NETWORK_H
 #define NEGATE_NETWORK_H
 
@@ -12,14 +9,14 @@
 class NegateNetworkHistory;
 class NegateNetwork : public AbstractNetwork {
 public:
-	int state;
-	double weight;
+	std::vector<int> init_states;
+	std::vector<double> weights;
 
-	double state_input;
+	std::vector<double> state_vals;
 
-	double weight_update;
+	std::vector<double> weight_updates;
 
-	NegateNetwork(int state);
+	NegateNetwork(std::vector<int>& init_states);
 	NegateNetwork(NegateNetwork* original);
 	NegateNetwork(std::ifstream& input_file);
 
@@ -37,7 +34,7 @@ public:
 
 class NegateNetworkHistory : public AbstractNetworkHistory {
 public:
-	double state_input_history;
+	std::vector<double> state_vals_history;
 
 	NegateNetworkHistory(NegateNetwork* network);
 };

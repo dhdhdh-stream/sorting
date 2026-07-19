@@ -20,13 +20,6 @@ void Scope::experiment_start_activate(vector<double>& obs,
 			this->start_negate_networks[n_index]->save(negate_network_history);
 			wrapper->network_histories.push_back(negate_network_history);
 		}
-
-		if (wrapper->partial_state.size() > 0) {
-			this->start_negate_networks[n_index]->activate(wrapper->partial_state);
-			NegateNetworkHistory* negate_network_history = new NegateNetworkHistory(this->start_negate_networks[n_index]);
-			this->start_negate_networks[n_index]->save(negate_network_history);
-			wrapper->partial_network_histories.push_back(negate_network_history);
-		}
 	}
 
 	for (int n_index = 0; n_index < (int)this->start_init_networks.size(); n_index++) {
@@ -39,23 +32,6 @@ void Scope::experiment_start_activate(vector<double>& obs,
 				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->start_init_networks[n_index]);
 				this->start_init_networks[n_index]->save(init_network_history);
 				wrapper->network_histories.push_back(init_network_history);
-			}
-
-			if (wrapper->partial_state.size() > 0) {
-				uniform_int_distribution<int> add_noise_distribution(0, 9);
-				if (add_noise_distribution(generator) == 0) {
-					for (int i_index = 0; i_index < (int)this->start_init_networks[n_index]->init_states.size(); i_index++) {
-						int state = this->start_init_networks[n_index]->init_states[i_index];
-						normal_distribution<double> distribution(0.0, wrapper->solution->state_diffs[state]);
-						wrapper->partial_state[state] += distribution(generator);
-					}
-				}
-
-				this->start_init_networks[n_index]->activate(wrapper->partial_state,
-															 obs);
-				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->start_init_networks[n_index]);
-				this->start_init_networks[n_index]->save(init_network_history);
-				wrapper->partial_network_histories.push_back(init_network_history);
 			}
 		}
 	}
