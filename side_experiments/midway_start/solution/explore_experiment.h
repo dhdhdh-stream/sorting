@@ -46,6 +46,7 @@ public:
 	std::vector<int> best_step_types;
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;
+	std::vector<AbstractNode*> best_scope_start_nodes;
 
 	int total_num_instances;
 	int start_iter;
@@ -124,6 +125,7 @@ public:
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
+	std::vector<AbstractNode*> curr_scope_start_nodes;
 
 	ExploreExperimentHistory(ExploreExperiment* experiment);
 };

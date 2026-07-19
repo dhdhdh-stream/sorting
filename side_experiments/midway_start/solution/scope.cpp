@@ -83,7 +83,6 @@ void Scope::copy_from(Scope* original,
 	}
 
 	this->last_scores = original->last_scores;
-	this->multi_last_scores = original->multi_last_scores;
 
 	for (int r_index = 0; r_index < (int)original->run_histories.size(); r_index++) {
 		vector<pair<AbstractNode*,bool>> curr_run;
@@ -115,12 +114,6 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->last_scores.size() << endl;
 	for (list<double>::iterator it = this->last_scores.begin();
 			it != this->last_scores.end(); it++) {
-		output_file << *it << endl;
-	}
-
-	output_file << this->multi_last_scores.size() << endl;
-	for (list<double>::iterator it = this->multi_last_scores.begin();
-			it != this->multi_last_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 }
@@ -201,15 +194,6 @@ void Scope::load(ifstream& input_file,
 		string score_line;
 		getline(input_file, score_line);
 		this->last_scores.push_back(stod(score_line));
-	}
-
-	string num_multi_last_scores_line;
-	getline(input_file, num_multi_last_scores_line);
-	int num_multi_last_scores = stoi(num_multi_last_scores_line);
-	for (int e_index = 0; e_index < num_multi_last_scores; e_index++) {
-		string score_line;
-		getline(input_file, score_line);
-		this->multi_last_scores.push_back(stod(score_line));
 	}
 }
 

@@ -33,7 +33,6 @@ public:
 	std::vector<Scope*> child_scopes;
 
 	std::list<double> last_scores;
-	std::list<double> multi_last_scores;
 
 	std::vector<std::vector<std::pair<AbstractNode*,bool>>> run_histories;
 	int run_history_index;

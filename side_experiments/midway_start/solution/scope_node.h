@@ -27,6 +27,8 @@ class ScopeNodeHistory;
 class ScopeNode : public AbstractNode {
 public:
 	Scope* scope;
+	int scope_start_node_id;
+	AbstractNode* scope_start_node;
 
 	int next_node_id;
 	AbstractNode* next_node;

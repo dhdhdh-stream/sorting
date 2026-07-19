@@ -76,6 +76,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			this->scope_context->nodes[new_scope_node->id] = new_scope_node;
 
 			new_scope_node->scope = this->best_scopes[s_index];
+			new_scope_node->scope_start_node_id = this->best_scope_start_nodes[s_index]->id;
+			new_scope_node->scope_start_node = this->best_scope_start_nodes[s_index];
 
 			new_nodes.push_back(new_scope_node);
 		}
@@ -355,7 +357,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
 
 			new_scope->last_scores = wrapper->solution->starting_scope->last_scores;
-			new_scope->multi_last_scores = wrapper->solution->starting_scope->multi_last_scores;
 
 			NoopNode* start_node = new NoopNode();
 			start_node->parent = new_scope;
@@ -370,6 +371,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->nodes[scope_node->id] = scope_node;
 
 			scope_node->scope = wrapper->solution->starting_scope;
+			scope_node->scope_start_node_id = 0;
+			scope_node->scope_start_node = wrapper->solution->starting_scope->nodes[0];
 
 			NoopNode* end_node = new NoopNode();
 			end_node->parent = new_scope;

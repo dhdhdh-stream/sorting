@@ -25,6 +25,7 @@ ScopeNode::~ScopeNode() {
 void ScopeNode::copy_from(ScopeNode* original,
 						  Solution* parent_solution) {
 	this->scope = parent_solution->scopes[original->scope->id];
+	this->scope_start_node_id = original->scope_start_node_id;
 
 	this->next_node_id = original->next_node_id;
 
@@ -33,6 +34,7 @@ void ScopeNode::copy_from(ScopeNode* original,
 
 void ScopeNode::save(ofstream& output_file) {
 	output_file << this->scope->id << endl;
+	output_file << this->scope_start_node_id << endl;
 
 	output_file << this->next_node_id << endl;
 
@@ -47,6 +49,10 @@ void ScopeNode::load(ifstream& input_file,
 	string scope_id_line;
 	getline(input_file, scope_id_line);
 	this->scope = parent_solution->scopes[stoi(scope_id_line)];
+
+	string scope_start_node_id_line;
+	getline(input_file, scope_start_node_id_line);
+	this->scope_start_node_id = stoi(scope_start_node_id_line);
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
@@ -63,6 +69,8 @@ void ScopeNode::load(ifstream& input_file,
 }
 
 void ScopeNode::link(Solution* parent_solution) {
+	this->scope_start_node = this->scope->nodes[this->scope_start_node_id];
+
 	if (this->next_node_id == -1) {
 		this->next_node = NULL;
 	} else {

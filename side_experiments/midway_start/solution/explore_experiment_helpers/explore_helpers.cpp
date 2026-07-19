@@ -125,13 +125,27 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 					history->curr_actions.push_back(-1);
 
 					int child_index = possible_child_indexes[child_index_distribution(generator)];
-					history->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
+					Scope* scope = this->node_context->parent->child_scopes[child_index];
+					AbstractNode* scope_start_node;
+					if (scope->run_histories.size() == 0) {
+						scope_start_node = scope->nodes[0];
+					} else {
+						uniform_int_distribution<int> run_distribution(0, scope->run_histories.size()-1);
+						int run_index = run_distribution(generator);
+						uniform_int_distribution<int> node_history_distribution(0, scope->run_histories[run_index].size()-1);
+						int node_history_index = node_history_distribution(generator);
+						scope_start_node = scope->run_histories[run_index][node_history_index].first;
+					}
+
+					history->curr_scopes.push_back(scope);
+					history->curr_scope_start_nodes.push_back(scope_start_node);
 				} else {
 					history->curr_step_types.push_back(STEP_TYPE_ACTION);
 
 					history->curr_actions.push_back(-1);
 
 					history->curr_scopes.push_back(NULL);
+					history->curr_scope_start_nodes.push_back(NULL);
 				}
 			}
 
@@ -164,7 +178,7 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(history->curr_scopes[experiment_state->step_index]);
 			wrapper->scope_histories.push_back(inner_scope_history);
-			wrapper->node_context.push_back(history->curr_scopes[experiment_state->step_index]->nodes[0]);
+			wrapper->node_context.push_back(history->curr_scope_start_nodes[experiment_state->step_index]);
 			wrapper->experiment_context.push_back(NULL);
 		}
 	}
@@ -211,6 +225,7 @@ void ExploreExperiment::explore_backprop(double target_val,
 				this->best_step_types = history->curr_step_types;
 				this->best_actions = history->curr_actions;
 				this->best_scopes = history->curr_scopes;
+				this->best_scope_start_nodes = history->curr_scope_start_nodes;
 			}
 
 			this->state_iter++;
