@@ -169,6 +169,8 @@ void SolutionWrapper::experiment_end(double result) {
 			cout << "this->prev_solution->curr_score: " << this->prev_solution->curr_score << endl;
 			cout << "this->solution->curr_score: " << this->solution->curr_score << endl;
 
+			this->prev_solution->average_max_update = this->solution->average_max_update;
+
 			this->prev_solution->curr_num_resets++;
 			// if (this->prev_solution->curr_num_resets >= STUCK_NUM_ITERS) {
 			// 	this->prev_solution->timestamp = -1;

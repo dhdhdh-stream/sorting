@@ -26,8 +26,10 @@ const double VERIFY_RATIO = 0.2;
 
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;
+const int PARTIAL_START_ITER = 10;
 #else
 const int TRAIN_ITERS = 300000;
+const int PARTIAL_START_ITER = 100000;
 #endif /* MDEBUG */
 
 /**

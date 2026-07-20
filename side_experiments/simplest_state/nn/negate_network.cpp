@@ -83,6 +83,15 @@ void NegateNetwork::update_weights(double learning_rate) {
 	}
 }
 
+void NegateNetwork::get_max_update(double& max_update_size) {
+	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
+		double update_size = abs(this->weight_updates[i_index]);
+		if (update_size > max_update_size) {
+			max_update_size = update_size;
+		}
+	}
+}
+
 void NegateNetwork::save(ofstream& output_file) {
 	output_file << this->init_states.size() << endl;
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {

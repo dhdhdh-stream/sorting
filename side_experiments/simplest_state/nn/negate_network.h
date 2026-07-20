@@ -29,6 +29,11 @@ public:
 
 	void update_weights(double learning_rate);
 
+	/**
+	 * - sanity check
+	 */
+	void get_max_update(double& max_update_size);
+
 	void save(std::ofstream& output_file);
 };
 
