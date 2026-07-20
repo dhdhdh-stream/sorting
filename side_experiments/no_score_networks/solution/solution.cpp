@@ -28,6 +28,45 @@ Solution::Solution() {
 	this->average_max_update = 0.0;
 }
 
+Solution::Solution(Solution* original) {
+	this->timestamp = original->timestamp;
+	this->curr_score = original->curr_score;
+
+	this->curr_num_resets = original->curr_num_resets;
+
+	this->num_obs = original->num_obs;
+
+	this->num_states = original->num_states;
+
+	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
+		Scope* scope = new Scope();
+		scope->id = s_index;
+		this->scopes.push_back(scope);
+	}
+
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->copy_from(original->scopes[s_index],
+										 this);
+	}
+
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->link(this);
+	}
+
+	this->starting_scope = this->scopes[original->starting_scope->id];
+	this->starting_num_improvements = original->starting_num_improvements;
+
+	for (int a_index = 0; a_index < (int)original->generic_action_networks.size(); a_index++) {
+		this->generic_action_networks.push_back(new ActionNetwork(original->generic_action_networks[a_index]));
+	}
+	this->generic_obs_network = new ObsNetwork(original->generic_obs_network);
+
+	this->average_max_update = 0.0;
+
+	this->improvement_history = original->improvement_history;
+	this->change_history = original->change_history;
+}
+
 Solution::~Solution() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		delete this->scopes[s_index];
@@ -50,6 +89,8 @@ void Solution::init(ProblemType* problem_type) {
 	this->timestamp = 0;
 	this->curr_score = sum_score / INIT_MEASURE_ITERS;
 
+	this->curr_num_resets = 0;
+
 	this->num_obs = problem_type->num_obs();
 
 	this->num_states = 0;
@@ -67,7 +108,6 @@ void Solution::init(ProblemType* problem_type) {
 	this->scopes.push_back(new_scope);
 	new_scope->start_obs_network = new ObsNetwork(this->num_states,
 												  this->num_obs);
-	new_scope->prev_start_obs_network = new ObsNetwork(new_scope->start_obs_network);
 
 	NoopNode* start_node = new NoopNode();
 	start_node->parent = new_scope;
@@ -97,6 +137,10 @@ void Solution::load(ifstream& input_file) {
 	string curr_score_line;
 	getline(input_file, curr_score_line);
 	this->curr_score = stod(curr_score_line);
+
+	string curr_num_resets_line;
+	getline(input_file, curr_num_resets_line);
+	this->curr_num_resets = stoi(curr_num_resets_line);
 
 	string num_obs_line;
 	getline(input_file, num_obs_line);
@@ -205,16 +249,18 @@ void Solution::clean_scopes() {
 		if (!removed_scope) {
 			break;
 		}
-	}
 
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->id = s_index;
+		for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+			this->scopes[s_index]->id = s_index;
+		}
 	}
 }
 
 void Solution::save(ofstream& output_file) {
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
+
+	output_file << this->curr_num_resets << endl;
 
 	output_file << this->num_obs << endl;
 

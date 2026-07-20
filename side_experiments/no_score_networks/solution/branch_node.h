@@ -26,8 +26,6 @@ class BranchNode : public AbstractNode {
 public:
 	ScoreNetwork* original_network;
 	ScoreNetwork* branch_network;
-	ScoreNetwork* prev_original_network;
-	ScoreNetwork* prev_branch_network;
 
 	ScoreNetwork* explore_original_network;
 	ScoreNetwork* explore_branch_network;
@@ -66,6 +64,9 @@ public:
 						 int& action,
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
+
+	void copy_from(BranchNode* original,
+				   Solution* parent_solution);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

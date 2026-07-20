@@ -29,6 +29,9 @@ const int RUN_TYPE_DAMAGE = 2;
 class SolutionWrapper {
 public:
 	Solution* solution;
+	Solution* prev_solution;
+
+	int iters_since_update;
 
 	int experiment_iter;
 	/**
@@ -40,7 +43,6 @@ public:
 	 * - run variables
 	 */
 	std::vector<double> state;
-	std::vector<double> prev_state;
 
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<AbstractNode*> node_context;
@@ -49,12 +51,12 @@ public:
 	int num_actions;
 
 	int run_type;
-	bool last_was_damage;
 
 	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_experiment_histories;
 
 	std::vector<AbstractNetworkHistory*> network_histories;
-	std::vector<AbstractNetworkHistory*> partial_network_histories;
+
+	bool last_was_damage;
 
 	Problem* problem;
 

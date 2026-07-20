@@ -30,11 +30,6 @@ void BranchNode::experiment_step(vector<double>& obs,
 				this->init_networks[n_index]->save(init_network_history);
 				wrapper->network_histories.push_back(init_network_history);
 			}
-
-			if (wrapper->run_type == RUN_TYPE_EXISTING) {
-				this->prev_init_networks[n_index]->activate(wrapper->prev_state,
-															obs);
-			}
 		}
 	}
 
@@ -61,22 +56,10 @@ void BranchNode::experiment_step(vector<double>& obs,
 		bool is_branch;
 		this->original_network->activate(wrapper->state);
 		this->branch_network->activate(wrapper->state);
-		uniform_int_distribution<int> maintain_distribution(0, 9);
-		if (wrapper->run_type == RUN_TYPE_EXISTING
-				&& maintain_distribution(generator) == 0) {
-			this->prev_original_network->activate(wrapper->prev_state);
-			this->prev_branch_network->activate(wrapper->prev_state);
-			if (this->prev_branch_network->output->acti_vals(0) >= this->prev_original_network->output->acti_vals(0)) {
-				is_branch = true;
-			} else {
-				is_branch = false;
-			}
+		if (this->branch_network->output->acti_vals(0) >= this->original_network->output->acti_vals(0)) {
+			is_branch = true;
 		} else {
-			if (this->branch_network->output->acti_vals(0) >= this->original_network->output->acti_vals(0)) {
-				is_branch = true;
-			} else {
-				is_branch = false;
-			}
+			is_branch = false;
 		}
 
 		#if defined(MDEBUG) && MDEBUG

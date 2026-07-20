@@ -30,14 +30,9 @@ BranchNode::~BranchNode() {
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
 		delete this->init_networks[n_index];
 	}
-	for (int n_index = 0; n_index < (int)this->prev_init_networks.size(); n_index++) {
-		delete this->prev_init_networks[n_index];
-	}
 
 	delete this->original_network;
 	delete this->branch_network;
-	delete this->prev_original_network;
-	delete this->prev_branch_network;
 
 	delete this->explore_original_network;
 	delete this->explore_branch_network;
@@ -50,6 +45,44 @@ BranchNode::~BranchNode() {
 	}
 }
 
+void BranchNode::copy_from(BranchNode* original,
+						   Solution* parent_solution) {
+	for (int n_index = 0; n_index < (int)original->init_network_scope_contexts.size(); n_index++) {
+		vector<Scope*> scope_context;
+		for (int l_index = 0; l_index < (int)original->init_network_scope_contexts[n_index].size(); l_index++) {
+			scope_context.push_back(parent_solution->scopes[original->init_network_scope_contexts[n_index][l_index]->id]);
+		}
+		this->init_network_scope_contexts.push_back(scope_context);
+	}
+	this->init_network_node_contexts = original->init_network_node_contexts;
+	for (int n_index = 0; n_index < (int)original->init_networks.size(); n_index++) {
+		this->init_networks.push_back(new InitNetwork(original->init_networks[n_index]));
+	}
+
+	this->original_network = new ScoreNetwork(original->original_network);
+	this->branch_network = new ScoreNetwork(original->branch_network);
+
+	this->explore_original_network = new ScoreNetwork(original->explore_original_network);
+	this->explore_branch_network = new ScoreNetwork(original->explore_branch_network);
+
+	this->original_next_node_id = original->original_next_node_id;
+	this->branch_next_node_id = original->branch_next_node_id;
+
+	this->ramp = original->ramp;
+	this->ramp_num_gears = original->ramp_num_gears;
+	this->ramp_iter = original->ramp_iter;
+
+	this->consec_original = original->consec_original;
+	this->consec_branch = original->consec_branch;
+
+	this->original_average_instances_per_hit = original->original_average_instances_per_hit;
+	this->original_average_instances_per_run = original->original_average_instances_per_run;
+	this->branch_average_instances_per_hit = original->branch_average_instances_per_hit;
+	this->branch_average_instances_per_run = original->branch_average_instances_per_run;
+
+	this->ancestor_ids = original->ancestor_ids;
+}
+
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->init_networks.size() << endl;
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
@@ -60,13 +93,10 @@ void BranchNode::save(ofstream& output_file) {
 		}
 
 		this->init_networks[n_index]->save(output_file);
-		this->prev_init_networks[n_index]->save(output_file);
 	}
 
 	this->original_network->save(output_file);
 	this->branch_network->save(output_file);
-	this->prev_original_network->save(output_file);
-	this->prev_branch_network->save(output_file);
 
 	this->explore_original_network->save(output_file);
 	this->explore_branch_network->save(output_file);
@@ -114,13 +144,10 @@ void BranchNode::load(ifstream& input_file,
 		}
 
 		this->init_networks.push_back(new InitNetwork(input_file));
-		this->prev_init_networks.push_back(new InitNetwork(input_file));
 	}
 
 	this->original_network = new ScoreNetwork(input_file);
 	this->branch_network = new ScoreNetwork(input_file);
-	this->prev_original_network = new ScoreNetwork(input_file);
-	this->prev_branch_network = new ScoreNetwork(input_file);
 
 	this->explore_original_network = new ScoreNetwork(input_file);
 	this->explore_branch_network = new ScoreNetwork(input_file);

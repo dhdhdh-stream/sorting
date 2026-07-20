@@ -19,7 +19,7 @@
 
 using namespace std;
 
-const double SOLUTION_TARGET_MAX_UPDATE = 0.002;
+const double SOLUTION_TARGET_MAX_UPDATE = 0.01;
 
 #if defined(MDEBUG) && MDEBUG
 const int ITERS_PER_RAMP = 2;
@@ -77,6 +77,8 @@ void update_helper(double target_val,
 	if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 		vector<double> state_errors(wrapper->solution->num_states, 0.0);
 		double max_diff = 0.0;
+		double max_state = 0.0;
+		double max_error = 0.0;
 		for (int h_index = (int)wrapper->network_histories.size()-1; h_index >= 0; h_index--) {
 			switch (wrapper->network_histories[h_index]->network->type) {
 			case NETWORK_TYPE_OBS:
@@ -122,6 +124,18 @@ void update_helper(double target_val,
 				{
 					NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->network_histories[h_index];
 					NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
+					negate_network->load(negate_network_history);
+
+					double state_val = abs(negate_network->state_input);
+					if (state_val > max_state) {
+						max_state = state_val;
+					}
+
+					double error = abs(state_errors[negate_network->state]);
+					if (error > max_error) {
+						max_error = error;
+					}
+
 					negate_network->backprop_through(state_errors);
 				}
 				break;
@@ -135,7 +149,7 @@ void update_helper(double target_val,
 				max_state_val = state_size;
 			}
 		}
-		max_state_val = max(1.0, max_state_val);
+		max_state_val = max(1.0, max(max_state, max_state_val));
 		double max_state_error = 0.0;
 		for (int e_index = 0; e_index < (int)state_errors.size(); e_index++) {
 			double error_size = abs(state_errors[e_index]);
@@ -143,7 +157,7 @@ void update_helper(double target_val,
 				max_state_error = error_size;
 			}
 		}
-		max_state_error = max(max_diff, max_state_error);
+		max_state_error = max(max_diff, max(max_error, max_state_error));
 		double max_update = max_state_val * max_state_error;
 		if (max_update != 0.0) {
 			wrapper->solution->average_max_update = 0.99999*wrapper->solution->average_max_update + 0.00001*max_update;
@@ -241,9 +255,6 @@ void update_helper(double target_val,
 								if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
 									branch_node->ramp++;
 									branch_node->ramp_iter = 0;
-
-									// // temp
-									// cout << "branch_node->ramp: " << branch_node->ramp << endl;
 								}
 							}
 
@@ -258,9 +269,6 @@ void update_helper(double target_val,
 								if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
 									branch_node->ramp++;
 									branch_node->ramp_iter = 0;
-
-									// // temp
-									// cout << "branch_node->ramp: " << branch_node->ramp << endl;
 								}
 							}
 

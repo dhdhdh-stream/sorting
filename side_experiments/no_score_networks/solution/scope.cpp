@@ -29,19 +29,92 @@ Scope::~Scope() {
 	for (int n_index = 0; n_index < (int)this->start_negate_networks.size(); n_index++) {
 		delete this->start_negate_networks[n_index];
 	}
-	for (int n_index = 0; n_index < (int)this->prev_start_negate_networks.size(); n_index++) {
-		delete this->prev_start_negate_networks[n_index];
-	}
 
 	delete this->start_obs_network;
-	delete this->prev_start_obs_network;
 
 	for (int n_index = 0; n_index < (int)this->start_init_networks.size(); n_index++) {
 		delete this->start_init_networks[n_index];
 	}
-	for (int n_index = 0; n_index < (int)this->prev_start_init_networks.size(); n_index++) {
-		delete this->prev_start_init_networks[n_index];
+}
+
+void Scope::copy_from(Scope* original,
+					  Solution* parent_solution) {
+	this->node_counter = original->node_counter;
+
+	for (map<int, AbstractNode*>::iterator it = original->nodes.begin();
+			it != original->nodes.end(); it++) {
+		switch (it->second->type) {
+		case NODE_TYPE_NOOP:
+			{
+				NoopNode* original_noop_node = (NoopNode*)it->second;
+				NoopNode* noop_node = new NoopNode();
+				noop_node->parent = this;
+				noop_node->id = it->first;
+				noop_node->copy_from(original_noop_node,
+									 parent_solution);
+				this->nodes[noop_node->id] = noop_node;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* original_action_node = (ActionNode*)it->second;
+				ActionNode* action_node = new ActionNode();
+				action_node->parent = this;
+				action_node->id = it->first;
+				action_node->copy_from(original_action_node,
+									   parent_solution);
+				this->nodes[action_node->id] = action_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* original_scope_node = (ScopeNode*)it->second;
+				ScopeNode* scope_node = new ScopeNode();
+				scope_node->parent = this;
+				scope_node->id = it->first;
+				scope_node->copy_from(original_scope_node,
+									  parent_solution);
+				this->nodes[scope_node->id] = scope_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* original_branch_node = (BranchNode*)it->second;
+				BranchNode* branch_node = new BranchNode();
+				branch_node->parent = this;
+				branch_node->id = it->first;
+				branch_node->copy_from(original_branch_node,
+									   parent_solution);
+				this->nodes[branch_node->id] = branch_node;
+			}
+			break;
+		}
 	}
+
+	for (int n_index = 0; n_index < (int)original->start_negate_networks.size(); n_index++) {
+		this->start_negate_networks.push_back(new NegateNetwork(original->start_negate_networks[n_index]));
+	}
+
+	this->start_obs_network = new ObsNetwork(original->start_obs_network);
+
+	for (int n_index = 0; n_index < (int)original->start_init_network_scope_contexts.size(); n_index++) {
+		vector<Scope*> scope_context;
+		for (int l_index = 0; l_index < (int)original->start_init_network_scope_contexts[n_index].size(); l_index++) {
+			scope_context.push_back(parent_solution->scopes[original->start_init_network_scope_contexts[n_index][l_index]->id]);
+		}
+		this->start_init_network_scope_contexts.push_back(scope_context);
+	}
+	this->start_init_network_node_contexts = original->start_init_network_node_contexts;
+	for (int n_index = 0; n_index < (int)original->start_init_networks.size(); n_index++) {
+		this->start_init_networks.push_back(new InitNetwork(original->start_init_networks[n_index]));
+	}
+
+	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
+		this->child_scopes.push_back(parent_solution->scopes[original->child_scopes[c_index]->id]);
+	}
+
+	this->reuse_last_scores = original->reuse_last_scores;
+	this->new_state_last_scores = original->new_state_last_scores;
 }
 
 void Scope::save(ofstream& output_file) {
@@ -59,13 +132,8 @@ void Scope::save(ofstream& output_file) {
 	for (int n_index = 0; n_index < (int)this->start_negate_networks.size(); n_index++) {
 		this->start_negate_networks[n_index]->save(output_file);
 	}
-	output_file << this->prev_start_negate_networks.size() << endl;
-	for (int n_index = 0; n_index < (int)this->prev_start_negate_networks.size(); n_index++) {
-		this->prev_start_negate_networks[n_index]->save(output_file);
-	}
 
 	this->start_obs_network->save(output_file);
-	this->prev_start_obs_network->save(output_file);
 
 	output_file << this->start_init_networks.size() << endl;
 	for (int n_index = 0; n_index < (int)this->start_init_networks.size(); n_index++) {
@@ -76,7 +144,6 @@ void Scope::save(ofstream& output_file) {
 		}
 
 		this->start_init_networks[n_index]->save(output_file);
-		this->prev_start_init_networks[n_index]->save(output_file);
 	}
 
 	output_file << this->child_scopes.size() << endl;
@@ -164,15 +231,8 @@ void Scope::load(ifstream& input_file,
 	for (int n_index = 0; n_index < num_start_negate_networks; n_index++) {
 		this->start_negate_networks.push_back(new NegateNetwork(input_file));
 	}
-	string num_prev_start_negate_networks_line;
-	getline(input_file, num_prev_start_negate_networks_line);
-	int num_prev_start_negate_networks = stoi(num_prev_start_negate_networks_line);
-	for (int n_index = 0; n_index < num_prev_start_negate_networks; n_index++) {
-		this->prev_start_negate_networks.push_back(new NegateNetwork(input_file));
-	}
 
 	this->start_obs_network = new ObsNetwork(input_file);
-	this->prev_start_obs_network = new ObsNetwork(input_file);
 
 	string num_start_init_networks_line;
 	getline(input_file, num_start_init_networks_line);
@@ -194,7 +254,6 @@ void Scope::load(ifstream& input_file,
 		}
 
 		this->start_init_networks.push_back(new InitNetwork(input_file));
-		this->prev_start_init_networks.push_back(new InitNetwork(input_file));
 	}
 
 	string num_child_scopes_line;

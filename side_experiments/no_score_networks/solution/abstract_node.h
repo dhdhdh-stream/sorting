@@ -26,7 +26,6 @@ public:
 	std::vector<std::vector<Scope*>> init_network_scope_contexts;
 	std::vector<std::vector<int>> init_network_node_contexts;
 	std::vector<InitNetwork*> init_networks;
-	std::vector<InitNetwork*> prev_init_networks;
 
 	std::vector<AbstractExperiment*> dependencies;
 

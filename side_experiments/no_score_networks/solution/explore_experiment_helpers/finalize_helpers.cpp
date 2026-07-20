@@ -25,9 +25,13 @@ using namespace std;
 
 void ExploreExperiment::add(ScoreNetwork* new_network,
 							SolutionWrapper* wrapper) {
+	delete wrapper->prev_solution;
+	wrapper->prev_solution = new Solution(wrapper->solution);
+
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
+	ss << "curr_num_resets: " << wrapper->solution->curr_num_resets << "; ";
 	ss << "Experiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
@@ -48,11 +52,8 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
 	}
 
-	double previous_val_average = measure_helper(wrapper);
-	wrapper->solution->improvement_history.push_back(previous_val_average);
-	cout << "previous_val_average: " << previous_val_average << endl;
-
-	wrapper->solution->curr_score = previous_val_average;
+	wrapper->solution->improvement_history.push_back(wrapper->solution->curr_score);
+	cout << "previous_val_average: " << wrapper->solution->curr_score << endl;
 
 	wrapper->solution->change_history.push_back(ss.str());
 
@@ -71,12 +72,8 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 
 			new_action_node->action_network = new ActionNetwork(
 				wrapper->solution->generic_action_networks[this->best_actions[s_index]]);
-			new_action_node->prev_action_network = new ActionNetwork(new_action_node->action_network);
 
 			new_action_node->obs_network = new ObsNetwork(wrapper->solution->generic_obs_network);
-			new_action_node->prev_obs_network = new ObsNetwork(new_action_node->obs_network);
-
-			// new_action_node->verify_states = this->new_node_verify_states[s_index];
 
 			new_nodes.push_back(new_action_node);
 		} else {
@@ -87,8 +84,6 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			scope_context->nodes[new_scope_node->id] = new_scope_node;
 
 			new_scope_node->scope = this->best_scopes[s_index];
-
-			// new_scope_node->verify_states = this->new_node_verify_states[s_index];
 
 			new_nodes.push_back(new_scope_node);
 		}
@@ -316,9 +311,7 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 
 	new_branch_node->original_network = this->existing_network;
 	this->existing_network = NULL;
-	new_branch_node->prev_original_network = new ScoreNetwork(new_branch_node->original_network);
 	new_branch_node->branch_network = new_network;
-	new_branch_node->prev_branch_network = new ScoreNetwork(new_branch_node->branch_network);
 
 	new_branch_node->explore_original_network = new ScoreNetwork(new_branch_node->original_network);
 	new_branch_node->explore_branch_network = new ScoreNetwork(new_branch_node->branch_network);
@@ -362,13 +355,11 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 	 *   - whereas if fully add immediately, forces dramatic adjustment
 	 *     - resulting in more improvement
 	 */
-	new_branch_node->ramp_num_gears = ceil(average_instances_per_hit);
+	new_branch_node->ramp_num_gears = ceil(average_instances_per_hit)-1;
 	new_branch_node->ramp_iter = 0;
 
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;
-
-	// new_branch_node->verify_states = this->branch_node_verify_states;
 
 	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
 		int next_node_id;
@@ -401,85 +392,8 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
 	}
 
-	// wrapper->verify_problems = this->verify_problems;
-	// this->verify_problems.clear();
-	// wrapper->verify_starting_run_seeds = this->verify_starting_run_seeds;
-
-	/**
-	 * - simply update maintain here and re-copy maintain networks for new nodes
-	 */
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		Scope* scope = wrapper->solution->scopes[s_index];
-
-		for (int n_index = 0; n_index < (int)scope->prev_start_negate_networks.size(); n_index++) {
-			delete scope->prev_start_negate_networks[n_index];
-		}
-		scope->prev_start_negate_networks.clear();
-		for (int n_index = 0; n_index < (int)scope->start_negate_networks.size(); n_index++) {
-			scope->prev_start_negate_networks.push_back(new NegateNetwork(scope->start_negate_networks[n_index]));
-		}
-		delete scope->prev_start_obs_network;
-		scope->prev_start_obs_network = new ObsNetwork(scope->start_obs_network);
-		for (int n_index = 0; n_index < (int)scope->prev_start_init_networks.size(); n_index++) {
-			delete scope->prev_start_init_networks[n_index];
-		}
-		scope->prev_start_init_networks.clear();
-		for (int n_index = 0; n_index < (int)scope->start_init_networks.size(); n_index++) {
-			scope->prev_start_init_networks.push_back(new InitNetwork(scope->start_init_networks[n_index]));
-		}
-
-		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-				it != scope->nodes.end(); it++) {
-			for (int n_index = 0; n_index < (int)it->second->prev_init_networks.size(); n_index++) {
-				delete it->second->prev_init_networks[n_index];
-			}
-			it->second->prev_init_networks.clear();
-			for (int n_index = 0; n_index < (int)it->second->init_networks.size(); n_index++) {
-				it->second->prev_init_networks.push_back(new InitNetwork(it->second->init_networks[n_index]));
-			}
-
-			switch (it->second->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)it->second;
-					delete action_node->prev_action_network;
-					action_node->prev_action_network = new ActionNetwork(action_node->action_network);
-					delete action_node->prev_obs_network;
-					action_node->prev_obs_network = new ObsNetwork(action_node->obs_network);
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)it->second;
-					delete branch_node->prev_original_network;
-					branch_node->prev_original_network = new ScoreNetwork(branch_node->original_network);
-					delete branch_node->prev_branch_network;
-					branch_node->prev_branch_network = new ScoreNetwork(branch_node->branch_network);
-				}
-				break;
-			}
-		}
-	}
-
 	wrapper->solution->timestamp++;
-	// if ((int)wrapper->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
-	// 	double prev_val = wrapper->solution->improvement_history[wrapper->solution->improvement_history.size() - STUCK_NUM_ITERS];
-	// 	bool improved = false;
-	// 	for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
-	// 		if (wrapper->solution->improvement_history[wrapper->solution->improvement_history.size() - 1 - h_index] > prev_val) {
-	// 			improved = true;
-	// 			break;
-	// 		}
-	// 	}
-
-	// 	if (!improved) {
-	// 		wrapper->solution->timestamp = -1;
-	// 	}
-	// }
-	// // temp
-	// if (wrapper->solution->timestamp >= 40) {
-	// 	wrapper->solution->timestamp = -1;
-	// }
+	wrapper->solution->curr_num_resets = 0;
 
 	if (this->scope_context == wrapper->solution->starting_scope) {
 		wrapper->solution->starting_num_improvements++;
@@ -490,7 +404,6 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 			wrapper->solution->scopes.push_back(new_scope);
 			new_scope->start_obs_network = new ObsNetwork(wrapper->solution->num_states,
 														  wrapper->solution->num_obs);
-			new_scope->prev_start_obs_network = new ObsNetwork(new_scope->start_obs_network);
 
 			new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
 			new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
@@ -541,9 +454,5 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 	 * - reset all other experiments
 	 */
 
-	// temp
-	{
-		double val_average = measure_helper(wrapper);
-		cout << "post val_average: " << val_average << endl;
-	}
+	wrapper->iters_since_update = 0;
 }

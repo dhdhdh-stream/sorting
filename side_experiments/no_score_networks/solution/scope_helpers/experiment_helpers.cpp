@@ -17,11 +17,8 @@ void Scope::experiment_start_activate(vector<double>& obs,
 		this->start_negate_networks[n_index]->activate(wrapper->state);
 		if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 			NegateNetworkHistory* negate_network_history = new NegateNetworkHistory(this->start_negate_networks[n_index]);
+			this->start_negate_networks[n_index]->save(negate_network_history);
 			wrapper->network_histories.push_back(negate_network_history);
-		}
-
-		if (wrapper->run_type == RUN_TYPE_EXISTING) {
-			this->prev_start_negate_networks[n_index]->activate(wrapper->prev_state);
 		}
 	}
 
@@ -31,11 +28,6 @@ void Scope::experiment_start_activate(vector<double>& obs,
 		ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(this->start_obs_network);
 		this->start_obs_network->save(obs_network_history);
 		wrapper->network_histories.push_back(obs_network_history);
-	}
-
-	if (wrapper->run_type == RUN_TYPE_EXISTING) {
-		this->prev_start_obs_network->activate(wrapper->prev_state,
-											   obs);
 	}
 
 	for (int n_index = 0; n_index < (int)this->start_init_networks.size(); n_index++) {
@@ -48,11 +40,6 @@ void Scope::experiment_start_activate(vector<double>& obs,
 				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->start_init_networks[n_index]);
 				this->start_init_networks[n_index]->save(init_network_history);
 				wrapper->network_histories.push_back(init_network_history);
-			}
-
-			if (wrapper->run_type == RUN_TYPE_EXISTING) {
-				this->prev_start_init_networks[n_index]->activate(wrapper->prev_state,
-																  obs);
 			}
 		}
 	}

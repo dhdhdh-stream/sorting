@@ -49,21 +49,12 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 		wrapper->network_histories.push_back(action_network_history);
 	}
 
-	if (wrapper->run_type == RUN_TYPE_EXISTING) {
-		this->prev_action_network->activate(wrapper->prev_state);
-	}
-
 	this->obs_network->activate(wrapper->state,
 								obs);
 	if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 		ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(this->obs_network);
 		this->obs_network->save(obs_network_history);
 		wrapper->network_histories.push_back(obs_network_history);
-	}
-
-	if (wrapper->run_type == RUN_TYPE_EXISTING) {
-		this->prev_obs_network->activate(wrapper->prev_state,
-										 obs);
 	}
 
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
@@ -76,11 +67,6 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
 				this->init_networks[n_index]->save(init_network_history);
 				wrapper->network_histories.push_back(init_network_history);
-			}
-
-			if (wrapper->run_type == RUN_TYPE_EXISTING) {
-				this->prev_init_networks[n_index]->activate(wrapper->prev_state,
-															obs);
 			}
 		}
 	}

@@ -10,6 +10,10 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->solution = new Solution();
 	this->solution->init(problem_type);
 
+	this->prev_solution = new Solution(this->solution);
+
+	this->iters_since_update = 0;
+
 	this->experiment_iter = 0;
 
 	this->last_was_damage = false;
@@ -27,6 +31,11 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution = new Solution();
 	this->solution->load(input_file);
 
+	this->prev_solution = new Solution();
+	this->prev_solution->load(input_file);
+
+	this->iters_since_update = 0;
+
 	this->experiment_iter = 0;
 
 	this->last_was_damage = false;
@@ -40,6 +49,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
+
+	delete this->prev_solution;
 }
 
 bool SolutionWrapper::is_done() {
@@ -86,6 +97,8 @@ void SolutionWrapper::save(string path,
 	output_file.open(path + "temp_" + name);
 
 	this->solution->save(output_file);
+
+	this->prev_solution->save(output_file);
 
 	output_file.close();
 

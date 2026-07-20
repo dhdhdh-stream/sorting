@@ -56,6 +56,9 @@ public:
 	void experiment_exit_step(std::vector<double>& obs,
 							  SolutionWrapper* wrapper);
 
+	void copy_from(ScopeNode* original,
+				   Solution* parent_solution);
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);
