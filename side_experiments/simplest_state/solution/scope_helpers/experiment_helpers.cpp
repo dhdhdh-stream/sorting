@@ -17,7 +17,6 @@ void Scope::experiment_start_activate(vector<double>& obs,
 		this->start_negate_networks[n_index]->activate(wrapper->state);
 		if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 			NegateNetworkHistory* negate_network_history = new NegateNetworkHistory(this->start_negate_networks[n_index]);
-			this->start_negate_networks[n_index]->save(negate_network_history);
 			wrapper->network_histories.push_back(negate_network_history);
 		}
 	}

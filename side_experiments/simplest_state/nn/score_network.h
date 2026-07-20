@@ -19,6 +19,10 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
+	int epoch_iter;
+	double average_max_update;
+	int last_update_iter;
+
 	ScoreNetwork(std::vector<int>& init_states);
 	ScoreNetwork(ScoreNetwork* original);
 	ScoreNetwork(std::ifstream& input_file);
@@ -38,12 +42,8 @@ public:
 
 	void backprop(double target_val,
 				  std::vector<double>& state_errors);
-	void update_weights(double learning_rate);
 
-	/**
-	 * - sanity check
-	 */
-	void get_max_update(double& max_update_size);
+	void update();
 
 	void save(std::ofstream& output_file);
 };

@@ -209,34 +209,6 @@ void ExploreExperiment::train_new_backprop(
 						}
 					}
 
-					// if (iter_index >= PARTIAL_START_ITER) {
-					// 	int include_index = include_distribution(generator);
-
-					// 	vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
-
-					// 	vector<bool> is_activate(this->dependencies.size(), false);
-					// 	for (int d_index = include_index; d_index < (int)this->dependencies.size(); d_index++) {
-					// 		if (this->new_dependencies_is_hit_histories[rand_index][d_index]) {
-					// 			for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
-					// 				new_state[s_index] += init_networks[d_index]->output->acti_vals(0);
-					// 			}
-					// 		}
-					// 	}
-
-					// 	new_network->init_activate(new_state);
-
-					// 	vector<double> new_state_errors(NEW_STATE_NUM_ADD, 0.0);
-
-					// 	new_network->init_backprop(this->new_target_val_histories[rand_index],
-					// 							   new_state_errors);
-
-					// 	for (int d_index = (int)this->dependencies.size()-1; d_index >= include_index; d_index--) {
-					// 		if (this->new_dependencies_is_hit_histories[rand_index][d_index]) {
-					// 			init_networks[d_index]->init_backprop(new_state_errors);
-					// 		}
-					// 	}
-					// }
-
 					if ((iter_index+1)%EPOCH_SIZE == 0) {
 						for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 							init_networks[d_index]->init_update(hidden_1_average_max_updates[d_index],
@@ -390,40 +362,14 @@ void ExploreExperiment::train_new_backprop(
 				if (is_success) {
 				#endif /* MDEBUG */
 					// // temp
-					// {
-					// 	double sum_vals = 0.0;
-					// 	for (int h_index = 0; h_index < (int)this->existing_target_val_histories.size(); h_index++) {
-					// 		sum_vals += this->existing_target_val_histories[h_index];
+					// cout << "this->best_dependencies:" << endl;
+					// for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+					// 	cout << d_index << ":";
+					// 	for (int l_index = 0; l_index < (int)this->dependencies[d_index].size(); l_index++) {
+					// 		cout << " " << this->dependencies[d_index][l_index];
 					// 	}
-					// 	double existing_average = sum_vals / (double)this->existing_target_val_histories.size();
-					// 	cout << "existing_average: " << existing_average << endl;
-
-					// 	vector<double> inputs(NEW_STATE_NUM_ADD, 0.0);
-					// 	this->existing_network->init_activate(inputs);
-					// 	cout << "this->existing_network->output->acti_vals(0): " << this->existing_network->output->acti_vals(0) << endl;
+					// 	cout << endl;
 					// }
-					// {
-					// 	double sum_vals = 0.0;
-					// 	for (int h_index = 0; h_index < (int)this->new_target_val_histories.size(); h_index++) {
-					// 		sum_vals += this->new_target_val_histories[h_index];
-					// 	}
-					// 	double new_average = sum_vals / (double)this->new_target_val_histories.size();
-					// 	cout << "new_average: " << new_average << endl;
-
-					// 	vector<double> inputs(NEW_STATE_NUM_ADD, 0.0);
-					// 	new_network->init_activate(inputs);
-					// 	cout << "new_network->output->acti_vals(0): " << new_network->output->acti_vals(0) << endl;
-					// }
-
-					// temp
-					cout << "this->best_dependencies:" << endl;
-					for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
-						cout << d_index << ":";
-						for (int l_index = 0; l_index < (int)this->dependencies[d_index].size(); l_index++) {
-							cout << " " << this->dependencies[d_index][l_index];
-						}
-						cout << endl;
-					}
 
 					{
 						NegateNetwork* new_negate_network = new NegateNetwork(this->existing_network->init_states);

@@ -10,11 +10,6 @@ class NegateNetworkHistory;
 class NegateNetwork : public AbstractNetwork {
 public:
 	std::vector<int> init_states;
-	std::vector<double> weights;
-
-	std::vector<double> state_vals;
-
-	std::vector<double> weight_updates;
 
 	NegateNetwork(std::vector<int>& init_states);
 	NegateNetwork(NegateNetwork* original);
@@ -22,25 +17,13 @@ public:
 
 	void activate(std::vector<double>& state_vals);
 
-	void save(NegateNetworkHistory* history);
-	void load(NegateNetworkHistory* history);
-
-	void backprop(std::vector<double>& state_errors);
-
-	void update_weights(double learning_rate);
-
-	/**
-	 * - sanity check
-	 */
-	void get_max_update(double& max_update_size);
+	void backprop_through(std::vector<double>& state_errors);
 
 	void save(std::ofstream& output_file);
 };
 
 class NegateNetworkHistory : public AbstractNetworkHistory {
 public:
-	std::vector<double> state_vals_history;
-
 	NegateNetworkHistory(NegateNetwork* network);
 };
 

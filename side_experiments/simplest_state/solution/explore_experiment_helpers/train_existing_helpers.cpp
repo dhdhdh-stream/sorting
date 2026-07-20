@@ -112,33 +112,6 @@ void ExploreExperiment::train_existing_backprop(
 				}
 			}
 
-			// if (iter_index >= PARTIAL_START_ITER) {
-			// 	int include_index = include_distribution(generator);
-
-			// 	vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
-
-			// 	for (int d_index = include_index; d_index < (int)this->dependencies.size(); d_index++) {
-			// 		if (this->existing_dependencies_is_hit_histories[rand_index][d_index]) {
-			// 			for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
-			// 				new_state[s_index] += this->existing_init_networks[d_index]->output->acti_vals(0);
-			// 			}
-			// 		}
-			// 	}
-
-			// 	this->existing_network->init_activate(new_state);
-
-			// 	vector<double> new_state_errors(NEW_STATE_NUM_ADD, 0.0);
-
-			// 	this->existing_network->init_backprop(this->existing_target_val_histories[rand_index],
-			// 										   new_state_errors);
-
-			// 	for (int d_index = (int)this->dependencies.size()-1; d_index >= include_index; d_index--) {
-			// 		if (this->existing_dependencies_is_hit_histories[rand_index][d_index]) {
-			// 			this->existing_init_networks[d_index]->init_backprop(new_state_errors);
-			// 		}
-			// 	}
-			// }
-
 			if ((iter_index+1)%EPOCH_SIZE == 0) {
 				for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 					this->existing_init_networks[d_index]->init_update(

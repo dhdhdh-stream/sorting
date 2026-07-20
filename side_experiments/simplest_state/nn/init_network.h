@@ -38,6 +38,10 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
+	int epoch_iter;
+	double average_max_update;
+	int last_update_iter;
+
 	InitNetwork(std::vector<int>& init_states,
 				int num_obs);
 	InitNetwork(InitNetwork* original);
@@ -59,12 +63,7 @@ public:
 
 	void backprop(std::vector<double>& state_errors);
 
-	void update_weights(double learning_rate);
-
-	/**
-	 * - sanity check
-	 */
-	void get_max_update(double& max_update_size);
+	void update();
 
 	void save(std::ofstream& output_file);
 };
