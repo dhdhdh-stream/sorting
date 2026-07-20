@@ -306,6 +306,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
 
+	new_branch_node->ramp = 0;
+	new_branch_node->ramp_num_gears = floor(this->average_instances_per_hit);
+	new_branch_node->ramp_iter = 0;
+
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;
 
