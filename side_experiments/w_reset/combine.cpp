@@ -50,10 +50,6 @@ int main(int argc, char* argv[]) {
 								  starting_num_scopes);
 	}
 
-	solution_wrapper->solution->curr_num_resets = 0;
-	delete solution_wrapper->prev_solution;
-	solution_wrapper->prev_solution = new Solution(solution_wrapper->solution);
-
 	solution_wrapper->save("saves/", output_file);
 
 	delete solution_wrapper;

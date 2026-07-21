@@ -23,7 +23,7 @@ class Solution;
 class SolutionWrapper {
 public:
 	Solution* solution;
-	Solution* prev_solution;
+	Solution* best_solution;
 
 	int iters_since_update;
 

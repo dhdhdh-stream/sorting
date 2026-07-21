@@ -29,8 +29,6 @@ Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
 	this->curr_score = original->curr_score;
 
-	this->curr_num_resets = original->curr_num_resets;
-
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
 		scope->id = s_index;
@@ -69,8 +67,6 @@ void Solution::init(ProblemType* problem_type) {
 
 	this->timestamp = 0;
 	this->curr_score = sum_score / INIT_MEASURE_ITERS;
-
-	this->curr_num_resets = 0;
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -116,10 +112,6 @@ void Solution::load(ifstream& input_file) {
 	string curr_score_line;
 	getline(input_file, curr_score_line);
 	this->curr_score = stod(curr_score_line);
-
-	string curr_num_resets_line;
-	getline(input_file, curr_num_resets_line);
-	this->curr_num_resets = stoi(curr_num_resets_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -222,8 +214,6 @@ void Solution::clean_scopes() {
 void Solution::save(ofstream& output_file) {
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
-
-	output_file << this->curr_num_resets << endl;
 
 	output_file << this->scopes.size() << endl;
 

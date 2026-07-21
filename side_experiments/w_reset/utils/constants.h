@@ -55,6 +55,6 @@ const int GENERALIZE_ITER = 3;
 
 const int EXPERIMENT_REFRESH_NUM_ITERS = 10;
 
-const int STUCK_NUM_ITERS = 10;
+const int STUCK_NUM_ITERS = 12;
 
 #endif /* CONSTANTS_H */
