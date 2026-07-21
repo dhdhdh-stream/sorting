@@ -31,6 +31,11 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	}
 
 	this->state = vector<double>(this->solution->num_states, 0.0);
+	if (this->run_type != RUN_TYPE_EXPLORE) {
+		this->partial_state = vector<double>(this->solution->num_states, 0.0);
+	} else {
+		this->partial_state.clear();	// for debug
+	}
 
 	this->num_actions = 1;
 
@@ -157,27 +162,27 @@ void SolutionWrapper::experiment_end(double result) {
 	}
 
 	this->iters_since_update++;
-	if (this->iters_since_update == UPDATE_NUM_ITERS) {
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
-		if (this->prev_solution->curr_score > this->solution->curr_score) {
-		#endif /* MDEBUG */
-			// temp
-			cout << "reset" << endl;
-			cout << "this->prev_solution->curr_num_resets: " << this->prev_solution->curr_num_resets << endl;
-			cout << "this->prev_solution->curr_score: " << this->prev_solution->curr_score << endl;
-			cout << "this->solution->curr_score: " << this->solution->curr_score << endl;
+	// if (this->iters_since_update == UPDATE_NUM_ITERS) {
+	// 	#if defined(MDEBUG) && MDEBUG
+	// 	if (rand()%2 == 0) {
+	// 	#else
+	// 	if (this->prev_solution->curr_score > this->solution->curr_score) {
+	// 	#endif /* MDEBUG */
+	// 		// temp
+	// 		cout << "reset" << endl;
+	// 		cout << "this->prev_solution->curr_num_resets: " << this->prev_solution->curr_num_resets << endl;
+	// 		cout << "this->prev_solution->curr_score: " << this->prev_solution->curr_score << endl;
+	// 		cout << "this->solution->curr_score: " << this->solution->curr_score << endl;
 
-			this->prev_solution->average_max_update = this->solution->average_max_update;
+	// 		this->prev_solution->average_max_update = this->solution->average_max_update;
 
-			this->prev_solution->curr_num_resets++;
-			// if (this->prev_solution->curr_num_resets >= STUCK_NUM_ITERS) {
-			// 	this->prev_solution->timestamp = -1;
-			// }
+	// 		this->prev_solution->curr_num_resets++;
+	// 		// if (this->prev_solution->curr_num_resets >= STUCK_NUM_ITERS) {
+	// 		// 	this->prev_solution->timestamp = -1;
+	// 		// }
 
-			delete this->solution;
-			this->solution = new Solution(this->prev_solution);
-		}
-	}
+	// 		delete this->solution;
+	// 		this->solution = new Solution(this->prev_solution);
+	// 	}
+	// }
 }

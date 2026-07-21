@@ -18,6 +18,12 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int ITERS_PER_RAMP = 2;
+#else
+const int ITERS_PER_RAMP = 4000;
+#endif /* MDEBUG */
+
 void update_helper(ScopeHistory* scope_history) {
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
@@ -67,11 +73,11 @@ void update_helper(double target_val,
 				   SolutionWrapper* wrapper) {
 	if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 		vector<double> state_errors(wrapper->solution->num_states, 0.0);
-		for (int h_index = (int)wrapper->network_histories.size()-1; h_index >= 0; h_index--) {
-			switch (wrapper->network_histories[h_index]->network->type) {
+		for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
+			switch (wrapper->partial_network_histories[h_index]->network->type) {
 			case NETWORK_TYPE_SCORE:
 				{
-					ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->network_histories[h_index];
+					ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->partial_network_histories[h_index];
 					ScoreNetwork* score_network = (ScoreNetwork*)score_network_history->network;
 					score_network->load(score_network_history);
 					score_network->backprop(target_val,
@@ -80,7 +86,7 @@ void update_helper(double target_val,
 				break;
 			case NETWORK_TYPE_INIT:
 				{
-					InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->network_histories[h_index];
+					InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->partial_network_histories[h_index];
 					InitNetwork* init_network = (InitNetwork*)init_network_history->network;
 					init_network->load(init_network_history);
 					init_network->backprop(state_errors);
@@ -88,7 +94,7 @@ void update_helper(double target_val,
 				break;
 			case NETWORK_TYPE_NEGATE:
 				{
-					NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->network_histories[h_index];
+					NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->partial_network_histories[h_index];
 					NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
 					negate_network->backprop_through(state_errors);
 				}
@@ -96,11 +102,11 @@ void update_helper(double target_val,
 			}
 		}
 
-		for (int h_index = (int)wrapper->network_histories.size()-1; h_index >= 0; h_index--) {
-			switch (wrapper->network_histories[h_index]->network->type) {
+		for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
+			switch (wrapper->partial_network_histories[h_index]->network->type) {
 			case NETWORK_TYPE_SCORE:
 				{
-					ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->network_histories[h_index];
+					ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->partial_network_histories[h_index];
 					ScoreNetwork* score_network = (ScoreNetwork*)score_network_history->network;
 					if (score_network->last_update_iter != wrapper->iters_since_update) {
 						score_network->update();
@@ -111,7 +117,7 @@ void update_helper(double target_val,
 				break;
 			case NETWORK_TYPE_INIT:
 				{
-					InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->network_histories[h_index];
+					InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->partial_network_histories[h_index];
 					InitNetwork* init_network = (InitNetwork*)init_network_history->network;
 					if (init_network->last_update_iter != wrapper->iters_since_update) {
 						init_network->update();
@@ -123,10 +129,10 @@ void update_helper(double target_val,
 			}
 		}
 	}
-	for (int h_index = (int)wrapper->network_histories.size()-1; h_index >= 0; h_index--) {
-		delete wrapper->network_histories[h_index];
+	for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
+		delete wrapper->partial_network_histories[h_index];
 	}
-	wrapper->network_histories.clear();
+	wrapper->partial_network_histories.clear();
 
 	if (wrapper->run_type == RUN_TYPE_EXISTING) {
 		for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
@@ -174,11 +180,27 @@ void update_helper(double target_val,
 						if (branch_node->original_curr_num_instances > 0) {
 							branch_node->original_average_instances_per_hit = 0.999*branch_node->original_average_instances_per_hit + 0.001*branch_node->original_curr_num_instances;
 
+							if (branch_node->ramp < branch_node->ramp_num_gears) {
+								branch_node->ramp_iter++;
+								if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
+									branch_node->ramp++;
+									branch_node->ramp_iter = 0;
+								}
+							}
+
 							branch_node->original_curr_num_instances = 0;
 						}
 						branch_node->branch_average_instances_per_run = 0.999*branch_node->branch_average_instances_per_run + 0.001*branch_node->branch_curr_num_instances;
 						if (branch_node->branch_curr_num_instances > 0) {
 							branch_node->branch_average_instances_per_hit = 0.999*branch_node->branch_average_instances_per_hit + 0.001*branch_node->branch_curr_num_instances;
+
+							if (branch_node->ramp < branch_node->ramp_num_gears) {
+								branch_node->ramp_iter++;
+								if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
+									branch_node->ramp++;
+									branch_node->ramp_iter = 0;
+								}
+							}
 
 							branch_node->branch_curr_num_instances = 0;
 						}

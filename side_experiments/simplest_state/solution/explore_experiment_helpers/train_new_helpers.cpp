@@ -182,7 +182,8 @@ void ExploreExperiment::train_new_backprop(
 				int num_new_train = (1.0 - VERIFY_RATIO) * (double)this->new_dependencies_is_hit_histories.size();
 
 				uniform_int_distribution<int> new_train_distribution(0, num_new_train-1);
-				uniform_int_distribution<int> include_distribution(1, this->dependencies.size());
+				// uniform_int_distribution<int> partial_distribution(0, 4);
+				uniform_int_distribution<int> partial_distribution(0, 9);
 				for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 					int rand_index = new_train_distribution(generator);
 
@@ -191,8 +192,13 @@ void ExploreExperiment::train_new_backprop(
 					vector<bool> is_activate(this->dependencies.size(), false);
 					for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 						if (this->new_dependencies_is_hit_histories[rand_index][d_index]) {
-							init_networks[d_index]->init_activate(new_state,
-																  this->new_dependencies_obs_histories[rand_index][d_index]);
+							if (iter_index < PARTIAL_START_ITERS
+									|| partial_distribution(generator) != 0) {
+								is_activate[d_index] = true;
+
+								init_networks[d_index]->init_activate(new_state,
+																	  this->new_dependencies_obs_histories[rand_index][d_index]);
+							}
 						}
 					}
 
@@ -204,7 +210,7 @@ void ExploreExperiment::train_new_backprop(
 											   new_state_errors);
 
 					for (int d_index = (int)this->dependencies.size()-1; d_index >= 0; d_index--) {
-						if (this->new_dependencies_is_hit_histories[rand_index][d_index]) {
+						if (is_activate[d_index]) {
 							init_networks[d_index]->init_backprop(new_state_errors);
 						}
 					}

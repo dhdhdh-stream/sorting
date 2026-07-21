@@ -182,9 +182,9 @@ void ScoreNetwork::init_update(double& hidden_1_average_max_update,
 	this->hidden_1->get_max_update(hidden_1_max_update);
 	hidden_1_average_max_update = 0.999*hidden_1_average_max_update+0.001*hidden_1_max_update;
 	if (hidden_1_max_update > 0.0) {
-		double hidden_1_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/hidden_1_average_max_update;
-		if (hidden_1_learning_rate*hidden_1_max_update > NETWORK_TARGET_MAX_UPDATE) {
-			hidden_1_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_1_max_update;
+		double hidden_1_learning_rate = (0.3*NETWORK_INIT_TARGET_MAX_UPDATE)/hidden_1_average_max_update;
+		if (hidden_1_learning_rate*hidden_1_max_update > NETWORK_INIT_TARGET_MAX_UPDATE) {
+			hidden_1_learning_rate = NETWORK_INIT_TARGET_MAX_UPDATE/hidden_1_max_update;
 		}
 		this->hidden_1->update_weights(hidden_1_learning_rate);
 	}
@@ -193,9 +193,9 @@ void ScoreNetwork::init_update(double& hidden_1_average_max_update,
 	this->hidden_2->get_max_update(hidden_2_max_update);
 	hidden_2_average_max_update = 0.999*hidden_2_average_max_update+0.001*hidden_2_max_update;
 	if (hidden_2_max_update > 0.0) {
-		double hidden_2_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/hidden_2_average_max_update;
-		if (hidden_2_learning_rate*hidden_2_max_update > NETWORK_TARGET_MAX_UPDATE) {
-			hidden_2_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_2_max_update;
+		double hidden_2_learning_rate = (0.3*NETWORK_INIT_TARGET_MAX_UPDATE)/hidden_2_average_max_update;
+		if (hidden_2_learning_rate*hidden_2_max_update > NETWORK_INIT_TARGET_MAX_UPDATE) {
+			hidden_2_learning_rate = NETWORK_INIT_TARGET_MAX_UPDATE/hidden_2_max_update;
 		}
 		this->hidden_2->update_weights(hidden_2_learning_rate);
 	}
@@ -204,9 +204,9 @@ void ScoreNetwork::init_update(double& hidden_1_average_max_update,
 	this->output->get_max_update(output_max_update);
 	output_average_max_update = 0.999*output_average_max_update+0.001*output_max_update;
 	if (output_max_update > 0.0) {
-		double output_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/output_average_max_update;
-		if (output_learning_rate*output_max_update > NETWORK_TARGET_MAX_UPDATE) {
-			output_learning_rate = NETWORK_TARGET_MAX_UPDATE/output_max_update;
+		double output_learning_rate = (0.3*NETWORK_INIT_TARGET_MAX_UPDATE)/output_average_max_update;
+		if (output_learning_rate*output_max_update > NETWORK_INIT_TARGET_MAX_UPDATE) {
+			output_learning_rate = NETWORK_INIT_TARGET_MAX_UPDATE/output_max_update;
 		}
 		this->output->update_weights(output_learning_rate);
 	}

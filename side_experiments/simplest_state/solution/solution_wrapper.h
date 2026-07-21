@@ -42,6 +42,7 @@ public:
 	 * - run variables
 	 */
 	std::vector<double> state;
+	std::vector<double> partial_state;
 
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<AbstractNode*> node_context;
@@ -53,7 +54,16 @@ public:
 
 	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_experiment_histories;
 
-	std::vector<AbstractNetworkHistory*> network_histories;
+	std::vector<AbstractNetworkHistory*> partial_network_histories;
+	/**
+	 * - big issues when state dependency is sharp
+	 *   - less robust against changes
+	 *   - when changes do occur, more likely for update to cause irrecoverable damage
+	 * - so train with each network occasionally not activating to break sharp dependency
+	 * 
+	 * - whether dependency early or close not an issue
+	 *   - can easily get great results depending on random spots
+	 */
 
 	Problem* problem;
 

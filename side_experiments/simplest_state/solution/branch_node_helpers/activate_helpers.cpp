@@ -28,10 +28,14 @@ void BranchNode::step(vector<double>& obs,
 		}
 	}
 
+	uniform_int_distribution<int> on_distribution(0, this->ramp_num_gears);
 	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->original_next_node;
 	} else if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->branch_next_node;
+	} else if (this->ramp < this->ramp_num_gears
+			&& this->ramp < on_distribution(generator)) {
+		wrapper->node_context.back() = this->original_next_node;
 	} else {
 		ScopeHistory* scope_history = wrapper->scope_histories.back();
 
@@ -46,6 +50,15 @@ void BranchNode::step(vector<double>& obs,
 			is_branch = true;
 		} else {
 			is_branch = false;
+		}
+
+		// temp
+		{
+			vector<double> inputs(wrapper->solution->num_states, 0.0);
+			this->original_network->activate(inputs);
+			cout << "this->original_network->output->acti_vals(0): " << this->original_network->output->acti_vals(0) << endl;
+			this->branch_network->activate(inputs);
+			cout << "this->branch_network->output->acti_vals(0): " << this->branch_network->output->acti_vals(0) << endl;
 		}
 
 		#if defined(MDEBUG) && MDEBUG
