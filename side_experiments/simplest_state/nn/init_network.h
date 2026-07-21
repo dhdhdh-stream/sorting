@@ -13,6 +13,8 @@ class InitNetwork : public AbstractNetwork {
 public:
 	std::vector<int> init_states;
 
+	Layer* state_input;
+
 	Layer* raw_obs_input;
 	Eigen::VectorXf obs_input_means;
 	Eigen::VectorXf obs_input_deviations;
@@ -70,6 +72,7 @@ public:
 
 class InitNetworkHistory : public AbstractNetworkHistory {
 public:
+	std::vector<double> state_input_history;
 	std::vector<double> raw_obs_input_history;
 	std::vector<double> obs_input_history;
 	std::vector<double> hidden_1_history;

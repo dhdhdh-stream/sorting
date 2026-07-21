@@ -40,7 +40,6 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 												   obs);
 
 			if (wrapper->run_type != RUN_TYPE_EXPLORE) {
-				// uniform_int_distribution<int> partial_distribution(0, 4);
 				uniform_int_distribution<int> partial_distribution(0, 9);
 				if (partial_distribution(generator) != 0) {
 					this->init_networks[n_index]->activate(wrapper->partial_state,

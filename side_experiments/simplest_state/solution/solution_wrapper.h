@@ -60,6 +60,7 @@ public:
 	 *   - less robust against changes
 	 *   - when changes do occur, more likely for update to cause irrecoverable damage
 	 * - so train with each network occasionally not activating to break sharp dependency
+	 *   - but don't not activate too often, or dependency can be lost(?)
 	 * 
 	 * - whether dependency early or close not an issue
 	 *   - can easily get great results depending on random spots
