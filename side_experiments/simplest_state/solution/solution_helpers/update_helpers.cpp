@@ -96,7 +96,8 @@ void update_helper(double target_val,
 				{
 					NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->partial_network_histories[h_index];
 					NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
-					negate_network->backprop_through(state_errors);
+					negate_network->load(negate_network_history);
+					negate_network->backprop(state_errors);
 				}
 				break;
 			}
@@ -123,6 +124,17 @@ void update_helper(double target_val,
 						init_network->update();
 
 						init_network->last_update_iter = wrapper->iters_since_update;
+					}
+				}
+				break;
+			case NETWORK_TYPE_NEGATE:
+				{
+					NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->partial_network_histories[h_index];
+					NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
+					if (negate_network->last_update_iter != wrapper->iters_since_update) {
+						negate_network->update();
+
+						negate_network->last_update_iter = wrapper->iters_since_update;
 					}
 				}
 				break;
