@@ -21,6 +21,7 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 									 AbstractNode* node_context,
 									 bool is_branch,
 									 AbstractNode* exit_next_node,
+									 vector<vector<int>>& dependencies,
 									 SolutionWrapper* wrapper) {
 	this->scope_context = scope_context;
 	this->node_context = node_context;
@@ -29,14 +30,22 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 
 	this->existing_network = NULL;
 
+	this->dependencies = dependencies;
+	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+		set_dependency_helper(this->scope_context,
+							  this->dependencies[d_index],
+							  0,
+							  this);
+	}
+
 	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 }
 
 ExploreExperiment::~ExploreExperiment() {
-	for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
+	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 		clear_dependency_helper(this->scope_context,
-								this->best_dependencies[d_index],
+								this->dependencies[d_index],
 								0,
 								this);
 	}

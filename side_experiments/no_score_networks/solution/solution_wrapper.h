@@ -23,8 +23,8 @@ class ScopeHistory;
 class Solution;
 
 const int RUN_TYPE_EXISTING = 0;
-const int RUN_TYPE_EXPLORE = 1;
-const int RUN_TYPE_DAMAGE = 2;
+const int RUN_TYPE_DAMAGE = 1;
+const int RUN_TYPE_EXPLORE = 2;
 
 class SolutionWrapper {
 public:

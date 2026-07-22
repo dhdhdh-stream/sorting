@@ -22,6 +22,13 @@ class SolutionWrapper;
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper);
 
+void gather_dependencies_top_helper(ScopeHistory* scope_history,
+									int top_index,
+									std::vector<int>& curr_context,
+									std::vector<int>& curr_index,
+									int& count,
+									std::vector<int>& dependency,
+									std::vector<int>& index);
 void gather_dependencies_helper(ScopeHistory* scope_history,
 								std::vector<int>& curr_context,
 								std::vector<int>& curr_index,

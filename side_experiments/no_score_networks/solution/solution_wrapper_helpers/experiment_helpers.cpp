@@ -26,8 +26,12 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	uniform_int_distribution<int> type_distribution(0, 2);
-	this->run_type = type_distribution(generator);
+	if (this->iters_since_update < UPDATE_NUM_ITERS) {
+		uniform_int_distribution<int> type_distribution(0, 1);
+		this->run_type = type_distribution(generator);
+	} else {
+		this->run_type = RUN_TYPE_EXPLORE;
+	}
 
 	this->state = vector<double>(this->solution->num_states, 0.0);
 
@@ -131,27 +135,31 @@ void SolutionWrapper::set_action(int action) {
 
 void SolutionWrapper::experiment_end(double result) {
 	if (this->run_type == RUN_TYPE_EXISTING) {
+		this->solution->curr_score = 0.999*this->solution->curr_score + 0.001*result;
+
 		update_helper(this->scope_histories[0]);
 	}
 	update_helper(result,
 				  this);
 
-	if (this->explore_experiment_histories.size() == 0) {
-		create_experiment(this->scope_histories[0],
-						  this);
-	} else if (this->explore_experiment_histories.size() >= 2) {
-		ExploreExperiment* keep_experiment = NULL;
-		for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
-				it != this->explore_experiment_histories.end(); it++) {
-			if (keep_experiment == NULL) {
-				keep_experiment = it->first;
-			} else {
-				if (it->first->further_than(keep_experiment)) {
-					delete keep_experiment;
-
+	if (this->run_type == RUN_TYPE_EXPLORE) {
+		if (this->explore_experiment_histories.size() == 0) {
+			create_experiment(this->scope_histories[0],
+							  this);
+		} else if (this->explore_experiment_histories.size() >= 2) {
+			ExploreExperiment* keep_experiment = NULL;
+			for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
+					it != this->explore_experiment_histories.end(); it++) {
+				if (keep_experiment == NULL) {
 					keep_experiment = it->first;
 				} else {
-					delete it->first;
+					if (it->first->further_than(keep_experiment)) {
+						delete keep_experiment;
+
+						keep_experiment = it->first;
+					} else {
+						delete it->first;
+					}
 				}
 			}
 		}
@@ -163,18 +171,45 @@ void SolutionWrapper::experiment_end(double result) {
 	this->node_context.clear();
 	this->experiment_context.clear();
 
-	if (this->explore_experiment_histories.size() == 1) {
+	if (this->run_type == RUN_TYPE_EXPLORE) {
+		if (this->explore_experiment_histories.size() == 1) {
+			for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
+					it != this->explore_experiment_histories.end(); it++) {
+				it->first->backprop(result,
+									it->second,
+									this);
+			}
+		}
+
 		for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
 				it != this->explore_experiment_histories.end(); it++) {
-			it->first->backprop(result,
-								it->second,
-								this);
+			delete it->second;
 		}
+		this->explore_experiment_histories.clear();
 	}
 
-	for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
-			it != this->explore_experiment_histories.end(); it++) {
-		delete it->second;
-	}
-	this->explore_experiment_histories.clear();
+	this->iters_since_update++;
+	// if (this->iters_since_update == UPDATE_NUM_ITERS) {
+	// 	if (this->solution->timestamp != 0) {
+	// 		#if defined(MDEBUG) && MDEBUG
+	// 		if (rand()%2 == 0) {
+	// 		#else
+	// 		if (this->prev_solution->curr_score > this->solution->curr_score) {
+	// 		#endif /* MDEBUG */
+	// 			// temp
+	// 			cout << "reset" << endl;
+	// 			cout << "this->prev_solution->curr_num_resets: " << this->prev_solution->curr_num_resets << endl;
+	// 			cout << "this->prev_solution->curr_score: " << this->prev_solution->curr_score << endl;
+	// 			cout << "this->solution->curr_score: " << this->solution->curr_score << endl;
+
+	// 			this->prev_solution->curr_num_resets++;
+	// 			// if (this->prev_solution->curr_num_resets >= STUCK_NUM_ITERS) {
+	// 			// 	this->prev_solution->timestamp = -1;
+	// 			// }
+
+	// 			delete this->solution;
+	// 			this->solution = new Solution(this->prev_solution);
+	// 		}
+	// 	}
+	// }
 }

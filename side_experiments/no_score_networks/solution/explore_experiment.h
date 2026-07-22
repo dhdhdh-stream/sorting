@@ -33,6 +33,8 @@ public:
 	int state;
 	int state_iter;
 
+	std::vector<std::vector<int>> dependencies;
+
 	ScoreNetwork* existing_network;
 
 	int num_instances_until_target;
@@ -41,10 +43,6 @@ public:
 	std::vector<int> best_step_types;
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;
-	/**
-	 * - -1 if scope start
-	 */
-	std::vector<std::vector<int>> best_dependencies;
 
 	std::vector<std::vector<bool>> existing_dependencies_is_hit_histories;
 	std::vector<std::vector<std::vector<double>>> existing_dependencies_state_histories;
@@ -62,6 +60,7 @@ public:
 					  AbstractNode* node_context,
 					  bool is_branch,
 					  AbstractNode* exit_next_node,
+					  std::vector<std::vector<int>>& dependencies,
 					  SolutionWrapper* wrapper);
 	~ExploreExperiment();
 
@@ -136,7 +135,6 @@ public:
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
-	std::vector<std::vector<int>> curr_dependencies;
 
 	std::vector<std::vector<bool>> dependencies_is_hit_histories;
 	std::vector<std::vector<std::vector<double>>> dependencies_state_histories;

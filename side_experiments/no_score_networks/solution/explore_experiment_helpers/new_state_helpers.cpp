@@ -20,26 +20,22 @@
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int NEW_STATE_TRAIN_ITERS = 50;
-#else
-const int NEW_STATE_TRAIN_ITERS = 500000;
-#endif /* MDEBUG */
-
 void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
-	vector<InitNetwork*> init_networks(this->best_dependencies.size());
+	int num_existing_train = (1.0 - VERIFY_RATIO) * (double)this->existing_dependencies_is_hit_histories.size();
+
+	vector<InitNetwork*> init_networks(this->dependencies.size());
 	vector<int> init_states;
 	for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
 		init_states.push_back(wrapper->solution->num_states + s_index);
 	}
-	for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
+	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 		init_networks[d_index] = new InitNetwork(init_states,
 												 wrapper->solution->num_states + NEW_STATE_NUM_ADD,
 												 wrapper->solution->num_obs);
 	}
-	vector<double> hidden_1_average_max_updates(this->best_dependencies.size(), 0.0);
-	vector<double> hidden_2_average_max_updates(this->best_dependencies.size(), 0.0);
-	vector<double> output_average_max_updates(this->best_dependencies.size(), 0.0);
+	vector<double> hidden_1_average_max_updates(this->dependencies.size(), 0.0);
+	vector<double> hidden_2_average_max_updates(this->dependencies.size(), 0.0);
+	vector<double> output_average_max_updates(this->dependencies.size(), 0.0);
 	ScoreNetwork* new_network = new ScoreNetwork(wrapper->solution->num_states + NEW_STATE_NUM_ADD);
 	double hidden_1_average_max_update = 0.0;
 	double hidden_2_average_max_update = 0.0;
@@ -54,8 +50,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 
 		vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
 
-		vector<bool> is_activate(this->best_dependencies.size(), false);
-		for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
+		vector<bool> is_activate(this->dependencies.size(), false);
+		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 			if (this->new_dependencies_is_hit_histories[rand_index][d_index]
 					&& drop_distribution(generator) != 0) {
 				is_activate[d_index] = true;
@@ -79,14 +75,14 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			new_network->state_input->errors(wrapper->solution->num_states + s_index) = 0.0;
 		}
 
-		for (int d_index = (int)this->best_dependencies.size()-1; d_index >= 0; d_index--) {
+		for (int d_index = (int)this->dependencies.size()-1; d_index >= 0; d_index--) {
 			if (is_activate[d_index]) {
 				init_networks[d_index]->init_backprop(new_state_errors);
 			}
 		}
 
 		if ((iter_index+1)%EPOCH_SIZE == 0) {
-			for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
+			for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 				init_networks[d_index]->init_update(hidden_1_average_max_updates[d_index],
 													hidden_2_average_max_updates[d_index],
 													output_average_max_updates[d_index]);
@@ -96,7 +92,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 									 output_average_max_update);
 		}
 	}
-	for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
+	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 		for (int i_index = 0; i_index < (int)init_networks[d_index]->state_input->errors.size(); i_index++) {
 			init_networks[d_index]->state_input->errors(i_index) = 0.0;
 		}
@@ -107,11 +103,11 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 
 	double existing_sum_vals = 0.0;
 	int existing_count = 0;
-	for (int h_index = 0; h_index < (int)this->existing_dependencies_is_hit_histories.size(); h_index++) {
+	for (int h_index = num_existing_train; h_index < (int)this->existing_dependencies_is_hit_histories.size(); h_index++) {
 		this->existing_network->activate(this->existing_state_histories[h_index]);
 
 		vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
-		for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
+		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 			if (this->existing_dependencies_is_hit_histories[h_index][d_index]) {
 				init_networks[d_index]->init_activate(this->existing_dependencies_state_histories[h_index][d_index],
 													  new_state,
@@ -135,7 +131,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		this->existing_network->activate(this->new_state_histories[h_index]);
 
 		vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
-		for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
+		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 			if (this->new_dependencies_is_hit_histories[h_index][d_index]) {
 				init_networks[d_index]->init_activate(this->new_dependencies_state_histories[h_index][d_index],
 													  new_state,
@@ -154,7 +150,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	}
 	double new_average = new_sum_vals / (double)new_count;
 	double average_ratio = (existing_count + new_count)
-		/ ((double)this->existing_dependencies_is_hit_histories.size()
+		/ ((double)this->existing_dependencies_is_hit_histories.size() - num_existing_train
 			+ (double)this->new_dependencies_is_hit_histories.size() - num_new_train);
 	double local_improvement = (new_average - existing_average) * average_ratio;
 
@@ -192,11 +188,11 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	}
 	double global_improvement = average_instances_per_run * local_improvement;
 
-	// temp
-	cout << "new_state" << endl;
-	cout << "this->scope_context->id: " << this->scope_context->id << endl;
-	cout << "local_improvement: " << local_improvement << endl;
-	cout << "global_improvement: " << global_improvement << endl;
+	// // temp
+	// cout << "new_state" << endl;
+	// cout << "this->scope_context->id: " << this->scope_context->id << endl;
+	// cout << "local_improvement: " << local_improvement << endl;
+	// cout << "global_improvement: " << global_improvement << endl;
 
 	bool is_success = false;
 	if (local_improvement > 0.0) {
@@ -229,15 +225,15 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	#else
 	if (is_success) {
 	#endif /* MDEBUG */
-		// temp
-		cout << "this->best_dependencies:" << endl;
-		for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
-			cout << d_index << ":";
-			for (int l_index = 0; l_index < (int)this->best_dependencies[d_index].size(); l_index++) {
-				cout << " " << this->best_dependencies[d_index][l_index];
-			}
-			cout << endl;
-		}
+		// // temp
+		// cout << "this->dependencies:" << endl;
+		// for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+		// 	cout << d_index << ":";
+		// 	for (int l_index = 0; l_index < (int)this->dependencies[d_index].size(); l_index++) {
+		// 		cout << " " << this->dependencies[d_index][l_index];
+		// 	}
+		// 	cout << endl;
+		// }
 
 		for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
 			NegateNetwork* new_negate_network = new NegateNetwork(wrapper->solution->num_states + s_index);
@@ -304,11 +300,11 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			}
 		}
 
-		for (int d_index = 0; d_index < (int)this->best_dependencies.size(); d_index++) {
+		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 			vector<Scope*> init_network_scope_context;
 			add_dependency_helper(this->scope_context,
 								  init_network_scope_context,
-								  this->best_dependencies[d_index],
+								  this->dependencies[d_index],
 								  0,
 								  init_networks[d_index]);
 		}
