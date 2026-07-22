@@ -52,9 +52,15 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 		ObsNetwork* obs_network = this->solution->generic_obs_network;
 		obs_network->activate(this->state,
 							  obs);
-		ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(obs_network);
-		obs_network->save(obs_network_history);
-		this->network_histories.push_back(obs_network_history);
+
+		uniform_int_distribution<int> partial_distribution(0, 9);
+		if (partial_distribution(generator) != 0) {
+			obs_network->activate(this->partial_state,
+								  obs);
+			ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(obs_network);
+			obs_network->save(obs_network_history);
+			this->partial_network_histories.push_back(obs_network_history);
+		}
 
 		this->last_was_damage = false;
 	} else {
@@ -79,9 +85,14 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 
 			ActionNetwork* action_network = this->solution->generic_action_networks[action];
 			action_network->activate(this->state);
-			ActionNetworkHistory* action_network_history = new ActionNetworkHistory(action_network);
-			action_network->save(action_network_history);
-			this->network_histories.push_back(action_network_history);
+
+			uniform_int_distribution<int> partial_distribution(0, 9);
+			if (partial_distribution(generator) != 0) {
+				action_network->activate(this->partial_state);
+				ActionNetworkHistory* action_network_history = new ActionNetworkHistory(action_network);
+				action_network->save(action_network_history);
+				this->partial_network_histories.push_back(action_network_history);
+			}
 
 			this->last_was_damage = true;
 

@@ -43,18 +43,29 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 	scope_history->node_histories[this->id] = history;
 
 	this->action_network->activate(wrapper->state);
+
 	if (wrapper->run_type != RUN_TYPE_EXPLORE) {
-		ActionNetworkHistory* action_network_history = new ActionNetworkHistory(this->action_network);
-		this->action_network->save(action_network_history);
-		wrapper->network_histories.push_back(action_network_history);
+		uniform_int_distribution<int> partial_distribution(0, 9);
+		if (partial_distribution(generator) != 0) {
+			this->action_network->activate(wrapper->partial_state);
+			ActionNetworkHistory* action_network_history = new ActionNetworkHistory(this->action_network);
+			this->action_network->save(action_network_history);
+			wrapper->partial_network_histories.push_back(action_network_history);
+		}
 	}
 
 	this->obs_network->activate(wrapper->state,
 								obs);
+
 	if (wrapper->run_type != RUN_TYPE_EXPLORE) {
-		ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(this->obs_network);
-		this->obs_network->save(obs_network_history);
-		wrapper->network_histories.push_back(obs_network_history);
+		uniform_int_distribution<int> partial_distribution(0, 9);
+		if (partial_distribution(generator) != 0) {
+			this->obs_network->activate(wrapper->partial_state,
+										obs);
+			ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(this->obs_network);
+			this->obs_network->save(obs_network_history);
+			wrapper->partial_network_histories.push_back(obs_network_history);
+		}
 	}
 
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
@@ -63,10 +74,16 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 									this->init_network_node_contexts[n_index])) {
 			this->init_networks[n_index]->activate(wrapper->state,
 												   obs);
+
 			if (wrapper->run_type != RUN_TYPE_EXPLORE) {
-				InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
-				this->init_networks[n_index]->save(init_network_history);
-				wrapper->network_histories.push_back(init_network_history);
+				uniform_int_distribution<int> partial_distribution(0, 9);
+				if (partial_distribution(generator) != 0) {
+					this->init_networks[n_index]->activate(wrapper->partial_state,
+														   obs);
+					InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
+					this->init_networks[n_index]->save(init_network_history);
+					wrapper->partial_network_histories.push_back(init_network_history);
+				}
 			}
 		}
 	}

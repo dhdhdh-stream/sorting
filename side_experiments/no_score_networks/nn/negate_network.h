@@ -1,6 +1,8 @@
 /**
- * - training (away from -1.0) leads to instability(?)
- *   - and creates strong dependencies that can make it difficult to generalize(?)
+ * - simply do not train away from -1.0
+ *   - drop makes training stable, but still hurts long term results
+ *     - even with pinning weights, drop to -1.0, etc.
+ *   - maybe simply good to break dependency wherever possible?
  */
 
 #ifndef NEGATE_NETWORK_H
@@ -16,16 +18,11 @@ class NegateNetwork : public AbstractNetwork {
 public:
 	int state;
 
-	double state_input;
-
 	NegateNetwork(int state);
 	NegateNetwork(NegateNetwork* original);
 	NegateNetwork(std::ifstream& input_file);
 
 	void activate(std::vector<double>& state_vals);
-
-	void save(NegateNetworkHistory* history);
-	void load(NegateNetworkHistory* history);
 
 	void backprop_through(std::vector<double>& state_errors);
 
@@ -34,8 +31,6 @@ public:
 
 class NegateNetworkHistory : public AbstractNetworkHistory {
 public:
-	double state_input_history;
-
 	NegateNetworkHistory(NegateNetwork* network);
 };
 
