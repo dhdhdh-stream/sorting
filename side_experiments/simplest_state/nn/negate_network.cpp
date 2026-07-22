@@ -97,11 +97,12 @@ void NegateNetwork::backprop(vector<double>& state_errors) {
 
 void NegateNetwork::update() {
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
-		this->average_max_updates[i_index] = 0.999*this->average_max_updates[i_index]+0.001*this->weight_updates[i_index];
-		if (this->weight_updates[i_index] > 0.0) {
+		double update_size = abs(this->weight_updates[i_index]);
+		this->average_max_updates[i_index] = 0.999*this->average_max_updates[i_index]+0.001*update_size;
+		if (update_size > 0.0) {
 			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->average_max_updates[i_index];
-			if (learning_rate*this->weight_updates[i_index] > NETWORK_TARGET_MAX_UPDATE) {
-				learning_rate = NETWORK_TARGET_MAX_UPDATE/this->weight_updates[i_index];
+			if (learning_rate*update_size > NETWORK_TARGET_MAX_UPDATE) {
+				learning_rate = NETWORK_TARGET_MAX_UPDATE/update_size;
 			}
 			double update = this->weight_updates[i_index] * learning_rate;
 			this->weight_updates[i_index] = 0.0;

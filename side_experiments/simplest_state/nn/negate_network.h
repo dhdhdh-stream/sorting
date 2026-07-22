@@ -1,3 +1,10 @@
+/**
+ * - simply do not train away from -1.0
+ *   - drop makes training stable, but still hurts long term results
+ *     - even with pinning weights, drop to -1.0, etc.
+ *   - maybe simply good to break dependency wherever possible?
+ */
+
 #ifndef NEGATE_NETWORK_H
 #define NEGATE_NETWORK_H
 
