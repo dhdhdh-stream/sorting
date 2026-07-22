@@ -182,7 +182,7 @@ void ExploreExperiment::train_new_backprop(
 				int num_new_train = (1.0 - VERIFY_RATIO) * (double)this->new_dependencies_is_hit_histories.size();
 
 				uniform_int_distribution<int> new_train_distribution(0, num_new_train-1);
-				uniform_int_distribution<int> partial_distribution(0, 9);
+				uniform_int_distribution<int> partial_distribution(0, 4);
 				for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 					int rand_index = new_train_distribution(generator);
 

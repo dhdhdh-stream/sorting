@@ -36,17 +36,14 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 		if (match_dependency_helper(wrapper,
 									this->init_network_scope_contexts[n_index],
 									this->init_network_node_contexts[n_index])) {
-			this->init_networks[n_index]->activate(wrapper->state,
-												   obs);
-
-			if (wrapper->run_type != RUN_TYPE_EXPLORE) {
-				uniform_int_distribution<int> partial_distribution(0, 9);
-				if (partial_distribution(generator) != 0) {
-					this->init_networks[n_index]->activate(wrapper->partial_state,
-														   obs);
+			uniform_int_distribution<int> partial_distribution(0, 4);
+			if (partial_distribution(generator) != 0) {
+				this->init_networks[n_index]->activate(wrapper->state,
+													   obs);
+				if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 					InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
 					this->init_networks[n_index]->save(init_network_history);
-					wrapper->partial_network_histories.push_back(init_network_history);
+					wrapper->network_histories.push_back(init_network_history);
 				}
 			}
 		}

@@ -23,17 +23,14 @@ void BranchNode::experiment_step(vector<double>& obs,
 		if (match_dependency_helper(wrapper,
 									this->init_network_scope_contexts[n_index],
 									this->init_network_node_contexts[n_index])) {
-			this->init_networks[n_index]->activate(wrapper->state,
-												   obs);
-
-			if (wrapper->run_type != RUN_TYPE_EXPLORE) {
-				uniform_int_distribution<int> partial_distribution(0, 9);
-				if (partial_distribution(generator) != 0) {
-					this->init_networks[n_index]->activate(wrapper->partial_state,
-														   obs);
+			uniform_int_distribution<int> partial_distribution(0, 4);
+			if (partial_distribution(generator) != 0) {
+				this->init_networks[n_index]->activate(wrapper->state,
+													   obs);
+				if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 					InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
 					this->init_networks[n_index]->save(init_network_history);
-					wrapper->partial_network_histories.push_back(init_network_history);
+					wrapper->network_histories.push_back(init_network_history);
 				}
 			}
 		}
@@ -85,10 +82,9 @@ void BranchNode::experiment_step(vector<double>& obs,
 			}
 
 			if (wrapper->run_type == RUN_TYPE_EXISTING) {
-				this->branch_network->activate(wrapper->partial_state);
 				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->branch_network);
 				this->branch_network->save(score_network_history);
-				wrapper->partial_network_histories.push_back(score_network_history);
+				wrapper->network_histories.push_back(score_network_history);
 			}
 
 			wrapper->node_context.back() = this->branch_next_node;
@@ -105,10 +101,9 @@ void BranchNode::experiment_step(vector<double>& obs,
 			}
 
 			if (wrapper->run_type == RUN_TYPE_EXISTING) {
-				this->original_network->activate(wrapper->partial_state);
 				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->original_network);
 				this->original_network->save(score_network_history);
-				wrapper->partial_network_histories.push_back(score_network_history);
+				wrapper->network_histories.push_back(score_network_history);
 			}
 
 			wrapper->node_context.back() = this->original_next_node;

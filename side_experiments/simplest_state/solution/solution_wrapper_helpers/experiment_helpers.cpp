@@ -31,11 +31,6 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	}
 
 	this->state = vector<double>(this->solution->num_states, 0.0);
-	if (this->run_type != RUN_TYPE_EXPLORE) {
-		this->partial_state = vector<double>(this->solution->num_states, 0.0);
-	} else {
-		this->partial_state.clear();	// for debug
-	}
 
 	this->num_actions = 1;
 

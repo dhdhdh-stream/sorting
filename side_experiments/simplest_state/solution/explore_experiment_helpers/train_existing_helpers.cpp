@@ -85,7 +85,7 @@ void ExploreExperiment::train_existing_backprop(
 		double output_average_max_update = 0.0;
 
 		uniform_int_distribution<int> train_distribution(0, num_existing_train-1);
-		uniform_int_distribution<int> partial_distribution(0, 9);
+		uniform_int_distribution<int> partial_distribution(0, 4);
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int rand_index = train_distribution(generator);
 

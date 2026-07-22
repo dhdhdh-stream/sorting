@@ -73,11 +73,11 @@ void update_helper(double target_val,
 				   SolutionWrapper* wrapper) {
 	if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 		vector<double> state_errors(wrapper->solution->num_states, 0.0);
-		for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
-			switch (wrapper->partial_network_histories[h_index]->network->type) {
+		for (int h_index = (int)wrapper->network_histories.size()-1; h_index >= 0; h_index--) {
+			switch (wrapper->network_histories[h_index]->network->type) {
 			case NETWORK_TYPE_SCORE:
 				{
-					ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->partial_network_histories[h_index];
+					ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->network_histories[h_index];
 					ScoreNetwork* score_network = (ScoreNetwork*)score_network_history->network;
 					score_network->load(score_network_history);
 					score_network->backprop(target_val,
@@ -86,7 +86,7 @@ void update_helper(double target_val,
 				break;
 			case NETWORK_TYPE_INIT:
 				{
-					InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->partial_network_histories[h_index];
+					InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->network_histories[h_index];
 					InitNetwork* init_network = (InitNetwork*)init_network_history->network;
 					init_network->load(init_network_history);
 					init_network->backprop(state_errors);
@@ -94,20 +94,19 @@ void update_helper(double target_val,
 				break;
 			case NETWORK_TYPE_NEGATE:
 				{
-					NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->partial_network_histories[h_index];
+					NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->network_histories[h_index];
 					NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
-					negate_network->load(negate_network_history);
-					negate_network->backprop(state_errors);
+					negate_network->backprop_through(state_errors);
 				}
 				break;
 			}
 		}
 
-		for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
-			switch (wrapper->partial_network_histories[h_index]->network->type) {
+		for (int h_index = (int)wrapper->network_histories.size()-1; h_index >= 0; h_index--) {
+			switch (wrapper->network_histories[h_index]->network->type) {
 			case NETWORK_TYPE_SCORE:
 				{
-					ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->partial_network_histories[h_index];
+					ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->network_histories[h_index];
 					ScoreNetwork* score_network = (ScoreNetwork*)score_network_history->network;
 					if (score_network->last_update_iter != wrapper->iters_since_update) {
 						score_network->update();
@@ -118,7 +117,7 @@ void update_helper(double target_val,
 				break;
 			case NETWORK_TYPE_INIT:
 				{
-					InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->partial_network_histories[h_index];
+					InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->network_histories[h_index];
 					InitNetwork* init_network = (InitNetwork*)init_network_history->network;
 					if (init_network->last_update_iter != wrapper->iters_since_update) {
 						init_network->update();
@@ -127,24 +126,13 @@ void update_helper(double target_val,
 					}
 				}
 				break;
-			case NETWORK_TYPE_NEGATE:
-				{
-					NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->partial_network_histories[h_index];
-					NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
-					if (negate_network->last_update_iter != wrapper->iters_since_update) {
-						negate_network->update();
-
-						negate_network->last_update_iter = wrapper->iters_since_update;
-					}
-				}
-				break;
 			}
 		}
 	}
-	for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
-		delete wrapper->partial_network_histories[h_index];
+	for (int h_index = (int)wrapper->network_histories.size()-1; h_index >= 0; h_index--) {
+		delete wrapper->network_histories[h_index];
 	}
-	wrapper->partial_network_histories.clear();
+	wrapper->network_histories.clear();
 
 	if (wrapper->run_type == RUN_TYPE_EXISTING) {
 		for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
