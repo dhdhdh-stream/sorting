@@ -57,10 +57,6 @@ ObsNetwork::ObsNetwork(int num_states,
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(0.0);
-
-	this->epoch_iter = 0;
-	this->average_max_update = 0.0;
-	this->last_update_iter = -1;
 }
 
 ObsNetwork::ObsNetwork(ObsNetwork* original) {
@@ -113,10 +109,6 @@ ObsNetwork::ObsNetwork(ObsNetwork* original) {
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(0.0);
 	this->output->copy_weights_from(original->output);
-
-	this->epoch_iter = 0;
-	this->average_max_update = 0.0;
-	this->last_update_iter = -1;
 }
 
 ObsNetwork::ObsNetwork(ifstream& input_file) {
@@ -192,10 +184,6 @@ ObsNetwork::ObsNetwork(ifstream& input_file) {
 	this->hidden_1->load_weights_from(input_file);
 	this->hidden_2->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
-
-	this->epoch_iter = 0;
-	this->average_max_update = 0.0;
-	this->last_update_iter = -1;
 }
 
 ObsNetwork::~ObsNetwork() {
@@ -286,26 +274,10 @@ void ObsNetwork::backprop(vector<double>& state_errors) {
 	}
 }
 
-void ObsNetwork::update() {
-	this->epoch_iter++;
-	if (this->epoch_iter == EPOCH_SIZE) {
-		double max_update = 0.0;
-		this->hidden_1->get_max_update(max_update);
-		this->hidden_2->get_max_update(max_update);
-		this->output->get_max_update(max_update);
-		this->average_max_update = 0.999*this->average_max_update+0.001*max_update;
-		if (max_update > 0.0) {
-			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->average_max_update;
-			if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
-				learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
-			}
-			this->hidden_1->update_weights(learning_rate);
-			this->hidden_2->update_weights(learning_rate);
-			this->output->update_weights(learning_rate);
-		}
-
-		this->epoch_iter = 0;
-	}
+void ObsNetwork::update_weights(double learning_rate) {
+	this->hidden_1->update_weights(learning_rate);
+	this->hidden_2->update_weights(learning_rate);
+	this->output->update_weights(learning_rate);
 }
 
 void ObsNetwork::add_states(int new_num_states) {

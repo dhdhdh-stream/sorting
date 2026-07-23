@@ -17,10 +17,6 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
-	int epoch_iter;
-	double average_max_update;
-	int last_update_iter;
-
 	ActionNetwork(int num_states);
 	ActionNetwork(ActionNetwork* original);
 	ActionNetwork(std::ifstream& input_file);
@@ -33,7 +29,7 @@ public:
 
 	void backprop(std::vector<double>& state_errors);
 
-	void update();
+	void update_weights(double learning_rate);
 
 	void add_states(int new_num_states);
 
