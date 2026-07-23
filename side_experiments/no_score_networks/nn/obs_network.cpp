@@ -215,6 +215,33 @@ void ObsNetwork::activate(vector<double>& state_vals,
 	}
 }
 
+void ObsNetwork::activate_w_drop(vector<double>& state_vals,
+								 vector<double>& obs_input_vals) {
+	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
+		this->state_input->acti_vals(s_index) = state_vals[s_index];
+	}
+
+	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
+		this->raw_obs_input->acti_vals(i_index) = obs_input_vals[i_index];
+	}
+	this->obs_input->acti_vals = (this->raw_obs_input->acti_vals - this->obs_input_means).cwiseQuotient(this->obs_input_deviations);
+
+	uniform_int_distribution<int> drop_distribution(0, 9);
+	for (int i_index = 0; i_index < (int)this->obs_input->acti_vals.size(); i_index++) {
+		if (drop_distribution(generator) == 0) {
+			this->obs_input->acti_vals(i_index) = 0.0;
+		}
+	}
+
+	this->hidden_1->activate();
+	this->hidden_2->activate();
+	this->output->activate();
+
+	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
+		state_vals[s_index] += this->output->acti_vals(s_index);
+	}
+}
+
 void ObsNetwork::save(ObsNetworkHistory* history) {
 	history->state_input_history = vector<double>(this->state_input->acti_vals.size());
 	for (int s_index = 0; s_index < (int)this->state_input->acti_vals.size(); s_index++) {
@@ -284,6 +311,12 @@ void ObsNetwork::update_weights(double learning_rate) {
 	this->hidden_1->update_weights(learning_rate);
 	this->hidden_2->update_weights(learning_rate);
 	this->output->update_weights(learning_rate);
+}
+
+void ObsNetwork::clear_update_weights() {
+	this->hidden_1->clear_update_weights();
+	this->hidden_2->clear_update_weights();
+	this->output->clear_update_weights();
 }
 
 void ObsNetwork::add_states(int new_num_states) {

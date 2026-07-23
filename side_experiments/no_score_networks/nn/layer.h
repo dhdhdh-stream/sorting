@@ -38,6 +38,8 @@ public:
 	void get_max_update(double& max_update_size);
 	void update_weights(double learning_rate);
 
+	void clear_update_weights();
+
 	void save_weights(std::ofstream& output_file);
 };
 

@@ -46,6 +46,8 @@ public:
 
 	void activate(std::vector<double>& state_vals,
 				  std::vector<double>& obs_input_vals);
+	void activate_w_drop(std::vector<double>& state_vals,
+						 std::vector<double>& obs_input_vals);
 
 	void save(ObsNetworkHistory* history);
 	void load(ObsNetworkHistory* history);
@@ -54,6 +56,8 @@ public:
 
 	void get_max_update(double& max_update_size);
 	void update_weights(double learning_rate);
+
+	void clear_update_weights();
 
 	void add_states(int new_num_states);
 

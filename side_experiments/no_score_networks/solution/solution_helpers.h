@@ -58,6 +58,8 @@ bool match_dependency_helper(SolutionWrapper* wrapper,
 							 std::vector<Scope*>& scope_contexts,
 							 std::vector<int>& node_contexts);
 
+double measure_average_max_update_helper(double target_val,
+										 SolutionWrapper* wrapper);
 void update_helper(ScopeHistory* scope_history);
 void update_helper(double target_val,
 				   SolutionWrapper* wrapper);

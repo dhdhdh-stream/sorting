@@ -19,13 +19,133 @@
 
 using namespace std;
 
-const double SOLUTION_TARGET_MAX_UPDATE = 0.002;
+const double SOLUTION_TARGET_MAX_UPDATE = 0.01;
 
 #if defined(MDEBUG) && MDEBUG
 const int ITERS_PER_RAMP = 2;
 #else
 const int ITERS_PER_RAMP = 4000;
 #endif /* MDEBUG */
+
+const int LARGEST_MAX_UPDATES_NUM_TRACK = 10;
+
+double measure_average_max_update_helper(double target_val,
+										 SolutionWrapper* wrapper) {
+	vector<double> state_errors(wrapper->solution->num_states, 0.0);
+	for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
+		switch (wrapper->partial_network_histories[h_index]->network->type) {
+		case NETWORK_TYPE_OBS:
+			{
+				ObsNetworkHistory* obs_network_history = (ObsNetworkHistory*)wrapper->partial_network_histories[h_index];
+				ObsNetwork* obs_network = (ObsNetwork*)obs_network_history->network;
+				obs_network->load(obs_network_history);
+				obs_network->backprop(state_errors);
+			}
+			break;
+		case NETWORK_TYPE_SCORE:
+			{
+				ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->partial_network_histories[h_index];
+				ScoreNetwork* score_network = (ScoreNetwork*)score_network_history->network;
+				score_network->load(score_network_history);
+				score_network->backprop(target_val,
+										state_errors);
+			}
+			break;
+		case NETWORK_TYPE_ACTION:
+			{
+				ActionNetworkHistory* action_network_history = (ActionNetworkHistory*)wrapper->partial_network_histories[h_index];
+				ActionNetwork* action_network = (ActionNetwork*)action_network_history->network;
+				action_network->load(action_network_history);
+				action_network->backprop(state_errors);
+			}
+			break;
+		case NETWORK_TYPE_INIT:
+			{
+				InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->partial_network_histories[h_index];
+				InitNetwork* init_network = (InitNetwork*)init_network_history->network;
+				init_network->load(init_network_history);
+				init_network->backprop(state_errors);
+			}
+			break;
+		case NETWORK_TYPE_NEGATE:
+			{
+				NegateNetworkHistory* negate_network_history = (NegateNetworkHistory*)wrapper->partial_network_histories[h_index];
+				NegateNetwork* negate_network = (NegateNetwork*)negate_network_history->network;
+				negate_network->backprop_through(state_errors);
+			}
+			break;
+		}
+	}
+
+	double max_update_size = 0.0;
+	for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
+		switch (wrapper->partial_network_histories[h_index]->network->type) {
+		case NETWORK_TYPE_OBS:
+			{
+				ObsNetworkHistory* obs_network_history = (ObsNetworkHistory*)wrapper->partial_network_histories[h_index];
+				ObsNetwork* obs_network = (ObsNetwork*)obs_network_history->network;
+				obs_network->get_max_update(max_update_size);
+			}
+			break;
+		case NETWORK_TYPE_SCORE:
+			{
+				ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->partial_network_histories[h_index];
+				ScoreNetwork* score_network = (ScoreNetwork*)score_network_history->network;
+				score_network->get_max_update(max_update_size);
+			}
+			break;
+		case NETWORK_TYPE_ACTION:
+			{
+				ActionNetworkHistory* action_network_history = (ActionNetworkHistory*)wrapper->partial_network_histories[h_index];
+				ActionNetwork* action_network = (ActionNetwork*)action_network_history->network;
+				action_network->get_max_update(max_update_size);
+			}
+			break;
+		case NETWORK_TYPE_INIT:
+			{
+				InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->partial_network_histories[h_index];
+				InitNetwork* init_network = (InitNetwork*)init_network_history->network;
+				init_network->get_max_update(max_update_size);
+			}
+			break;
+		}
+	}
+
+	for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
+		switch (wrapper->partial_network_histories[h_index]->network->type) {
+		case NETWORK_TYPE_OBS:
+			{
+				ObsNetworkHistory* obs_network_history = (ObsNetworkHistory*)wrapper->partial_network_histories[h_index];
+				ObsNetwork* obs_network = (ObsNetwork*)obs_network_history->network;
+				obs_network->clear_update_weights();
+			}
+			break;
+		case NETWORK_TYPE_SCORE:
+			{
+				ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->partial_network_histories[h_index];
+				ScoreNetwork* score_network = (ScoreNetwork*)score_network_history->network;
+				score_network->clear_update_weights();
+			}
+			break;
+		case NETWORK_TYPE_ACTION:
+			{
+				ActionNetworkHistory* action_network_history = (ActionNetworkHistory*)wrapper->partial_network_histories[h_index];
+				ActionNetwork* action_network = (ActionNetwork*)action_network_history->network;
+				action_network->clear_update_weights();
+			}
+			break;
+		case NETWORK_TYPE_INIT:
+			{
+				InitNetworkHistory* init_network_history = (InitNetworkHistory*)wrapper->partial_network_histories[h_index];
+				InitNetwork* init_network = (InitNetwork*)init_network_history->network;
+				init_network->clear_update_weights();
+			}
+			break;
+		}
+	}
+
+	return max_update_size;
+}
 
 void update_helper(ScopeHistory* scope_history) {
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
@@ -155,8 +275,14 @@ void update_helper(double target_val,
 			}
 		}
 
+		wrapper->solution->largest_max_updates.push_back(max_update_size);
+		sort(wrapper->solution->largest_max_updates.begin(), wrapper->solution->largest_max_updates.end());
+		if (wrapper->solution->largest_max_updates.size() > LARGEST_MAX_UPDATES_NUM_TRACK) {
+			wrapper->solution->largest_max_updates.erase(wrapper->solution->largest_max_updates.begin());
+		}
+
+		wrapper->solution->average_max_update = 0.99999*wrapper->solution->average_max_update + 0.00001*max_update_size;
 		if (max_update_size != 0.0) {
-			wrapper->solution->average_max_update = 0.99999*wrapper->solution->average_max_update + 0.00001*max_update_size;
 			double learning_rate = (0.3*SOLUTION_TARGET_MAX_UPDATE)/wrapper->solution->average_max_update;
 			if (learning_rate*max_update_size > SOLUTION_TARGET_MAX_UPDATE) {
 				learning_rate = SOLUTION_TARGET_MAX_UPDATE/max_update_size;
@@ -194,12 +320,12 @@ void update_helper(double target_val,
 				}
 			}
 		}
-
-		for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
-			delete wrapper->partial_network_histories[h_index];
-		}
-		wrapper->partial_network_histories.clear();
 	}
+
+	for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
+		delete wrapper->partial_network_histories[h_index];
+	}
+	wrapper->partial_network_histories.clear();
 
 	if (wrapper->run_type == RUN_TYPE_EXISTING) {
 		for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {

@@ -120,7 +120,8 @@ public:
 
 	void new_state_helper(SolutionWrapper* wrapper);
 
-	void add(ScoreNetwork* new_network,
+	void add(bool is_new_state,
+			 ScoreNetwork* new_network,
 			 SolutionWrapper* wrapper);
 
 	bool further_than(ExploreExperiment* other);

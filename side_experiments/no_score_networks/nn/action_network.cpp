@@ -196,6 +196,12 @@ void ActionNetwork::update_weights(double learning_rate) {
 	this->output->update_weights(learning_rate);
 }
 
+void ActionNetwork::clear_update_weights() {
+	this->hidden_1->clear_update_weights();
+	this->hidden_2->clear_update_weights();
+	this->output->clear_update_weights();
+}
+
 void ActionNetwork::add_states(int new_num_states) {
 	this->state_input->acti_vals.resize(new_num_states);
 	this->state_input->errors.resize(new_num_states);

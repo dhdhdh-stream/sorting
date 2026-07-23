@@ -65,9 +65,16 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 						|| partial_distribution(generator) != 0) {
 					is_activate[d_index] = true;
 
-					init_networks[d_index]->init_activate(this->new_dependencies_state_histories[rand_index][d_index],
-														  new_state,
-														  this->new_dependencies_obs_histories[rand_index][d_index]);
+					if (iter_index < NEW_STATE_PARTIAL_START_ITERS) {
+						init_networks[d_index]->init_activate(this->new_dependencies_state_histories[rand_index][d_index],
+															  new_state,
+															  this->new_dependencies_obs_histories[rand_index][d_index]);
+					} else {
+						init_networks[d_index]->init_activate_w_drop(
+							this->new_dependencies_state_histories[rand_index][d_index],
+							new_state,
+							this->new_dependencies_obs_histories[rand_index][d_index]);
+					}
 				}
 			}
 		}
@@ -322,7 +329,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 
 		this->existing_network->add_states(wrapper->solution->num_states);
 
-		add(new_network,
+		add(true,
+			new_network,
 			wrapper);
 
 		/**

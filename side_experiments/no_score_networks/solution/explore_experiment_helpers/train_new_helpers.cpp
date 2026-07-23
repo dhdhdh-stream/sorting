@@ -305,7 +305,8 @@ void ExploreExperiment::train_new_backprop(
 					#else
 					if (is_success) {
 					#endif /* MDEBUG */
-						add(new_network,
+						add(false,
+							new_network,
 							wrapper);
 
 						delete this;

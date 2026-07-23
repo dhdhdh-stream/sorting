@@ -1,3 +1,12 @@
+// - issues probably come from states adding onto each other in a way that previously can't happen
+//   - then the values get all crazy
+
+// - maybe still have fade for states
+//   - if something is absolutely needed, can reinforce
+//     - otherwise, should help keep value small?
+
+// - instead of fade, can also try keeping track of length, and always normalizing before use
+
 #include <chrono>
 #include <iostream>
 #include <map>

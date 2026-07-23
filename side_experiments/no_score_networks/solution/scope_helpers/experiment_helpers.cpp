@@ -29,8 +29,9 @@ void Scope::experiment_start_activate(vector<double>& obs,
 									  obs);
 
 	if (partial_distribution(generator) != 0) {
-		this->start_obs_network->activate(wrapper->partial_state,
-										  obs);
+		this->start_obs_network->activate_w_drop(
+			wrapper->partial_state,
+			obs);
 		if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 			ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(this->start_obs_network);
 			this->start_obs_network->save(obs_network_history);
@@ -46,8 +47,9 @@ void Scope::experiment_start_activate(vector<double>& obs,
 														 obs);
 
 			if (partial_distribution(generator) != 0) {
-				this->start_init_networks[n_index]->activate(wrapper->partial_state,
-															 obs);
+				this->start_init_networks[n_index]->activate_w_drop(
+					wrapper->partial_state,
+					obs);
 				if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 					InitNetworkHistory* init_network_history = new InitNetworkHistory(this->start_init_networks[n_index]);
 					this->start_init_networks[n_index]->save(init_network_history);

@@ -23,7 +23,8 @@
 
 using namespace std;
 
-void ExploreExperiment::add(ScoreNetwork* new_network,
+void ExploreExperiment::add(bool is_new_state,
+							ScoreNetwork* new_network,
 							SolutionWrapper* wrapper) {
 	delete wrapper->prev_solution;
 	wrapper->prev_solution = new Solution(wrapper->solution);
@@ -31,8 +32,15 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
+	ss << "average_max_update: " << wrapper->solution->average_max_update << "; ";
+	ss << "largest_max_updates:";
+	for (int i_index = 0; i_index < (int)wrapper->solution->largest_max_updates.size(); i_index++) {
+		ss << " " << wrapper->solution->largest_max_updates[i_index];
+	}
+	ss << "; ";
 	ss << "curr_num_resets: " << wrapper->solution->curr_num_resets << "; ";
 	ss << "Experiment" << "; ";
+	ss << "is_new_state: " << is_new_state << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "this->is_branch: " << this->is_branch << "; ";
@@ -455,4 +463,7 @@ void ExploreExperiment::add(ScoreNetwork* new_network,
 	 */
 
 	wrapper->iters_since_update = 0;
+
+	// temp
+	wrapper->solution->largest_max_updates.clear();
 }

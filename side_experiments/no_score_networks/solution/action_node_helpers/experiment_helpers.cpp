@@ -59,8 +59,8 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 								obs);
 
 	if (partial_distribution(generator) != 0) {
-		this->obs_network->activate(wrapper->partial_state,
-									obs);
+		this->obs_network->activate_w_drop(wrapper->partial_state,
+										   obs);
 		if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 			ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(this->obs_network);
 			this->obs_network->save(obs_network_history);
@@ -76,8 +76,9 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 												   obs);
 
 			if (partial_distribution(generator) != 0) {
-				this->init_networks[n_index]->activate(wrapper->partial_state,
-													   obs);
+				this->init_networks[n_index]->activate_w_drop(
+					wrapper->partial_state,
+					obs);
 				if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 					InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
 					this->init_networks[n_index]->save(init_network_history);

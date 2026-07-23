@@ -50,6 +50,9 @@ public:
 	void init_activate(std::vector<double>& state_vals,
 					   std::vector<double>& new_state_vals,
 					   std::vector<double>& obs_input_vals);
+	void init_activate_w_drop(std::vector<double>& state_vals,
+							  std::vector<double>& new_state_vals,
+							  std::vector<double>& obs_input_vals);
 	void init_backprop(std::vector<double>& new_state_errors);
 	void init_update(double& hidden_1_average_max_update,
 					 double& hidden_2_average_max_update,
@@ -57,6 +60,8 @@ public:
 
 	void activate(std::vector<double>& state_vals,
 				  std::vector<double>& obs_input_vals);
+	void activate_w_drop(std::vector<double>& state_vals,
+						 std::vector<double>& obs_input_vals);
 
 	void save(InitNetworkHistory* history);
 	void load(InitNetworkHistory* history);
@@ -65,6 +70,8 @@ public:
 
 	void get_max_update(double& max_update_size);
 	void update_weights(double learning_rate);
+
+	void clear_update_weights();
 
 	void add_states(int new_num_states);
 

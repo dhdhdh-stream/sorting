@@ -306,6 +306,16 @@ void Layer::update_weights(double learning_rate) {
 	}
 }
 
+void Layer::clear_update_weights() {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
+			this->weight_updates[n_index][l_index].setConstant(0.0);
+		}
+
+		this->constant_updates[n_index] = 0.0;
+	}
+}
+
 void Layer::save_weights(ofstream& output_file) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
