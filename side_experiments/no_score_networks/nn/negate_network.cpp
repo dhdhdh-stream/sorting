@@ -28,17 +28,7 @@ NegateNetwork::NegateNetwork(ifstream& input_file) {
 }
 
 void NegateNetwork::activate(vector<double>& state_vals) {
-	this->state_input = state_vals[this->state];
-
 	state_vals[this->state] = 0.0;
-}
-
-void NegateNetwork::save(NegateNetworkHistory* history) {
-	history->state_input_history = this->state_input;
-}
-
-void NegateNetwork::load(NegateNetworkHistory* history) {
-	this->state_input = history->state_input_history;
 }
 
 void NegateNetwork::backprop_through(vector<double>& state_errors) {

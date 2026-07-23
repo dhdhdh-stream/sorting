@@ -184,6 +184,12 @@ void ActionNetwork::backprop(vector<double>& state_errors) {
 	}
 }
 
+void ActionNetwork::get_max_update(double& max_update_size) {
+	this->hidden_1->get_max_update(max_update_size);
+	this->hidden_2->get_max_update(max_update_size);
+	this->output->get_max_update(max_update_size);
+}
+
 void ActionNetwork::update_weights(double learning_rate) {
 	this->hidden_1->update_weights(learning_rate);
 	this->hidden_2->update_weights(learning_rate);

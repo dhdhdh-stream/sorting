@@ -37,6 +37,8 @@ void ScopeNode::experiment_step(vector<double>& obs,
 
 void ScopeNode::experiment_exit_step(vector<double>& obs,
 									 SolutionWrapper* wrapper) {
+	uniform_int_distribution<int> partial_distribution(0, 9);
+
 	ScopeHistory* scope_history = wrapper->scope_histories[wrapper->scope_histories.size() - 2];
 
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
@@ -56,11 +58,10 @@ void ScopeNode::experiment_exit_step(vector<double>& obs,
 			this->init_networks[n_index]->activate(wrapper->state,
 												   obs);
 
-			if (wrapper->run_type != RUN_TYPE_EXPLORE) {
-				uniform_int_distribution<int> partial_distribution(0, 9);
-				if (partial_distribution(generator) != 0) {
-					this->init_networks[n_index]->activate(wrapper->partial_state,
-														   obs);
+			if (partial_distribution(generator) != 0) {
+				this->init_networks[n_index]->activate(wrapper->partial_state,
+													   obs);
+				if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 					InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
 					this->init_networks[n_index]->save(init_network_history);
 					wrapper->partial_network_histories.push_back(init_network_history);
@@ -70,7 +71,7 @@ void ScopeNode::experiment_exit_step(vector<double>& obs,
 	}
 
 	if (this->dependencies.size() > 0) {
-		history->state = wrapper->state;
+		history->state = wrapper->partial_state;
 		history->obs = obs;
 	}
 

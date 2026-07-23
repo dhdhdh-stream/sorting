@@ -35,6 +35,7 @@ public:
 	void backprop(double target_val,
 				  std::vector<double>& state_errors);
 
+	void get_max_update(double& max_update_size);
 	void update_weights(double learning_rate);
 
 	void add_states(int new_num_states);

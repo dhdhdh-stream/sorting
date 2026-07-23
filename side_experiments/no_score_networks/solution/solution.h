@@ -54,6 +54,10 @@ public:
 	ObsNetwork* generic_obs_network;
 
 	double average_max_update;
+	/**
+	 * - important to update all networks together
+	 *   - maybe because updating individually causes too much change and destroys naunce?
+	 */
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;

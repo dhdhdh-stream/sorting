@@ -19,6 +19,8 @@ void BranchNode::experiment_step(vector<double>& obs,
 								 int& action,
 								 bool& is_next,
 								 SolutionWrapper* wrapper) {
+	uniform_int_distribution<int> partial_distribution(0, 9);
+
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
 		if (match_dependency_helper(wrapper,
 									this->init_network_scope_contexts[n_index],
@@ -26,11 +28,10 @@ void BranchNode::experiment_step(vector<double>& obs,
 			this->init_networks[n_index]->activate(wrapper->state,
 												   obs);
 
-			if (wrapper->run_type != RUN_TYPE_EXPLORE) {
-				uniform_int_distribution<int> partial_distribution(0, 9);
-				if (partial_distribution(generator) != 0) {
-					this->init_networks[n_index]->activate(wrapper->partial_state,
-														   obs);
+			if (partial_distribution(generator) != 0) {
+				this->init_networks[n_index]->activate(wrapper->partial_state,
+													   obs);
+				if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 					InitNetworkHistory* init_network_history = new InitNetworkHistory(this->init_networks[n_index]);
 					this->init_networks[n_index]->save(init_network_history);
 					wrapper->partial_network_histories.push_back(init_network_history);
@@ -55,7 +56,7 @@ void BranchNode::experiment_step(vector<double>& obs,
 		scope_history->node_histories[this->id] = history;
 
 		if (this->dependencies.size() > 0) {
-			history->state = wrapper->state;
+			history->state = wrapper->partial_state;
 			history->obs = obs;
 		}
 
