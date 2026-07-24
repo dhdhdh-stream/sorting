@@ -53,14 +53,6 @@ public:
 	std::vector<ActionNetwork*> generic_action_networks;
 	ObsNetwork* generic_obs_network;
 
-	double average_max_update;
-	/**
-	 * - important to update all networks together
-	 *   - maybe because updating individually causes too much change and destroys naunce?
-	 */
-	// temp
-	std::vector<double> largest_max_updates;
-
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
 

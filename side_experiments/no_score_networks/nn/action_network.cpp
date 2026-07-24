@@ -34,10 +34,13 @@ ActionNetwork::ActionNetwork(int num_states) {
 	this->output->acti_vals.resize(num_states);
 	this->output->errors.resize(num_states);
 	this->output->errors.setConstant(0.0);
-	this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(0.0);
+
+	this->average_max_update = 0.0;
+	this->epoch_iter = 0;
+	this->last_update_iter = -1;
 }
 
 ActionNetwork::ActionNetwork(ActionNetwork* original) {
@@ -69,11 +72,14 @@ ActionNetwork::ActionNetwork(ActionNetwork* original) {
 	this->output->acti_vals.resize(original->output->acti_vals.size());
 	this->output->errors.resize(original->output->errors.size());
 	this->output->errors.setConstant(0.0);
-	this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(0.0);
 	this->output->copy_weights_from(original->output);
+
+	this->average_max_update = original->average_max_update;
+	this->epoch_iter = 0;
+	this->last_update_iter = -1;
 }
 
 ActionNetwork::ActionNetwork(ifstream& input_file) {
@@ -112,7 +118,6 @@ ActionNetwork::ActionNetwork(ifstream& input_file) {
 	this->output->acti_vals.resize(num_states);
 	this->output->errors.resize(num_states);
 	this->output->errors.setConstant(0.0);
-	this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(0.0);
@@ -120,6 +125,12 @@ ActionNetwork::ActionNetwork(ifstream& input_file) {
 	this->hidden_1->load_weights_from(input_file);
 	this->hidden_2->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
+
+	string average_max_update_line;
+	getline(input_file, average_max_update_line);
+	this->average_max_update = stod(average_max_update_line);
+	this->epoch_iter = 0;
+	this->last_update_iter = -1;
 }
 
 ActionNetwork::~ActionNetwork() {
@@ -129,58 +140,63 @@ ActionNetwork::~ActionNetwork() {
 	delete this->output;
 }
 
-void ActionNetwork::activate(vector<double>& state_vals) {
-	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
-		this->state_input->acti_vals(s_index) = state_vals[s_index];
-	}
+void ActionNetwork::activate(Eigen::VectorXf& state_vals) {
+	this->state_input->acti_vals = state_vals;
 
 	this->hidden_1->activate();
 	this->hidden_2->activate();
 	this->output->activate();
 
-	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
-		state_vals[s_index] += this->output->acti_vals(s_index);
-	}
+	state_vals += this->output->acti_vals;
 }
 
 void ActionNetwork::save(ActionNetworkHistory* history) {
-	history->state_input_history = vector<double>(this->state_input->acti_vals.size());
-	for (int s_index = 0; s_index < (int)this->state_input->acti_vals.size(); s_index++) {
-		history->state_input_history[s_index] = this->state_input->acti_vals(s_index);
-	}
-	history->hidden_1_history = vector<double>(this->hidden_1->acti_vals.size());
-	for (int h_index = 0; h_index < (int)this->hidden_1->acti_vals.size(); h_index++) {
-		history->hidden_1_history[h_index] = this->hidden_1->acti_vals(h_index);
-	}
-	history->hidden_2_history = vector<double>(this->hidden_2->acti_vals.size());
-	for (int h_index = 0; h_index < (int)this->hidden_2->acti_vals.size(); h_index++) {
-		history->hidden_2_history[h_index] = this->hidden_2->acti_vals(h_index);
-	}
+	history->state_input_history = this->state_input->acti_vals;
+	history->hidden_1_history = this->hidden_1->acti_vals;
+	history->hidden_2_history = this->hidden_2->acti_vals;
+	history->output_history = this->output->acti_vals;
 }
 
 void ActionNetwork::load(ActionNetworkHistory* history) {
-	for (int s_index = 0; s_index < (int)this->state_input->acti_vals.size(); s_index++) {
-		this->state_input->acti_vals(s_index) = history->state_input_history[s_index];
-	}
-	for (int h_index = 0; h_index < (int)this->hidden_1->acti_vals.size(); h_index++) {
-		this->hidden_1->acti_vals(h_index) = history->hidden_1_history[h_index];
-	}
-	for (int h_index = 0; h_index < (int)this->hidden_2->acti_vals.size(); h_index++) {
-		this->hidden_2->acti_vals(h_index) = history->hidden_2_history[h_index];
-	}
+	this->state_input->acti_vals = history->state_input_history;
+	this->hidden_1->acti_vals = history->hidden_1_history;
+	this->hidden_2->acti_vals = history->hidden_2_history;
+	this->output->acti_vals = history->output_history;
 }
 
-void ActionNetwork::backprop(vector<double>& state_errors) {
-	for (int s_index = 0; s_index < (int)state_errors.size(); s_index++) {
-		this->output->errors(s_index) = state_errors[s_index];
-	}
+void ActionNetwork::backprop(Eigen::VectorXf& state_errors) {
+	this->output->errors = state_errors;
+
+	this->output->errors -= (this->state_input->acti_vals + this->output->acti_vals)
+		.cwiseProduct(this->output->acti_vals.cwiseAbs()) * STATE_NORM_CONSTANT;
+
 	this->output->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
 
-	for (int s_index = 0; s_index < (int)state_errors.size(); s_index++) {
-		state_errors[s_index] += this->state_input->errors(s_index);
-		this->state_input->errors(s_index) = 0.0;
+	state_errors += this->state_input->errors;
+	this->state_input->errors.setConstant(0.0);
+}
+
+void ActionNetwork::update() {
+	this->epoch_iter++;
+	if (this->epoch_iter == EPOCH_SIZE) {
+		double max_update = 0.0;
+		this->hidden_1->get_max_update(max_update);
+		this->hidden_2->get_max_update(max_update);
+		this->output->get_max_update(max_update);
+		this->average_max_update = 0.999*this->average_max_update+0.001*max_update;
+		if (max_update > 0.0) {
+			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->average_max_update;
+			if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
+				learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+			}
+			this->hidden_1->update_weights(learning_rate);
+			this->hidden_2->update_weights(learning_rate);
+			this->output->update_weights(learning_rate);
+		}
+
+		this->epoch_iter = 0;
 	}
 }
 
@@ -188,18 +204,6 @@ void ActionNetwork::get_max_update(double& max_update_size) {
 	this->hidden_1->get_max_update(max_update_size);
 	this->hidden_2->get_max_update(max_update_size);
 	this->output->get_max_update(max_update_size);
-}
-
-void ActionNetwork::update_weights(double learning_rate) {
-	this->hidden_1->update_weights(learning_rate);
-	this->hidden_2->update_weights(learning_rate);
-	this->output->update_weights(learning_rate);
-}
-
-void ActionNetwork::clear_update_weights() {
-	this->hidden_1->clear_update_weights();
-	this->hidden_2->clear_update_weights();
-	this->output->clear_update_weights();
 }
 
 void ActionNetwork::add_states(int new_num_states) {
@@ -225,6 +229,8 @@ void ActionNetwork::save(ofstream& output_file) {
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);
 	this->output->save_weights(output_file);
+
+	output_file << this->average_max_update << endl;
 }
 
 ActionNetworkHistory::ActionNetworkHistory(ActionNetwork* network) {

@@ -10,6 +10,8 @@
 #include <set>
 #include <vector>
 
+#include <Eigen/Dense>
+
 #include "abstract_experiment.h"
 
 class AbstractNode;
@@ -45,15 +47,15 @@ public:
 	std::vector<Scope*> best_scopes;
 
 	std::vector<std::vector<bool>> existing_dependencies_is_hit_histories;
-	std::vector<std::vector<std::vector<double>>> existing_dependencies_state_histories;
+	std::vector<std::vector<Eigen::VectorXf>> existing_dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> existing_dependencies_obs_histories;
-	std::vector<std::vector<double>> existing_state_histories;
+	std::vector<Eigen::VectorXf> existing_state_histories;
 	std::vector<double> existing_target_val_histories;
 
 	std::vector<std::vector<bool>> new_dependencies_is_hit_histories;
-	std::vector<std::vector<std::vector<double>>> new_dependencies_state_histories;
+	std::vector<std::vector<Eigen::VectorXf>> new_dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> new_dependencies_obs_histories;
-	std::vector<std::vector<double>> new_state_histories;
+	std::vector<Eigen::VectorXf> new_state_histories;
 	std::vector<double> new_target_val_histories;
 
 	ExploreExperiment(Scope* scope_context,
@@ -138,9 +140,9 @@ public:
 	std::vector<Scope*> curr_scopes;
 
 	std::vector<std::vector<bool>> dependencies_is_hit_histories;
-	std::vector<std::vector<std::vector<double>>> dependencies_state_histories;
+	std::vector<std::vector<Eigen::VectorXf>> dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> dependencies_obs_histories;
-	std::vector<std::vector<double>> state_histories;
+	std::vector<Eigen::VectorXf> state_histories;
 
 	ExploreExperimentHistory(ExploreExperiment* experiment);
 };
@@ -148,8 +150,6 @@ public:
 class ExploreExperimentState : public AbstractExperimentState {
 public:
 	int step_index;
-
-	std::vector<double> new_state;
 
 	ExploreExperimentState(ExploreExperiment* experiment);
 };

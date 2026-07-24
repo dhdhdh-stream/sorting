@@ -27,11 +27,11 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 		this->num_instances_until_target--;
 		if (this->num_instances_until_target <= 0) {
 			vector<bool> curr_dependencies_is_hit(this->dependencies.size());
-			vector<vector<double>> curr_dependencies_state(this->dependencies.size());
+			vector<Eigen::VectorXf> curr_dependencies_state(this->dependencies.size());
 			vector<vector<double>> curr_dependencies_obs(this->dependencies.size());
 			for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 				bool is_hit;
-				vector<double> state;
+				Eigen::VectorXf state;
 				vector<double> obs;
 				fetch_dependency_helper(wrapper->scope_histories.back(),
 										this->dependencies[d_index],

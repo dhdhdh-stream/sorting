@@ -6,6 +6,8 @@
 #include <map>
 #include <vector>
 
+#include <Eigen/Dense>
+
 class AbstractExperiment;
 class AbstractNode;
 class AbstractNodeHistory;
@@ -66,10 +68,7 @@ class ScopeHistory {
 public:
 	Scope* scope;
 
-	std::vector<double> state;
-	/**
-	 * - after start
-	 */
+	Eigen::VectorXf state;
 	std::vector<double> obs;
 
 	std::map<int, AbstractNodeHistory*> node_histories;

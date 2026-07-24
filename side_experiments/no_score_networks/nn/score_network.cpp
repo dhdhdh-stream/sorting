@@ -38,6 +38,10 @@ ScoreNetwork::ScoreNetwork(int num_states) {
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
+
+	this->average_max_update = 0.0;
+	this->epoch_iter = 0;
+	this->last_update_iter = -1;
 }
 
 ScoreNetwork::ScoreNetwork(ScoreNetwork* original) {
@@ -74,6 +78,10 @@ ScoreNetwork::ScoreNetwork(ScoreNetwork* original) {
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 	this->output->copy_weights_from(original->output);
+
+	this->average_max_update = original->average_max_update;
+	this->epoch_iter = 0;
+	this->last_update_iter = -1;
 }
 
 ScoreNetwork::ScoreNetwork(ifstream& input_file) {
@@ -120,6 +128,12 @@ ScoreNetwork::ScoreNetwork(ifstream& input_file) {
 	this->hidden_1->load_weights_from(input_file);
 	this->hidden_2->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
+
+	string average_max_update_line;
+	getline(input_file, average_max_update_line);
+	this->average_max_update = stod(average_max_update_line);
+	this->epoch_iter = 0;
+	this->last_update_iter = -1;
 }
 
 ScoreNetwork::~ScoreNetwork() {
@@ -129,43 +143,12 @@ ScoreNetwork::~ScoreNetwork() {
 	delete this->output;
 }
 
-void ScoreNetwork::activate(vector<double>& state_vals) {
-	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
-		this->state_input->acti_vals(s_index) = state_vals[s_index];
-	}
+void ScoreNetwork::activate(Eigen::VectorXf& state_vals) {
+	this->state_input->acti_vals = state_vals;
 
 	this->hidden_1->activate();
 	this->hidden_2->activate();
 	this->output->activate();
-}
-
-void ScoreNetwork::save(ScoreNetworkHistory* history) {
-	history->state_input_history = vector<double>(this->state_input->acti_vals.size());
-	for (int s_index = 0; s_index < (int)this->state_input->acti_vals.size(); s_index++) {
-		history->state_input_history[s_index] = this->state_input->acti_vals(s_index);
-	}
-	history->hidden_1_history = vector<double>(this->hidden_1->acti_vals.size());
-	for (int h_index = 0; h_index < (int)this->hidden_1->acti_vals.size(); h_index++) {
-		history->hidden_1_history[h_index] = this->hidden_1->acti_vals(h_index);
-	}
-	history->hidden_2_history = vector<double>(this->hidden_2->acti_vals.size());
-	for (int h_index = 0; h_index < (int)this->hidden_2->acti_vals.size(); h_index++) {
-		history->hidden_2_history[h_index] = this->hidden_2->acti_vals(h_index);
-	}
-	history->output_history = this->output->acti_vals(0);
-}
-
-void ScoreNetwork::load(ScoreNetworkHistory* history) {
-	for (int s_index = 0; s_index < (int)this->state_input->acti_vals.size(); s_index++) {
-		this->state_input->acti_vals(s_index) = history->state_input_history[s_index];
-	}
-	for (int h_index = 0; h_index < (int)this->hidden_1->acti_vals.size(); h_index++) {
-		this->hidden_1->acti_vals(h_index) = history->hidden_1_history[h_index];
-	}
-	for (int h_index = 0; h_index < (int)this->hidden_2->acti_vals.size(); h_index++) {
-		this->hidden_2->acti_vals(h_index) = history->hidden_2_history[h_index];
-	}
-	this->output->acti_vals(0) = history->output_history;
 }
 
 void ScoreNetwork::init_backprop(double target_val) {
@@ -176,6 +159,34 @@ void ScoreNetwork::init_backprop(double target_val) {
 	this->hidden_1->backprop();
 }
 
+void ScoreNetwork::init_activate(Eigen::VectorXf& state_vals,
+								 std::vector<double>& new_state_vals) {
+	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
+		this->state_input->acti_vals(s_index) = state_vals(s_index);
+	}
+	for (int s_index = 0; s_index < (int)new_state_vals.size(); s_index++) {
+		this->state_input->acti_vals(state_vals.size() + s_index) = new_state_vals[s_index];
+	}
+
+	this->hidden_1->activate();
+	this->hidden_2->activate();
+	this->output->activate();
+}
+
+void ScoreNetwork::init_backprop(double target_val,
+								 std::vector<double>& new_state_errors) {
+	this->output->errors(0) = target_val - this->output->acti_vals(0);
+
+	this->output->backprop();
+	this->hidden_2->backprop();
+	this->hidden_1->backprop();
+
+	for (int s_index = 0; s_index < (int)new_state_errors.size(); s_index++) {
+		new_state_errors[new_state_errors.size()-1 - s_index] += this->state_input->errors(this->state_input->errors.size()-1 - s_index);
+		this->state_input->errors(this->state_input->errors.size()-1 - s_index) = 0.0;
+	}
+}
+
 void ScoreNetwork::init_update(double& hidden_1_average_max_update,
 							   double& hidden_2_average_max_update,
 							   double& output_average_max_update) {
@@ -183,9 +194,9 @@ void ScoreNetwork::init_update(double& hidden_1_average_max_update,
 	this->hidden_1->get_max_update(hidden_1_max_update);
 	hidden_1_average_max_update = 0.999*hidden_1_average_max_update+0.001*hidden_1_max_update;
 	if (hidden_1_max_update > 0.0) {
-		double hidden_1_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/hidden_1_average_max_update;
-		if (hidden_1_learning_rate*hidden_1_max_update > NETWORK_TARGET_MAX_UPDATE) {
-			hidden_1_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_1_max_update;
+		double hidden_1_learning_rate = (0.3*NETWORK_INIT_TARGET_MAX_UPDATE)/hidden_1_average_max_update;
+		if (hidden_1_learning_rate*hidden_1_max_update > NETWORK_INIT_TARGET_MAX_UPDATE) {
+			hidden_1_learning_rate = NETWORK_INIT_TARGET_MAX_UPDATE/hidden_1_max_update;
 		}
 		this->hidden_1->update_weights(hidden_1_learning_rate);
 	}
@@ -194,9 +205,9 @@ void ScoreNetwork::init_update(double& hidden_1_average_max_update,
 	this->hidden_2->get_max_update(hidden_2_max_update);
 	hidden_2_average_max_update = 0.999*hidden_2_average_max_update+0.001*hidden_2_max_update;
 	if (hidden_2_max_update > 0.0) {
-		double hidden_2_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/hidden_2_average_max_update;
-		if (hidden_2_learning_rate*hidden_2_max_update > NETWORK_TARGET_MAX_UPDATE) {
-			hidden_2_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_2_max_update;
+		double hidden_2_learning_rate = (0.3*NETWORK_INIT_TARGET_MAX_UPDATE)/hidden_2_average_max_update;
+		if (hidden_2_learning_rate*hidden_2_max_update > NETWORK_INIT_TARGET_MAX_UPDATE) {
+			hidden_2_learning_rate = NETWORK_INIT_TARGET_MAX_UPDATE/hidden_2_max_update;
 		}
 		this->hidden_2->update_weights(hidden_2_learning_rate);
 	}
@@ -205,25 +216,59 @@ void ScoreNetwork::init_update(double& hidden_1_average_max_update,
 	this->output->get_max_update(output_max_update);
 	output_average_max_update = 0.999*output_average_max_update+0.001*output_max_update;
 	if (output_max_update > 0.0) {
-		double output_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/output_average_max_update;
-		if (output_learning_rate*output_max_update > NETWORK_TARGET_MAX_UPDATE) {
-			output_learning_rate = NETWORK_TARGET_MAX_UPDATE/output_max_update;
+		double output_learning_rate = (0.3*NETWORK_INIT_TARGET_MAX_UPDATE)/output_average_max_update;
+		if (output_learning_rate*output_max_update > NETWORK_INIT_TARGET_MAX_UPDATE) {
+			output_learning_rate = NETWORK_INIT_TARGET_MAX_UPDATE/output_max_update;
 		}
 		this->output->update_weights(output_learning_rate);
 	}
 }
 
+void ScoreNetwork::save(ScoreNetworkHistory* history) {
+	history->state_input_history = this->state_input->acti_vals;
+	history->hidden_1_history = this->hidden_1->acti_vals;
+	history->hidden_2_history = this->hidden_2->acti_vals;
+	history->output_history = this->output->acti_vals(0);
+}
+
+void ScoreNetwork::load(ScoreNetworkHistory* history) {
+	this->state_input->acti_vals = history->state_input_history;
+	this->hidden_1->acti_vals = history->hidden_1_history;
+	this->hidden_2->acti_vals = history->hidden_2_history;
+	this->output->acti_vals(0) = history->output_history;
+}
+
 void ScoreNetwork::backprop(double target_val,
-							vector<double>& state_errors) {
+							Eigen::VectorXf& state_errors) {
 	this->output->errors(0) = target_val - this->output->acti_vals(0);
 
 	this->output->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
 
-	for (int s_index = 0; s_index < (int)state_errors.size(); s_index++) {
-		state_errors[s_index] += this->state_input->errors(s_index);
-		this->state_input->errors(s_index) = 0.0;
+	state_errors += this->state_input->errors;
+	this->state_input->errors.setConstant(0.0);
+}
+
+void ScoreNetwork::update() {
+	this->epoch_iter++;
+	if (this->epoch_iter == EPOCH_SIZE) {
+		double max_update = 0.0;
+		this->hidden_1->get_max_update(max_update);
+		this->hidden_2->get_max_update(max_update);
+		this->output->get_max_update(max_update);
+		this->average_max_update = 0.999*this->average_max_update+0.001*max_update;
+		if (max_update > 0.0) {
+			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->average_max_update;
+			if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
+				learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+			}
+			this->hidden_1->update_weights(learning_rate);
+			this->hidden_2->update_weights(learning_rate);
+			this->output->update_weights(learning_rate);
+		}
+
+		this->epoch_iter = 0;
 	}
 }
 
@@ -231,18 +276,6 @@ void ScoreNetwork::get_max_update(double& max_update_size) {
 	this->hidden_1->get_max_update(max_update_size);
 	this->hidden_2->get_max_update(max_update_size);
 	this->output->get_max_update(max_update_size);
-}
-
-void ScoreNetwork::update_weights(double learning_rate) {
-	this->hidden_1->update_weights(learning_rate);
-	this->hidden_2->update_weights(learning_rate);
-	this->output->update_weights(learning_rate);
-}
-
-void ScoreNetwork::clear_update_weights() {
-	this->hidden_1->clear_update_weights();
-	this->hidden_2->clear_update_weights();
-	this->output->clear_update_weights();
 }
 
 void ScoreNetwork::add_states(int new_num_states) {
@@ -264,6 +297,8 @@ void ScoreNetwork::save(ofstream& output_file) {
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);
 	this->output->save_weights(output_file);
+
+	output_file << this->average_max_update << endl;
 }
 
 ScoreNetworkHistory::ScoreNetworkHistory(ScoreNetwork* network) {

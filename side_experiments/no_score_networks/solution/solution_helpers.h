@@ -6,6 +6,8 @@
 #include <utility>
 #include <vector>
 
+#include <Eigen/Dense>
+
 class AbstractExperiment;
 class AbstractNode;
 class BranchExperiment;
@@ -47,7 +49,7 @@ void fetch_dependency_helper(ScopeHistory* scope_history,
 							 std::vector<int>& dependency,
 							 int l_index,
 							 bool& is_hit,
-							 std::vector<double>& state,
+							 Eigen::VectorXf& state,
 							 std::vector<double>& obs);
 void add_dependency_helper(Scope* scope,
 						   std::vector<Scope*>& init_network_scope_context,

@@ -17,28 +17,40 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
+	double average_max_update;
+	int epoch_iter;
+	int last_update_iter;
+
 	ScoreNetwork(int num_states);
 	ScoreNetwork(ScoreNetwork* original);
 	ScoreNetwork(std::ifstream& input_file);
 	~ScoreNetwork();
 
-	void activate(std::vector<double>& state_vals);
-
-	void save(ScoreNetworkHistory* history);
-	void load(ScoreNetworkHistory* history);
+	void activate(Eigen::VectorXf& state_vals);
 
 	void init_backprop(double target_val);
+
+	void init_activate(Eigen::VectorXf& state_vals,
+					   std::vector<double>& new_state_vals);
+	void init_backprop(double target_val,
+					   std::vector<double>& new_state_errors);
+
 	void init_update(double& hidden_1_average_max_update,
 					 double& hidden_2_average_max_update,
 					 double& output_average_max_update);
 
+	void save(ScoreNetworkHistory* history);
+	void load(ScoreNetworkHistory* history);
+
 	void backprop(double target_val,
-				  std::vector<double>& state_errors);
+				  Eigen::VectorXf& state_errors);
 
+	void update();
+
+	/**
+	 * - for debug
+	 */
 	void get_max_update(double& max_update_size);
-	void update_weights(double learning_rate);
-
-	void clear_update_weights();
 
 	void add_states(int new_num_states);
 
@@ -47,9 +59,9 @@ public:
 
 class ScoreNetworkHistory : public AbstractNetworkHistory {
 public:
-	std::vector<double> state_input_history;
-	std::vector<double> hidden_1_history;
-	std::vector<double> hidden_2_history;
+	Eigen::VectorXf state_input_history;
+	Eigen::VectorXf hidden_1_history;
+	Eigen::VectorXf hidden_2_history;
 	double output_history;
 
 	ScoreNetworkHistory(ScoreNetwork* network);

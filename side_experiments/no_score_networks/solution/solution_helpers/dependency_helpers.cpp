@@ -161,7 +161,7 @@ void fetch_dependency_helper(ScopeHistory* scope_history,
 							 vector<int>& dependency,
 							 int l_index,
 							 bool& is_hit,
-							 vector<double>& state,
+							 Eigen::VectorXf& state,
 							 vector<double>& obs) {
 	if (dependency[l_index] == -1) {
 		is_hit = true;

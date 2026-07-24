@@ -13,7 +13,8 @@ using namespace std;
 void Scope::start_activate(vector<double>& obs,
 						   SolutionWrapper* wrapper) {
 	for (int n_index = 0; n_index < (int)this->start_negate_networks.size(); n_index++) {
-		this->start_negate_networks[n_index]->activate(wrapper->state);
+		int state_index = this->start_negate_networks[n_index]->state_index;
+		wrapper->state(state_index) = 0.0;
 	}
 
 	this->start_obs_network->activate(wrapper->state,

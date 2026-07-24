@@ -4,6 +4,8 @@
 #include <fstream>
 #include <vector>
 
+#include <Eigen/Dense>
+
 class AbstractExperiment;
 class InitNetwork;
 class Scope;
@@ -56,7 +58,7 @@ public:
 	AbstractNode* node;
 	int index;
 
-	std::vector<double> state;
+	Eigen::VectorXf state;
 	std::vector<double> obs;
 
 	virtual ~AbstractNodeHistory() {};

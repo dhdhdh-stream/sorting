@@ -7,36 +7,28 @@
 
 using namespace std;
 
-NegateNetwork::NegateNetwork(int state) {
+NegateNetwork::NegateNetwork(int state_index) {
 	this->type = NETWORK_TYPE_NEGATE;
 
-	this->state = state;
+	this->state_index = state_index;
 }
 
 NegateNetwork::NegateNetwork(NegateNetwork* original) {
 	this->type = NETWORK_TYPE_NEGATE;
 
-	this->state = original->state;
+	this->state_index = original->state_index;
 }
 
 NegateNetwork::NegateNetwork(ifstream& input_file) {
 	this->type = NETWORK_TYPE_NEGATE;
 
-	string state_line;
-	getline(input_file, state_line);
-	this->state = stoi(state_line);
-}
-
-void NegateNetwork::activate(vector<double>& state_vals) {
-	state_vals[this->state] = 0.0;
-}
-
-void NegateNetwork::backprop_through(vector<double>& state_errors) {
-	state_errors[this->state] = 0.0;
+	string state_index_line;
+	getline(input_file, state_index_line);
+	this->state_index = stoi(state_index_line);
 }
 
 void NegateNetwork::save(ofstream& output_file) {
-	output_file << this->state << endl;
+	output_file << this->state_index << endl;
 }
 
 NegateNetworkHistory::NegateNetworkHistory(NegateNetwork* network) {

@@ -61,8 +61,6 @@ Solution::Solution(Solution* original) {
 	}
 	this->generic_obs_network = new ObsNetwork(original->generic_obs_network);
 
-	this->average_max_update = original->average_max_update;
-
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
 }
@@ -127,8 +125,6 @@ void Solution::init(ProblemType* problem_type) {
 	}
 	this->generic_obs_network = new ObsNetwork(this->num_states,
 											   this->num_obs);
-
-	this->average_max_update = 0.0;
 }
 
 void Solution::load(ifstream& input_file) {
@@ -186,10 +182,6 @@ void Solution::load(ifstream& input_file) {
 		this->generic_action_networks.push_back(new ActionNetwork(input_file));
 	}
 	this->generic_obs_network = new ObsNetwork(input_file);
-
-	string average_max_update_line;
-	getline(input_file, average_max_update_line);
-	this->average_max_update = stod(average_max_update_line);
 
 	string history_size_line;
 	getline(input_file, history_size_line);
@@ -286,8 +278,6 @@ void Solution::save(ofstream& output_file) {
 		this->generic_action_networks[a_index]->save(output_file);
 	}
 	this->generic_obs_network->save(output_file);
-
-	output_file << this->average_max_update << endl;
 
 	output_file << this->improvement_history.size() << endl;
 	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {

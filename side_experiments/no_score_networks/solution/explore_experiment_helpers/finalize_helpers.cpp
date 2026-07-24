@@ -32,12 +32,6 @@ void ExploreExperiment::add(bool is_new_state,
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
-	ss << "average_max_update: " << wrapper->solution->average_max_update << "; ";
-	ss << "largest_max_updates:";
-	for (int i_index = 0; i_index < (int)wrapper->solution->largest_max_updates.size(); i_index++) {
-		ss << " " << wrapper->solution->largest_max_updates[i_index];
-	}
-	ss << "; ";
 	ss << "curr_num_resets: " << wrapper->solution->curr_num_resets << "; ";
 	ss << "Experiment" << "; ";
 	ss << "is_new_state: " << is_new_state << "; ";
@@ -463,7 +457,4 @@ void ExploreExperiment::add(bool is_new_state,
 	 */
 
 	wrapper->iters_since_update = 0;
-
-	// temp
-	wrapper->solution->largest_max_updates.clear();
 }

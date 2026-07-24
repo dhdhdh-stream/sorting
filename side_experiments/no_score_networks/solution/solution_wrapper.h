@@ -7,6 +7,8 @@
 #include <utility>
 #include <vector>
 
+#include <Eigen/Dense>
+
 class AbstractExperiment;
 class AbstractExperimentHistory;
 class AbstractExperimentState;
@@ -42,8 +44,8 @@ public:
 	/**
 	 * - run variables
 	 */
-	std::vector<double> state;
-	std::vector<double> partial_state;
+	Eigen::VectorXf state;
+	Eigen::VectorXf partial_state;
 
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<AbstractNode*> node_context;

@@ -18,7 +18,8 @@ void SolutionWrapper::init(vector<double> obs) {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	this->state = vector<double>(this->solution->num_states, 0.0);
+	this->state.resize(this->solution->num_states);
+	this->state.setConstant(0.0);
 
 	this->num_actions = 1;
 

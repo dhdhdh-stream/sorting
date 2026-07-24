@@ -16,15 +16,11 @@
 class NegateNetworkHistory;
 class NegateNetwork : public AbstractNetwork {
 public:
-	int state;
+	int state_index;
 
-	NegateNetwork(int state);
+	NegateNetwork(int state_index);
 	NegateNetwork(NegateNetwork* original);
 	NegateNetwork(std::ifstream& input_file);
-
-	void activate(std::vector<double>& state_vals);
-
-	void backprop_through(std::vector<double>& state_errors);
 
 	void save(std::ofstream& output_file);
 };
