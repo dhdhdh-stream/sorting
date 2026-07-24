@@ -146,6 +146,8 @@ void ActionNetwork::activate(Eigen::VectorXf& state_norms,
 	this->output->activate();
 
 	state_vals += this->output->acti_vals;
+
+	this->end_state = state_vals;
 }
 
 void ActionNetwork::save(ActionNetworkHistory* history) {
@@ -154,6 +156,8 @@ void ActionNetwork::save(ActionNetworkHistory* history) {
 	history->hidden_1_history = this->hidden_1->acti_vals;
 	history->hidden_2_history = this->hidden_2->acti_vals;
 	history->output_history = this->output->acti_vals;
+
+	history->end_state_history = this->end_state;
 }
 
 void ActionNetwork::load(ActionNetworkHistory* history) {
@@ -162,10 +166,16 @@ void ActionNetwork::load(ActionNetworkHistory* history) {
 	this->hidden_1->acti_vals = history->hidden_1_history;
 	this->hidden_2->acti_vals = history->hidden_2_history;
 	this->output->acti_vals = history->output_history;
+
+	this->end_state = history->end_state_history;
 }
 
 void ActionNetwork::backprop(Eigen::VectorXf& state_errors) {
 	this->output->errors = state_errors;
+
+	this->output->errors -= this->end_state
+		.cwiseProduct(this->output->acti_vals.cwiseAbs()) * STATE_NORM_CONSTANT;
+
 	this->output->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();

@@ -198,6 +198,11 @@ void InitNetwork::init_activate(Eigen::VectorXf& state_norms,
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
 		new_state_vals[i_index] += this->output->acti_vals(i_index);
 	}
+
+	this->end_state.resize(this->init_states.size());
+	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
+		this->end_state(i_index) = new_state_vals[i_index];
+	}
 }
 
 void InitNetwork::init_activate_w_drop(Eigen::VectorXf& state_norms,
@@ -228,6 +233,11 @@ void InitNetwork::init_activate_w_drop(Eigen::VectorXf& state_norms,
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
 		new_state_vals[i_index] += this->output->acti_vals(i_index);
 	}
+
+	this->end_state.resize(this->init_states.size());
+	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
+		this->end_state(i_index) = new_state_vals[i_index];
+	}
 }
 
 void InitNetwork::init_backprop(int new_state_norm,
@@ -235,6 +245,12 @@ void InitNetwork::init_backprop(int new_state_norm,
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
 		this->output->errors(i_index) = new_state_errors[i_index];
 	}
+
+	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
+		this->output->errors(i_index) -= this->end_state(i_index)
+			* abs(this->output->acti_vals(i_index)) * STATE_NORM_CONSTANT;
+	}
+
 	this->output->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
@@ -300,6 +316,8 @@ void InitNetwork::activate(Eigen::VectorXf& state_norms,
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
 		state_vals(this->init_states[i_index]) += this->output->acti_vals(i_index);
 	}
+
+	this->end_state = state_vals;
 }
 
 void InitNetwork::activate_w_drop(Eigen::VectorXf& state_norms,
@@ -325,6 +343,8 @@ void InitNetwork::activate_w_drop(Eigen::VectorXf& state_norms,
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
 		state_vals(this->init_states[i_index]) += this->output->acti_vals(i_index);
 	}
+
+	this->end_state = state_vals;
 }
 
 void InitNetwork::save(InitNetworkHistory* history) {
@@ -334,6 +354,8 @@ void InitNetwork::save(InitNetworkHistory* history) {
 	history->hidden_1_history = this->hidden_1->acti_vals;
 	history->hidden_2_history = this->hidden_2->acti_vals;
 	history->output_history = this->output->acti_vals;
+
+	history->end_state_history = this->end_state;
 }
 
 void InitNetwork::load(InitNetworkHistory* history) {
@@ -343,12 +365,20 @@ void InitNetwork::load(InitNetworkHistory* history) {
 	this->hidden_1->acti_vals = history->hidden_1_history;
 	this->hidden_2->acti_vals = history->hidden_2_history;
 	this->output->acti_vals = history->output_history;
+
+	this->end_state = history->end_state_history;
 }
 
 void InitNetwork::backprop(Eigen::VectorXf& state_errors) {
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
 		this->output->errors(i_index) = state_errors(this->init_states[i_index]);
 	}
+
+	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
+		this->output->errors(i_index) -= this->end_state(this->init_states[i_index])
+			* abs(this->output->acti_vals(i_index)) * STATE_NORM_CONSTANT;
+	}
+
 	this->output->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();

@@ -18,6 +18,8 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
+	Eigen::VectorXf end_state;
+
 	int last_get_max_update_iter;
 	int last_update_weights_iter;
 
@@ -51,6 +53,8 @@ public:
 	Eigen::VectorXf hidden_1_history;
 	Eigen::VectorXf hidden_2_history;
 	Eigen::VectorXf output_history;
+
+	Eigen::VectorXf end_state_history;
 
 	ActionNetworkHistory(ActionNetwork* network);
 };
