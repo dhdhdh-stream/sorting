@@ -16,16 +16,6 @@ ObsNetwork::ObsNetwork(int num_states,
 	this->state_input->errors.resize(num_states);
 	this->state_input->errors.setConstant(0.0);
 
-	this->raw_obs_input = new Layer(LINEAR_LAYER);
-	this->raw_obs_input->acti_vals.resize(num_obs);
-	this->raw_obs_input->errors.resize(num_obs);
-	this->raw_obs_input->errors.setConstant(0.0);
-
-	this->obs_input_means.resize(num_obs);
-	this->obs_input_means.setConstant(0.0);
-	this->obs_input_deviations.resize(num_obs);
-	this->obs_input_deviations.setConstant(1.0);
-
 	this->obs_input = new Layer(LINEAR_LAYER);
 	this->obs_input->acti_vals.resize(num_obs);
 	this->obs_input->errors.resize(num_obs);
@@ -52,11 +42,14 @@ ObsNetwork::ObsNetwork(int num_states,
 	this->output->acti_vals.resize(num_states);
 	this->output->errors.resize(num_states);
 	this->output->errors.setConstant(0.0);
-	this->output->input_layers.push_back(this->state_input);
-	this->output->input_layers.push_back(this->obs_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(0.0);
+	/**
+	 * - don't directly connect input to output
+	 *   - update size will be large even when network has no impact
+	 *   - hidden updates will be small
+	 */
 
 	this->last_get_max_update_iter = -1;
 	this->last_update_weights_iter = -1;
@@ -69,14 +62,6 @@ ObsNetwork::ObsNetwork(ObsNetwork* original) {
 	this->state_input->acti_vals.resize(original->state_input->acti_vals.size());
 	this->state_input->errors.resize(original->state_input->errors.size());
 	this->state_input->errors.setConstant(0.0);
-
-	this->raw_obs_input = new Layer(LINEAR_LAYER);
-	this->raw_obs_input->acti_vals.resize(original->raw_obs_input->acti_vals.size());
-	this->raw_obs_input->errors.resize(original->raw_obs_input->errors.size());
-	this->raw_obs_input->errors.setConstant(0.0);
-
-	this->obs_input_means = original->obs_input_means;
-	this->obs_input_deviations = original->obs_input_deviations;
 
 	this->obs_input = new Layer(LINEAR_LAYER);
 	this->obs_input->acti_vals.resize(original->obs_input->acti_vals.size());
@@ -106,8 +91,6 @@ ObsNetwork::ObsNetwork(ObsNetwork* original) {
 	this->output->acti_vals.resize(original->output->acti_vals.size());
 	this->output->errors.resize(original->output->errors.size());
 	this->output->errors.setConstant(0.0);
-	this->output->input_layers.push_back(this->state_input);
-	this->output->input_layers.push_back(this->obs_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(0.0);
@@ -128,28 +111,10 @@ ObsNetwork::ObsNetwork(ifstream& input_file) {
 	this->state_input->errors.resize(num_states);
 	this->state_input->errors.setConstant(0.0);
 
+	this->obs_input = new Layer(LINEAR_LAYER);
 	string num_obs_line;
 	getline(input_file, num_obs_line);
 	int num_obs = stoi(num_obs_line);
-
-	this->raw_obs_input = new Layer(LINEAR_LAYER);
-	this->raw_obs_input->acti_vals.resize(num_obs);
-	this->raw_obs_input->errors.resize(num_obs);
-	this->raw_obs_input->errors.setConstant(0.0);
-
-	this->obs_input_means.resize(num_obs);
-	this->obs_input_deviations.resize(num_obs);
-	for (int i_index = 0; i_index < num_obs; i_index++) {
-		string mean_line;
-		getline(input_file, mean_line);
-		this->obs_input_means(i_index) = stod(mean_line);
-
-		string deviation_line;
-		getline(input_file, deviation_line);
-		this->obs_input_deviations(i_index) = stod(deviation_line);
-	}
-
-	this->obs_input = new Layer(LINEAR_LAYER);
 	this->obs_input->acti_vals.resize(num_obs);
 	this->obs_input->errors.resize(num_obs);
 	this->obs_input->errors.setConstant(0.0);
@@ -181,8 +146,6 @@ ObsNetwork::ObsNetwork(ifstream& input_file) {
 	this->output->acti_vals.resize(num_states);
 	this->output->errors.resize(num_states);
 	this->output->errors.setConstant(0.0);
-	this->output->input_layers.push_back(this->state_input);
-	this->output->input_layers.push_back(this->obs_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(0.0);
@@ -197,7 +160,6 @@ ObsNetwork::ObsNetwork(ifstream& input_file) {
 
 ObsNetwork::~ObsNetwork() {
 	delete this->state_input;
-	delete this->raw_obs_input;
 	delete this->obs_input;
 	delete this->hidden_1;
 	delete this->hidden_2;
@@ -212,9 +174,8 @@ void ObsNetwork::activate(Eigen::VectorXf& state_norms,
 	this->state_input->acti_vals = state_vals.cwiseQuotient(state_norms);
 
 	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
-		this->raw_obs_input->acti_vals(i_index) = obs_input_vals[i_index];
+		this->obs_input->acti_vals(i_index) = obs_input_vals[i_index];
 	}
-	this->obs_input->acti_vals = (this->raw_obs_input->acti_vals - this->obs_input_means).cwiseQuotient(this->obs_input_deviations);
 
 	this->hidden_1->activate();
 	this->hidden_2->activate();
@@ -230,15 +191,12 @@ void ObsNetwork::activate_w_drop(Eigen::VectorXf& state_norms,
 
 	this->state_input->acti_vals = state_vals.cwiseQuotient(state_norms);
 
+	uniform_int_distribution<int> drop_distribution(0, 19);
 	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
-		this->raw_obs_input->acti_vals(i_index) = obs_input_vals[i_index];
-	}
-	this->obs_input->acti_vals = (this->raw_obs_input->acti_vals - this->obs_input_means).cwiseQuotient(this->obs_input_deviations);
-
-	uniform_int_distribution<int> drop_distribution(0, 9);
-	for (int i_index = 0; i_index < (int)this->obs_input->acti_vals.size(); i_index++) {
 		if (drop_distribution(generator) == 0) {
 			this->obs_input->acti_vals(i_index) = 0.0;
+		} else {
+			this->obs_input->acti_vals(i_index) = obs_input_vals[i_index];
 		}
 	}
 
@@ -252,7 +210,6 @@ void ObsNetwork::activate_w_drop(Eigen::VectorXf& state_norms,
 void ObsNetwork::save(ObsNetworkHistory* history) {
 	history->state_norms_history = this->state_norms;
 	history->state_input_history = this->state_input->acti_vals;
-	history->raw_obs_input_history = this->raw_obs_input->acti_vals;
 	history->obs_input_history = this->obs_input->acti_vals;
 	history->hidden_1_history = this->hidden_1->acti_vals;
 	history->hidden_2_history = this->hidden_2->acti_vals;
@@ -262,7 +219,6 @@ void ObsNetwork::save(ObsNetworkHistory* history) {
 void ObsNetwork::load(ObsNetworkHistory* history) {
 	this->state_norms = history->state_norms_history;
 	this->state_input->acti_vals = history->state_input_history;
-	this->raw_obs_input->acti_vals = history->raw_obs_input_history;
 	this->obs_input->acti_vals = history->obs_input_history;
 	this->hidden_1->acti_vals = history->hidden_1_history;
 	this->hidden_2->acti_vals = history->hidden_2_history;
@@ -274,10 +230,6 @@ void ObsNetwork::backprop(Eigen::VectorXf& state_errors) {
 	this->output->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
-
-	this->obs_input_means = 0.99999*this->obs_input_means + 0.00001*this->raw_obs_input->acti_vals;
-	this->obs_input_deviations = 0.99999*this->obs_input_deviations
-		+ 0.00001*(this->raw_obs_input->acti_vals - this->obs_input_means).cwiseAbs();
 
 	state_errors += this->state_input->errors.cwiseQuotient(this->state_norms);
 	this->state_input->errors.setConstant(0.0);
@@ -319,11 +271,6 @@ void ObsNetwork::save(ofstream& output_file) {
 	output_file << this->state_input->acti_vals.size() << endl;
 
 	output_file << this->obs_input->acti_vals.size() << endl;
-
-	for (int i_index = 0; i_index < (int)this->obs_input->acti_vals.size(); i_index++) {
-		output_file << this->obs_input_means[i_index] << endl;
-		output_file << this->obs_input_deviations[i_index] << endl;
-	}
 
 	output_file << this->hidden_1->acti_vals.size() << endl;
 	output_file << this->hidden_2->acti_vals.size() << endl;

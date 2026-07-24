@@ -16,25 +16,6 @@ public:
 	Eigen::VectorXf state_norms;
 	Layer* state_input;
 
-	Layer* raw_obs_input;
-	Eigen::VectorXf obs_input_means;
-	Eigen::VectorXf obs_input_deviations;
-	/**
-	 * - to help network initialize
-	 *   - but need to constantly update
-	 *     - otherwise, if e.g., init_deviation is small, bad when generalized
-	 *   - initialize to (0.0, 1.0)
-	 *     - if initialize to true, variance can become ~0.0, and cause instability when generalized
-	 *     - with 300000 iters of 0.99999 averaging:
-	 *       - if true is 0.0, resulting deviation is ~0.5
-	 *       - if true is 5.0, resulting deviation is ~4.8
-	 *       - if true is 50.0, resulting deviation si ~48.0
-	 * 
-	 * - do not normalize inner
-	 *   - gradually weakens signals
-	 *   - if mean/deviation gets large enough, normalization can outpace any possible adjustment
-	 *     - permanently destroying signal
-	 */
 	Layer* obs_input;
 
 	Layer* hidden_1;
@@ -93,7 +74,6 @@ class InitNetworkHistory : public AbstractNetworkHistory {
 public:
 	Eigen::VectorXf state_norms_history;
 	Eigen::VectorXf state_input_history;
-	Eigen::VectorXf raw_obs_input_history;
 	Eigen::VectorXf obs_input_history;
 	Eigen::VectorXf hidden_1_history;
 	Eigen::VectorXf hidden_2_history;

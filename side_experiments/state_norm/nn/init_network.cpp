@@ -19,16 +19,6 @@ InitNetwork::InitNetwork(vector<int>& init_states,
 	this->state_input->errors.resize(num_states);
 	this->state_input->errors.setConstant(0.0);
 
-	this->raw_obs_input = new Layer(LINEAR_LAYER);
-	this->raw_obs_input->acti_vals.resize(num_obs);
-	this->raw_obs_input->errors.resize(num_obs);
-	this->raw_obs_input->errors.setConstant(0.0);
-
-	this->obs_input_means.resize(num_obs);
-	this->obs_input_means.setConstant(0.0);
-	this->obs_input_deviations.resize(num_obs);
-	this->obs_input_deviations.setConstant(1.0);
-
 	this->obs_input = new Layer(LINEAR_LAYER);
 	this->obs_input->acti_vals.resize(num_obs);
 	this->obs_input->errors.resize(num_obs);
@@ -72,14 +62,6 @@ InitNetwork::InitNetwork(InitNetwork* original) {
 	this->state_input->acti_vals.resize(original->state_input->acti_vals.size());
 	this->state_input->errors.resize(original->state_input->errors.size());
 	this->state_input->errors.setConstant(0.0);
-
-	this->raw_obs_input = new Layer(LINEAR_LAYER);
-	this->raw_obs_input->acti_vals.resize(original->raw_obs_input->acti_vals.size());
-	this->raw_obs_input->errors.resize(original->raw_obs_input->errors.size());
-	this->raw_obs_input->errors.setConstant(0.0);
-
-	this->obs_input_means = original->obs_input_means;
-	this->obs_input_deviations = original->obs_input_deviations;
 
 	this->obs_input = new Layer(LINEAR_LAYER);
 	this->obs_input->acti_vals.resize(original->obs_input->acti_vals.size());
@@ -138,28 +120,10 @@ InitNetwork::InitNetwork(ifstream& input_file) {
 	this->state_input->errors.resize(num_states);
 	this->state_input->errors.setConstant(0.0);
 
+	this->obs_input = new Layer(LINEAR_LAYER);
 	string num_obs_line;
 	getline(input_file, num_obs_line);
 	int num_obs = stoi(num_obs_line);
-
-	this->raw_obs_input = new Layer(LINEAR_LAYER);
-	this->raw_obs_input->acti_vals.resize(num_obs);
-	this->raw_obs_input->errors.resize(num_obs);
-	this->raw_obs_input->errors.setConstant(0.0);
-
-	this->obs_input_means.resize(num_obs);
-	this->obs_input_deviations.resize(num_obs);
-	for (int i_index = 0; i_index < num_obs; i_index++) {
-		string mean_line;
-		getline(input_file, mean_line);
-		this->obs_input_means(i_index) = stod(mean_line);
-
-		string deviation_line;
-		getline(input_file, deviation_line);
-		this->obs_input_deviations(i_index) = stod(deviation_line);
-	}
-
-	this->obs_input = new Layer(LINEAR_LAYER);
 	this->obs_input->acti_vals.resize(num_obs);
 	this->obs_input->errors.resize(num_obs);
 	this->obs_input->errors.setConstant(0.0);
@@ -205,7 +169,6 @@ InitNetwork::InitNetwork(ifstream& input_file) {
 
 InitNetwork::~InitNetwork() {
 	delete this->state_input;
-	delete this->raw_obs_input;
 	delete this->obs_input;
 	delete this->hidden_1;
 	delete this->hidden_2;
@@ -225,9 +188,8 @@ void InitNetwork::init_activate(Eigen::VectorXf& state_norms,
 	}
 
 	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
-		this->raw_obs_input->acti_vals(i_index) = obs_input_vals[i_index];
+		this->obs_input->acti_vals(i_index) = obs_input_vals[i_index];
 	}
-	this->obs_input->acti_vals = (this->raw_obs_input->acti_vals - this->obs_input_means).cwiseQuotient(this->obs_input_deviations);
 
 	this->hidden_1->activate();
 	this->hidden_2->activate();
@@ -250,15 +212,12 @@ void InitNetwork::init_activate_w_drop(Eigen::VectorXf& state_norms,
 		this->state_input->acti_vals(state_vals.size() + s_index) = new_state_vals[s_index] / new_state_norm;
 	}
 
-	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
-		this->raw_obs_input->acti_vals(i_index) = obs_input_vals[i_index];
-	}
-	this->obs_input->acti_vals = (this->raw_obs_input->acti_vals - this->obs_input_means).cwiseQuotient(this->obs_input_deviations);
-
 	uniform_int_distribution<int> drop_distribution(0, 19);
-	for (int i_index = 0; i_index < (int)this->obs_input->acti_vals.size(); i_index++) {
+	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
 		if (drop_distribution(generator) == 0) {
 			this->obs_input->acti_vals(i_index) = 0.0;
+		} else {
+			this->obs_input->acti_vals(i_index) = obs_input_vals[i_index];
 		}
 	}
 
@@ -279,10 +238,6 @@ void InitNetwork::init_backprop(int new_state_norm,
 	this->output->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
-
-	this->obs_input_means = 0.99999*this->obs_input_means + 0.00001*this->raw_obs_input->acti_vals;
-	this->obs_input_deviations = 0.99999*this->obs_input_deviations
-		+ 0.00001*(this->raw_obs_input->acti_vals - this->obs_input_means).cwiseAbs();
 
 	for (int s_index = 0; s_index < (int)new_state_errors.size(); s_index++) {
 		new_state_errors[new_state_errors.size()-1 - s_index] += this->state_input->errors(this->state_input->errors.size()-1 - s_index) / new_state_norm;
@@ -335,9 +290,8 @@ void InitNetwork::activate(Eigen::VectorXf& state_norms,
 	this->state_input->acti_vals = state_vals.cwiseQuotient(state_norms);
 
 	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
-		this->raw_obs_input->acti_vals(i_index) = obs_input_vals[i_index];
+		this->obs_input->acti_vals(i_index) = obs_input_vals[i_index];
 	}
-	this->obs_input->acti_vals = (this->raw_obs_input->acti_vals - this->obs_input_means).cwiseQuotient(this->obs_input_deviations);
 
 	this->hidden_1->activate();
 	this->hidden_2->activate();
@@ -355,15 +309,12 @@ void InitNetwork::activate_w_drop(Eigen::VectorXf& state_norms,
 
 	this->state_input->acti_vals = state_vals.cwiseQuotient(state_norms);
 
-	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
-		this->raw_obs_input->acti_vals(i_index) = obs_input_vals[i_index];
-	}
-	this->obs_input->acti_vals = (this->raw_obs_input->acti_vals - this->obs_input_means).cwiseQuotient(this->obs_input_deviations);
-
 	uniform_int_distribution<int> drop_distribution(0, 19);
-	for (int i_index = 0; i_index < (int)this->obs_input->acti_vals.size(); i_index++) {
+	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
 		if (drop_distribution(generator) == 0) {
 			this->obs_input->acti_vals(i_index) = 0.0;
+		} else {
+			this->obs_input->acti_vals(i_index) = obs_input_vals[i_index];
 		}
 	}
 
@@ -379,7 +330,6 @@ void InitNetwork::activate_w_drop(Eigen::VectorXf& state_norms,
 void InitNetwork::save(InitNetworkHistory* history) {
 	history->state_norms_history = this->state_norms;
 	history->state_input_history = this->state_input->acti_vals;
-	history->raw_obs_input_history = this->raw_obs_input->acti_vals;
 	history->obs_input_history = this->obs_input->acti_vals;
 	history->hidden_1_history = this->hidden_1->acti_vals;
 	history->hidden_2_history = this->hidden_2->acti_vals;
@@ -389,7 +339,6 @@ void InitNetwork::save(InitNetworkHistory* history) {
 void InitNetwork::load(InitNetworkHistory* history) {
 	this->state_norms = history->state_norms_history;
 	this->state_input->acti_vals = history->state_input_history;
-	this->raw_obs_input->acti_vals = history->raw_obs_input_history;
 	this->obs_input->acti_vals = history->obs_input_history;
 	this->hidden_1->acti_vals = history->hidden_1_history;
 	this->hidden_2->acti_vals = history->hidden_2_history;
@@ -403,10 +352,6 @@ void InitNetwork::backprop(Eigen::VectorXf& state_errors) {
 	this->output->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
-
-	this->obs_input_means = 0.99999*this->obs_input_means + 0.00001*this->raw_obs_input->acti_vals;
-	this->obs_input_deviations = 0.99999*this->obs_input_deviations
-		+ 0.00001*(this->raw_obs_input->acti_vals - this->obs_input_means).cwiseAbs();
 
 	state_errors += this->state_input->errors.cwiseQuotient(this->state_norms);
 	this->state_input->errors.setConstant(0.0);
@@ -451,11 +396,6 @@ void InitNetwork::save(ofstream& output_file) {
 	output_file << this->state_input->acti_vals.size() << endl;
 
 	output_file << this->obs_input->acti_vals.size() << endl;
-
-	for (int i_index = 0; i_index < (int)this->obs_input->acti_vals.size(); i_index++) {
-		output_file << this->obs_input_means[i_index] << endl;
-		output_file << this->obs_input_deviations[i_index] << endl;
-	}
 
 	output_file << this->hidden_1->acti_vals.size() << endl;
 	output_file << this->hidden_2->acti_vals.size() << endl;
