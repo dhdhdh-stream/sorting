@@ -383,6 +383,7 @@ void InitNetwork::save(InitNetworkHistory* history) {
 	history->obs_input_history = this->obs_input->acti_vals;
 	history->hidden_1_history = this->hidden_1->acti_vals;
 	history->hidden_2_history = this->hidden_2->acti_vals;
+	history->output_history = this->output->acti_vals;
 }
 
 void InitNetwork::load(InitNetworkHistory* history) {
@@ -392,6 +393,7 @@ void InitNetwork::load(InitNetworkHistory* history) {
 	this->obs_input->acti_vals = history->obs_input_history;
 	this->hidden_1->acti_vals = history->hidden_1_history;
 	this->hidden_2->acti_vals = history->hidden_2_history;
+	this->output->acti_vals = history->output_history;
 }
 
 void InitNetwork::backprop(Eigen::VectorXf& state_errors) {
@@ -420,6 +422,12 @@ void InitNetwork::update_weights(double learning_rate) {
 	this->hidden_1->update_weights(learning_rate);
 	this->hidden_2->update_weights(learning_rate);
 	this->output->update_weights(learning_rate);
+}
+
+void InitNetwork::clear_update_weights() {
+	this->hidden_1->clear_update_weights();
+	this->hidden_2->clear_update_weights();
+	this->output->clear_update_weights();
 }
 
 void InitNetwork::add_states(int new_num_states) {

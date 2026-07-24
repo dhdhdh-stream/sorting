@@ -82,6 +82,8 @@ public:
 	void get_max_update(double& max_update_size);
 	void update_weights(double learning_rate);
 
+	void clear_update_weights();
+
 	void add_states(int new_num_states);
 
 	void save(std::ofstream& output_file);
@@ -95,6 +97,7 @@ public:
 	Eigen::VectorXf obs_input_history;
 	Eigen::VectorXf hidden_1_history;
 	Eigen::VectorXf hidden_2_history;
+	Eigen::VectorXf output_history;
 
 	InitNetworkHistory(InitNetwork* network);
 };

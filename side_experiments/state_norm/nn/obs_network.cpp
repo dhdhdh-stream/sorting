@@ -256,6 +256,7 @@ void ObsNetwork::save(ObsNetworkHistory* history) {
 	history->obs_input_history = this->obs_input->acti_vals;
 	history->hidden_1_history = this->hidden_1->acti_vals;
 	history->hidden_2_history = this->hidden_2->acti_vals;
+	history->output_history = this->output->acti_vals;
 }
 
 void ObsNetwork::load(ObsNetworkHistory* history) {
@@ -265,6 +266,7 @@ void ObsNetwork::load(ObsNetworkHistory* history) {
 	this->obs_input->acti_vals = history->obs_input_history;
 	this->hidden_1->acti_vals = history->hidden_1_history;
 	this->hidden_2->acti_vals = history->hidden_2_history;
+	this->output->acti_vals = history->output_history;
 }
 
 void ObsNetwork::backprop(Eigen::VectorXf& state_errors) {
@@ -291,6 +293,12 @@ void ObsNetwork::update_weights(double learning_rate) {
 	this->hidden_1->update_weights(learning_rate);
 	this->hidden_2->update_weights(learning_rate);
 	this->output->update_weights(learning_rate);
+}
+
+void ObsNetwork::clear_update_weights() {
+	this->hidden_1->clear_update_weights();
+	this->hidden_2->clear_update_weights();
+	this->output->clear_update_weights();
 }
 
 void ObsNetwork::add_states(int new_num_states) {

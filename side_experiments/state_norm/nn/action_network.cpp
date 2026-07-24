@@ -156,6 +156,7 @@ void ActionNetwork::save(ActionNetworkHistory* history) {
 	history->state_input_history = this->state_input->acti_vals;
 	history->hidden_1_history = this->hidden_1->acti_vals;
 	history->hidden_2_history = this->hidden_2->acti_vals;
+	history->output_history = this->output->acti_vals;
 }
 
 void ActionNetwork::load(ActionNetworkHistory* history) {
@@ -163,6 +164,7 @@ void ActionNetwork::load(ActionNetworkHistory* history) {
 	this->state_input->acti_vals = history->state_input_history;
 	this->hidden_1->acti_vals = history->hidden_1_history;
 	this->hidden_2->acti_vals = history->hidden_2_history;
+	this->output->acti_vals = history->output_history;
 }
 
 void ActionNetwork::backprop(Eigen::VectorXf& state_errors) {
@@ -185,6 +187,12 @@ void ActionNetwork::update_weights(double learning_rate) {
 	this->hidden_1->update_weights(learning_rate);
 	this->hidden_2->update_weights(learning_rate);
 	this->output->update_weights(learning_rate);
+}
+
+void ActionNetwork::clear_update_weights() {
+	this->hidden_1->clear_update_weights();
+	this->hidden_2->clear_update_weights();
+	this->output->clear_update_weights();
 }
 
 void ActionNetwork::add_states(int new_num_states) {
