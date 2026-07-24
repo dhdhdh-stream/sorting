@@ -142,7 +142,7 @@ void ScoreNetwork::activate(Eigen::VectorXf& state_norms,
 							Eigen::VectorXf& state_vals) {
 	this->state_norms = state_norms;
 
-	this->state_input->acti_vals = state_norms.cwiseProduct(state_vals);
+	this->state_input->acti_vals = state_vals.cwiseQuotient(state_norms);
 
 	this->hidden_1->activate();
 	this->hidden_2->activate();
@@ -162,10 +162,10 @@ void ScoreNetwork::init_activate(Eigen::VectorXf& state_norms,
 								 int new_state_norm,
 								 std::vector<double>& new_state_vals) {
 	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
-		this->state_input->acti_vals(s_index) = state_norms(s_index) * state_vals(s_index);
+		this->state_input->acti_vals(s_index) = state_vals(s_index) / state_norms(s_index);
 	}
 	for (int s_index = 0; s_index < (int)new_state_vals.size(); s_index++) {
-		this->state_input->acti_vals(state_vals.size() + s_index) = new_state_norm * new_state_vals[s_index];
+		this->state_input->acti_vals(state_vals.size() + s_index) = new_state_vals[s_index] / new_state_norm;
 	}
 
 	this->hidden_1->activate();
@@ -183,7 +183,7 @@ void ScoreNetwork::init_backprop(double target_val,
 	this->hidden_1->backprop();
 
 	for (int s_index = 0; s_index < (int)new_state_errors.size(); s_index++) {
-		new_state_errors[new_state_errors.size()-1 - s_index] += new_state_norm * this->state_input->errors(this->state_input->errors.size()-1 - s_index);
+		new_state_errors[new_state_errors.size()-1 - s_index] += this->state_input->errors(this->state_input->errors.size()-1 - s_index) / new_state_norm;
 		this->state_input->errors(this->state_input->errors.size()-1 - s_index) = 0.0;
 	}
 }
@@ -249,7 +249,7 @@ void ScoreNetwork::backprop(double target_val,
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
 
-	state_errors += this->state_input->errors.cwiseProduct(this->state_norms);
+	state_errors += this->state_input->errors.cwiseQuotient(this->state_norms);
 	this->state_input->errors.setConstant(0.0);
 }
 

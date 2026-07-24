@@ -218,10 +218,10 @@ void InitNetwork::init_activate(Eigen::VectorXf& state_norms,
 								vector<double>& new_state_vals,
 								vector<double>& obs_input_vals) {
 	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
-		this->state_input->acti_vals(s_index) = state_norms(s_index) * state_vals(s_index);
+		this->state_input->acti_vals(s_index) = state_vals(s_index) / state_norms(s_index);
 	}
 	for (int s_index = 0; s_index < (int)new_state_vals.size(); s_index++) {
-		this->state_input->acti_vals(state_vals.size() + s_index) = new_state_norm * new_state_vals[s_index];
+		this->state_input->acti_vals(state_vals.size() + s_index) = new_state_vals[s_index] / new_state_norm;
 	}
 
 	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
@@ -244,10 +244,10 @@ void InitNetwork::init_activate_w_drop(Eigen::VectorXf& state_norms,
 									   vector<double>& new_state_vals,
 									   vector<double>& obs_input_vals) {
 	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
-		this->state_input->acti_vals(s_index) = state_norms(s_index) * state_vals(s_index);
+		this->state_input->acti_vals(s_index) = state_vals(s_index) / state_norms(s_index);
 	}
 	for (int s_index = 0; s_index < (int)new_state_vals.size(); s_index++) {
-		this->state_input->acti_vals(state_vals.size() + s_index) = new_state_norm * new_state_vals[s_index];
+		this->state_input->acti_vals(state_vals.size() + s_index) = new_state_vals[s_index] / new_state_norm;
 	}
 
 	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
@@ -285,7 +285,7 @@ void InitNetwork::init_backprop(int new_state_norm,
 		+ 0.00001*(this->raw_obs_input->acti_vals - this->obs_input_means).cwiseAbs();
 
 	for (int s_index = 0; s_index < (int)new_state_errors.size(); s_index++) {
-		new_state_errors[new_state_errors.size()-1 - s_index] += new_state_norm * this->state_input->errors(this->state_input->errors.size()-1 - s_index);
+		new_state_errors[new_state_errors.size()-1 - s_index] += this->state_input->errors(this->state_input->errors.size()-1 - s_index) / new_state_norm;
 		this->state_input->errors(this->state_input->errors.size()-1 - s_index) = 0.0;
 	}
 }
@@ -332,7 +332,7 @@ void InitNetwork::activate(Eigen::VectorXf& state_norms,
 						   vector<double>& obs_input_vals) {
 	this->state_norms = state_norms;
 
-	this->state_input->acti_vals = state_norms.cwiseProduct(state_vals);
+	this->state_input->acti_vals = state_vals.cwiseQuotient(state_norms);
 
 	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
 		this->raw_obs_input->acti_vals(i_index) = obs_input_vals[i_index];
@@ -353,7 +353,7 @@ void InitNetwork::activate_w_drop(Eigen::VectorXf& state_norms,
 								  vector<double>& obs_input_vals) {
 	this->state_norms = state_norms;
 
-	this->state_input->acti_vals = state_norms.cwiseProduct(state_vals);
+	this->state_input->acti_vals = state_vals.cwiseQuotient(state_norms);
 
 	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
 		this->raw_obs_input->acti_vals(i_index) = obs_input_vals[i_index];
@@ -406,7 +406,7 @@ void InitNetwork::backprop(Eigen::VectorXf& state_errors) {
 	this->obs_input_deviations = 0.99999*this->obs_input_deviations
 		+ 0.00001*(this->raw_obs_input->acti_vals - this->obs_input_means).cwiseAbs();
 
-	state_errors += this->state_input->errors.cwiseProduct(this->state_norms);
+	state_errors += this->state_input->errors.cwiseQuotient(this->state_norms);
 	this->state_input->errors.setConstant(0.0);
 }
 

@@ -142,7 +142,7 @@ void ActionNetwork::activate(Eigen::VectorXf& state_norms,
 							 Eigen::VectorXf& state_vals) {
 	this->state_norms = state_norms;
 
-	this->state_input->acti_vals = state_norms.cwiseProduct(state_vals);
+	this->state_input->acti_vals = state_vals.cwiseQuotient(state_norms);
 
 	this->hidden_1->activate();
 	this->hidden_2->activate();
@@ -171,7 +171,7 @@ void ActionNetwork::backprop(Eigen::VectorXf& state_errors) {
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
 
-	state_errors += this->state_input->errors.cwiseProduct(this->state_norms);
+	state_errors += this->state_input->errors.cwiseQuotient(this->state_norms);
 	this->state_input->errors.setConstant(0.0);
 }
 

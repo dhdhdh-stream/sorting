@@ -209,7 +209,7 @@ void ObsNetwork::activate(Eigen::VectorXf& state_norms,
 						  vector<double>& obs_input_vals) {
 	this->state_norms = state_norms;
 
-	this->state_input->acti_vals = state_norms.cwiseProduct(state_vals);
+	this->state_input->acti_vals = state_vals.cwiseQuotient(state_norms);
 
 	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
 		this->raw_obs_input->acti_vals(i_index) = obs_input_vals[i_index];
@@ -228,7 +228,7 @@ void ObsNetwork::activate_w_drop(Eigen::VectorXf& state_norms,
 								 vector<double>& obs_input_vals) {
 	this->state_norms = state_norms;
 
-	this->state_input->acti_vals = state_norms.cwiseProduct(state_vals);
+	this->state_input->acti_vals = state_vals.cwiseQuotient(state_norms);
 
 	for (int i_index = 0; i_index < (int)obs_input_vals.size(); i_index++) {
 		this->raw_obs_input->acti_vals(i_index) = obs_input_vals[i_index];
@@ -277,7 +277,7 @@ void ObsNetwork::backprop(Eigen::VectorXf& state_errors) {
 	this->obs_input_deviations = 0.99999*this->obs_input_deviations
 		+ 0.00001*(this->raw_obs_input->acti_vals - this->obs_input_means).cwiseAbs();
 
-	state_errors += this->state_input->errors.cwiseProduct(this->state_norms);
+	state_errors += this->state_input->errors.cwiseQuotient(this->state_norms);
 	this->state_input->errors.setConstant(0.0);
 }
 
