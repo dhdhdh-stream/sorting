@@ -100,7 +100,8 @@ void SolutionWrapper::experiment_end(double result) {
 					  hit_original,
 					  hit_branch);
 		update_helper(hit_original,
-					  hit_branch);
+					  hit_branch,
+					  this);
 
 		this->solution->curr_score = 0.999*this->solution->curr_score + 0.001*result;
 	}
@@ -213,10 +214,10 @@ void SolutionWrapper::experiment_end(double result) {
 			delete this->best_solution;
 			this->best_solution = new Solution(this->solution);
 		} else if (this->solution->timestamp + STUCK_NUM_ITERS < this->best_solution->timestamp) {
-			delete this->solution;
-			this->solution = new Solution(this->best_solution);
+			// delete this->solution;
+			// this->solution = new Solution(this->best_solution);
 
-			this->solution->timestamp = -1;
+			// this->solution->timestamp = -1;
 		}
 	}
 }

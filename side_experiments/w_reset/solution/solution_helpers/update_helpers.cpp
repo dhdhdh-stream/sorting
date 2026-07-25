@@ -64,12 +64,13 @@ void update_helper(ScopeHistory* scope_history,
  *   - vs. updating all networks in a balanced way
  */
 void update_helper(set<BranchNode*>& hit_original,
-				   set<BranchNode*>& hit_branch) {
+				   set<BranchNode*>& hit_branch,
+				   SolutionWrapper* wrapper) {
 	for (set<BranchNode*>::iterator it = hit_original.begin();
 			it != hit_original.end(); it++) {
 		BranchNode* branch_node = *it;
 
-		branch_node->original_network->update();
+		branch_node->original_network->update(wrapper->solution->scopes.size()-1 - branch_node->parent->id);
 
 		if (branch_node->ramp < branch_node->ramp_num_gears) {
 			branch_node->ramp_iter++;
@@ -84,7 +85,7 @@ void update_helper(set<BranchNode*>& hit_original,
 			it != hit_branch.end(); it++) {
 		BranchNode* branch_node = *it;
 
-		branch_node->branch_network->update();
+		branch_node->branch_network->update(wrapper->solution->scopes.size()-1 - branch_node->parent->id);
 
 		if (branch_node->ramp < branch_node->ramp_num_gears) {
 			branch_node->ramp_iter++;

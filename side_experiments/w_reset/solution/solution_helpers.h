@@ -25,6 +25,7 @@ void update_helper(ScopeHistory* scope_history,
 				   std::set<BranchNode*>& hit_original,
 				   std::set<BranchNode*>& hit_branch);
 void update_helper(std::set<BranchNode*>& hit_original,
-				   std::set<BranchNode*>& hit_branch);
+				   std::set<BranchNode*>& hit_branch,
+				   SolutionWrapper* wrapper);
 
 #endif /* SOLUTION_HELPERS_H */

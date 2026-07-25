@@ -307,7 +307,7 @@ void Network::backprop(double error) {
 		+ 0.00001*(this->raw_input->acti_vals - this->input_means).cwiseAbs();
 }
 
-void Network::update() {
+void Network::update(int layer) {
 	this->epoch_iter++;
 	if (this->epoch_iter == EPOCH_SIZE) {
 		double max_update = 0.0;
@@ -317,9 +317,10 @@ void Network::update() {
 		this->output->get_max_update(max_update);
 		this->average_max_update = 0.999*this->average_max_update+0.001*max_update;
 		if (max_update > 0.0) {
-			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->average_max_update;
-			if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
-				learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+			double target_max_update = NETWORK_TARGET_MAX_UPDATE * pow(0.5, layer);
+			double learning_rate = (0.3*target_max_update)/this->average_max_update;
+			if (learning_rate*max_update > target_max_update) {
+				learning_rate = target_max_update/max_update;
 			}
 			this->hidden_1->update_weights(learning_rate);
 			this->hidden_2->update_weights(learning_rate);
