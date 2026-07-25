@@ -144,10 +144,10 @@ void update_helper(double target_val,
 				{
 					ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->partial_network_histories[h_index];
 					ScoreNetwork* score_network = (ScoreNetwork*)score_network_history->network;
-					if (score_network->last_get_max_update_iter != wrapper->iters_since_update) {
-						score_network->get_max_update(max_update_size);
+					if (score_network->last_update_iter != wrapper->iters_since_update) {
+						score_network->update();
 
-						score_network->last_get_max_update_iter = wrapper->iters_since_update;
+						score_network->last_update_iter = wrapper->iters_since_update;
 					}
 				}
 				break;
@@ -208,17 +208,6 @@ void update_helper(double target_val,
 							obs_network->update_weights(learning_rate);
 
 							obs_network->last_update_weights_iter = wrapper->iters_since_update;
-						}
-					}
-					break;
-				case NETWORK_TYPE_SCORE:
-					{
-						ScoreNetworkHistory* score_network_history = (ScoreNetworkHistory*)wrapper->partial_network_histories[h_index];
-						ScoreNetwork* score_network = (ScoreNetwork*)score_network_history->network;
-						if (score_network->last_update_weights_iter != wrapper->iters_since_update) {
-							score_network->update_weights(learning_rate);
-
-							score_network->last_update_weights_iter = wrapper->iters_since_update;
 						}
 					}
 					break;

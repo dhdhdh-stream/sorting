@@ -252,14 +252,9 @@ void print_error_helper(double target_val,
 				score_network->backprop(target_val,
 										state_errors);
 
-				double max_update_size = 0.0;
-				score_network->get_max_update(max_update_size);
-				it->second.push_back(max_update_size);
-
 				cout << "NETWORK_TYPE_SCORE" << endl;
 				cout << "score_network->output->acti_vals(0): " << score_network->output->acti_vals(0) << endl;
 				cout << "diff: " << diff << endl;
-				cout << "max_update_size: " << max_update_size << endl;
 				cout << "state_errors:";
 				for (int s_index = 0; s_index < (int)state_errors.size(); s_index++) {
 					cout << " " << state_errors(s_index);

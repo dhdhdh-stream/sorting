@@ -39,9 +39,9 @@ ScoreNetwork::ScoreNetwork(int num_states) {
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 
-	this->run_num_instances = 0;
-	this->last_get_max_update_iter = -1;
-	this->last_update_weights_iter = -1;
+	this->last_update_iter = -1;
+	this->epoch_iter = 0;
+	this->average_max_update = 0.0;
 }
 
 ScoreNetwork::ScoreNetwork(ScoreNetwork* original) {
@@ -79,9 +79,9 @@ ScoreNetwork::ScoreNetwork(ScoreNetwork* original) {
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 	this->output->copy_weights_from(original->output);
 
-	this->run_num_instances = 0;
-	this->last_get_max_update_iter = -1;
-	this->last_update_weights_iter = -1;
+	this->last_update_iter = -1;
+	this->epoch_iter = 0;
+	this->average_max_update = 0.0;
 }
 
 ScoreNetwork::ScoreNetwork(ifstream& input_file) {
@@ -129,9 +129,9 @@ ScoreNetwork::ScoreNetwork(ifstream& input_file) {
 	this->hidden_2->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
 
-	this->run_num_instances = 0;
-	this->last_get_max_update_iter = -1;
-	this->last_update_weights_iter = -1;
+	this->last_update_iter = -1;
+	this->epoch_iter = 0;
+	this->average_max_update = 0.0;
 }
 
 ScoreNetwork::~ScoreNetwork() {
@@ -257,25 +257,31 @@ void ScoreNetwork::backprop(double target_val,
 
 	state_errors += this->state_input->errors.cwiseQuotient(this->state_norms);
 	this->state_input->errors.setConstant(0.0);
-
-	this->run_num_instances++;
 }
 
-void ScoreNetwork::get_max_update(double& max_update_size) {
-	this->hidden_1->get_max_update(this->run_num_instances,
-								   max_update_size);
-	this->hidden_2->get_max_update(this->run_num_instances,
-								   max_update_size);
-	this->output->get_max_update(this->run_num_instances,
-								 max_update_size);
+void ScoreNetwork::update() {
+	this->epoch_iter++;
+	if (this->epoch_iter == EPOCH_SIZE) {
+		double max_update = 0.0;
+		this->hidden_1->get_max_update(1,
+									   max_update);
+		this->hidden_2->get_max_update(1,
+									   max_update);
+		this->output->get_max_update(1,
+									 max_update);
+		this->average_max_update = 0.999*this->average_max_update+0.001*max_update;
+		if (max_update > 0.0) {
+			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->average_max_update;
+			if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
+				learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+			}
+			this->hidden_1->update_weights(learning_rate);
+			this->hidden_2->update_weights(learning_rate);
+			this->output->update_weights(learning_rate);
+		}
 
-	this->run_num_instances = 0;
-}
-
-void ScoreNetwork::update_weights(double learning_rate) {
-	this->hidden_1->update_weights(learning_rate);
-	this->hidden_2->update_weights(learning_rate);
-	this->output->update_weights(learning_rate);
+		this->epoch_iter = 0;
+	}
 }
 
 void ScoreNetwork::clear_update_weights() {

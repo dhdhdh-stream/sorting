@@ -18,9 +18,9 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
-	int run_num_instances;
-	int last_get_max_update_iter;
-	int last_update_weights_iter;
+	int last_update_iter;
+	int epoch_iter;
+	double average_max_update;
 
 	ScoreNetwork(int num_states);
 	ScoreNetwork(ScoreNetwork* original);
@@ -50,8 +50,7 @@ public:
 	void backprop(double target_val,
 				  Eigen::VectorXf& state_errors);
 
-	void get_max_update(double& max_update_size);
-	void update_weights(double learning_rate);
+	void update();
 
 	void clear_update_weights();
 
