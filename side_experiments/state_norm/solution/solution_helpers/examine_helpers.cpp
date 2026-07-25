@@ -193,11 +193,19 @@ void print_error_helper(double target_val,
 		}
 	}
 
+	map<AbstractNetwork*, vector<double>> max_update_history;
+
 	Eigen::VectorXf state_errors;
 	state_errors.resize(wrapper->solution->num_states);
 	state_errors.setConstant(0.0);
 	for (int h_index = (int)wrapper->partial_network_histories.size()-1; h_index >= 0; h_index--) {
-		switch (wrapper->partial_network_histories[h_index]->network->type) {
+		AbstractNetwork* network = wrapper->partial_network_histories[h_index]->network;
+		map<AbstractNetwork*, vector<double>>::iterator it = max_update_history.find(network);
+		if (it == max_update_history.end()) {
+			it = max_update_history.insert({network, vector<double>()}).first;
+		}
+
+		switch (network->type) {
 		case NETWORK_TYPE_OBS:
 			{
 				ObsNetworkHistory* obs_network_history = (ObsNetworkHistory*)wrapper->partial_network_histories[h_index];
@@ -207,9 +215,25 @@ void print_error_helper(double target_val,
 
 				double max_update_size = 0.0;
 				obs_network->get_max_update(max_update_size);
+				it->second.push_back(max_update_size);
 
 				cout << "NETWORK_TYPE_OBS" << endl;
 				cout << "max_update_size: " << max_update_size << endl;
+				cout << "obs_network->state_norms:";
+				for (int s_index = 0; s_index < (int)obs_network->state_norms.size(); s_index++) {
+					cout << " " << obs_network->state_norms(s_index);
+				}
+				cout << endl;
+				cout << "obs_network->state_input->acti_vals:";
+				for (int s_index = 0; s_index < (int)obs_network->state_input->acti_vals.size(); s_index++) {
+					cout << " " << obs_network->state_input->acti_vals(s_index);
+				}
+				cout << endl;
+				cout << "obs_network->output->acti_vals:";
+				for (int s_index = 0; s_index < (int)obs_network->output->acti_vals.size(); s_index++) {
+					cout << " " << obs_network->output->acti_vals(s_index);
+				}
+				cout << endl;
 				cout << "state_errors:";
 				for (int s_index = 0; s_index < (int)state_errors.size(); s_index++) {
 					cout << " " << state_errors(s_index);
@@ -230,6 +254,7 @@ void print_error_helper(double target_val,
 
 				double max_update_size = 0.0;
 				score_network->get_max_update(max_update_size);
+				it->second.push_back(max_update_size);
 
 				cout << "NETWORK_TYPE_SCORE" << endl;
 				cout << "score_network->output->acti_vals(0): " << score_network->output->acti_vals(0) << endl;
@@ -251,6 +276,7 @@ void print_error_helper(double target_val,
 
 				double max_update_size = 0.0;
 				action_network->get_max_update(max_update_size);
+				it->second.push_back(max_update_size);
 
 				cout << "NETWORK_TYPE_ACTION" << endl;
 				cout << "max_update_size: " << max_update_size << endl;
@@ -270,6 +296,7 @@ void print_error_helper(double target_val,
 
 				double max_update_size = 0.0;
 				init_network->get_max_update(max_update_size);
+				it->second.push_back(max_update_size);
 
 				cout << "NETWORK_TYPE_INIT" << endl;
 				cout << "max_update_size: " << max_update_size << endl;
@@ -288,5 +315,14 @@ void print_error_helper(double target_val,
 			}
 			break;
 		}
+	}
+
+	for (map<AbstractNetwork*, vector<double>>::iterator it = max_update_history.begin();
+			it != max_update_history.end(); it++) {
+		cout << "it->second.size(): " << it->second.size() << endl;
+		for (int h_index = 0; h_index < (int)it->second.size(); h_index++) {
+			cout << it->second[h_index] << " ";
+		}
+		cout << endl;
 	}
 }

@@ -30,7 +30,7 @@ const int TRAIN_ITERS = 30;
 const int TRAIN_ITERS = 300000;
 #endif /* MDEBUG */
 
-const double STATE_NORM_CONSTANT = 0.0001;
+const double STATE_NORM_CONSTANT = 0.001;
 
 /**
  * - simply give raw actions a fixed weight

@@ -49,6 +49,7 @@ InitNetwork::InitNetwork(vector<int>& init_states,
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 
+	this->run_num_instances = 0;
 	this->last_get_max_update_iter = -1;
 	this->last_update_weights_iter = -1;
 }
@@ -96,6 +97,7 @@ InitNetwork::InitNetwork(InitNetwork* original) {
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 	this->output->copy_weights_from(original->output);
 
+	this->run_num_instances = 0;
 	this->last_get_max_update_iter = -1;
 	this->last_update_weights_iter = -1;
 }
@@ -163,6 +165,7 @@ InitNetwork::InitNetwork(ifstream& input_file) {
 	this->hidden_2->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
 
+	this->run_num_instances = 0;
 	this->last_get_max_update_iter = -1;
 	this->last_update_weights_iter = -1;
 }
@@ -198,11 +201,6 @@ void InitNetwork::init_activate(Eigen::VectorXf& state_norms,
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
 		new_state_vals[i_index] += this->output->acti_vals(i_index);
 	}
-
-	this->end_state.resize(this->init_states.size());
-	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
-		this->end_state(i_index) = new_state_vals[i_index];
-	}
 }
 
 void InitNetwork::init_activate_w_drop(Eigen::VectorXf& state_norms,
@@ -233,11 +231,6 @@ void InitNetwork::init_activate_w_drop(Eigen::VectorXf& state_norms,
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
 		new_state_vals[i_index] += this->output->acti_vals(i_index);
 	}
-
-	this->end_state.resize(this->init_states.size());
-	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
-		this->end_state(i_index) = new_state_vals[i_index];
-	}
 }
 
 void InitNetwork::init_backprop(int new_state_norm,
@@ -246,10 +239,7 @@ void InitNetwork::init_backprop(int new_state_norm,
 		this->output->errors(i_index) = new_state_errors[i_index];
 	}
 
-	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
-		this->output->errors(i_index) -= this->end_state(i_index)
-			* abs(this->output->acti_vals(i_index)) * STATE_NORM_CONSTANT;
-	}
+	this->output->errors -= this->output->acti_vals * STATE_NORM_CONSTANT;
 
 	this->output->backprop();
 	this->hidden_2->backprop();
@@ -265,7 +255,8 @@ void InitNetwork::init_update(double& hidden_1_average_max_update,
 							  double& hidden_2_average_max_update,
 							  double& output_average_max_update) {
 	double hidden_1_max_update = 0.0;
-	this->hidden_1->get_max_update(hidden_1_max_update);
+	this->hidden_1->get_max_update(1,
+								   hidden_1_max_update);
 	hidden_1_average_max_update = 0.999*hidden_1_average_max_update+0.001*hidden_1_max_update;
 	if (hidden_1_max_update > 0.0) {
 		double hidden_1_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/hidden_1_average_max_update;
@@ -276,7 +267,8 @@ void InitNetwork::init_update(double& hidden_1_average_max_update,
 	}
 
 	double hidden_2_max_update = 0.0;
-	this->hidden_2->get_max_update(hidden_2_max_update);
+	this->hidden_2->get_max_update(1,
+								   hidden_2_max_update);
 	hidden_2_average_max_update = 0.999*hidden_2_average_max_update+0.001*hidden_2_max_update;
 	if (hidden_2_max_update > 0.0) {
 		double hidden_2_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/hidden_2_average_max_update;
@@ -287,7 +279,8 @@ void InitNetwork::init_update(double& hidden_1_average_max_update,
 	}
 
 	double output_max_update = 0.0;
-	this->output->get_max_update(output_max_update);
+	this->output->get_max_update(1,
+								 output_max_update);
 	output_average_max_update = 0.999*output_average_max_update+0.001*output_max_update;
 	if (output_max_update > 0.0) {
 		double output_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/output_average_max_update;
@@ -316,8 +309,6 @@ void InitNetwork::activate(Eigen::VectorXf& state_norms,
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
 		state_vals(this->init_states[i_index]) += this->output->acti_vals(i_index);
 	}
-
-	this->end_state = state_vals;
 }
 
 void InitNetwork::activate_w_drop(Eigen::VectorXf& state_norms,
@@ -343,8 +334,6 @@ void InitNetwork::activate_w_drop(Eigen::VectorXf& state_norms,
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
 		state_vals(this->init_states[i_index]) += this->output->acti_vals(i_index);
 	}
-
-	this->end_state = state_vals;
 }
 
 void InitNetwork::save(InitNetworkHistory* history) {
@@ -354,8 +343,6 @@ void InitNetwork::save(InitNetworkHistory* history) {
 	history->hidden_1_history = this->hidden_1->acti_vals;
 	history->hidden_2_history = this->hidden_2->acti_vals;
 	history->output_history = this->output->acti_vals;
-
-	history->end_state_history = this->end_state;
 }
 
 void InitNetwork::load(InitNetworkHistory* history) {
@@ -365,8 +352,6 @@ void InitNetwork::load(InitNetworkHistory* history) {
 	this->hidden_1->acti_vals = history->hidden_1_history;
 	this->hidden_2->acti_vals = history->hidden_2_history;
 	this->output->acti_vals = history->output_history;
-
-	this->end_state = history->end_state_history;
 }
 
 void InitNetwork::backprop(Eigen::VectorXf& state_errors) {
@@ -374,10 +359,7 @@ void InitNetwork::backprop(Eigen::VectorXf& state_errors) {
 		this->output->errors(i_index) = state_errors(this->init_states[i_index]);
 	}
 
-	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
-		this->output->errors(i_index) -= this->end_state(this->init_states[i_index])
-			* abs(this->output->acti_vals(i_index)) * STATE_NORM_CONSTANT;
-	}
+	this->output->errors -= this->output->acti_vals * STATE_NORM_CONSTANT;
 
 	this->output->backprop();
 	this->hidden_2->backprop();
@@ -385,12 +367,19 @@ void InitNetwork::backprop(Eigen::VectorXf& state_errors) {
 
 	state_errors += this->state_input->errors.cwiseQuotient(this->state_norms);
 	this->state_input->errors.setConstant(0.0);
+
+	this->run_num_instances++;
 }
 
 void InitNetwork::get_max_update(double& max_update_size) {
-	this->hidden_1->get_max_update(max_update_size);
-	this->hidden_2->get_max_update(max_update_size);
-	this->output->get_max_update(max_update_size);
+	this->hidden_1->get_max_update(this->run_num_instances,
+								   max_update_size);
+	this->hidden_2->get_max_update(this->run_num_instances,
+								   max_update_size);
+	this->output->get_max_update(this->run_num_instances,
+								 max_update_size);
+
+	this->run_num_instances = 0;
 }
 
 void InitNetwork::update_weights(double learning_rate) {

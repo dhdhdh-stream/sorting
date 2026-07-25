@@ -182,13 +182,15 @@ void update_helper(double target_val,
 			wrapper->solution->largest_max_updates.erase(wrapper->solution->largest_max_updates.begin());
 		}
 
-		// temp
-		if (max_update_size > 10.0) {
-			print_run_helper(wrapper->scope_histories[0]);
-			print_state_helper(wrapper);
-			print_error_helper(target_val,
-							   wrapper);
-		}
+		// // temp
+		// if (max_update_size > 1000.0) {
+		// 	print_run_helper(wrapper->scope_histories[0]);
+		// 	print_state_helper(wrapper);
+		// 	print_error_helper(target_val,
+		// 					   wrapper);
+
+		// 	throw invalid_argument("max_update_size > 1000.0");
+		// }
 
 		wrapper->solution->average_max_update = 0.99999*wrapper->solution->average_max_update + 0.00001*max_update_size;
 		if (max_update_size != 0.0) {

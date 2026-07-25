@@ -18,6 +18,7 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
+	int run_num_instances;
 	int last_get_max_update_iter;
 	int last_update_weights_iter;
 

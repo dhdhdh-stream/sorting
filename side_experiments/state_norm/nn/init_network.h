@@ -22,8 +22,11 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
-	Eigen::VectorXf end_state;
-
+	int run_num_instances;
+	/**
+	 * - need to take average of gradients instead of sum
+	 *   - as each individual gradient is the complete direction for its spot
+	 */
 	int last_get_max_update_iter;
 	int last_update_weights_iter;
 
@@ -63,6 +66,9 @@ public:
 	void backprop(Eigen::VectorXf& state_errors);
 
 	void get_max_update(double& max_update_size);
+	/**
+	 * - also divides updates by run_num_instances
+	 */
 	void update_weights(double learning_rate);
 
 	void clear_update_weights();
@@ -80,8 +86,6 @@ public:
 	Eigen::VectorXf hidden_1_history;
 	Eigen::VectorXf hidden_2_history;
 	Eigen::VectorXf output_history;
-
-	Eigen::VectorXf end_state_history;
 
 	InitNetworkHistory(InitNetwork* network);
 };

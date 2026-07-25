@@ -39,6 +39,7 @@ ScoreNetwork::ScoreNetwork(int num_states) {
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 
+	this->run_num_instances = 0;
 	this->last_get_max_update_iter = -1;
 	this->last_update_weights_iter = -1;
 }
@@ -78,6 +79,7 @@ ScoreNetwork::ScoreNetwork(ScoreNetwork* original) {
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 	this->output->copy_weights_from(original->output);
 
+	this->run_num_instances = 0;
 	this->last_get_max_update_iter = -1;
 	this->last_update_weights_iter = -1;
 }
@@ -127,6 +129,7 @@ ScoreNetwork::ScoreNetwork(ifstream& input_file) {
 	this->hidden_2->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
 
+	this->run_num_instances = 0;
 	this->last_get_max_update_iter = -1;
 	this->last_update_weights_iter = -1;
 }
@@ -192,7 +195,8 @@ void ScoreNetwork::init_update(double& hidden_1_average_max_update,
 							   double& hidden_2_average_max_update,
 							   double& output_average_max_update) {
 	double hidden_1_max_update = 0.0;
-	this->hidden_1->get_max_update(hidden_1_max_update);
+	this->hidden_1->get_max_update(1,
+								   hidden_1_max_update);
 	hidden_1_average_max_update = 0.999*hidden_1_average_max_update+0.001*hidden_1_max_update;
 	if (hidden_1_max_update > 0.0) {
 		double hidden_1_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/hidden_1_average_max_update;
@@ -203,7 +207,8 @@ void ScoreNetwork::init_update(double& hidden_1_average_max_update,
 	}
 
 	double hidden_2_max_update = 0.0;
-	this->hidden_2->get_max_update(hidden_2_max_update);
+	this->hidden_2->get_max_update(1,
+								   hidden_2_max_update);
 	hidden_2_average_max_update = 0.999*hidden_2_average_max_update+0.001*hidden_2_max_update;
 	if (hidden_2_max_update > 0.0) {
 		double hidden_2_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/hidden_2_average_max_update;
@@ -214,7 +219,8 @@ void ScoreNetwork::init_update(double& hidden_1_average_max_update,
 	}
 
 	double output_max_update = 0.0;
-	this->output->get_max_update(output_max_update);
+	this->output->get_max_update(1,
+								 output_max_update);
 	output_average_max_update = 0.999*output_average_max_update+0.001*output_max_update;
 	if (output_max_update > 0.0) {
 		double output_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/output_average_max_update;
@@ -251,12 +257,19 @@ void ScoreNetwork::backprop(double target_val,
 
 	state_errors += this->state_input->errors.cwiseQuotient(this->state_norms);
 	this->state_input->errors.setConstant(0.0);
+
+	this->run_num_instances++;
 }
 
 void ScoreNetwork::get_max_update(double& max_update_size) {
-	this->hidden_1->get_max_update(max_update_size);
-	this->hidden_2->get_max_update(max_update_size);
-	this->output->get_max_update(max_update_size);
+	this->hidden_1->get_max_update(this->run_num_instances,
+								   max_update_size);
+	this->hidden_2->get_max_update(this->run_num_instances,
+								   max_update_size);
+	this->output->get_max_update(this->run_num_instances,
+								 max_update_size);
+
+	this->run_num_instances = 0;
 }
 
 void ScoreNetwork::update_weights(double learning_rate) {

@@ -216,9 +216,12 @@ void Layer::backprop() {
 	}
 }
 
-void Layer::get_max_update(double& max_update_size) {
+void Layer::get_max_update(int run_num_instances,
+						   double& max_update_size) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
+			this->weight_updates[n_index][l_index] /= run_num_instances;
+
 			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
 			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
 				double update_size = abs(this->weight_updates[n_index][l_index](ln_index));
@@ -228,6 +231,7 @@ void Layer::get_max_update(double& max_update_size) {
 			}
 		}
 
+		this->constant_updates[n_index] /= run_num_instances;
 		double update_size = abs(this->constant_updates[n_index]);
 		if (update_size > max_update_size) {
 			max_update_size = update_size;

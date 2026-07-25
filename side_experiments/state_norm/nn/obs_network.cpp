@@ -51,6 +51,7 @@ ObsNetwork::ObsNetwork(int num_states,
 	 *   - hidden updates will be small
 	 */
 
+	this->run_num_instances = 0;
 	this->last_get_max_update_iter = -1;
 	this->last_update_weights_iter = -1;
 }
@@ -96,6 +97,7 @@ ObsNetwork::ObsNetwork(ObsNetwork* original) {
 	this->output->update_structure(0.0);
 	this->output->copy_weights_from(original->output);
 
+	this->run_num_instances = 0;
 	this->last_get_max_update_iter = -1;
 	this->last_update_weights_iter = -1;
 }
@@ -154,6 +156,7 @@ ObsNetwork::ObsNetwork(ifstream& input_file) {
 	this->hidden_2->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
 
+	this->run_num_instances = 0;
 	this->last_get_max_update_iter = -1;
 	this->last_update_weights_iter = -1;
 }
@@ -182,8 +185,6 @@ void ObsNetwork::activate(Eigen::VectorXf& state_norms,
 	this->output->activate();
 
 	state_vals += this->output->acti_vals;
-
-	this->end_state = state_vals;
 }
 
 void ObsNetwork::activate_w_drop(Eigen::VectorXf& state_norms,
@@ -207,8 +208,6 @@ void ObsNetwork::activate_w_drop(Eigen::VectorXf& state_norms,
 	this->output->activate();
 
 	state_vals += this->output->acti_vals;
-
-	this->end_state = state_vals;
 }
 
 void ObsNetwork::save(ObsNetworkHistory* history) {
@@ -218,8 +217,6 @@ void ObsNetwork::save(ObsNetworkHistory* history) {
 	history->hidden_1_history = this->hidden_1->acti_vals;
 	history->hidden_2_history = this->hidden_2->acti_vals;
 	history->output_history = this->output->acti_vals;
-
-	history->end_state_history = this->end_state;
 }
 
 void ObsNetwork::load(ObsNetworkHistory* history) {
@@ -229,15 +226,17 @@ void ObsNetwork::load(ObsNetworkHistory* history) {
 	this->hidden_1->acti_vals = history->hidden_1_history;
 	this->hidden_2->acti_vals = history->hidden_2_history;
 	this->output->acti_vals = history->output_history;
-
-	this->end_state = history->end_state_history;
 }
 
 void ObsNetwork::backprop(Eigen::VectorXf& state_errors) {
 	this->output->errors = state_errors;
 
-	this->output->errors -= this->end_state
-		.cwiseProduct(this->output->acti_vals.cwiseAbs()) * STATE_NORM_CONSTANT;
+	this->output->errors -= this->output->acti_vals * STATE_NORM_CONSTANT;
+	/**
+	 * - don't norm overall state
+	 *   - can lead to thrashing/instability
+	 * - only norm self
+	 */
 
 	this->output->backprop();
 	this->hidden_2->backprop();
@@ -245,12 +244,19 @@ void ObsNetwork::backprop(Eigen::VectorXf& state_errors) {
 
 	state_errors += this->state_input->errors.cwiseQuotient(this->state_norms);
 	this->state_input->errors.setConstant(0.0);
+
+	this->run_num_instances++;
 }
 
 void ObsNetwork::get_max_update(double& max_update_size) {
-	this->hidden_1->get_max_update(max_update_size);
-	this->hidden_2->get_max_update(max_update_size);
-	this->output->get_max_update(max_update_size);
+	this->hidden_1->get_max_update(this->run_num_instances,
+								   max_update_size);
+	this->hidden_2->get_max_update(this->run_num_instances,
+								   max_update_size);
+	this->output->get_max_update(this->run_num_instances,
+								 max_update_size);
+
+	this->run_num_instances = 0;
 }
 
 void ObsNetwork::update_weights(double learning_rate) {
