@@ -7,7 +7,6 @@
 
 using namespace std;
 
-const double NETWORK_TARGET_MAX_UPDATE = 0.01;
 const int EPOCH_SIZE = 10;
 /**
  * - not meaningful to update weights more often(?)
@@ -59,6 +58,7 @@ Network::Network(int input_size) {
 	this->output->input_layers.push_back(this->hidden_3);
 	this->output->update_structure();
 
+	this->num_instances = 0;
 	this->epoch_iter = 0;
 	this->average_max_update = 0.0;
 }
@@ -106,6 +106,7 @@ Network::Network(Network* original) {
 	this->output->update_structure();
 	this->output->copy_weights_from(original->output);
 
+	this->num_instances = 0;
 	this->epoch_iter = 0;
 	this->average_max_update = 0.0;
 }
@@ -166,6 +167,7 @@ Network::Network(ifstream& input_file) {
 	this->hidden_3->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
 
+	this->num_instances = 0;
 	this->epoch_iter = 0;
 	this->average_max_update = 0.0;
 }
@@ -202,49 +204,10 @@ void Network::init_backprop(double error,
 
 	this->epoch_iter++;
 	if (this->epoch_iter == EPOCH_SIZE) {
-		double hidden_1_max_update = 0.0;
-		this->hidden_1->get_max_update(hidden_1_max_update);
-		hidden_1_average_max_update = 0.999*hidden_1_average_max_update+0.001*hidden_1_max_update;
-		if (hidden_1_max_update > 0.0) {
-			double hidden_1_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/hidden_1_average_max_update;
-			if (hidden_1_learning_rate*hidden_1_max_update > NETWORK_TARGET_MAX_UPDATE) {
-				hidden_1_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_1_max_update;
-			}
-			this->hidden_1->update_weights(hidden_1_learning_rate);
-		}
-
-		double hidden_2_max_update = 0.0;
-		this->hidden_2->get_max_update(hidden_2_max_update);
-		hidden_2_average_max_update = 0.999*hidden_2_average_max_update+0.001*hidden_2_max_update;
-		if (hidden_2_max_update > 0.0) {
-			double hidden_2_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/hidden_2_average_max_update;
-			if (hidden_2_learning_rate*hidden_2_max_update > NETWORK_TARGET_MAX_UPDATE) {
-				hidden_2_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_2_max_update;
-			}
-			this->hidden_2->update_weights(hidden_2_learning_rate);
-		}
-
-		double hidden_3_max_update = 0.0;
-		this->hidden_3->get_max_update(hidden_3_max_update);
-		hidden_3_average_max_update = 0.999*hidden_3_average_max_update+0.001*hidden_3_max_update;
-		if (hidden_3_max_update > 0.0) {
-			double hidden_3_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/hidden_3_average_max_update;
-			if (hidden_3_learning_rate*hidden_3_max_update > NETWORK_TARGET_MAX_UPDATE) {
-				hidden_3_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_3_max_update;
-			}
-			this->hidden_3->update_weights(hidden_3_learning_rate);
-		}
-
-		double output_max_update = 0.0;
-		this->output->get_max_update(output_max_update);
-		output_average_max_update = 0.999*output_average_max_update+0.001*output_max_update;
-		if (output_max_update > 0.0) {
-			double output_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/output_average_max_update;
-			if (output_learning_rate*output_max_update > NETWORK_TARGET_MAX_UPDATE) {
-				output_learning_rate = NETWORK_TARGET_MAX_UPDATE/output_max_update;
-			}
-			this->output->update_weights(output_learning_rate);
-		}
+		this->hidden_1->update(1);
+		this->hidden_2->update(1);
+		this->hidden_3->update(1);
+		this->output->update(1);
 
 		this->epoch_iter = 0;
 	}
@@ -261,23 +224,12 @@ void Network::backprop(double error) {
 void Network::update() {
 	this->epoch_iter++;
 	if (this->epoch_iter == EPOCH_SIZE) {
-		double max_update = 0.0;
-		this->hidden_1->get_max_update(max_update);
-		this->hidden_2->get_max_update(max_update);
-		this->hidden_3->get_max_update(max_update);
-		this->output->get_max_update(max_update);
-		this->average_max_update = 0.999*this->average_max_update+0.001*max_update;
-		if (max_update > 0.0) {
-			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->average_max_update;
-			if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
-				learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
-			}
-			this->hidden_1->update_weights(learning_rate);
-			this->hidden_2->update_weights(learning_rate);
-			this->hidden_3->update_weights(learning_rate);
-			this->output->update_weights(learning_rate);
-		}
+		this->hidden_1->update(this->num_instances);
+		this->hidden_2->update(this->num_instances);
+		this->hidden_3->update(this->num_instances);
+		this->output->update(this->num_instances);
 
+		this->num_instances = 0;
 		this->epoch_iter = 0;
 	}
 }

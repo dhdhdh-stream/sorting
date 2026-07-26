@@ -21,6 +21,7 @@ public:
 	Layer* hidden_3;
 	Layer* output;
 
+	int num_instances;
 	int epoch_iter;
 	double average_max_update;
 

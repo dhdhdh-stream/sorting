@@ -10,10 +10,16 @@
 
 using namespace std;
 
-const double MOMENTUM_CONSTANT = 0.9;
+const double LEARNING_RATE = 0.001;
+const double M_CONSTANT = 0.9;
+const double V_CONSTANT = 0.999;
+const double EPSILON = 0.00000001;
 
 Layer::Layer(int type) {
 	this->type = type;
+
+	this->m_bch = 1.0;
+	this->v_bch = 1.0;
 }
 
 void Layer::update_structure() {
@@ -31,11 +37,17 @@ void Layer::update_structure() {
 		if ((int)this->constant_updates.size() < n_index+1) {
 			this->constant_updates.push_back(0.0);
 		}
-		if ((int)this->weight_momentums.size() < n_index+1) {
-			this->weight_momentums.push_back(vector<Eigen::VectorXf>());
+		if ((int)this->weight_ms.size() < n_index+1) {
+			this->weight_ms.push_back(vector<Eigen::VectorXf>());
 		}
-		if ((int)this->constant_momentums.size() < n_index+1) {
-			this->constant_momentums.push_back(0.0);
+		if ((int)this->constant_ms.size() < n_index+1) {
+			this->constant_ms.push_back(0.0);
+		}
+		if ((int)this->weight_vs.size() < n_index+1) {
+			this->weight_vs.push_back(vector<Eigen::VectorXf>());
+		}
+		if ((int)this->constant_vs.size() < n_index+1) {
+			this->constant_vs.push_back(0.0);
 		}
 
 		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
@@ -45,8 +57,11 @@ void Layer::update_structure() {
 			if ((int)this->weight_updates[n_index].size() < l_index+1) {
 				this->weight_updates[n_index].push_back(Eigen::VectorXf());
 			}
-			if ((int)this->weight_momentums[n_index].size() < l_index+1) {
-				this->weight_momentums[n_index].push_back(Eigen::VectorXf());
+			if ((int)this->weight_ms[n_index].size() < l_index+1) {
+				this->weight_ms[n_index].push_back(Eigen::VectorXf());
+			}
+			if ((int)this->weight_vs[n_index].size() < l_index+1) {
+				this->weight_vs[n_index].push_back(Eigen::VectorXf());
 			}
 
 			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
@@ -59,9 +74,13 @@ void Layer::update_structure() {
 					this->weight_updates[n_index][l_index].conservativeResize(this->weight_updates[n_index][l_index].size()+1);
 					this->weight_updates[n_index][l_index](ln_index) = 0.0;
 				}
-				if ((int)this->weight_momentums[n_index][l_index].size() < ln_index+1) {
-					this->weight_momentums[n_index][l_index].conservativeResize(this->weight_momentums[n_index][l_index].size()+1);
-					this->weight_momentums[n_index][l_index](ln_index) = 0.0;
+				if ((int)this->weight_ms[n_index][l_index].size() < ln_index+1) {
+					this->weight_ms[n_index][l_index].conservativeResize(this->weight_ms[n_index][l_index].size()+1);
+					this->weight_ms[n_index][l_index](ln_index) = 0.0;
+				}
+				if ((int)this->weight_vs[n_index][l_index].size() < ln_index+1) {
+					this->weight_vs[n_index][l_index].conservativeResize(this->weight_vs[n_index][l_index].size()+1);
+					this->weight_vs[n_index][l_index](ln_index) = 0.0;
 				}
 			}
 		}
@@ -231,49 +250,55 @@ void Layer::backprop() {
 	}
 }
 
-void Layer::get_max_update(double& max_update_size) {
+void Layer::update(int num_instances) {
+	this->m_bch *= M_CONSTANT;
+	this->v_bch *= V_CONSTANT;
+
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
-			this->weight_updates[n_index][l_index] += MOMENTUM_CONSTANT * this->weight_momentums[n_index][l_index];
-			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
-			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-				double update_size = abs(this->weight_updates[n_index][l_index](ln_index));
-				if (update_size > max_update_size) {
-					max_update_size = update_size;
-				}
-			}
-		}
+			this->weight_updates[n_index][l_index] /= num_instances;
 
-		this->constant_updates[n_index] += MOMENTUM_CONSTANT * this->constant_momentums[n_index];
-		double update_size = abs(this->constant_updates[n_index]);
-		if (update_size > max_update_size) {
-			max_update_size = update_size;
-		}
-	}
-}
+			this->weight_ms[n_index][l_index] = M_CONSTANT * this->weight_ms[n_index][l_index]
+				+ (1.0 - M_CONSTANT) * this->weight_updates[n_index][l_index];
+			this->weight_vs[n_index][l_index] = V_CONSTANT * this->weight_vs[n_index][l_index]
+				+ (1.0 - V_CONSTANT) * this->weight_updates[n_index][l_index].cwiseProduct(this->weight_updates[n_index][l_index]);
 
-void Layer::update_weights(double learning_rate) {
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
-			this->weights[n_index][l_index] += learning_rate * this->weight_updates[n_index][l_index];
+			this->weights[n_index][l_index] += (LEARNING_RATE
+				* this->weight_ms[n_index][l_index] / (1.0 - this->m_bch))
+				.cwiseQuotient(
+					(Eigen::VectorXf)(this->weight_vs[n_index][l_index].cwiseSqrt().array() + EPSILON));
+
 			this->weight_updates[n_index][l_index].setConstant(0.0);
 		}
 
-		double update = this->constant_updates[n_index]
-						*learning_rate;
+		this->constant_updates[n_index] /= num_instances;
+
+		this->constant_ms[n_index] = M_CONSTANT * this->constant_ms[n_index]
+			+ (1.0 - M_CONSTANT) * this->constant_updates[n_index];
+		this->constant_vs[n_index] = V_CONSTANT * this->constant_vs[n_index]
+			+ (1.0 - V_CONSTANT) * this->constant_updates[n_index] * this->constant_updates[n_index];
+
+		this->constants[n_index] += LEARNING_RATE
+			* this->constant_ms[n_index] / (1.0 - this->m_bch)
+			/ (sqrt(this->constant_vs[n_index]) + EPSILON);
+
 		this->constant_updates[n_index] = 0.0;
-		this->constants[n_index] += update;
 	}
 }
 
 void Layer::clear_momentum() {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
-			this->weight_momentums[n_index][l_index].setConstant(0.0);
+			this->weight_ms[n_index][l_index].setConstant(0.0);
+			this->weight_vs[n_index][l_index].setConstant(0.0);
 		}
 
-		this->constant_momentums[n_index] = 0.0;
+		this->constant_ms[n_index] = 0.0;
+		this->constant_vs[n_index] = 0.0;
 	}
+
+	this->m_bch = 1.0;
+	this->v_bch = 1.0;
 }
 
 void Layer::save_weights(ofstream& output_file) {
