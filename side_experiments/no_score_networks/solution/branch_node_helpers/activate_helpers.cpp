@@ -33,9 +33,9 @@ void BranchNode::step(vector<double>& obs,
 		wrapper->node_context.back() = this->original_next_node;
 	} else if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->branch_next_node;
-	} else if (this->ramp < this->ramp_num_gears
-			&& this->ramp < on_distribution(generator)) {
-		wrapper->node_context.back() = this->original_next_node;
+	// } else if (this->ramp < this->ramp_num_gears
+	// 		&& this->ramp < on_distribution(generator)) {
+	// 	wrapper->node_context.back() = this->original_next_node;
 	} else {
 		ScopeHistory* scope_history = wrapper->scope_histories.back();
 

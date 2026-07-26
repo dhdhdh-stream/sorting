@@ -34,10 +34,13 @@ ScoreNetwork::ScoreNetwork(int num_states) {
 	this->output->acti_vals.resize(1);
 	this->output->errors.resize(1);
 	this->output->errors.setConstant(0.0);
-	this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
+	/**
+	 * - don't directly connect output to state
+	 *   - state might be noise for this particular spot
+	 */
 
 	this->num_instances = 0;
 	this->last_update_iter = -1;
@@ -73,7 +76,6 @@ ScoreNetwork::ScoreNetwork(ScoreNetwork* original) {
 	this->output->acti_vals.resize(original->output->acti_vals.size());
 	this->output->errors.resize(original->output->errors.size());
 	this->output->errors.setConstant(0.0);
-	this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
@@ -120,7 +122,6 @@ ScoreNetwork::ScoreNetwork(ifstream& input_file) {
 	this->output->acti_vals.resize(1);
 	this->output->errors.resize(1);
 	this->output->errors.setConstant(0.0);
-	this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
@@ -235,6 +236,9 @@ void ScoreNetwork::clear_momentum() {
 	this->hidden_1->clear_momentum();
 	this->hidden_2->clear_momentum();
 	this->output->clear_momentum();
+
+	this->num_instances = 0;
+	this->epoch_iter = 0;
 }
 
 void ScoreNetwork::add_states(int new_num_states) {

@@ -54,13 +54,6 @@ void ExploreExperiment::add(bool is_new_state,
 		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
 	}
 
-	wrapper->solution->improvement_history.push_back(wrapper->solution->curr_score);
-	cout << "previous_val_average: " << wrapper->solution->curr_score << endl;
-
-	wrapper->solution->change_history.push_back(ss.str());
-
-	cout << ss.str() << endl;
-
 	vector<AbstractNode*> new_nodes;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -457,4 +450,50 @@ void ExploreExperiment::add(bool is_new_state,
 	 */
 
 	wrapper->iters_since_update = 0;
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+		scope->start_obs_network->clear_momentum();
+		for (int n_index = 0; n_index < (int)scope->start_init_networks.size(); n_index++) {
+			scope->start_init_networks[n_index]->clear_momentum();
+		}
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			switch (it->second->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)it->second;
+					action_node->action_network->clear_momentum();
+					action_node->obs_network->clear_momentum();
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)it->second;
+					branch_node->original_network->clear_momentum();
+					branch_node->branch_network->clear_momentum();
+					branch_node->explore_original_network->clear_momentum();
+					branch_node->explore_branch_network->clear_momentum();
+				}
+				break;
+			}
+
+			for (int n_index = 0; n_index < (int)it->second->init_networks.size(); n_index++) {
+				it->second->init_networks[n_index]->clear_momentum();
+			}
+		}
+	}
+
+	wrapper->solution->improvement_history.push_back(wrapper->solution->curr_score);
+	cout << "previous_val_average: " << wrapper->solution->curr_score << endl;
+
+	// temp
+	{
+		double val_average = measure_helper(wrapper);
+		cout << "post val_average: " << val_average << endl;
+		ss << "post val_average: " << val_average << "; ";
+	}
+
+	wrapper->solution->change_history.push_back(ss.str());
+
+	cout << ss.str() << endl;
 }

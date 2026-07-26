@@ -283,6 +283,9 @@ void InitNetwork::clear_momentum() {
 	this->hidden_1->clear_momentum();
 	this->hidden_2->clear_momentum();
 	this->output->clear_momentum();
+
+	this->num_instances = 0;
+	this->epoch_iter = 0;
 }
 
 void InitNetwork::add_states(int new_num_states) {
