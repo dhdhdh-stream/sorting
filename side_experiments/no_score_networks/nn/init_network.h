@@ -21,9 +21,9 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
-	double average_max_update;
-	int epoch_iter;
+	int num_instances;
 	int last_update_iter;
+	int epoch_iter;
 
 	InitNetwork(std::vector<int>& init_states,
 				int num_states,
@@ -36,9 +36,7 @@ public:
 					   std::vector<double>& new_state_vals,
 					   std::vector<double>& obs_input_vals);
 	void init_backprop(std::vector<double>& new_state_errors);
-	void init_update(double& hidden_1_average_max_update,
-					 double& hidden_2_average_max_update,
-					 double& output_average_max_update);
+	void init_update();
 
 	void activate(Eigen::VectorXf& state_vals,
 				  std::vector<double>& obs_input_vals);
@@ -50,10 +48,7 @@ public:
 
 	void update();
 
-	/**
-	 * - for debug
-	 */
-	void get_max_update(double& max_update_size);
+	void clear_momentum();
 
 	void add_states(int new_num_states);
 
@@ -66,7 +61,6 @@ public:
 	Eigen::VectorXf obs_input_history;
 	Eigen::VectorXf hidden_1_history;
 	Eigen::VectorXf hidden_2_history;
-	Eigen::VectorXf output_history;
 
 	InitNetworkHistory(InitNetwork* network);
 };

@@ -49,9 +49,9 @@ InitNetwork::InitNetwork(vector<int>& init_states,
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 
-	this->average_max_update = 0.0;
-	this->epoch_iter = 0;
+	this->num_instances = 0;
 	this->last_update_iter = -1;
+	this->epoch_iter = 0;
 }
 
 InitNetwork::InitNetwork(InitNetwork* original) {
@@ -97,9 +97,9 @@ InitNetwork::InitNetwork(InitNetwork* original) {
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 	this->output->copy_weights_from(original->output);
 
-	this->average_max_update = original->average_max_update;
-	this->epoch_iter = 0;
+	this->num_instances = 0;
 	this->last_update_iter = -1;
+	this->epoch_iter = 0;
 }
 
 InitNetwork::InitNetwork(ifstream& input_file) {
@@ -165,11 +165,9 @@ InitNetwork::InitNetwork(ifstream& input_file) {
 	this->hidden_2->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
 
-	string average_max_update_line;
-	getline(input_file, average_max_update_line);
-	this->average_max_update = stod(average_max_update_line);
-	this->epoch_iter = 0;
+	this->num_instances = 0;
 	this->last_update_iter = -1;
+	this->epoch_iter = 0;
 }
 
 InitNetwork::~InitNetwork() {
@@ -217,41 +215,10 @@ void InitNetwork::init_backprop(vector<double>& new_state_errors) {
 	}
 }
 
-void InitNetwork::init_update(double& hidden_1_average_max_update,
-							  double& hidden_2_average_max_update,
-							  double& output_average_max_update) {
-	double hidden_1_max_update = 0.0;
-	this->hidden_1->get_max_update(hidden_1_max_update);
-	hidden_1_average_max_update = 0.999*hidden_1_average_max_update+0.001*hidden_1_max_update;
-	if (hidden_1_max_update > 0.0) {
-		double hidden_1_learning_rate = (0.3*NETWORK_INIT_TARGET_MAX_UPDATE)/hidden_1_average_max_update;
-		if (hidden_1_learning_rate*hidden_1_max_update > NETWORK_INIT_TARGET_MAX_UPDATE) {
-			hidden_1_learning_rate = NETWORK_INIT_TARGET_MAX_UPDATE/hidden_1_max_update;
-		}
-		this->hidden_1->update_weights(hidden_1_learning_rate);
-	}
-
-	double hidden_2_max_update = 0.0;
-	this->hidden_2->get_max_update(hidden_2_max_update);
-	hidden_2_average_max_update = 0.999*hidden_2_average_max_update+0.001*hidden_2_max_update;
-	if (hidden_2_max_update > 0.0) {
-		double hidden_2_learning_rate = (0.3*NETWORK_INIT_TARGET_MAX_UPDATE)/hidden_2_average_max_update;
-		if (hidden_2_learning_rate*hidden_2_max_update > NETWORK_INIT_TARGET_MAX_UPDATE) {
-			hidden_2_learning_rate = NETWORK_INIT_TARGET_MAX_UPDATE/hidden_2_max_update;
-		}
-		this->hidden_2->update_weights(hidden_2_learning_rate);
-	}
-
-	double output_max_update = 0.0;
-	this->output->get_max_update(output_max_update);
-	output_average_max_update = 0.999*output_average_max_update+0.001*output_max_update;
-	if (output_max_update > 0.0) {
-		double output_learning_rate = (0.3*NETWORK_INIT_TARGET_MAX_UPDATE)/output_average_max_update;
-		if (output_learning_rate*output_max_update > NETWORK_INIT_TARGET_MAX_UPDATE) {
-			output_learning_rate = NETWORK_INIT_TARGET_MAX_UPDATE/output_max_update;
-		}
-		this->output->update_weights(output_learning_rate);
-	}
+void InitNetwork::init_update() {
+	this->hidden_1->update(1);
+	this->hidden_2->update(1);
+	this->output->update(1);
 }
 
 void InitNetwork::activate(Eigen::VectorXf& state_vals,
@@ -276,7 +243,6 @@ void InitNetwork::save(InitNetworkHistory* history) {
 	history->obs_input_history = this->obs_input->acti_vals;
 	history->hidden_1_history = this->hidden_1->acti_vals;
 	history->hidden_2_history = this->hidden_2->acti_vals;
-	history->output_history = this->output->acti_vals;
 }
 
 void InitNetwork::load(InitNetworkHistory* history) {
@@ -284,17 +250,11 @@ void InitNetwork::load(InitNetworkHistory* history) {
 	this->obs_input->acti_vals = history->obs_input_history;
 	this->hidden_1->acti_vals = history->hidden_1_history;
 	this->hidden_2->acti_vals = history->hidden_2_history;
-	this->output->acti_vals = history->output_history;
 }
 
 void InitNetwork::backprop(Eigen::VectorXf& state_errors) {
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
 		this->output->errors(i_index) = state_errors[this->init_states[i_index]];
-	}
-
-	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
-		this->output->errors(i_index) -= (this->state_input->acti_vals(this->init_states[i_index]) + this->output->acti_vals(i_index))
-			* abs(this->output->acti_vals(i_index)) * STATE_NORM_CONSTANT;
 	}
 
 	this->output->backprop();
@@ -303,34 +263,26 @@ void InitNetwork::backprop(Eigen::VectorXf& state_errors) {
 
 	state_errors += this->state_input->errors;
 	this->state_input->errors.setConstant(0.0);
+
+	this->num_instances++;
 }
 
 void InitNetwork::update() {
 	this->epoch_iter++;
-	if (this->epoch_iter == EPOCH_SIZE) {
-		double max_update = 0.0;
-		this->hidden_1->get_max_update(max_update);
-		this->hidden_2->get_max_update(max_update);
-		this->output->get_max_update(max_update);
-		this->average_max_update = 0.999*this->average_max_update+0.001*max_update;
-		if (max_update > 0.0) {
-			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->average_max_update;
-			if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
-				learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
-			}
-			this->hidden_1->update_weights(learning_rate);
-			this->hidden_2->update_weights(learning_rate);
-			this->output->update_weights(learning_rate);
-		}
+	if (this->epoch_iter == UPDATE_EPOCH_SIZE) {
+		this->hidden_1->update(this->num_instances);
+		this->hidden_2->update(this->num_instances);
+		this->output->update(this->num_instances);
 
+		this->num_instances = 0;
 		this->epoch_iter = 0;
 	}
 }
 
-void InitNetwork::get_max_update(double& max_update_size) {
-	this->hidden_1->get_max_update(max_update_size);
-	this->hidden_2->get_max_update(max_update_size);
-	this->output->get_max_update(max_update_size);
+void InitNetwork::clear_momentum() {
+	this->hidden_1->clear_momentum();
+	this->hidden_2->clear_momentum();
+	this->output->clear_momentum();
 }
 
 void InitNetwork::add_states(int new_num_states) {
@@ -361,8 +313,6 @@ void InitNetwork::save(ofstream& output_file) {
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);
 	this->output->save_weights(output_file);
-
-	output_file << this->average_max_update << endl;
 }
 
 InitNetworkHistory::InitNetworkHistory(InitNetwork* network) {

@@ -13,8 +13,6 @@ using namespace std;
 
 void Scope::experiment_start_activate(vector<double>& obs,
 									  SolutionWrapper* wrapper) {
-	uniform_int_distribution<int> partial_distribution(0, 9);
-
 	for (int n_index = 0; n_index < (int)this->start_negate_networks.size(); n_index++) {
 		int state_index = this->start_negate_networks[n_index]->state_index;
 		wrapper->state(state_index) = 0.0;
@@ -25,10 +23,13 @@ void Scope::experiment_start_activate(vector<double>& obs,
 		}
 	}
 
+	uniform_int_distribution<int> drop_distribution(0, 9);
+	bool is_drop = drop_distribution(generator) == 0;
+
 	this->start_obs_network->activate(wrapper->state,
 									  obs);
 
-	if (partial_distribution(generator) != 0) {
+	if (!is_drop) {
 		this->start_obs_network->activate(wrapper->partial_state,
 										  obs);
 		if (wrapper->run_type != RUN_TYPE_EXPLORE) {
@@ -45,7 +46,7 @@ void Scope::experiment_start_activate(vector<double>& obs,
 			this->start_init_networks[n_index]->activate(wrapper->state,
 														 obs);
 
-			if (partial_distribution(generator) != 0) {
+			if (!is_drop) {
 				this->start_init_networks[n_index]->activate(wrapper->partial_state,
 															 obs);
 				if (wrapper->run_type != RUN_TYPE_EXPLORE) {

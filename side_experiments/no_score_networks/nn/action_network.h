@@ -17,9 +17,9 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
-	double average_max_update;
-	int epoch_iter;
+	int num_instances;
 	int last_update_iter;
+	int epoch_iter;
 
 	ActionNetwork(int num_states);
 	ActionNetwork(ActionNetwork* original);
@@ -35,10 +35,7 @@ public:
 
 	void update();
 
-	/**
-	 * - for debug
-	 */
-	void get_max_update(double& max_update_size);
+	void clear_momentum();
 
 	void add_states(int new_num_states);
 
@@ -50,7 +47,6 @@ public:
 	Eigen::VectorXf state_input_history;
 	Eigen::VectorXf hidden_1_history;
 	Eigen::VectorXf hidden_2_history;
-	Eigen::VectorXf output_history;
 
 	ActionNetworkHistory(ActionNetwork* network);
 };

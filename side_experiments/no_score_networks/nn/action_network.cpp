@@ -38,9 +38,9 @@ ActionNetwork::ActionNetwork(int num_states) {
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(0.0);
 
-	this->average_max_update = 0.0;
-	this->epoch_iter = 0;
+	this->num_instances = 0;
 	this->last_update_iter = -1;
+	this->epoch_iter = 0;
 }
 
 ActionNetwork::ActionNetwork(ActionNetwork* original) {
@@ -77,9 +77,9 @@ ActionNetwork::ActionNetwork(ActionNetwork* original) {
 	this->output->update_structure(0.0);
 	this->output->copy_weights_from(original->output);
 
-	this->average_max_update = original->average_max_update;
-	this->epoch_iter = 0;
+	this->num_instances = 0;
 	this->last_update_iter = -1;
+	this->epoch_iter = 0;
 }
 
 ActionNetwork::ActionNetwork(ifstream& input_file) {
@@ -126,11 +126,9 @@ ActionNetwork::ActionNetwork(ifstream& input_file) {
 	this->hidden_2->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
 
-	string average_max_update_line;
-	getline(input_file, average_max_update_line);
-	this->average_max_update = stod(average_max_update_line);
-	this->epoch_iter = 0;
+	this->num_instances = 0;
 	this->last_update_iter = -1;
+	this->epoch_iter = 0;
 }
 
 ActionNetwork::~ActionNetwork() {
@@ -154,21 +152,16 @@ void ActionNetwork::save(ActionNetworkHistory* history) {
 	history->state_input_history = this->state_input->acti_vals;
 	history->hidden_1_history = this->hidden_1->acti_vals;
 	history->hidden_2_history = this->hidden_2->acti_vals;
-	history->output_history = this->output->acti_vals;
 }
 
 void ActionNetwork::load(ActionNetworkHistory* history) {
 	this->state_input->acti_vals = history->state_input_history;
 	this->hidden_1->acti_vals = history->hidden_1_history;
 	this->hidden_2->acti_vals = history->hidden_2_history;
-	this->output->acti_vals = history->output_history;
 }
 
 void ActionNetwork::backprop(Eigen::VectorXf& state_errors) {
 	this->output->errors = state_errors;
-
-	this->output->errors -= (this->state_input->acti_vals + this->output->acti_vals)
-		.cwiseProduct(this->output->acti_vals.cwiseAbs()) * STATE_NORM_CONSTANT;
 
 	this->output->backprop();
 	this->hidden_2->backprop();
@@ -176,34 +169,26 @@ void ActionNetwork::backprop(Eigen::VectorXf& state_errors) {
 
 	state_errors += this->state_input->errors;
 	this->state_input->errors.setConstant(0.0);
+
+	this->num_instances++;
 }
 
 void ActionNetwork::update() {
 	this->epoch_iter++;
-	if (this->epoch_iter == EPOCH_SIZE) {
-		double max_update = 0.0;
-		this->hidden_1->get_max_update(max_update);
-		this->hidden_2->get_max_update(max_update);
-		this->output->get_max_update(max_update);
-		this->average_max_update = 0.999*this->average_max_update+0.001*max_update;
-		if (max_update > 0.0) {
-			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->average_max_update;
-			if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
-				learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
-			}
-			this->hidden_1->update_weights(learning_rate);
-			this->hidden_2->update_weights(learning_rate);
-			this->output->update_weights(learning_rate);
-		}
+	if (this->epoch_iter == UPDATE_EPOCH_SIZE) {
+		this->hidden_1->update(this->num_instances);
+		this->hidden_2->update(this->num_instances);
+		this->output->update(this->num_instances);
 
+		this->num_instances = 0;
 		this->epoch_iter = 0;
 	}
 }
 
-void ActionNetwork::get_max_update(double& max_update_size) {
-	this->hidden_1->get_max_update(max_update_size);
-	this->hidden_2->get_max_update(max_update_size);
-	this->output->get_max_update(max_update_size);
+void ActionNetwork::clear_momentum() {
+	this->hidden_1->clear_momentum();
+	this->hidden_2->clear_momentum();
+	this->output->clear_momentum();
 }
 
 void ActionNetwork::add_states(int new_num_states) {
@@ -229,8 +214,6 @@ void ActionNetwork::save(ofstream& output_file) {
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);
 	this->output->save_weights(output_file);
-
-	output_file << this->average_max_update << endl;
 }
 
 ActionNetworkHistory::ActionNetworkHistory(ActionNetwork* network) {

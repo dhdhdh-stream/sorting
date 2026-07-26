@@ -19,7 +19,8 @@ void BranchNode::experiment_step(vector<double>& obs,
 								 int& action,
 								 bool& is_next,
 								 SolutionWrapper* wrapper) {
-	uniform_int_distribution<int> partial_distribution(0, 9);
+	uniform_int_distribution<int> drop_distribution(0, 9);
+	bool is_drop = drop_distribution(generator) == 0;
 
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
 		if (match_dependency_helper(wrapper,
@@ -28,7 +29,7 @@ void BranchNode::experiment_step(vector<double>& obs,
 			this->init_networks[n_index]->activate(wrapper->state,
 												   obs);
 
-			if (partial_distribution(generator) != 0) {
+			if (!is_drop) {
 				this->init_networks[n_index]->activate(wrapper->partial_state,
 													   obs);
 				if (wrapper->run_type != RUN_TYPE_EXPLORE) {

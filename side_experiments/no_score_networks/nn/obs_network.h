@@ -24,9 +24,9 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
-	double average_max_update;
-	int epoch_iter;
+	int num_instances;
 	int last_update_iter;
+	int epoch_iter;
 
 	ObsNetwork(int num_states,
 			   int num_obs);
@@ -44,10 +44,7 @@ public:
 
 	void update();
 
-	/**
-	 * - for debug
-	 */
-	void get_max_update(double& max_update_size);
+	void clear_momentum();
 
 	void add_states(int new_num_states);
 
@@ -60,7 +57,6 @@ public:
 	Eigen::VectorXf obs_input_history;
 	Eigen::VectorXf hidden_1_history;
 	Eigen::VectorXf hidden_2_history;
-	Eigen::VectorXf output_history;
 
 	ObsNetworkHistory(ObsNetwork* network);
 };

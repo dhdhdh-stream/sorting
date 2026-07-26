@@ -17,9 +17,9 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
-	double average_max_update;
-	int epoch_iter;
+	int num_instances;
 	int last_update_iter;
+	int epoch_iter;
 
 	ScoreNetwork(int num_states);
 	ScoreNetwork(ScoreNetwork* original);
@@ -35,9 +35,7 @@ public:
 	void init_backprop(double target_val,
 					   std::vector<double>& new_state_errors);
 
-	void init_update(double& hidden_1_average_max_update,
-					 double& hidden_2_average_max_update,
-					 double& output_average_max_update);
+	void init_update();
 
 	void save(ScoreNetworkHistory* history);
 	void load(ScoreNetworkHistory* history);
@@ -47,10 +45,7 @@ public:
 
 	void update();
 
-	/**
-	 * - for debug
-	 */
-	void get_max_update(double& max_update_size);
+	void clear_momentum();
 
 	void add_states(int new_num_states);
 

@@ -11,12 +11,8 @@ const double REGRESSION_WEIGHT_LIMIT = 100000.0;
 
 const double NETWORK_INIT_MULTIPLIER = 0.01;
 
-const double NETWORK_INIT_TARGET_MAX_UPDATE = 0.01;
-const double NETWORK_TARGET_MAX_UPDATE = 0.002;
-const int EPOCH_SIZE = 10;
-/**
- * - unstable to update weights more often(?)
- */
+const int INIT_EPOCH_SIZE = 10;
+const int UPDATE_EPOCH_SIZE = 100;
 
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_NUM_DATAPOINTS = 20;
@@ -30,8 +26,6 @@ const int TRAIN_ITERS = 30;
 #else
 const int TRAIN_ITERS = 300000;
 #endif /* MDEBUG */
-
-const double STATE_NORM_CONSTANT = 0.01;
 
 /**
  * - simply give raw actions a fixed weight
@@ -68,7 +62,7 @@ const double NEW_STATE_LAST_BETTER_THAN_RATIO = 0.9;
 #if defined(MDEBUG) && MDEBUG
 const int UPDATE_NUM_ITERS = 40;
 #else
-const int UPDATE_NUM_ITERS = 80000;
+const int UPDATE_NUM_ITERS = 400000;
 #endif /* MDEBUG */
 
 const int GENERALIZE_ITER = 3;

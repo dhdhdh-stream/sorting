@@ -22,7 +22,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int ITERS_PER_RAMP = 2;
 #else
-const int ITERS_PER_RAMP = 4000;
+const int ITERS_PER_RAMP = 40000;
 #endif /* MDEBUG */
 
 void update_helper(ScopeHistory* scope_history) {
@@ -66,10 +66,6 @@ void update_helper(ScopeHistory* scope_history) {
 	}
 }
 
-/**
- * - for some reason, best to update each network individually as frequently as possible(?)
- *   - vs. updating all networks in a balanced way
- */
 void update_helper(double target_val,
 				   SolutionWrapper* wrapper) {
 	if (wrapper->run_type != RUN_TYPE_EXPLORE) {

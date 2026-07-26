@@ -41,13 +41,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 												 wrapper->solution->num_states + NEW_STATE_NUM_ADD,
 												 wrapper->solution->num_obs);
 	}
-	vector<double> hidden_1_average_max_updates(this->dependencies.size(), 0.0);
-	vector<double> hidden_2_average_max_updates(this->dependencies.size(), 0.0);
-	vector<double> output_average_max_updates(this->dependencies.size(), 0.0);
 	ScoreNetwork* new_network = new ScoreNetwork(wrapper->solution->num_states + NEW_STATE_NUM_ADD);
-	double hidden_1_average_max_update = 0.0;
-	double hidden_2_average_max_update = 0.0;
-	double output_average_max_update = 0.0;
 
 	int num_new_train = (1.0 - VERIFY_RATIO) * (double)this->new_dependencies_is_hit_histories.size();
 
@@ -86,15 +80,11 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			}
 		}
 
-		if ((iter_index+1)%EPOCH_SIZE == 0) {
+		if ((iter_index+1)%INIT_EPOCH_SIZE == 0) {
 			for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
-				init_networks[d_index]->init_update(hidden_1_average_max_updates[d_index],
-													hidden_2_average_max_updates[d_index],
-													output_average_max_updates[d_index]);
+				init_networks[d_index]->init_update();
 			}
-			new_network->init_update(hidden_1_average_max_update,
-									 hidden_2_average_max_update,
-									 output_average_max_update);
+			new_network->init_update();
 		}
 	}
 	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {

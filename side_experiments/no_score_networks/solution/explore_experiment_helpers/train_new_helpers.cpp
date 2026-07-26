@@ -186,9 +186,6 @@ void ExploreExperiment::train_new_backprop(
 				int num_new_train = (1.0 - VERIFY_RATIO) * (double)this->new_dependencies_is_hit_histories.size();
 
 				ScoreNetwork* new_network = new ScoreNetwork(wrapper->solution->num_states);
-				double hidden_1_average_max_update = 0.0;
-				double hidden_2_average_max_update = 0.0;
-				double output_average_max_update = 0.0;
 
 				uniform_int_distribution<int> new_train_distribution(0, num_new_train-1);
 				for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
@@ -198,10 +195,8 @@ void ExploreExperiment::train_new_backprop(
 
 					new_network->init_backprop(this->new_target_val_histories[rand_index]);
 
-					if ((iter_index+1)%EPOCH_SIZE == 0) {
-						new_network->init_update(hidden_1_average_max_update,
-												 hidden_2_average_max_update,
-												 output_average_max_update);
+					if ((iter_index+1)%INIT_EPOCH_SIZE == 0) {
+						new_network->init_update();
 					}
 				}
 				for (int s_index = 0; s_index < (int)new_network->state_input->errors.size(); s_index++) {

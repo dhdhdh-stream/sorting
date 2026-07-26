@@ -36,7 +36,8 @@ void ActionNode::experiment_step(vector<double>& obs,
 
 void ActionNode::experiment_step_callback(vector<double>& obs,
 										  SolutionWrapper* wrapper) {
-	uniform_int_distribution<int> partial_distribution(0, 9);
+	uniform_int_distribution<int> drop_distribution(0, 9);
+	bool is_drop = drop_distribution(generator) == 0;
 
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
@@ -46,7 +47,7 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 
 	this->action_network->activate(wrapper->state);
 
-	if (partial_distribution(generator) != 0) {
+	if (!is_drop) {
 		this->action_network->activate(wrapper->partial_state);
 		if (wrapper->run_type != RUN_TYPE_EXPLORE) {
 			ActionNetworkHistory* action_network_history = new ActionNetworkHistory(this->action_network);
@@ -58,7 +59,7 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 	this->obs_network->activate(wrapper->state,
 								obs);
 
-	if (partial_distribution(generator) != 0) {
+	if (!is_drop) {
 		this->obs_network->activate(wrapper->partial_state,
 									obs);
 		if (wrapper->run_type != RUN_TYPE_EXPLORE) {
@@ -75,7 +76,7 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 			this->init_networks[n_index]->activate(wrapper->state,
 												   obs);
 
-			if (partial_distribution(generator) != 0) {
+			if (!is_drop) {
 				this->init_networks[n_index]->activate(wrapper->partial_state,
 													   obs);
 				if (wrapper->run_type != RUN_TYPE_EXPLORE) {
