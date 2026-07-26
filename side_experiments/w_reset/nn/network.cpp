@@ -37,19 +37,23 @@ Network::Network(int input_size) {
 	this->hidden_1->update_structure();
 
 	this->hidden_2 = new Layer(LEAKY_LAYER);
-	this->hidden_2->acti_vals.resize(8);
-	this->hidden_2->errors.resize(8);
+	// this->hidden_2->acti_vals.resize(8);
+	this->hidden_2->acti_vals.resize(16);
+	// this->hidden_2->errors.resize(8);
+	this->hidden_2->errors.resize(16);
 	this->hidden_2->errors.setConstant(0.0);
-	this->hidden_2->input_layers.push_back(this->input);
+	// this->hidden_2->input_layers.push_back(this->input);
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure();
 
 	this->hidden_3 = new Layer(LEAKY_LAYER);
-	this->hidden_3->acti_vals.resize(4);
-	this->hidden_3->errors.resize(4);
+	// this->hidden_3->acti_vals.resize(4);
+	this->hidden_3->acti_vals.resize(16);
+	// this->hidden_3->errors.resize(4);
+	this->hidden_3->errors.resize(16);
 	this->hidden_3->errors.setConstant(0.0);
-	this->hidden_3->input_layers.push_back(this->input);
-	this->hidden_3->input_layers.push_back(this->hidden_1);
+	// this->hidden_3->input_layers.push_back(this->input);
+	// this->hidden_3->input_layers.push_back(this->hidden_1);
 	this->hidden_3->input_layers.push_back(this->hidden_2);
 	this->hidden_3->update_structure();
 
@@ -59,9 +63,13 @@ Network::Network(int input_size) {
 	this->output->errors.setConstant(0.0);
 	/**
 	 * - if directly connect input with no norm, can dominate hidden
+	 *   - and/or less robust to change?
+	 *     - noise gets directly connected to error
+	 *       - destroying previous signal
+	 *   - whereas with indirect, noise goes through hidden and is weakened
 	 */
-	this->output->input_layers.push_back(this->hidden_1);
-	this->output->input_layers.push_back(this->hidden_2);
+	// this->output->input_layers.push_back(this->hidden_1);
+	// this->output->input_layers.push_back(this->hidden_2);
 	this->output->input_layers.push_back(this->hidden_3);
 	this->output->update_structure();
 
@@ -95,7 +103,7 @@ Network::Network(Network* original) {
 	this->hidden_2->acti_vals.resize(original->hidden_2->acti_vals.size());
 	this->hidden_2->errors.resize(original->hidden_2->errors.size());
 	this->hidden_2->errors.setConstant(0.0);
-	this->hidden_2->input_layers.push_back(this->input);
+	// this->hidden_2->input_layers.push_back(this->input);
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure();
 	this->hidden_2->copy_weights_from(original->hidden_2);
@@ -104,8 +112,8 @@ Network::Network(Network* original) {
 	this->hidden_3->acti_vals.resize(original->hidden_3->acti_vals.size());
 	this->hidden_3->errors.resize(original->hidden_3->errors.size());
 	this->hidden_3->errors.setConstant(0.0);
-	this->hidden_3->input_layers.push_back(this->input);
-	this->hidden_3->input_layers.push_back(this->hidden_1);
+	// this->hidden_3->input_layers.push_back(this->input);
+	// this->hidden_3->input_layers.push_back(this->hidden_1);
 	this->hidden_3->input_layers.push_back(this->hidden_2);
 	this->hidden_3->update_structure();
 	this->hidden_3->copy_weights_from(original->hidden_3);
@@ -114,8 +122,8 @@ Network::Network(Network* original) {
 	this->output->acti_vals.resize(original->output->acti_vals.size());
 	this->output->errors.resize(original->output->errors.size());
 	this->output->errors.setConstant(0.0);
-	this->output->input_layers.push_back(this->hidden_1);
-	this->output->input_layers.push_back(this->hidden_2);
+	// this->output->input_layers.push_back(this->hidden_1);
+	// this->output->input_layers.push_back(this->hidden_2);
 	this->output->input_layers.push_back(this->hidden_3);
 	this->output->update_structure();
 	this->output->copy_weights_from(original->output);
@@ -168,7 +176,7 @@ Network::Network(ifstream& input_file) {
 	this->hidden_2->acti_vals.resize(hidden_2_size);
 	this->hidden_2->errors.resize(hidden_2_size);
 	this->hidden_2->errors.setConstant(0.0);
-	this->hidden_2->input_layers.push_back(this->input);
+	// this->hidden_2->input_layers.push_back(this->input);
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure();
 
@@ -179,8 +187,8 @@ Network::Network(ifstream& input_file) {
 	this->hidden_3->acti_vals.resize(hidden_3_size);
 	this->hidden_3->errors.resize(hidden_3_size);
 	this->hidden_3->errors.setConstant(0.0);
-	this->hidden_3->input_layers.push_back(this->input);
-	this->hidden_3->input_layers.push_back(this->hidden_1);
+	// this->hidden_3->input_layers.push_back(this->input);
+	// this->hidden_3->input_layers.push_back(this->hidden_1);
 	this->hidden_3->input_layers.push_back(this->hidden_2);
 	this->hidden_3->update_structure();
 
@@ -188,8 +196,8 @@ Network::Network(ifstream& input_file) {
 	this->output->acti_vals.resize(1);
 	this->output->errors.resize(1);
 	this->output->errors.setConstant(0.0);
-	this->output->input_layers.push_back(this->hidden_1);
-	this->output->input_layers.push_back(this->hidden_2);
+	// this->output->input_layers.push_back(this->hidden_1);
+	// this->output->input_layers.push_back(this->hidden_2);
 	this->output->input_layers.push_back(this->hidden_3);
 	this->output->update_structure();
 
@@ -307,7 +315,7 @@ void Network::backprop(double error) {
 		+ 0.00001*(this->raw_input->acti_vals - this->input_means).cwiseAbs();
 }
 
-void Network::update(int layer) {
+void Network::update() {
 	this->epoch_iter++;
 	if (this->epoch_iter == EPOCH_SIZE) {
 		double max_update = 0.0;
@@ -317,10 +325,9 @@ void Network::update(int layer) {
 		this->output->get_max_update(max_update);
 		this->average_max_update = 0.999*this->average_max_update+0.001*max_update;
 		if (max_update > 0.0) {
-			double target_max_update = NETWORK_TARGET_MAX_UPDATE * pow(0.5, layer);
-			double learning_rate = (0.3*target_max_update)/this->average_max_update;
-			if (learning_rate*max_update > target_max_update) {
-				learning_rate = target_max_update/max_update;
+			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->average_max_update;
+			if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
+				learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
 			}
 			this->hidden_1->update_weights(learning_rate);
 			this->hidden_2->update_weights(learning_rate);

@@ -52,7 +52,7 @@ public:
 					   double& output_average_max_update);
 
 	void backprop(double error);
-	void update(int layer);
+	void update();
 
 	void save(std::ofstream& output_file);
 };

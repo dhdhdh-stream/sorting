@@ -20,9 +20,6 @@ const double VERIFY_RATIO = 0.2;
 const int TRAIN_ITERS = 30;
 #else
 const int TRAIN_ITERS = 300000;
-/**
- * - bare minimum needed to reach conclusions(?)
- */
 #endif /* MDEBUG */
 
 /**

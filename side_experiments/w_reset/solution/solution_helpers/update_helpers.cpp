@@ -70,7 +70,7 @@ void update_helper(set<BranchNode*>& hit_original,
 			it != hit_original.end(); it++) {
 		BranchNode* branch_node = *it;
 
-		branch_node->original_network->update(wrapper->solution->scopes.size()-1 - branch_node->parent->id);
+		branch_node->original_network->update();
 
 		if (branch_node->ramp < branch_node->ramp_num_gears) {
 			branch_node->ramp_iter++;
@@ -85,7 +85,7 @@ void update_helper(set<BranchNode*>& hit_original,
 			it != hit_branch.end(); it++) {
 		BranchNode* branch_node = *it;
 
-		branch_node->branch_network->update(wrapper->solution->scopes.size()-1 - branch_node->parent->id);
+		branch_node->branch_network->update();
 
 		if (branch_node->ramp < branch_node->ramp_num_gears) {
 			branch_node->ramp_iter++;
