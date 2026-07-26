@@ -24,6 +24,8 @@ public:
 	std::vector<double> constants;
 	std::vector<std::vector<Eigen::VectorXf>> weight_updates;
 	std::vector<double> constant_updates;
+	std::vector<std::vector<Eigen::VectorXf>> weight_momentums;
+	std::vector<double> constant_momentums;
 
 	Layer(int type);
 
@@ -36,6 +38,8 @@ public:
 	void backprop();
 	void get_max_update(double& max_update_size);
 	void update_weights(double learning_rate);
+
+	void clear_momentum();
 
 	void save_weights(std::ofstream& output_file);
 };

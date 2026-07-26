@@ -10,6 +10,8 @@
 
 using namespace std;
 
+const double MOMENTUM_CONSTANT = 0.9;
+
 Layer::Layer(int type) {
 	this->type = type;
 }
@@ -29,6 +31,12 @@ void Layer::update_structure() {
 		if ((int)this->constant_updates.size() < n_index+1) {
 			this->constant_updates.push_back(0.0);
 		}
+		if ((int)this->weight_momentums.size() < n_index+1) {
+			this->weight_momentums.push_back(vector<Eigen::VectorXf>());
+		}
+		if ((int)this->constant_momentums.size() < n_index+1) {
+			this->constant_momentums.push_back(0.0);
+		}
 
 		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
 			if ((int)this->weights[n_index].size() < l_index+1) {
@@ -36,6 +44,9 @@ void Layer::update_structure() {
 			}
 			if ((int)this->weight_updates[n_index].size() < l_index+1) {
 				this->weight_updates[n_index].push_back(Eigen::VectorXf());
+			}
+			if ((int)this->weight_momentums[n_index].size() < l_index+1) {
+				this->weight_momentums[n_index].push_back(Eigen::VectorXf());
 			}
 
 			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
@@ -47,6 +58,10 @@ void Layer::update_structure() {
 				if ((int)this->weight_updates[n_index][l_index].size() < ln_index+1) {
 					this->weight_updates[n_index][l_index].conservativeResize(this->weight_updates[n_index][l_index].size()+1);
 					this->weight_updates[n_index][l_index](ln_index) = 0.0;
+				}
+				if ((int)this->weight_momentums[n_index][l_index].size() < ln_index+1) {
+					this->weight_momentums[n_index][l_index].conservativeResize(this->weight_momentums[n_index][l_index].size()+1);
+					this->weight_momentums[n_index][l_index](ln_index) = 0.0;
 				}
 			}
 		}
@@ -219,6 +234,7 @@ void Layer::backprop() {
 void Layer::get_max_update(double& max_update_size) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
+			this->weight_updates[n_index][l_index] += MOMENTUM_CONSTANT * this->weight_momentums[n_index][l_index];
 			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
 			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
 				double update_size = abs(this->weight_updates[n_index][l_index](ln_index));
@@ -228,6 +244,7 @@ void Layer::get_max_update(double& max_update_size) {
 			}
 		}
 
+		this->constant_updates[n_index] += MOMENTUM_CONSTANT * this->constant_momentums[n_index];
 		double update_size = abs(this->constant_updates[n_index]);
 		if (update_size > max_update_size) {
 			max_update_size = update_size;
@@ -246,6 +263,16 @@ void Layer::update_weights(double learning_rate) {
 						*learning_rate;
 		this->constant_updates[n_index] = 0.0;
 		this->constants[n_index] += update;
+	}
+}
+
+void Layer::clear_momentum() {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
+			this->weight_momentums[n_index][l_index].setConstant(0.0);
+		}
+
+		this->constant_momentums[n_index] = 0.0;
 	}
 }
 

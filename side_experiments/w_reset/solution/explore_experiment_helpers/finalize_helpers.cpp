@@ -397,4 +397,15 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	 */
 
 	wrapper->iters_since_update = 0;
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			if (it->second->type == NODE_TYPE_BRANCH) {
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->original_network->clear_momentum();
+				branch_node->branch_network->clear_momentum();
+			}
+		}
+	}
 }
