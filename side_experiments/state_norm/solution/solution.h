@@ -57,8 +57,9 @@ public:
 	/**
 	 * - important to update all networks together
 	 *   - maybe because updating individually causes too much change and destroys naunce?
+	 *   - or if updating score networks individually, breaks connection between score and state?
+	 *     - and state gets taken over by other score networks
 	 */
-	// temp
 	std::vector<double> largest_max_updates;
 
 	std::vector<double> improvement_history;

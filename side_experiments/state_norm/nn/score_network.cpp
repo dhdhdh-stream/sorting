@@ -34,10 +34,14 @@ ScoreNetwork::ScoreNetwork(int num_states) {
 	this->output->acti_vals.resize(1);
 	this->output->errors.resize(1);
 	this->output->errors.setConstant(0.0);
-	this->output->input_layers.push_back(this->state_input);
+	// this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
+	/**
+	 * - don't directly connect output to state
+	 *   - state might be noise for this particular spot
+	 */
 
 	this->last_update_iter = -1;
 	this->epoch_iter = 0;
@@ -73,7 +77,7 @@ ScoreNetwork::ScoreNetwork(ScoreNetwork* original) {
 	this->output->acti_vals.resize(original->output->acti_vals.size());
 	this->output->errors.resize(original->output->errors.size());
 	this->output->errors.setConstant(0.0);
-	this->output->input_layers.push_back(this->state_input);
+	// this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
@@ -120,7 +124,7 @@ ScoreNetwork::ScoreNetwork(ifstream& input_file) {
 	this->output->acti_vals.resize(1);
 	this->output->errors.resize(1);
 	this->output->errors.setConstant(0.0);
-	this->output->input_layers.push_back(this->state_input);
+	// this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
@@ -199,9 +203,9 @@ void ScoreNetwork::init_update(double& hidden_1_average_max_update,
 								   hidden_1_max_update);
 	hidden_1_average_max_update = 0.999*hidden_1_average_max_update+0.001*hidden_1_max_update;
 	if (hidden_1_max_update > 0.0) {
-		double hidden_1_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/hidden_1_average_max_update;
-		if (hidden_1_learning_rate*hidden_1_max_update > NETWORK_TARGET_MAX_UPDATE) {
-			hidden_1_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_1_max_update;
+		double hidden_1_learning_rate = (0.3*NETWORK_INIT_TARGET_MAX_UPDATE)/hidden_1_average_max_update;
+		if (hidden_1_learning_rate*hidden_1_max_update > NETWORK_INIT_TARGET_MAX_UPDATE) {
+			hidden_1_learning_rate = NETWORK_INIT_TARGET_MAX_UPDATE/hidden_1_max_update;
 		}
 		this->hidden_1->update_weights(hidden_1_learning_rate);
 	}
@@ -211,9 +215,9 @@ void ScoreNetwork::init_update(double& hidden_1_average_max_update,
 								   hidden_2_max_update);
 	hidden_2_average_max_update = 0.999*hidden_2_average_max_update+0.001*hidden_2_max_update;
 	if (hidden_2_max_update > 0.0) {
-		double hidden_2_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/hidden_2_average_max_update;
-		if (hidden_2_learning_rate*hidden_2_max_update > NETWORK_TARGET_MAX_UPDATE) {
-			hidden_2_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_2_max_update;
+		double hidden_2_learning_rate = (0.3*NETWORK_INIT_TARGET_MAX_UPDATE)/hidden_2_average_max_update;
+		if (hidden_2_learning_rate*hidden_2_max_update > NETWORK_INIT_TARGET_MAX_UPDATE) {
+			hidden_2_learning_rate = NETWORK_INIT_TARGET_MAX_UPDATE/hidden_2_max_update;
 		}
 		this->hidden_2->update_weights(hidden_2_learning_rate);
 	}
@@ -223,9 +227,9 @@ void ScoreNetwork::init_update(double& hidden_1_average_max_update,
 								 output_max_update);
 	output_average_max_update = 0.999*output_average_max_update+0.001*output_max_update;
 	if (output_max_update > 0.0) {
-		double output_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/output_average_max_update;
-		if (output_learning_rate*output_max_update > NETWORK_TARGET_MAX_UPDATE) {
-			output_learning_rate = NETWORK_TARGET_MAX_UPDATE/output_max_update;
+		double output_learning_rate = (0.3*NETWORK_INIT_TARGET_MAX_UPDATE)/output_average_max_update;
+		if (output_learning_rate*output_max_update > NETWORK_INIT_TARGET_MAX_UPDATE) {
+			output_learning_rate = NETWORK_INIT_TARGET_MAX_UPDATE/output_max_update;
 		}
 		this->output->update_weights(output_learning_rate);
 	}
@@ -260,8 +264,8 @@ void ScoreNetwork::backprop(double target_val,
 }
 
 void ScoreNetwork::update() {
-	this->epoch_iter++;
-	if (this->epoch_iter == EPOCH_SIZE) {
+	// this->epoch_iter++;
+	// if (this->epoch_iter == EPOCH_SIZE) {
 		double max_update = 0.0;
 		this->hidden_1->get_max_update(1,
 									   max_update);
@@ -271,9 +275,9 @@ void ScoreNetwork::update() {
 									 max_update);
 		this->average_max_update = 0.999*this->average_max_update+0.001*max_update;
 		if (max_update > 0.0) {
-			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->average_max_update;
-			if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
-				learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+			double learning_rate = (0.3*NETWORK_UPDATE_TARGET_MAX_UPDATE)/this->average_max_update;
+			if (learning_rate*max_update > NETWORK_UPDATE_TARGET_MAX_UPDATE) {
+				learning_rate = NETWORK_UPDATE_TARGET_MAX_UPDATE/max_update;
 			}
 			this->hidden_1->update_weights(learning_rate);
 			this->hidden_2->update_weights(learning_rate);
@@ -281,7 +285,7 @@ void ScoreNetwork::update() {
 		}
 
 		this->epoch_iter = 0;
-	}
+	// }
 }
 
 void ScoreNetwork::clear_update_weights() {

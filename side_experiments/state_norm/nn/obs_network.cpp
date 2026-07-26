@@ -49,6 +49,10 @@ ObsNetwork::ObsNetwork(int num_states,
 	 * - don't directly connect input to output
 	 *   - update size will be large even when network has no impact
 	 *   - hidden updates will be small
+	 *   - and/or less robust to change?
+	 *     - noise gets directly connected to error
+	 *       - destroying previous signal
+	 *   - whereas with indirect, noise goes through hidden and is weakened
 	 */
 
 	this->run_num_instances = 0;

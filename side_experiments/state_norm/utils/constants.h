@@ -11,7 +11,8 @@ const double REGRESSION_WEIGHT_LIMIT = 100000.0;
 
 const double NETWORK_INIT_MULTIPLIER = 0.01;
 
-const double NETWORK_TARGET_MAX_UPDATE = 0.01;
+const double NETWORK_INIT_TARGET_MAX_UPDATE = 0.01;
+const double NETWORK_UPDATE_TARGET_MAX_UPDATE = 0.01;
 const int EPOCH_SIZE = 10;
 /**
  * - unstable to update weights more often(?)
