@@ -266,7 +266,7 @@ void Layer::update(int num_instances) {
 			this->weights[n_index][l_index] += (LEARNING_RATE
 				* this->weight_ms[n_index][l_index] / (1.0 - this->m_bch))
 				.cwiseQuotient(
-					(Eigen::VectorXf)(this->weight_vs[n_index][l_index].cwiseSqrt().array() + EPSILON));
+					(Eigen::VectorXf)(this->weight_vs[n_index][l_index].cwiseSqrt().array() / (1.0 - this->v_bch) + EPSILON));
 
 			this->weight_updates[n_index][l_index].setConstant(0.0);
 		}
@@ -280,7 +280,7 @@ void Layer::update(int num_instances) {
 
 		this->constants[n_index] += LEARNING_RATE
 			* this->constant_ms[n_index] / (1.0 - this->m_bch)
-			/ (sqrt(this->constant_vs[n_index]) + EPSILON);
+			/ (sqrt(this->constant_vs[n_index] / (1.0 - this->v_bch)) + EPSILON);
 
 		this->constant_updates[n_index] = 0.0;
 	}

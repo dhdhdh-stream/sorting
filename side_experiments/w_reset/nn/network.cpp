@@ -219,6 +219,8 @@ void Network::backprop(double error) {
 	this->hidden_3->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
+
+	this->num_instances++;
 }
 
 void Network::update() {

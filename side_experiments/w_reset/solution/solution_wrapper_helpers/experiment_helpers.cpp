@@ -98,7 +98,8 @@ void SolutionWrapper::experiment_end(double result) {
 		update_helper(this->scope_histories[0],
 					  result,
 					  hit_original,
-					  hit_branch);
+					  hit_branch,
+					  this);
 		update_helper(hit_original,
 					  hit_branch,
 					  this);
