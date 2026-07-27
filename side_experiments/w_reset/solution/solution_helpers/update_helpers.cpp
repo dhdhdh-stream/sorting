@@ -13,13 +13,6 @@
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int ITERS_PER_RAMP = 2;
-#else
-// const int ITERS_PER_RAMP = 4000;
-const int ITERS_PER_RAMP = 40000;
-#endif /* MDEBUG */
-
 void update_helper(ScopeHistory* scope_history,
 				   double target_val,
 				   set<BranchNode*>& hit_original,
@@ -74,14 +67,6 @@ void update_helper(set<BranchNode*>& hit_original,
 		BranchNode* branch_node = *it;
 
 		branch_node->original_network->update();
-
-		if (branch_node->ramp < branch_node->ramp_num_gears) {
-			branch_node->ramp_iter++;
-			if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
-				branch_node->ramp++;
-				branch_node->ramp_iter = 0;
-			}
-		}
 	}
 
 	for (set<BranchNode*>::iterator it = hit_branch.begin();
@@ -89,13 +74,5 @@ void update_helper(set<BranchNode*>& hit_original,
 		BranchNode* branch_node = *it;
 
 		branch_node->branch_network->update();
-
-		if (branch_node->ramp < branch_node->ramp_num_gears) {
-			branch_node->ramp_iter++;
-			if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
-				branch_node->ramp++;
-				branch_node->ramp_iter = 0;
-			}
-		}
 	}
 }

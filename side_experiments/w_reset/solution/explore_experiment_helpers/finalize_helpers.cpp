@@ -300,10 +300,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
 
-	new_branch_node->ramp = 0;
-	new_branch_node->ramp_num_gears = ceil(this->average_instances_per_hit) - 1;
-	new_branch_node->ramp_iter = 0;
-
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;
 
@@ -351,7 +347,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
 			new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
 
-			new_scope->last_scores = wrapper->solution->starting_scope->last_scores;
+			new_scope->train_new_last_scores = wrapper->solution->starting_scope->train_new_last_scores;
+			new_scope->measure_last_scores = wrapper->solution->starting_scope->measure_last_scores;
 
 			NoopNode* start_node = new NoopNode();
 			start_node->parent = new_scope;

@@ -38,14 +38,14 @@ const int MIN_NUM_LAST_TRACK = 2;
 const double LAST_BETTER_THAN_RATIO = 0.5;
 #else
 const int NUM_LAST_TRACK = 10;
-const int MIN_NUM_LAST_TRACK = 5;
-const double LAST_BETTER_THAN_RATIO = 0.8;
+const int MIN_NUM_LAST_TRACK = 3;
+const double LAST_BETTER_THAN_RATIO = 0.6;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
 const int UPDATE_NUM_ITERS = 40;
 #else
-const int UPDATE_NUM_ITERS = 40000;
+const int UPDATE_NUM_ITERS = 400000;
 #endif /* MDEBUG */
 
 const int GENERALIZE_ITER = 3;

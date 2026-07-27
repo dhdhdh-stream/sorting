@@ -165,27 +165,27 @@ void ExploreExperiment::train_new_backprop(
 
 				bool is_success = false;
 				if (local_improvement > 0.0) {
-					if (this->scope_context->last_scores.size() >= MIN_NUM_LAST_TRACK) {
+					if (this->scope_context->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
 						int num_better_than = 0;
-						for (list<double>::iterator it = this->scope_context->last_scores.begin();
-								it != this->scope_context->last_scores.end(); it++) {
+						for (list<double>::iterator it = this->scope_context->train_new_last_scores.begin();
+								it != this->scope_context->train_new_last_scores.end(); it++) {
 							if (global_improvement >= *it) {
 								num_better_than++;
 							}
 						}
 
-						double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->last_scores.size();
+						double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->train_new_last_scores.size();
 
 						if (num_better_than >= target_better_than) {
 							is_success = true;
 						}
 
-						if (this->scope_context->last_scores.size() >= NUM_LAST_TRACK) {
-							this->scope_context->last_scores.pop_front();
+						if (this->scope_context->train_new_last_scores.size() >= NUM_LAST_TRACK) {
+							this->scope_context->train_new_last_scores.pop_front();
 						}
-						this->scope_context->last_scores.push_back(global_improvement);
+						this->scope_context->train_new_last_scores.push_back(global_improvement);
 					} else {
-						this->scope_context->last_scores.push_back(global_improvement);
+						this->scope_context->train_new_last_scores.push_back(global_improvement);
 					}
 				}
 
@@ -194,93 +194,68 @@ void ExploreExperiment::train_new_backprop(
 				#else
 				if (is_success) {
 				#endif /* MDEBUG */
-					add(wrapper);
-				}
+					this->sum_scores = 0.0;
 
-				switch (this->node_context->type) {
-				case NODE_TYPE_NOOP:
-					{
-						NoopNode* noop_node = (NoopNode*)this->node_context;
-						noop_node->experiment = NULL;
-					}
-					break;
-				case NODE_TYPE_ACTION:
-					{
-						ActionNode* action_node = (ActionNode*)this->node_context;
-						action_node->experiment = NULL;
-					}
-					break;
-				case NODE_TYPE_SCOPE:
-					{
-						ScopeNode* scope_node = (ScopeNode*)this->node_context;
-						scope_node->experiment = NULL;
-					}
-					break;
-				case NODE_TYPE_BRANCH:
-					{
-						BranchNode* branch_node = (BranchNode*)this->node_context;
-						if (this->is_branch) {
-							branch_node->branch_experiment = NULL;
-						} else {
-							branch_node->original_experiment = NULL;
-						}
-					}
-					break;
-				}
-				delete this;
+					this->start_iter = wrapper->iters_since_update;
 
-				wrapper->experiment_iter++;
-				if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
-					for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-						Scope* scope = wrapper->solution->scopes[s_index];
-						for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-								it != scope->nodes.end(); it++) {
-							switch (it->second->type) {
-							case NODE_TYPE_NOOP:
-								{
-									NoopNode* noop_node = (NoopNode*)it->second;
-									if (noop_node->experiment != NULL) {
-										delete noop_node->experiment;
-										noop_node->experiment = NULL;
+					this->state = EXPLORE_EXPERIMENT_STATE_MEASURE;
+					this->state_iter = 0;
+				} else {
+					delete this;
+
+					wrapper->experiment_iter++;
+					if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
+						for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+							Scope* scope = wrapper->solution->scopes[s_index];
+							for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+									it != scope->nodes.end(); it++) {
+								switch (it->second->type) {
+								case NODE_TYPE_NOOP:
+									{
+										NoopNode* noop_node = (NoopNode*)it->second;
+										if (noop_node->experiment != NULL) {
+											delete noop_node->experiment;
+											noop_node->experiment = NULL;
+										}
 									}
+									break;
+								case NODE_TYPE_ACTION:
+									{
+										ActionNode* action_node = (ActionNode*)it->second;
+										if (action_node->experiment != NULL) {
+											delete action_node->experiment;
+											action_node->experiment = NULL;
+										}
+									}
+									break;
+								case NODE_TYPE_SCOPE:
+									{
+										ScopeNode* scope_node = (ScopeNode*)it->second;
+										if (scope_node->experiment != NULL) {
+											delete scope_node->experiment;
+											scope_node->experiment = NULL;
+										}
+									}
+									break;
+								case NODE_TYPE_BRANCH:
+									{
+										BranchNode* branch_node = (BranchNode*)it->second;
+										if (branch_node->original_experiment != NULL) {
+											delete branch_node->original_experiment;
+											branch_node->original_experiment = NULL;
+										}
+										if (branch_node->branch_experiment != NULL) {
+											delete branch_node->branch_experiment;
+											branch_node->branch_experiment = NULL;
+										}
+									}
+									break;
 								}
-								break;
-							case NODE_TYPE_ACTION:
-								{
-									ActionNode* action_node = (ActionNode*)it->second;
-									if (action_node->experiment != NULL) {
-										delete action_node->experiment;
-										action_node->experiment = NULL;
-									}
-								}
-								break;
-							case NODE_TYPE_SCOPE:
-								{
-									ScopeNode* scope_node = (ScopeNode*)it->second;
-									if (scope_node->experiment != NULL) {
-										delete scope_node->experiment;
-										scope_node->experiment = NULL;
-									}
-								}
-								break;
-							case NODE_TYPE_BRANCH:
-								{
-									BranchNode* branch_node = (BranchNode*)it->second;
-									if (branch_node->original_experiment != NULL) {
-										delete branch_node->original_experiment;
-										branch_node->original_experiment = NULL;
-									}
-									if (branch_node->branch_experiment != NULL) {
-										delete branch_node->branch_experiment;
-										branch_node->branch_experiment = NULL;
-									}
-								}
-								break;
 							}
 						}
-					}
 
-					wrapper->experiment_iter = 0;
+						wrapper->experiment_iter = 0;
+					}
 				}
 			}
 		}

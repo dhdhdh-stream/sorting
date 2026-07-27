@@ -19,11 +19,10 @@ const int EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
  */
 const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
+const int EXPLORE_EXPERIMENT_STATE_MEASURE = 3;
 /**
- * - no measure step
- *   - improvement not just the experiment change itself...
- *     - ...but also the solution's adjustments to it
- *       - so any results from a measure step less meaningful
+ * - even though not final result, still check measure
+ *   - if change too damaginging, might not be able to recover from
  */
 
 class ExploreExperimentHistory;
@@ -34,6 +33,8 @@ public:
 
 	std::vector<std::vector<double>> existing_obs_histories;
 	std::vector<double> existing_target_val_histories;
+
+	double existing_val_average;
 
 	Network* existing_network;
 
@@ -51,6 +52,8 @@ public:
 	std::vector<double> new_target_val_histories;
 
 	Network* new_network;
+
+	double sum_scores;
 
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,
@@ -106,6 +109,18 @@ public:
 	void train_new_backprop(double target_val,
 							ExploreExperimentHistory* history,
 							SolutionWrapper* wrapper);
+
+	void measure_check_activate(std::vector<double>& obs,
+								ExploreExperimentHistory* history,
+								SolutionWrapper* wrapper);
+	void measure_step(std::vector<double>& obs,
+					  int& action,
+					  bool& is_next,
+					  SolutionWrapper* wrapper);
+	void measure_exit_step(SolutionWrapper* wrapper);
+	void measure_backprop(double target_val,
+						  ExploreExperimentHistory* history,
+						  SolutionWrapper* wrapper);
 
 	void add(SolutionWrapper* wrapper);
 

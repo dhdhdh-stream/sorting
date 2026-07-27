@@ -18,14 +18,10 @@ void BranchNode::step(vector<double>& obs,
 					  int& action,
 					  bool& is_next,
 					  SolutionWrapper* wrapper) {
-	uniform_int_distribution<int> on_distribution(0, this->ramp_num_gears);
 	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->original_next_node;
 	} else if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->branch_next_node;
-	} else if (this->ramp < this->ramp_num_gears
-			&& this->ramp < on_distribution(generator)) {
-		wrapper->node_context.back() = this->original_next_node;
 	} else {
 		ScopeHistory* scope_history = wrapper->scope_histories.back();
 
