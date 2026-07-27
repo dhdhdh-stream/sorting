@@ -27,7 +27,6 @@ public:
 	std::vector<Scope*> child_scopes;
 
 	std::list<double> train_new_last_scores;
-	std::list<double> measure_last_scores;
 
 	Scope();
 	~Scope();

@@ -30,8 +30,6 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 
 	this->average_instances_per_hit = 1.0;
 
-	this->sum_scores = 0.0;
-
 	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 }

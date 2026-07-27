@@ -19,65 +19,83 @@ void BranchNode::experiment_step(vector<double>& obs,
 								 SolutionWrapper* wrapper) {
 	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->original_next_node;
-	} else if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {
+		return;
+	}
+	if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->branch_next_node;
-	} else {
-		ScopeHistory* scope_history = wrapper->scope_histories.back();
+		return;
+	}
 
-		BranchNodeHistory* history = new BranchNodeHistory(this);
-		history->index = (int)scope_history->node_histories.size();
-		scope_history->node_histories[this->id] = history;
-
-		bool is_branch;
-		this->original_network->activate(obs);
-		this->branch_network->activate(obs);
-		if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
-			is_branch = true;
-		} else {
-			is_branch = false;
-		}
-
+	if (this->is_ramp) {
 		#if defined(MDEBUG) && MDEBUG
-		if (wrapper->curr_run_seed%2 == 0) {
-			is_branch = true;
-		} else {
-			is_branch = false;
-		}
-		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
+		uniform_int_distribution<int> ramp_distribution(-5, 20);
+		#else
+		uniform_int_distribution<int> ramp_distribution(-50000, 200000);
+		/**
+		 * - make sure fully ramped up before update ends
+		 */
 		#endif /* MDEBUG */
+		if (ramp_distribution(generator) >= wrapper->iters_since_update) {
+			wrapper->node_context.back() = this->original_next_node;
+			return;
+		}
+	}
 
-		history->is_branch = is_branch;
+	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
+	BranchNodeHistory* history = new BranchNodeHistory(this);
+	history->index = (int)scope_history->node_histories.size();
+	scope_history->node_histories[this->id] = history;
+
+	bool is_branch;
+	this->original_network->activate(obs);
+	this->branch_network->activate(obs);
+	if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+		is_branch = true;
+	} else {
+		is_branch = false;
+	}
+
+	#if defined(MDEBUG) && MDEBUG
+	if (wrapper->curr_run_seed%2 == 0) {
+		is_branch = true;
+	} else {
+		is_branch = false;
+	}
+	wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
+	#endif /* MDEBUG */
+
+	history->is_branch = is_branch;
+
+	if (!wrapper->should_explore) {
+		history->obs = obs;
+	}
+
+	if (is_branch) {
 		if (!wrapper->should_explore) {
-			history->obs = obs;
+			this->consec_original = 0;
+			this->consec_branch++;
 		}
 
-		if (is_branch) {
-			if (!wrapper->should_explore) {
-				this->consec_original = 0;
-				this->consec_branch++;
-			}
+		wrapper->node_context.back() = this->branch_next_node;
 
-			wrapper->node_context.back() = this->branch_next_node;
+		if (this->branch_experiment != NULL) {
+			this->branch_experiment->experiment_check_activate(
+				obs,
+				wrapper);
+		}
+	} else {
+		if (!wrapper->should_explore) {
+			this->consec_original++;
+			this->consec_branch = 0;
+		}
 
-			if (this->branch_experiment != NULL) {
-				this->branch_experiment->experiment_check_activate(
-					obs,
-					wrapper);
-			}
-		} else {
-			if (!wrapper->should_explore) {
-				this->consec_original++;
-				this->consec_branch = 0;
-			}
+		wrapper->node_context.back() = this->original_next_node;
 
-			wrapper->node_context.back() = this->original_next_node;
-
-			if (this->original_experiment != NULL) {
-				this->original_experiment->experiment_check_activate(
-					obs,
-					wrapper);
-			}
+		if (this->original_experiment != NULL) {
+			this->original_experiment->experiment_check_activate(
+				obs,
+				wrapper);
 		}
 	}
 }

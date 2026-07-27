@@ -7,7 +7,7 @@
 
 using namespace std;
 
-const int EPOCH_SIZE = 10;
+const int EPOCH_SIZE = 100;
 /**
  * - not meaningful to update weights more often(?)
  */

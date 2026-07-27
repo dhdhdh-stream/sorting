@@ -10,7 +10,7 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->solution = new Solution();
 	this->solution->init(problem_type);
 
-	this->best_solution = new Solution(this->solution);
+	this->prev_solution = new Solution(this->solution);
 
 	this->iters_since_update = 0;
 
@@ -29,8 +29,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution = new Solution();
 	this->solution->load(input_file);
 
-	this->best_solution = new Solution();
-	this->best_solution->load(input_file);
+	this->prev_solution = new Solution();
+	this->prev_solution->load(input_file);
 
 	this->iters_since_update = 0;
 
@@ -45,7 +45,7 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
-	delete this->best_solution;
+	delete this->prev_solution;
 }
 
 bool SolutionWrapper::is_done() {
@@ -93,7 +93,7 @@ void SolutionWrapper::save(string path,
 
 	this->solution->save(output_file);
 
-	this->best_solution->save(output_file);
+	this->prev_solution->save(output_file);
 
 	output_file.close();
 

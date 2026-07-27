@@ -20,9 +20,13 @@
 using namespace std;
 
 void ExploreExperiment::add(SolutionWrapper* wrapper) {
+	delete wrapper->prev_solution;
+	wrapper->prev_solution = new Solution(wrapper->solution);
+
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
+	ss << "curr_num_resets: " << wrapper->solution->curr_num_resets << "; ";
 	ss << "Experiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
@@ -300,6 +304,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
 
+	new_branch_node->is_ramp = true;
+
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;
 
@@ -335,6 +341,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	}
 
 	wrapper->solution->timestamp++;
+	wrapper->solution->curr_num_resets = 0;
 
 	if (this->scope_context == wrapper->solution->starting_scope) {
 		wrapper->solution->starting_num_improvements++;
@@ -348,7 +355,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
 
 			new_scope->train_new_last_scores = wrapper->solution->starting_scope->train_new_last_scores;
-			new_scope->measure_last_scores = wrapper->solution->starting_scope->measure_last_scores;
 
 			NoopNode* start_node = new NoopNode();
 			start_node->parent = new_scope;

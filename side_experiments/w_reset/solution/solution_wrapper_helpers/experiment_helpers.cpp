@@ -104,7 +104,7 @@ void SolutionWrapper::experiment_end(double result) {
 					  hit_branch,
 					  this);
 
-		this->solution->curr_score = 0.999*this->solution->curr_score + 0.001*result;
+		this->solution->curr_score = 0.9999*this->solution->curr_score + 0.0001*result;
 	}
 
 	if (this->explore_experiment_histories.size() == 0) {
@@ -151,14 +151,37 @@ void SolutionWrapper::experiment_end(double result) {
 
 	this->iters_since_update++;
 	if (this->iters_since_update == UPDATE_NUM_ITERS) {
-		if (this->solution->curr_score > this->best_solution->curr_score) {
-			delete this->best_solution;
-			this->best_solution = new Solution(this->solution);
-		} else if (this->solution->timestamp + STUCK_NUM_ITERS < this->best_solution->timestamp) {
-			// delete this->solution;
-			// this->solution = new Solution(this->best_solution);
+		for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
+			Scope* scope = solution->scopes[s_index];
+			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+					it != scope->nodes.end(); it++) {
+				if (it->second->type == NODE_TYPE_BRANCH) {
+					BranchNode* branch_node = (BranchNode*)it->second;
+					branch_node->is_ramp = false;
+				}
+			}
+		}
 
-			// this->solution->timestamp = -1;
+		if (this->solution->timestamp != 0) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
+			if (this->prev_solution->curr_score > this->solution->curr_score) {
+			#endif /* MDEBUG */
+				// temp
+				cout << "reset" << endl;
+				cout << "this->prev_solution->curr_num_resets: " << this->prev_solution->curr_num_resets << endl;
+				cout << "this->prev_solution->curr_score: " << this->prev_solution->curr_score << endl;
+				cout << "this->solution->curr_score: " << this->solution->curr_score << endl;
+
+				this->prev_solution->curr_num_resets++;
+				// if (this->prev_solution->curr_num_resets >= STUCK_NUM_ITERS) {
+				// 	this->prev_solution->timestamp = -1;
+				// }
+
+				delete this->solution;
+				this->solution = new Solution(this->prev_solution);
+			}
 		}
 	}
 }
