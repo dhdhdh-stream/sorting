@@ -50,12 +50,14 @@ public:
 	std::vector<std::vector<Eigen::VectorXf>> existing_dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> existing_dependencies_obs_histories;
 	std::vector<Eigen::VectorXf> existing_state_histories;
+	std::vector<double> existing_signal_histories;
 	std::vector<double> existing_target_val_histories;
 
 	std::vector<std::vector<bool>> new_dependencies_is_hit_histories;
 	std::vector<std::vector<Eigen::VectorXf>> new_dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> new_dependencies_obs_histories;
 	std::vector<Eigen::VectorXf> new_state_histories;
+	std::vector<double> new_signal_histories;
 	std::vector<double> new_target_val_histories;
 
 	ExploreExperiment(Scope* scope_context,
@@ -129,10 +131,8 @@ public:
 	bool further_than(ExploreExperiment* other);
 };
 
-class ExploreExperimentHistory {
+class ExploreExperimentHistory : public AbstractExperimentHistory{
 public:
-	ExploreExperiment* experiment;
-
 	std::vector<double> existing_predicted;
 
 	std::vector<int> curr_step_types;
@@ -143,6 +143,7 @@ public:
 	std::vector<std::vector<Eigen::VectorXf>> dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> dependencies_obs_histories;
 	std::vector<Eigen::VectorXf> state_histories;
+	std::vector<double> signal_histories;
 
 	ExploreExperimentHistory(ExploreExperiment* experiment);
 };

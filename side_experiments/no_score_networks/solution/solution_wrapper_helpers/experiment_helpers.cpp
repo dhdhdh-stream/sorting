@@ -118,6 +118,25 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 				is_next = true;
 				is_done = true;
 			} else {
+				if (this->run_type != RUN_TYPE_EXPLORE) {
+					Scope* scope = this->scope_histories.back()->scope;
+					scope->explore_score_network->activate(this->partial_state);
+					ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(scope->explore_score_network);
+					scope->explore_score_network->save(score_network_history);
+					this->partial_network_histories.push_back(score_network_history);
+				}
+
+				if (this->scope_histories.back()->experiment_callback_histories.size() > 0) {
+					Scope* scope = this->scope_histories.back()->scope;
+					scope->explore_score_network->activate(this->state);
+					double signal = scope->explore_score_network->output->acti_vals(0);
+					for (int c_index = 0; c_index < (int)this->scope_histories.back()->experiment_callback_histories.size(); c_index++) {
+						ExploreExperimentHistory* explore_experiment_history = (ExploreExperimentHistory*)this->scope_histories.back()->experiment_callback_histories[c_index];
+						int index = this->scope_histories.back()->experiment_callback_indexes[c_index];
+						explore_experiment_history->signal_histories[index] = signal;
+					}
+				}
+
 				if (this->experiment_context[this->experiment_context.size() - 2] != NULL) {
 					AbstractExperiment* experiment = this->experiment_context[this->experiment_context.size() - 2]->experiment;
 					experiment->experiment_exit_step(this);
@@ -222,8 +241,6 @@ void SolutionWrapper::experiment_end(double result) {
 
 						branch_node->original_network->is_ramp = false;
 						branch_node->branch_network->is_ramp = false;
-						branch_node->explore_original_network->is_ramp = false;
-						branch_node->explore_branch_network->is_ramp = false;
 
 						branch_node->is_ramp = false;
 					}

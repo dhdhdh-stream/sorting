@@ -34,9 +34,6 @@ BranchNode::~BranchNode() {
 	delete this->original_network;
 	delete this->branch_network;
 
-	delete this->explore_original_network;
-	delete this->explore_branch_network;
-
 	if (this->original_experiment != NULL) {
 		delete this->original_experiment;
 	}
@@ -61,9 +58,6 @@ void BranchNode::copy_from(BranchNode* original,
 
 	this->original_network = new ScoreNetwork(original->original_network);
 	this->branch_network = new ScoreNetwork(original->branch_network);
-
-	this->explore_original_network = new ScoreNetwork(original->explore_original_network);
-	this->explore_branch_network = new ScoreNetwork(original->explore_branch_network);
 
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
@@ -95,9 +89,6 @@ void BranchNode::save(ofstream& output_file) {
 
 	this->original_network->save(output_file);
 	this->branch_network->save(output_file);
-
-	this->explore_original_network->save(output_file);
-	this->explore_branch_network->save(output_file);
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
@@ -144,9 +135,6 @@ void BranchNode::load(ifstream& input_file,
 
 	this->original_network = new ScoreNetwork(input_file);
 	this->branch_network = new ScoreNetwork(input_file);
-
-	this->explore_original_network = new ScoreNetwork(input_file);
-	this->explore_branch_network = new ScoreNetwork(input_file);
 
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);

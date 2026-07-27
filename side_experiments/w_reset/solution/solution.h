@@ -42,6 +42,11 @@ public:
 	std::vector<Scope*> scopes;
 	Scope* starting_scope;
 	int starting_num_improvements;
+	/**
+	 * TODO:
+	 * - try generalization based on capturing inner into new scopes
+	 *   - so also need branch ends (i.e., no jumps)
+	 */
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;

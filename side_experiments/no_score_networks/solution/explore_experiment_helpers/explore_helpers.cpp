@@ -136,6 +136,10 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 				}
 			}
 
+			history->signal_histories.push_back(0.0);
+			wrapper->scope_histories.back()->experiment_callback_histories.push_back(history);
+			wrapper->scope_histories.back()->experiment_callback_indexes.push_back(history->signal_histories.size()-1);
+
 			ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
 			new_experiment_state->step_index = 0;
 			wrapper->experiment_context.back() = new_experiment_state;

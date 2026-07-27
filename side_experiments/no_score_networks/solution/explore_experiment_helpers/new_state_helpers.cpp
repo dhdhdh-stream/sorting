@@ -242,6 +242,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			for (int n_index = 0; n_index < (int)scope->start_init_networks.size(); n_index++) {
 				scope->start_init_networks[n_index]->add_states(wrapper->solution->num_states);
 			}
+			scope->explore_score_network->add_states(wrapper->solution->num_states);
 			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 					it != scope->nodes.end(); it++) {
 				switch (it->second->type) {
@@ -283,8 +284,6 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 						}
 						branch_node->original_network->add_states(wrapper->solution->num_states);
 						branch_node->branch_network->add_states(wrapper->solution->num_states);
-						branch_node->explore_original_network->add_states(wrapper->solution->num_states);
-						branch_node->explore_branch_network->add_states(wrapper->solution->num_states);
 					}
 					break;
 				}

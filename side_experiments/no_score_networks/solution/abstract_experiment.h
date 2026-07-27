@@ -35,6 +35,13 @@ public:
 	virtual void experiment_exit_step(SolutionWrapper* wrapper) = 0;
 };
 
+class AbstractExperimentHistory {
+public:
+	AbstractExperiment* experiment;
+
+	virtual ~AbstractExperimentHistory() {};
+};
+
 class AbstractExperimentState {
 public:
 	AbstractExperiment* experiment;

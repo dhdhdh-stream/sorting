@@ -42,6 +42,10 @@ void ExploreExperiment::train_existing_check_activate(
 	history->dependencies_state_histories.push_back(curr_dependencies_state);
 	history->dependencies_obs_histories.push_back(curr_dependencies_obs);
 	history->state_histories.push_back(wrapper->state);
+
+	history->signal_histories.push_back(0.0);
+	wrapper->scope_histories.back()->experiment_callback_histories.push_back(history);
+	wrapper->scope_histories.back()->experiment_callback_indexes.push_back(history->signal_histories.size()-1);
 }
 
 void ExploreExperiment::train_existing_backprop(
@@ -53,6 +57,7 @@ void ExploreExperiment::train_existing_backprop(
 		this->existing_dependencies_state_histories.push_back(history->dependencies_state_histories[i_index]);
 		this->existing_dependencies_obs_histories.push_back(history->dependencies_obs_histories[i_index]);
 		this->existing_state_histories.push_back(history->state_histories[i_index]);
+		this->existing_signal_histories.push_back(history->signal_histories[i_index]);
 		this->existing_target_val_histories.push_back(target_val);
 	}
 
@@ -73,6 +78,10 @@ void ExploreExperiment::train_existing_backprop(
 		{
 			default_random_engine generator_copy = generator;
 			shuffle(this->existing_state_histories.begin(), this->existing_state_histories.end(), generator_copy);
+		}
+		{
+			default_random_engine generator_copy = generator;
+			shuffle(this->existing_signal_histories.begin(), this->existing_signal_histories.end(), generator_copy);
 		}
 		{
 			default_random_engine generator_copy = generator;

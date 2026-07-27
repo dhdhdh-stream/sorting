@@ -83,6 +83,10 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 			uniform_int_distribution<int> until_distribution(1, average_instances_per_hit);
 			this->num_instances_until_target = until_distribution(generator);
 
+			history->signal_histories.push_back(0.0);
+			wrapper->scope_histories.back()->experiment_callback_histories.push_back(history);
+			wrapper->scope_histories.back()->experiment_callback_indexes.push_back(history->signal_histories.size()-1);
+
 			ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
 			new_experiment_state->step_index = 0;
 			wrapper->experiment_context.back() = new_experiment_state;
@@ -155,6 +159,7 @@ void ExploreExperiment::train_new_backprop(
 				this->new_dependencies_state_histories.push_back(history->dependencies_state_histories[i_index]);
 				this->new_dependencies_obs_histories.push_back(history->dependencies_obs_histories[i_index]);
 				this->new_state_histories.push_back(history->state_histories[i_index]);
+				this->new_signal_histories.push_back(history->signal_histories[i_index]);
 				this->new_target_val_histories.push_back(target_val);
 			}
 
@@ -177,6 +182,10 @@ void ExploreExperiment::train_new_backprop(
 				{
 					default_random_engine generator_copy = generator;
 					shuffle(this->new_state_histories.begin(), this->new_state_histories.end(), generator_copy);
+				}
+				{
+					default_random_engine generator_copy = generator;
+					shuffle(this->new_signal_histories.begin(), this->new_signal_histories.end(), generator_copy);
 				}
 				{
 					default_random_engine generator_copy = generator;

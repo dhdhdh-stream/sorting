@@ -9,6 +9,7 @@
 #include <Eigen/Dense>
 
 class AbstractExperiment;
+class AbstractExperimentHistory;
 class AbstractNode;
 class AbstractNodeHistory;
 class InitNetwork;
@@ -36,6 +37,8 @@ public:
 	std::vector<std::vector<Scope*>> start_init_network_scope_contexts;
 	std::vector<std::vector<int>> start_init_network_node_contexts;
 	std::vector<InitNetwork*> start_init_networks;
+
+	ScoreNetwork* explore_score_network;
 
 	std::vector<AbstractExperiment*> dependencies;
 
@@ -72,6 +75,9 @@ public:
 	std::vector<double> obs;
 
 	std::map<int, AbstractNodeHistory*> node_histories;
+
+	std::vector<AbstractExperimentHistory*> experiment_callback_histories;
+	std::vector<int> experiment_callback_indexes;
 
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();

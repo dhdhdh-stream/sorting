@@ -12,6 +12,7 @@
 #include "negate_network.h"
 #include "noop_node.h"
 #include "scope_node.h"
+#include "score_network.h"
 #include "solution.h"
 
 using namespace std;
@@ -35,6 +36,8 @@ Scope::~Scope() {
 	for (int n_index = 0; n_index < (int)this->start_init_networks.size(); n_index++) {
 		delete this->start_init_networks[n_index];
 	}
+
+	delete this->explore_score_network;
 }
 
 void Scope::copy_from(Scope* original,
@@ -109,6 +112,8 @@ void Scope::copy_from(Scope* original,
 		this->start_init_networks.push_back(new InitNetwork(original->start_init_networks[n_index]));
 	}
 
+	this->explore_score_network = new ScoreNetwork(original->explore_score_network);
+
 	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
 		this->child_scopes.push_back(parent_solution->scopes[original->child_scopes[c_index]->id]);
 	}
@@ -145,6 +150,8 @@ void Scope::save(ofstream& output_file) {
 
 		this->start_init_networks[n_index]->save(output_file);
 	}
+
+	this->explore_score_network->save(output_file);
 
 	output_file << this->child_scopes.size() << endl;
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
@@ -255,6 +262,8 @@ void Scope::load(ifstream& input_file,
 
 		this->start_init_networks.push_back(new InitNetwork(input_file));
 	}
+
+	this->explore_score_network = new ScoreNetwork(input_file);
 
 	string num_child_scopes_line;
 	getline(input_file, num_child_scopes_line);

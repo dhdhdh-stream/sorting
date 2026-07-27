@@ -116,6 +116,9 @@ void Solution::init(ProblemType* problem_type) {
 	start_node->next_node_id = -1;
 	start_node->next_node = NULL;
 
+	new_scope->explore_score_network = new ScoreNetwork(this->num_states);
+	new_scope->explore_score_network->is_ramp = false;
+
 	this->starting_scope = new_scope;
 	this->starting_num_improvements = 0;
 
