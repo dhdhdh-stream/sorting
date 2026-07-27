@@ -45,7 +45,10 @@ int main(int argc, char* argv[]) {
 
 		vector<double> obs = problem->get_observations();
 
-		solution_wrapper->init(obs);
+		// solution_wrapper->init(RUN_TYPE_EXISTING,
+		// 					   obs);
+		solution_wrapper->init(RUN_TYPE_DAMAGE,
+							   obs);
 
 		while (true) {
 			pair<bool,int> next = solution_wrapper->step(obs);
@@ -57,6 +60,12 @@ int main(int argc, char* argv[]) {
 
 			obs = problem->get_observations();
 		}
+
+		cout << "solution_wrapper->state:";
+		for (int s_index = 0; s_index < (int)solution_wrapper->state.size(); s_index++) {
+			cout << " " << solution_wrapper->state(s_index);
+		}
+		cout << endl;
 
 		double target_val = problem->score_result();
 		target_val -= 0.0001 * solution_wrapper->num_actions;

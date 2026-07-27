@@ -74,7 +74,8 @@ public:
 					std::string name);
 	~SolutionWrapper();
 
-	void init(std::vector<double> obs);
+	void init(int run_type,
+			  std::vector<double> obs);
 	std::pair<bool,int> step(std::vector<double> obs);
 	void end();
 

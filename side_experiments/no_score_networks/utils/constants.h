@@ -63,7 +63,8 @@ const double NEW_STATE_LAST_BETTER_THAN_RATIO = 0.9;
 #if defined(MDEBUG) && MDEBUG
 const int UPDATE_NUM_ITERS = 40;
 #else
-const int UPDATE_NUM_ITERS = 400000;
+// const int UPDATE_NUM_ITERS = 400000;
+const int UPDATE_NUM_ITERS = 1000000;
 #endif /* MDEBUG */
 
 const int GENERALIZE_ITER = 3;

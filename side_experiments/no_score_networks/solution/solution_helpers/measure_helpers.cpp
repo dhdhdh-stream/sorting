@@ -23,7 +23,8 @@ double measure_helper(SolutionWrapper* wrapper) {
 
 		vector<double> obs = problem->get_observations();
 
-		wrapper->init(obs);
+		wrapper->init(RUN_TYPE_EXISTING,
+					  obs);
 
 		while (true) {
 			pair<bool,int> next = wrapper->step(obs);

@@ -410,6 +410,10 @@ void ExploreExperiment::add(bool is_new_state,
 	 */
 
 	wrapper->iters_since_update = 0;
+	for (int a_index = 0; a_index < (int)wrapper->solution->generic_action_networks.size(); a_index++) {
+		wrapper->solution->generic_action_networks[a_index]->clear_momentum();
+	}
+	wrapper->solution->generic_obs_network->clear_momentum();
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		Scope* scope = wrapper->solution->scopes[s_index];
 		scope->start_obs_network->clear_momentum();
