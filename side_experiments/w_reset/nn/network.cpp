@@ -7,10 +7,7 @@
 
 using namespace std;
 
-const int EPOCH_SIZE = 100;
-/**
- * - not meaningful to update weights more often(?)
- */
+const int INIT_EPOCH_SIZE = 10;
 
 Network::Network(int input_size) {
 	this->input = new Layer(LINEAR_LAYER);
@@ -203,7 +200,7 @@ void Network::init_backprop(double error,
 	this->hidden_1->backprop();
 
 	this->epoch_iter++;
-	if (this->epoch_iter == EPOCH_SIZE) {
+	if (this->epoch_iter == INIT_EPOCH_SIZE) {
 		this->hidden_1->update(1);
 		this->hidden_2->update(1);
 		this->hidden_3->update(1);
@@ -224,16 +221,12 @@ void Network::backprop(double error) {
 }
 
 void Network::update() {
-	this->epoch_iter++;
-	if (this->epoch_iter == EPOCH_SIZE) {
-		this->hidden_1->update(this->num_instances);
-		this->hidden_2->update(this->num_instances);
-		this->hidden_3->update(this->num_instances);
-		this->output->update(this->num_instances);
+	this->hidden_1->update(this->num_instances);
+	this->hidden_2->update(this->num_instances);
+	this->hidden_3->update(this->num_instances);
+	this->output->update(this->num_instances);
 
-		this->num_instances = 0;
-		this->epoch_iter = 0;
-	}
+	this->num_instances = 0;
 }
 
 void Network::clear_momentum() {

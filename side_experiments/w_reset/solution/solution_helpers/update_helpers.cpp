@@ -13,6 +13,9 @@
 
 using namespace std;
 
+const int RAMP_EPOCH_SIZE = 20;
+const int UPDATE_EPOCH_SIZE = 100;
+
 void update_helper(ScopeHistory* scope_history,
 				   double target_val,
 				   set<BranchNode*>& hit_original,
@@ -66,13 +69,39 @@ void update_helper(set<BranchNode*>& hit_original,
 			it != hit_original.end(); it++) {
 		BranchNode* branch_node = *it;
 
-		branch_node->original_network->update();
+		branch_node->original_network->epoch_iter++;
+		if (branch_node->is_ramp) {
+			if (branch_node->original_network->epoch_iter >= RAMP_EPOCH_SIZE) {
+				branch_node->original_network->update();
+
+				branch_node->original_network->epoch_iter = 0;
+			}
+		} else {
+			if (branch_node->original_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
+				branch_node->original_network->update();
+
+				branch_node->original_network->epoch_iter = 0;
+			}
+		}
 	}
 
 	for (set<BranchNode*>::iterator it = hit_branch.begin();
 			it != hit_branch.end(); it++) {
 		BranchNode* branch_node = *it;
 
-		branch_node->branch_network->update();
+		branch_node->branch_network->epoch_iter++;
+		if (branch_node->is_ramp) {
+			if (branch_node->branch_network->epoch_iter >= RAMP_EPOCH_SIZE) {
+				branch_node->branch_network->update();
+
+				branch_node->branch_network->epoch_iter = 0;
+			}
+		} else {
+			if (branch_node->branch_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
+				branch_node->branch_network->update();
+
+				branch_node->branch_network->epoch_iter = 0;
+			}
+		}
 	}
 }
