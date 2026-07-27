@@ -12,6 +12,7 @@ const double REGRESSION_WEIGHT_LIMIT = 100000.0;
 const double NETWORK_INIT_MULTIPLIER = 0.01;
 
 const int INIT_EPOCH_SIZE = 10;
+const int RAMP_EPOCH_SIZE = 20;
 const int UPDATE_EPOCH_SIZE = 100;
 
 #if defined(MDEBUG) && MDEBUG

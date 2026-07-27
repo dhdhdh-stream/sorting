@@ -8,11 +8,13 @@
 #include "constants.h"
 #include "explore_experiment.h"
 #include "globals.h"
+#include "init_network.h"
 #include "noop_node.h"
 #include "obs_network.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "score_network.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "utilities.h"
@@ -205,27 +207,55 @@ void SolutionWrapper::experiment_end(double result) {
 	}
 
 	this->iters_since_update++;
-	// if (this->iters_since_update == UPDATE_NUM_ITERS) {
-	// 	if (this->solution->timestamp != 0) {
-	// 		#if defined(MDEBUG) && MDEBUG
-	// 		if (rand()%2 == 0) {
-	// 		#else
-	// 		if (this->prev_solution->curr_score > this->solution->curr_score) {
-	// 		#endif /* MDEBUG */
-	// 			// temp
-	// 			cout << "reset" << endl;
-	// 			cout << "this->prev_solution->curr_num_resets: " << this->prev_solution->curr_num_resets << endl;
-	// 			cout << "this->prev_solution->curr_score: " << this->prev_solution->curr_score << endl;
-	// 			cout << "this->solution->curr_score: " << this->solution->curr_score << endl;
+	if (this->iters_since_update == UPDATE_NUM_ITERS) {
+		for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+			Scope* scope = this->solution->scopes[s_index];
+			for (int n_index = 0; n_index < (int)scope->start_init_networks.size(); n_index++) {
+				scope->start_init_networks[n_index]->is_ramp = false;
+			}
+			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+					it != scope->nodes.end(); it++) {
+				switch (it->second->type) {
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)it->second;
 
-	// 			this->prev_solution->curr_num_resets++;
-	// 			// if (this->prev_solution->curr_num_resets >= STUCK_NUM_ITERS) {
-	// 			// 	this->prev_solution->timestamp = -1;
-	// 			// }
+						branch_node->original_network->is_ramp = false;
+						branch_node->branch_network->is_ramp = false;
+						branch_node->explore_original_network->is_ramp = false;
+						branch_node->explore_branch_network->is_ramp = false;
 
-	// 			delete this->solution;
-	// 			this->solution = new Solution(this->prev_solution);
-	// 		}
-	// 	}
-	// }
+						branch_node->is_ramp = false;
+					}
+					break;
+				}
+
+				for (int n_index = 0; n_index < (int)it->second->init_networks.size(); n_index++) {
+					it->second->init_networks[n_index]->is_ramp = false;
+				}
+			}
+		}
+
+		if (this->solution->timestamp != 0) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
+			if (this->prev_solution->curr_score > this->solution->curr_score) {
+			#endif /* MDEBUG */
+				// temp
+				cout << "reset" << endl;
+				cout << "this->prev_solution->curr_num_resets: " << this->prev_solution->curr_num_resets << endl;
+				cout << "this->prev_solution->curr_score: " << this->prev_solution->curr_score << endl;
+				cout << "this->solution->curr_score: " << this->solution->curr_score << endl;
+
+				this->prev_solution->curr_num_resets++;
+				// if (this->prev_solution->curr_num_resets >= STUCK_NUM_ITERS) {
+				// 	this->prev_solution->timestamp = -1;
+				// }
+
+				delete this->solution;
+				this->solution = new Solution(this->prev_solution);
+			}
+		}
+	}
 }

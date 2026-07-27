@@ -21,6 +21,8 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
+	bool is_ramp;
+
 	int num_instances;
 	int last_update_iter;
 	int epoch_iter;

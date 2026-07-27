@@ -42,6 +42,8 @@ ScoreNetwork::ScoreNetwork(int num_states) {
 	 *   - state might be noise for this particular spot
 	 */
 
+	this->is_ramp = true;
+
 	this->num_instances = 0;
 	this->last_update_iter = -1;
 	this->epoch_iter = 0;
@@ -80,6 +82,8 @@ ScoreNetwork::ScoreNetwork(ScoreNetwork* original) {
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 	this->output->copy_weights_from(original->output);
+
+	this->is_ramp = original->is_ramp;
 
 	this->num_instances = 0;
 	this->last_update_iter = -1;
@@ -129,6 +133,10 @@ ScoreNetwork::ScoreNetwork(ifstream& input_file) {
 	this->hidden_1->load_weights_from(input_file);
 	this->hidden_2->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
+
+	string is_ramp_line;
+	getline(input_file, is_ramp_line);
+	this->is_ramp = stoi(is_ramp_line);
 
 	this->num_instances = 0;
 	this->last_update_iter = -1;
@@ -222,13 +230,24 @@ void ScoreNetwork::backprop(double target_val,
 
 void ScoreNetwork::update() {
 	this->epoch_iter++;
-	if (this->epoch_iter == UPDATE_EPOCH_SIZE) {
-		this->hidden_1->update(this->num_instances);
-		this->hidden_2->update(this->num_instances);
-		this->output->update(this->num_instances);
+	if (this->is_ramp) {
+		if (this->epoch_iter == RAMP_EPOCH_SIZE) {
+			this->hidden_1->update(this->num_instances);
+			this->hidden_2->update(this->num_instances);
+			this->output->update(this->num_instances);
 
-		this->num_instances = 0;
-		this->epoch_iter = 0;
+			this->num_instances = 0;
+			this->epoch_iter = 0;
+		}
+	} else {
+		if (this->epoch_iter == UPDATE_EPOCH_SIZE) {
+			this->hidden_1->update(this->num_instances);
+			this->hidden_2->update(this->num_instances);
+			this->output->update(this->num_instances);
+
+			this->num_instances = 0;
+			this->epoch_iter = 0;
+		}
 	}
 }
 
@@ -248,7 +267,6 @@ void ScoreNetwork::add_states(int new_num_states) {
 
 	this->hidden_1->update_structure(0.0);
 	this->hidden_2->update_structure(0.0);
-	this->output->update_structure(0.0);
 }
 
 void ScoreNetwork::save(ofstream& output_file) {
@@ -260,6 +278,8 @@ void ScoreNetwork::save(ofstream& output_file) {
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);
 	this->output->save_weights(output_file);
+
+	output_file << this->is_ramp << endl;
 }
 
 ScoreNetworkHistory::ScoreNetworkHistory(ScoreNetwork* network) {

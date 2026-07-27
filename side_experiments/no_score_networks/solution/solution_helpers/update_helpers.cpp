@@ -19,12 +19,6 @@
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int ITERS_PER_RAMP = 2;
-#else
-const int ITERS_PER_RAMP = 40000;
-#endif /* MDEBUG */
-
 void update_helper(ScopeHistory* scope_history) {
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
@@ -218,27 +212,11 @@ void update_helper(double target_val,
 						if (branch_node->original_curr_num_instances > 0) {
 							branch_node->original_average_instances_per_hit = 0.999*branch_node->original_average_instances_per_hit + 0.001*branch_node->original_curr_num_instances;
 
-							if (branch_node->ramp < branch_node->ramp_num_gears) {
-								branch_node->ramp_iter++;
-								if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
-									branch_node->ramp++;
-									branch_node->ramp_iter = 0;
-								}
-							}
-
 							branch_node->original_curr_num_instances = 0;
 						}
 						branch_node->branch_average_instances_per_run = 0.999*branch_node->branch_average_instances_per_run + 0.001*branch_node->branch_curr_num_instances;
 						if (branch_node->branch_curr_num_instances > 0) {
 							branch_node->branch_average_instances_per_hit = 0.999*branch_node->branch_average_instances_per_hit + 0.001*branch_node->branch_curr_num_instances;
-
-							if (branch_node->ramp < branch_node->ramp_num_gears) {
-								branch_node->ramp_iter++;
-								if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
-									branch_node->ramp++;
-									branch_node->ramp_iter = 0;
-								}
-							}
 
 							branch_node->branch_curr_num_instances = 0;
 						}
