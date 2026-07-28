@@ -29,10 +29,10 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	#endif /* MDEBUG */
 
 	if (this->iters_since_update < UPDATE_NUM_ITERS) {
-		uniform_int_distribution<int> type_distribution(0, 1);
-		this->run_type = type_distribution(generator);
+		// uniform_int_distribution<int> type_distribution(0, 1);
+		// this->run_type = type_distribution(generator);
 
-		// this->run_type = RUN_TYPE_EXISTING;
+		this->run_type = RUN_TYPE_EXISTING;
 	} else {
 		this->run_type = RUN_TYPE_EXPLORE;
 	}
@@ -235,6 +235,24 @@ void SolutionWrapper::experiment_end(double result) {
 			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 					it != scope->nodes.end(); it++) {
 				switch (it->second->type) {
+				case NODE_TYPE_NOOP:
+					{
+						NoopNode* noop_node = (NoopNode*)it->second;
+						noop_node->score_network->is_ramp = false;
+					}
+					break;
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)it->second;
+						action_node->score_network->is_ramp = false;
+					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)it->second;
+						scope_node->score_network->is_ramp = false;
+					}
+					break;
 				case NODE_TYPE_BRANCH:
 					{
 						BranchNode* branch_node = (BranchNode*)it->second;
