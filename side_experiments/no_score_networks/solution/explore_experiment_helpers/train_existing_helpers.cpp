@@ -98,7 +98,11 @@ void ExploreExperiment::train_existing_backprop(
 
 			this->existing_network->activate(this->existing_state_histories[rand_index]);
 
-			this->existing_network->init_backprop(this->existing_target_val_histories[rand_index]);
+			if (this->use_signal) {
+				this->existing_network->init_backprop(this->existing_signal_histories[rand_index]);
+			} else {
+				this->existing_network->init_backprop(this->existing_target_val_histories[rand_index]);
+			}
 
 			if ((iter_index+1)%INIT_EPOCH_SIZE == 0) {
 				this->existing_network->init_update();

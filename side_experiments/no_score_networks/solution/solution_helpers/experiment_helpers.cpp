@@ -199,12 +199,16 @@ void create_experiment(ScopeHistory* scope_history,
 			}
 		}
 
+		uniform_int_distribution<int> use_signal_distribution(0, 1);
+		bool use_signal = use_signal_distribution(generator) == 0;
+
 		ExploreExperiment* new_experiment = new ExploreExperiment(
 			context_it->second.explore_node->parent,
 			context_it->second.explore_node,
 			context_it->second.explore_is_branch,
 			exit_next_node,
 			dependencies,
+			use_signal,
 			wrapper);
 		switch (context_it->second.explore_node->type) {
 		case NODE_TYPE_NOOP:

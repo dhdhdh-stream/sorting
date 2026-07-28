@@ -32,6 +32,8 @@ const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
 class ExploreExperimentHistory;
 class ExploreExperiment : public AbstractExperiment {
 public:
+	bool use_signal;
+
 	int state;
 	int state_iter;
 
@@ -65,6 +67,7 @@ public:
 					  bool is_branch,
 					  AbstractNode* exit_next_node,
 					  std::vector<std::vector<int>>& dependencies,
+					  bool use_signal,
 					  SolutionWrapper* wrapper);
 	~ExploreExperiment();
 

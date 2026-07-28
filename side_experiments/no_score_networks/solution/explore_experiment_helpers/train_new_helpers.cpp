@@ -202,7 +202,11 @@ void ExploreExperiment::train_new_backprop(
 
 					new_network->activate(this->new_state_histories[rand_index]);
 
-					new_network->init_backprop(this->new_target_val_histories[rand_index]);
+					if (this->use_signal) {
+						new_network->init_backprop(this->new_signal_histories[rand_index]);
+					} else {
+						new_network->init_backprop(this->new_target_val_histories[rand_index]);
+					}
 
 					if ((iter_index+1)%INIT_EPOCH_SIZE == 0) {
 						new_network->init_update();

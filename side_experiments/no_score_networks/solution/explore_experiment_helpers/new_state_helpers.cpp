@@ -71,8 +71,13 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 
 		vector<double> new_state_errors(NEW_STATE_NUM_ADD, 0.0);
 
-		new_network->init_backprop(this->new_target_val_histories[rand_index],
-								   new_state_errors);
+		if (this->use_signal) {
+			new_network->init_backprop(this->new_signal_histories[rand_index],
+									   new_state_errors);
+		} else {
+			new_network->init_backprop(this->new_target_val_histories[rand_index],
+									   new_state_errors);
+		}
 
 		for (int d_index = (int)this->dependencies.size()-1; d_index >= 0; d_index--) {
 			if (is_activate[d_index]) {

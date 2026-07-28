@@ -22,11 +22,14 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 									 bool is_branch,
 									 AbstractNode* exit_next_node,
 									 vector<vector<int>>& dependencies,
+									 bool use_signal,
 									 SolutionWrapper* wrapper) {
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 	this->exit_next_node = exit_next_node;
+
+	this->use_signal = use_signal;
 
 	this->existing_network = NULL;
 
