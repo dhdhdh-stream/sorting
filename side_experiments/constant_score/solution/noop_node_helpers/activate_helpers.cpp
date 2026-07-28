@@ -4,6 +4,7 @@
 
 #include "init_network.h"
 #include "scope.h"
+#include "score_network.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
 
@@ -29,4 +30,8 @@ void NoopNode::step(vector<double>& obs,
 	}
 
 	wrapper->node_context.back() = this->next_node;
+
+	// temp
+	this->score_network->activate(wrapper->state);
+	cout << "this->score_network->output->acti_vals(0): " << this->score_network->output->acti_vals(0) << endl;
 }

@@ -1,3 +1,5 @@
+// - constant score networks significantly hurts results
+
 #include <chrono>
 #include <iostream>
 #include <map>

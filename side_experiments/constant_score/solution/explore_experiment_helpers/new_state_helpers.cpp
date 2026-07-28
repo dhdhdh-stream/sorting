@@ -253,6 +253,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 						for (int n_index = 0; n_index < (int)noop_node->init_networks.size(); n_index++) {
 							noop_node->init_networks[n_index]->add_states(wrapper->solution->num_states);
 						}
+
+						noop_node->score_network->add_states(wrapper->solution->num_states);
 					}
 					break;
 				case NODE_TYPE_ACTION:
@@ -264,6 +266,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 						for (int n_index = 0; n_index < (int)action_node->init_networks.size(); n_index++) {
 							action_node->init_networks[n_index]->add_states(wrapper->solution->num_states);
 						}
+
+						action_node->score_network->add_states(wrapper->solution->num_states);
 					}
 					break;
 				case NODE_TYPE_SCOPE:
@@ -273,6 +277,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 						for (int n_index = 0; n_index < (int)scope_node->init_networks.size(); n_index++) {
 							scope_node->init_networks[n_index]->add_states(wrapper->solution->num_states);
 						}
+
+						scope_node->score_network->add_states(wrapper->solution->num_states);
 					}
 					break;
 				case NODE_TYPE_BRANCH:

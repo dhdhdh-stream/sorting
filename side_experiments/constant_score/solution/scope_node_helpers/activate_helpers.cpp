@@ -7,6 +7,7 @@
 #include "init_network.h"
 #include "problem.h"
 #include "scope.h"
+#include "score_network.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
@@ -56,4 +57,8 @@ void ScopeNode::exit_step(vector<double>& obs,
 	}
 
 	wrapper->node_context.back() = this->next_node;
+
+	// temp
+	this->score_network->activate(wrapper->state);
+	cout << "this->score_network->output->acti_vals(0): " << this->score_network->output->acti_vals(0) << endl;
 }

@@ -432,11 +432,24 @@ void ExploreExperiment::add(bool is_new_state,
 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 				it != scope->nodes.end(); it++) {
 			switch (it->second->type) {
+			case NODE_TYPE_NOOP:
+				{
+					NoopNode* noop_node = (NoopNode*)it->second;
+					noop_node->score_network->clear_momentum();
+				}
+				break;
 			case NODE_TYPE_ACTION:
 				{
 					ActionNode* action_node = (ActionNode*)it->second;
 					action_node->action_network->clear_momentum();
 					action_node->obs_network->clear_momentum();
+					action_node->score_network->clear_momentum();
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)it->second;
+					scope_node->score_network->clear_momentum();
 				}
 				break;
 			case NODE_TYPE_BRANCH:
