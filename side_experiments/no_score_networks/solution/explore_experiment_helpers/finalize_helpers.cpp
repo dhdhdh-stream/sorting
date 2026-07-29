@@ -397,7 +397,8 @@ void ExploreExperiment::add(bool is_new_state,
 			end_node->next_node_id = -1;
 			end_node->next_node = NULL;
 
-			new_scope->explore_score_network = new ScoreNetwork(wrapper->solution->starting_scope->explore_score_network);
+			new_scope->start_score_network = new ScoreNetwork(wrapper->solution->num_states);
+			new_scope->end_score_network = new ScoreNetwork(wrapper->solution->starting_scope->end_score_network);
 
 			wrapper->solution->starting_scope = new_scope;
 			wrapper->solution->starting_num_improvements = 0;
@@ -420,7 +421,8 @@ void ExploreExperiment::add(bool is_new_state,
 		for (int n_index = 0; n_index < (int)scope->start_init_networks.size(); n_index++) {
 			scope->start_init_networks[n_index]->clear_momentum();
 		}
-		scope->explore_score_network->clear_momentum();
+		scope->start_score_network->clear_momentum();
+		scope->end_score_network->clear_momentum();
 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 				it != scope->nodes.end(); it++) {
 			switch (it->second->type) {

@@ -6,6 +6,7 @@
 #include "init_network.h"
 #include "negate_network.h"
 #include "obs_network.h"
+#include "score_network.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
 
@@ -13,6 +14,8 @@ using namespace std;
 
 void Scope::experiment_start_activate(vector<double>& obs,
 									  SolutionWrapper* wrapper) {
+	ScopeHistory* scope_history = wrapper->scope_histories.back();
+
 	for (int n_index = 0; n_index < (int)this->start_negate_networks.size(); n_index++) {
 		int state_index = this->start_negate_networks[n_index]->state_index;
 		wrapper->state(state_index) = 0.0;
@@ -59,8 +62,19 @@ void Scope::experiment_start_activate(vector<double>& obs,
 	}
 
 	if (this->dependencies.size() > 0) {
-		ScopeHistory* scope_history = wrapper->scope_histories.back();
 		scope_history->state = wrapper->partial_state;
 		scope_history->obs = obs;
+	}
+
+	this->start_score_network->activate(wrapper->state,
+										0.0);
+	scope_history->start_score = this->start_score_network->output->acti_vals(0);
+
+	if (wrapper->run_type == RUN_TYPE_DAMAGE) {
+		this->start_score_network->activate(wrapper->partial_state,
+											0.0);
+		ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->start_score_network);
+		this->start_score_network->save(score_network_history);
+		wrapper->partial_network_histories.push_back(score_network_history);
 	}
 }

@@ -52,6 +52,7 @@ public:
 	std::vector<std::vector<Eigen::VectorXf>> existing_dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> existing_dependencies_obs_histories;
 	std::vector<Eigen::VectorXf> existing_state_histories;
+	std::vector<double> existing_norm_histories;
 	std::vector<double> existing_signal_histories;
 	std::vector<double> existing_target_val_histories;
 
@@ -59,6 +60,7 @@ public:
 	std::vector<std::vector<Eigen::VectorXf>> new_dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> new_dependencies_obs_histories;
 	std::vector<Eigen::VectorXf> new_state_histories;
+	std::vector<double> new_norm_histories;
 	std::vector<double> new_signal_histories;
 	std::vector<double> new_target_val_histories;
 
@@ -146,6 +148,7 @@ public:
 	std::vector<std::vector<Eigen::VectorXf>> dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> dependencies_obs_histories;
 	std::vector<Eigen::VectorXf> state_histories;
+	std::vector<double> norm_histories;
 	std::vector<double> signal_histories;
 
 	ExploreExperimentHistory(ExploreExperiment* experiment);

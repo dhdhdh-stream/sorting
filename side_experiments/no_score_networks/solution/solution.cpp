@@ -24,6 +24,8 @@ const int INIT_MEASURE_ITERS = 10;
 const int INIT_MEASURE_ITERS = 4000;
 #endif /* MDEBUG */
 
+const int INIT_NUM_STATES = 4;
+
 Solution::Solution() {
 	// do nothing
 }
@@ -91,7 +93,7 @@ void Solution::init(ProblemType* problem_type) {
 
 	this->num_obs = problem_type->num_obs();
 
-	this->num_states = 0;
+	this->num_states = INIT_NUM_STATES;
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -116,8 +118,9 @@ void Solution::init(ProblemType* problem_type) {
 	start_node->next_node_id = -1;
 	start_node->next_node = NULL;
 
-	new_scope->explore_score_network = new ScoreNetwork(this->num_states);
-	new_scope->explore_score_network->is_ramp = false;
+	new_scope->start_score_network = new ScoreNetwork(this->num_states);
+
+	new_scope->end_score_network = new ScoreNetwork(this->num_states);
 
 	this->starting_scope = new_scope;
 	this->starting_num_improvements = 0;

@@ -150,16 +150,19 @@ ScoreNetwork::~ScoreNetwork() {
 	delete this->output;
 }
 
-void ScoreNetwork::activate(Eigen::VectorXf& state_vals) {
+void ScoreNetwork::activate(Eigen::VectorXf& state_vals,
+							double norm) {
 	this->state_input->acti_vals = state_vals;
 
 	this->hidden_1->activate();
 	this->hidden_2->activate();
 	this->output->activate();
+
+	this->norm = norm;
 }
 
 void ScoreNetwork::init_backprop(double target_val) {
-	this->output->errors(0) = target_val - this->output->acti_vals(0);
+	this->output->errors(0) = (target_val-this->norm) - this->output->acti_vals(0);
 
 	this->output->backprop();
 	this->hidden_2->backprop();
@@ -167,7 +170,8 @@ void ScoreNetwork::init_backprop(double target_val) {
 }
 
 void ScoreNetwork::init_activate(Eigen::VectorXf& state_vals,
-								 std::vector<double>& new_state_vals) {
+								 std::vector<double>& new_state_vals,
+								 double norm) {
 	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
 		this->state_input->acti_vals(s_index) = state_vals(s_index);
 	}
@@ -178,11 +182,13 @@ void ScoreNetwork::init_activate(Eigen::VectorXf& state_vals,
 	this->hidden_1->activate();
 	this->hidden_2->activate();
 	this->output->activate();
+
+	this->norm = norm;
 }
 
 void ScoreNetwork::init_backprop(double target_val,
 								 std::vector<double>& new_state_errors) {
-	this->output->errors(0) = target_val - this->output->acti_vals(0);
+	this->output->errors(0) = (target_val-this->norm) - this->output->acti_vals(0);
 
 	this->output->backprop();
 	this->hidden_2->backprop();
@@ -205,6 +211,8 @@ void ScoreNetwork::save(ScoreNetworkHistory* history) {
 	history->hidden_1_history = this->hidden_1->acti_vals;
 	history->hidden_2_history = this->hidden_2->acti_vals;
 	history->output_history = this->output->acti_vals(0);
+
+	history->norm_history = this->norm;
 }
 
 void ScoreNetwork::load(ScoreNetworkHistory* history) {
@@ -212,11 +220,13 @@ void ScoreNetwork::load(ScoreNetworkHistory* history) {
 	this->hidden_1->acti_vals = history->hidden_1_history;
 	this->hidden_2->acti_vals = history->hidden_2_history;
 	this->output->acti_vals(0) = history->output_history;
+
+	this->norm = history->norm_history;
 }
 
 void ScoreNetwork::backprop(double target_val,
 							Eigen::VectorXf& state_errors) {
-	this->output->errors(0) = target_val - this->output->acti_vals(0);
+	this->output->errors(0) = (target_val-this->norm) - this->output->acti_vals(0);
 
 	this->output->backprop();
 	this->hidden_2->backprop();

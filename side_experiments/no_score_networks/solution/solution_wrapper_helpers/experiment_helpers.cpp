@@ -114,18 +114,20 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 	while (!is_next) {
 		if (this->node_context.back() == NULL
 				&& this->experiment_context.back() == NULL) {
-			if (this->run_type != RUN_TYPE_EXPLORE) {
+			if (this->run_type == RUN_TYPE_DAMAGE) {
 				Scope* scope = this->scope_histories.back()->scope;
-				scope->explore_score_network->activate(this->partial_state);
-				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(scope->explore_score_network);
-				scope->explore_score_network->save(score_network_history);
+				scope->end_score_network->activate(this->partial_state,
+												   this->scope_histories.back()->start_score);
+				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(scope->end_score_network);
+				scope->end_score_network->save(score_network_history);
 				this->partial_network_histories.push_back(score_network_history);
 			}
 
 			if (this->scope_histories.back()->experiment_callback_histories.size() > 0) {
 				Scope* scope = this->scope_histories.back()->scope;
-				scope->explore_score_network->activate(this->state);
-				double signal = scope->explore_score_network->output->acti_vals(0);
+				scope->end_score_network->activate(this->state,
+												   0.0);
+				double signal = scope->end_score_network->output->acti_vals(0);
 				for (int c_index = 0; c_index < (int)this->scope_histories.back()->experiment_callback_histories.size(); c_index++) {
 					ExploreExperimentHistory* explore_experiment_history = (ExploreExperimentHistory*)this->scope_histories.back()->experiment_callback_histories[c_index];
 					int index = this->scope_histories.back()->experiment_callback_indexes[c_index];
@@ -172,7 +174,7 @@ void SolutionWrapper::set_action(int action) {
 
 void SolutionWrapper::experiment_end(double result) {
 	if (this->run_type == RUN_TYPE_EXISTING) {
-		this->solution->curr_score = 0.999*this->solution->curr_score + 0.001*result;
+		this->solution->curr_score = 0.9999*this->solution->curr_score + 0.0001*result;
 
 		update_helper(this->scope_histories[0]);
 	}

@@ -67,7 +67,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		}
 
 		new_network->init_activate(this->new_state_histories[rand_index],
-								   new_state);
+								   new_state,
+								   this->new_norm_histories[rand_index]);
 
 		vector<double> new_state_errors(NEW_STATE_NUM_ADD, 0.0);
 
@@ -104,7 +105,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	double existing_sum_vals = 0.0;
 	int existing_count = 0;
 	for (int h_index = num_existing_train; h_index < (int)this->existing_dependencies_is_hit_histories.size(); h_index++) {
-		this->existing_network->activate(this->existing_state_histories[h_index]);
+		this->existing_network->activate(this->existing_state_histories[h_index],
+										 0.0);
 
 		vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
 		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
@@ -115,7 +117,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			}
 		}
 		new_network->init_activate(this->existing_state_histories[h_index],
-								   new_state);
+								   new_state,
+								   0.0);
 
 		if (new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
 			existing_sum_vals += this->existing_target_val_histories[h_index];
@@ -126,7 +129,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	double new_sum_vals = 0.0;
 	int new_count = 0;
 	for (int h_index = num_new_train; h_index < (int)this->new_dependencies_is_hit_histories.size(); h_index++) {
-		this->existing_network->activate(this->new_state_histories[h_index]);
+		this->existing_network->activate(this->new_state_histories[h_index],
+										 0.0);
 
 		vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
 		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
@@ -137,7 +141,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			}
 		}
 		new_network->init_activate(this->new_state_histories[h_index],
-								   new_state);
+								   new_state,
+								   0.0);
 
 		if (new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
 			new_sum_vals += this->new_target_val_histories[h_index];
@@ -247,7 +252,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			for (int n_index = 0; n_index < (int)scope->start_init_networks.size(); n_index++) {
 				scope->start_init_networks[n_index]->add_states(wrapper->solution->num_states);
 			}
-			scope->explore_score_network->add_states(wrapper->solution->num_states);
+			scope->start_score_network->add_states(wrapper->solution->num_states);
+			scope->end_score_network->add_states(wrapper->solution->num_states);
 			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 					it != scope->nodes.end(); it++) {
 				switch (it->second->type) {
