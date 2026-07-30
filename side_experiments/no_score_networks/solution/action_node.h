@@ -24,6 +24,10 @@ public:
 
 	ObsNetwork* obs_network;
 
+	std::vector<std::vector<Scope*>> init_network_scope_contexts;
+	std::vector<std::vector<int>> init_network_node_contexts;
+	std::vector<InitNetwork*> init_networks;
+
 	int next_node_id;
 	AbstractNode* next_node;
 
@@ -32,6 +36,8 @@ public:
 	AbstractExperiment* experiment;
 
 	int curr_num_instances;
+
+	std::vector<AbstractExperiment*> dependencies;
 
 	ActionNode();
 	~ActionNode();
@@ -63,6 +69,9 @@ public:
 
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
+	Eigen::VectorXf state;
+	std::vector<double> obs;
+
 	ActionNodeHistory(ActionNode* node);
 };
 

@@ -25,12 +25,6 @@ public:
 	Scope* parent;
 	int id;
 
-	std::vector<std::vector<Scope*>> init_network_scope_contexts;
-	std::vector<std::vector<int>> init_network_node_contexts;
-	std::vector<InitNetwork*> init_networks;
-
-	std::vector<AbstractExperiment*> dependencies;
-
 	std::vector<int> ancestor_ids;
 	/**
 	 * - if both paths of BranchNode point to same node, add twice
@@ -57,9 +51,6 @@ class AbstractNodeHistory {
 public:
 	AbstractNode* node;
 	int index;
-
-	Eigen::VectorXf state;
-	std::vector<double> obs;
 
 	virtual ~AbstractNodeHistory() {};
 };

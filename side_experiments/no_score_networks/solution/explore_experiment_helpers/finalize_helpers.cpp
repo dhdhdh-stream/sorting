@@ -431,6 +431,9 @@ void ExploreExperiment::add(bool is_new_state,
 					ActionNode* action_node = (ActionNode*)it->second;
 					action_node->action_network->clear_momentum();
 					action_node->obs_network->clear_momentum();
+					for (int n_index = 0; n_index < (int)action_node->init_networks.size(); n_index++) {
+						action_node->init_networks[n_index]->clear_momentum();
+					}
 				}
 				break;
 			case NODE_TYPE_BRANCH:
@@ -440,10 +443,6 @@ void ExploreExperiment::add(bool is_new_state,
 					branch_node->branch_network->clear_momentum();
 				}
 				break;
-			}
-
-			for (int n_index = 0; n_index < (int)it->second->init_networks.size(); n_index++) {
-				it->second->init_networks[n_index]->clear_momentum();
 			}
 		}
 	}

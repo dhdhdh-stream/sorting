@@ -257,15 +257,6 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 					it != scope->nodes.end(); it++) {
 				switch (it->second->type) {
-				case NODE_TYPE_NOOP:
-					{
-						NoopNode* noop_node = (NoopNode*)it->second;
-
-						for (int n_index = 0; n_index < (int)noop_node->init_networks.size(); n_index++) {
-							noop_node->init_networks[n_index]->add_states(wrapper->solution->num_states);
-						}
-					}
-					break;
 				case NODE_TYPE_ACTION:
 					{
 						ActionNode* action_node = (ActionNode*)it->second;
@@ -277,22 +268,10 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 						}
 					}
 					break;
-				case NODE_TYPE_SCOPE:
-					{
-						ScopeNode* scope_node = (ScopeNode*)it->second;
-
-						for (int n_index = 0; n_index < (int)scope_node->init_networks.size(); n_index++) {
-							scope_node->init_networks[n_index]->add_states(wrapper->solution->num_states);
-						}
-					}
-					break;
 				case NODE_TYPE_BRANCH:
 					{
 						BranchNode* branch_node = (BranchNode*)it->second;
 
-						for (int n_index = 0; n_index < (int)branch_node->init_networks.size(); n_index++) {
-							branch_node->init_networks[n_index]->add_states(wrapper->solution->num_states);
-						}
 						branch_node->original_network->add_states(wrapper->solution->num_states);
 						branch_node->branch_network->add_states(wrapper->solution->num_states);
 					}

@@ -22,10 +22,6 @@ NoopNode::NoopNode() {
 }
 
 NoopNode::~NoopNode() {
-	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
-		delete this->init_networks[n_index];
-	}
-
 	if (this->experiment != NULL) {
 		delete this->experiment;
 	}
@@ -33,18 +29,6 @@ NoopNode::~NoopNode() {
 
 void NoopNode::copy_from(NoopNode* original,
 						 Solution* parent_solution) {
-	for (int n_index = 0; n_index < (int)original->init_network_scope_contexts.size(); n_index++) {
-		vector<Scope*> scope_context;
-		for (int l_index = 0; l_index < (int)original->init_network_scope_contexts[n_index].size(); l_index++) {
-			scope_context.push_back(parent_solution->scopes[original->init_network_scope_contexts[n_index][l_index]->id]);
-		}
-		this->init_network_scope_contexts.push_back(scope_context);
-	}
-	this->init_network_node_contexts = original->init_network_node_contexts;
-	for (int n_index = 0; n_index < (int)original->init_networks.size(); n_index++) {
-		this->init_networks.push_back(new InitNetwork(original->init_networks[n_index]));
-	}
-
 	this->next_node_id = original->next_node_id;
 
 	this->average_instances_per_hit = original->average_instances_per_hit;
@@ -54,17 +38,6 @@ void NoopNode::copy_from(NoopNode* original,
 }
 
 void NoopNode::save(ofstream& output_file) {
-	output_file << this->init_networks.size() << endl;
-	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
-		output_file << this->init_network_scope_contexts[n_index].size() << endl;
-		for (int l_index = 0; l_index < (int)this->init_network_scope_contexts[n_index].size(); l_index++) {
-			output_file << this->init_network_scope_contexts[n_index][l_index]->id << endl;
-			output_file << this->init_network_node_contexts[n_index][l_index] << endl;
-		}
-
-		this->init_networks[n_index]->save(output_file);
-	}
-
 	output_file << this->next_node_id << endl;
 
 	output_file << this->average_instances_per_hit << endl;
@@ -78,28 +51,6 @@ void NoopNode::save(ofstream& output_file) {
 
 void NoopNode::load(ifstream& input_file,
 				   Solution* parent_solution) {
-	string num_init_networks_line;
-	getline(input_file, num_init_networks_line);
-	int num_init_networks = stoi(num_init_networks_line);
-	for (int n_index = 0; n_index < num_init_networks; n_index++) {
-		string num_layers_line;
-		getline(input_file, num_layers_line);
-		int num_layers = stoi(num_layers_line);
-		this->init_network_scope_contexts.push_back(vector<Scope*>());
-		this->init_network_node_contexts.push_back(vector<int>());
-		for (int l_index = 0; l_index < num_layers; l_index++) {
-			string scope_id_line;
-			getline(input_file, scope_id_line);
-			this->init_network_scope_contexts[n_index].push_back(parent_solution->scopes[stoi(scope_id_line)]);
-
-			string node_id_line;
-			getline(input_file, node_id_line);
-			this->init_network_node_contexts[n_index].push_back(stoi(node_id_line));
-		}
-
-		this->init_networks.push_back(new InitNetwork(input_file));
-	}
-
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);

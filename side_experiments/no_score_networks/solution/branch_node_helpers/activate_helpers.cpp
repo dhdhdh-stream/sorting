@@ -19,15 +19,6 @@ void BranchNode::step(vector<double>& obs,
 					  int& action,
 					  bool& is_next,
 					  SolutionWrapper* wrapper) {
-	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
-		if (match_dependency_helper(wrapper,
-									this->init_network_scope_contexts[n_index],
-									this->init_network_node_contexts[n_index])) {
-			this->init_networks[n_index]->activate(wrapper->state,
-												   obs);
-		}
-	}
-
 	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->original_next_node;
 	} else if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {

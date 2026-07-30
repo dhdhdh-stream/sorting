@@ -26,7 +26,7 @@ void Scope::experiment_start_activate(vector<double>& obs,
 		}
 	}
 
-	uniform_int_distribution<int> drop_distribution(0, 9);
+	uniform_int_distribution<int> drop_distribution(0, 19);
 	bool is_drop = drop_distribution(generator) == 0;
 
 	this->start_obs_network->activate(wrapper->state,

@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "action_node.h"
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -30,29 +31,36 @@ void gather_dependencies_helper(ScopeHistory* scope_history,
 
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
-		if (h_it->second->node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
-			curr_context.push_back(h_it->first);
-			curr_index.push_back(h_it->second->index);
-			gather_dependencies_helper(scope_node_history->scope_history,
-									   curr_context,
-									   curr_index,
-									   count,
-									   dependency,
-									   index);
-			curr_context.pop_back();
-			curr_index.pop_back();
-		}
-
-		uniform_int_distribution<int> distribution(0, count);
-		count++;
-		if (distribution(generator) == 0) {
-			curr_context.push_back(h_it->first);
-			curr_index.push_back(h_it->second->index);
-			dependency = curr_context;
-			index = curr_index;
-			curr_context.pop_back();
-			curr_index.pop_back();
+		switch (h_it->second->node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				uniform_int_distribution<int> distribution(0, count);
+				count++;
+				if (distribution(generator) == 0) {
+					curr_context.push_back(h_it->first);
+					curr_index.push_back(h_it->second->index);
+					dependency = curr_context;
+					index = curr_index;
+					curr_context.pop_back();
+					curr_index.pop_back();
+				}
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
+				curr_context.push_back(h_it->first);
+				curr_index.push_back(h_it->second->index);
+				gather_dependencies_helper(scope_node_history->scope_history,
+										   curr_context,
+										   curr_index,
+										   count,
+										   dependency,
+										   index);
+				curr_context.pop_back();
+				curr_index.pop_back();
+			}
+			break;
 		}
 	}
 }
@@ -80,29 +88,36 @@ void gather_dependencies_top_helper(ScopeHistory* scope_history,
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
 		if (h_it->second->index <= top_index) {
-			if (h_it->second->node->type == NODE_TYPE_SCOPE) {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
-				curr_context.push_back(h_it->first);
-				curr_index.push_back(h_it->second->index);
-				gather_dependencies_helper(scope_node_history->scope_history,
-										   curr_context,
-										   curr_index,
-										   count,
-										   dependency,
-										   index);
-				curr_context.pop_back();
-				curr_index.pop_back();
-			}
-
-			uniform_int_distribution<int> distribution(0, count);
-			count++;
-			if (distribution(generator) == 0) {
-				curr_context.push_back(h_it->first);
-				curr_index.push_back(h_it->second->index);
-				dependency = curr_context;
-				index = curr_index;
-				curr_context.pop_back();
-				curr_index.pop_back();
+			switch (h_it->second->node->type) {
+			case NODE_TYPE_ACTION:
+				{
+					uniform_int_distribution<int> distribution(0, count);
+					count++;
+					if (distribution(generator) == 0) {
+						curr_context.push_back(h_it->first);
+						curr_index.push_back(h_it->second->index);
+						dependency = curr_context;
+						index = curr_index;
+						curr_context.pop_back();
+						curr_index.pop_back();
+					}
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
+					curr_context.push_back(h_it->first);
+					curr_index.push_back(h_it->second->index);
+					gather_dependencies_helper(scope_node_history->scope_history,
+											   curr_context,
+											   curr_index,
+											   count,
+											   dependency,
+											   index);
+					curr_context.pop_back();
+					curr_index.pop_back();
+				}
+				break;
 			}
 		}
 	}
@@ -116,7 +131,8 @@ void set_dependency_helper(Scope* scope,
 		if (dependency[l_index] == -1) {
 			scope->dependencies.push_back(experiment);
 		} else {
-			scope->nodes[dependency[l_index]]->dependencies.push_back(experiment);
+			ActionNode* action_node = (ActionNode*)scope->nodes[dependency[l_index]];
+			action_node->dependencies.push_back(experiment);
 		}
 	} else {
 		ScopeNode* scope_node = (ScopeNode*)scope->nodes[dependency[l_index]];
@@ -140,10 +156,10 @@ void clear_dependency_helper(Scope* scope,
 				}
 			}
 		} else {
-			AbstractNode* node = scope->nodes[dependency[l_index]];
-			for (int d_index = 0; d_index < (int)node->dependencies.size(); d_index++) {
-				if (node->dependencies[d_index] == experiment) {
-					node->dependencies.erase(node->dependencies.begin() + d_index);
+			ActionNode* action_node = (ActionNode*)scope->nodes[dependency[l_index]];
+			for (int d_index = 0; d_index < (int)action_node->dependencies.size(); d_index++) {
+				if (action_node->dependencies[d_index] == experiment) {
+					action_node->dependencies.erase(action_node->dependencies.begin() + d_index);
 					break;
 				}
 			}
@@ -173,9 +189,10 @@ void fetch_dependency_helper(ScopeHistory* scope_history,
 			is_hit = false;
 		} else {
 			if (l_index == (int)dependency.size()-1) {
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
 				is_hit = true;
-				state = it->second->state;
-				obs = it->second->obs;
+				state = action_node_history->state;
+				obs = action_node_history->obs;
 			} else {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
 				fetch_dependency_helper(scope_node_history->scope_history,
@@ -202,9 +219,10 @@ void add_dependency_helper(Scope* scope,
 			scope->start_init_network_node_contexts.push_back(dependency);
 			scope->start_init_networks.push_back(init_network);
 		} else {
-			scope->nodes[dependency[l_index]]->init_network_scope_contexts.push_back(init_network_scope_context);
-			scope->nodes[dependency[l_index]]->init_network_node_contexts.push_back(dependency);
-			scope->nodes[dependency[l_index]]->init_networks.push_back(init_network);
+			ActionNode* action_node = (ActionNode*)scope->nodes[dependency[l_index]];
+			action_node->init_network_scope_contexts.push_back(init_network_scope_context);
+			action_node->init_network_node_contexts.push_back(dependency);
+			action_node->init_networks.push_back(init_network);
 		}
 	} else {
 		ScopeNode* scope_node = (ScopeNode*)scope->nodes[dependency[l_index]];

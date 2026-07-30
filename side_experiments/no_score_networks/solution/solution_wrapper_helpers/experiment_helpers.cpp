@@ -237,6 +237,15 @@ void SolutionWrapper::experiment_end(double result) {
 			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 					it != scope->nodes.end(); it++) {
 				switch (it->second->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)it->second;
+
+						for (int n_index = 0; n_index < (int)action_node->init_networks.size(); n_index++) {
+							action_node->init_networks[n_index]->is_ramp = false;
+						}
+					}
+					break;
 				case NODE_TYPE_BRANCH:
 					{
 						BranchNode* branch_node = (BranchNode*)it->second;
@@ -247,10 +256,6 @@ void SolutionWrapper::experiment_end(double result) {
 						branch_node->is_ramp = false;
 					}
 					break;
-				}
-
-				for (int n_index = 0; n_index < (int)it->second->init_networks.size(); n_index++) {
-					it->second->init_networks[n_index]->is_ramp = false;
 				}
 			}
 		}
