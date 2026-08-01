@@ -60,14 +60,15 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 		obs_network->activate(this->state,
 							  obs);
 
-		uniform_int_distribution<int> partial_distribution(0, 9);
-		if (partial_distribution(generator) != 0) {
-			obs_network->activate(this->partial_state,
-								  obs);
-			ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(obs_network);
-			obs_network->save(obs_network_history);
-			this->partial_network_histories.push_back(obs_network_history);
-		}
+		/**
+		 * - simply never drop
+		 *   - trained in unpredictable spots, so shouldn't be relied upon poorly
+		 */
+		obs_network->activate(this->partial_state,
+							  obs);
+		ObsNetworkHistory* obs_network_history = new ObsNetworkHistory(obs_network);
+		obs_network->save(obs_network_history);
+		this->partial_network_histories.push_back(obs_network_history);
 
 		this->last_was_damage = false;
 	} else {
@@ -93,13 +94,10 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 			ActionNetwork* action_network = this->solution->generic_action_networks[action];
 			action_network->activate(this->state);
 
-			uniform_int_distribution<int> partial_distribution(0, 9);
-			if (partial_distribution(generator) != 0) {
-				action_network->activate(this->partial_state);
-				ActionNetworkHistory* action_network_history = new ActionNetworkHistory(action_network);
-				action_network->save(action_network_history);
-				this->partial_network_histories.push_back(action_network_history);
-			}
+			action_network->activate(this->partial_state);
+			ActionNetworkHistory* action_network_history = new ActionNetworkHistory(action_network);
+			action_network->save(action_network_history);
+			this->partial_network_histories.push_back(action_network_history);
 
 			this->last_was_damage = true;
 
@@ -116,8 +114,7 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 				&& this->experiment_context.back() == NULL) {
 			if (this->run_type == RUN_TYPE_DAMAGE) {
 				Scope* scope = this->scope_histories.back()->scope;
-				scope->end_score_network->activate(this->partial_state,
-												   this->scope_histories.back()->start_score);
+				scope->end_score_network->activate(this->partial_state);
 				ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(scope->end_score_network);
 				scope->end_score_network->save(score_network_history);
 				this->partial_network_histories.push_back(score_network_history);
@@ -125,8 +122,7 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 
 			if (this->scope_histories.back()->experiment_callback_histories.size() > 0) {
 				Scope* scope = this->scope_histories.back()->scope;
-				scope->end_score_network->activate(this->state,
-												   0.0);
+				scope->end_score_network->activate(this->state);
 				double signal = scope->end_score_network->output->acti_vals(0);
 				for (int c_index = 0; c_index < (int)this->scope_histories.back()->experiment_callback_histories.size(); c_index++) {
 					ExploreExperimentHistory* explore_experiment_history = (ExploreExperimentHistory*)this->scope_histories.back()->experiment_callback_histories[c_index];

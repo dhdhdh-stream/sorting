@@ -5,6 +5,7 @@
 #include "init_network.h"
 #include "negate_network.h"
 #include "obs_network.h"
+#include "score_network.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
 

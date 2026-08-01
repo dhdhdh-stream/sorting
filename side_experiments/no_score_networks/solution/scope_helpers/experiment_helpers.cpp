@@ -26,7 +26,7 @@ void Scope::experiment_start_activate(vector<double>& obs,
 		}
 	}
 
-	uniform_int_distribution<int> drop_distribution(0, 19);
+	uniform_int_distribution<int> drop_distribution(0, 9);
 	bool is_drop = drop_distribution(generator) == 0;
 
 	this->start_obs_network->activate(wrapper->state,
@@ -64,17 +64,5 @@ void Scope::experiment_start_activate(vector<double>& obs,
 	if (this->dependencies.size() > 0) {
 		scope_history->state = wrapper->partial_state;
 		scope_history->obs = obs;
-	}
-
-	this->start_score_network->activate(wrapper->state,
-										0.0);
-	scope_history->start_score = this->start_score_network->output->acti_vals(0);
-
-	if (wrapper->run_type == RUN_TYPE_DAMAGE) {
-		this->start_score_network->activate(wrapper->partial_state,
-											0.0);
-		ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->start_score_network);
-		this->start_score_network->save(score_network_history);
-		wrapper->partial_network_histories.push_back(score_network_history);
 	}
 }

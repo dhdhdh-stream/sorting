@@ -36,7 +36,7 @@ void ActionNode::experiment_step(vector<double>& obs,
 
 void ActionNode::experiment_step_callback(vector<double>& obs,
 										  SolutionWrapper* wrapper) {
-	uniform_int_distribution<int> drop_distribution(0, 19);
+	uniform_int_distribution<int> drop_distribution(0, 9);
 	bool is_drop = drop_distribution(generator) == 0;
 
 	ScopeHistory* scope_history = wrapper->scope_histories.back();

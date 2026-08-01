@@ -32,8 +32,7 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 		this->num_instances_until_target--;
 		if (history->existing_predicted.size() == 0
 				&& this->num_instances_until_target <= 0) {
-			this->existing_network->activate(wrapper->state,
-											 0.0);
+			this->existing_network->activate(wrapper->state);
 			history->existing_predicted.push_back(this->existing_network->output->acti_vals(0));
 
 			bool exit_is_next;
@@ -137,7 +136,6 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 				}
 			}
 
-			history->norm_histories.push_back(wrapper->scope_histories.back()->start_score);
 			history->signal_histories.push_back(0.0);
 			wrapper->scope_histories.back()->experiment_callback_histories.push_back(history);
 			wrapper->scope_histories.back()->experiment_callback_indexes.push_back(history->signal_histories.size()-1);
@@ -253,7 +251,7 @@ void ExploreExperiment::explore_backprop(double target_val,
 		this->num_instances_until_target = until_distribution(generator);
 
 		if (history->existing_predicted.size() != 0) {
-			double curr_surprise = (target_val-history->norm_histories[0]) - history->existing_predicted[0];
+			double curr_surprise = target_val - history->existing_predicted[0];
 
 			#if defined(MDEBUG) && MDEBUG
 			if (curr_surprise > this->best_surprise || true) {

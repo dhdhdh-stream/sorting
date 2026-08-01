@@ -17,8 +17,6 @@ public:
 	Layer* hidden_2;
 	Layer* output;
 
-	double norm;
-
 	bool is_ramp;
 
 	int num_instances;
@@ -30,14 +28,12 @@ public:
 	ScoreNetwork(std::ifstream& input_file);
 	~ScoreNetwork();
 
-	void activate(Eigen::VectorXf& state_vals,
-				  double norm);
+	void activate(Eigen::VectorXf& state_vals);
 
 	void init_backprop(double target_val);
 
 	void init_activate(Eigen::VectorXf& state_vals,
-					   std::vector<double>& new_state_vals,
-					   double norm);
+					   std::vector<double>& new_state_vals);
 	void init_backprop(double target_val,
 					   std::vector<double>& new_state_errors);
 
@@ -64,8 +60,6 @@ public:
 	Eigen::VectorXf hidden_1_history;
 	Eigen::VectorXf hidden_2_history;
 	double output_history;
-
-	double norm_history;
 
 	ScoreNetworkHistory(ScoreNetwork* network);
 };

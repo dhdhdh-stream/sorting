@@ -85,7 +85,6 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 			uniform_int_distribution<int> until_distribution(1, average_instances_per_hit);
 			this->num_instances_until_target = until_distribution(generator);
 
-			history->norm_histories.push_back(scope_history->start_score);
 			history->signal_histories.push_back(0.0);
 			wrapper->scope_histories.back()->experiment_callback_histories.push_back(history);
 			wrapper->scope_histories.back()->experiment_callback_indexes.push_back(history->signal_histories.size()-1);
@@ -162,8 +161,7 @@ void ExploreExperiment::train_new_backprop(
 				this->new_dependencies_state_histories.push_back(history->dependencies_state_histories[i_index]);
 				this->new_dependencies_obs_histories.push_back(history->dependencies_obs_histories[i_index]);
 				this->new_state_histories.push_back(history->state_histories[i_index]);
-				this->new_norm_histories.push_back(history->norm_histories[i_index]);
-				this->new_signal_histories.push_back(history->norm_histories[i_index] + history->signal_histories[i_index]);
+				this->new_signal_histories.push_back(history->signal_histories[i_index]);
 				this->new_target_val_histories.push_back(target_val);
 			}
 
@@ -189,10 +187,6 @@ void ExploreExperiment::train_new_backprop(
 				}
 				{
 					default_random_engine generator_copy = generator;
-					shuffle(this->new_norm_histories.begin(), this->new_norm_histories.end(), generator_copy);
-				}
-				{
-					default_random_engine generator_copy = generator;
 					shuffle(this->new_signal_histories.begin(), this->new_signal_histories.end(), generator_copy);
 				}
 				{
@@ -208,8 +202,7 @@ void ExploreExperiment::train_new_backprop(
 				for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 					int rand_index = new_train_distribution(generator);
 
-					new_network->activate(this->new_state_histories[rand_index],
-										  this->new_norm_histories[rand_index]);
+					new_network->activate(this->new_state_histories[rand_index]);
 
 					if (this->use_signal) {
 						new_network->init_backprop(this->new_signal_histories[rand_index]);
@@ -228,10 +221,8 @@ void ExploreExperiment::train_new_backprop(
 				double existing_sum_vals = 0.0;
 				int existing_count = 0;
 				for (int h_index = num_existing_train; h_index < (int)this->existing_dependencies_is_hit_histories.size(); h_index++) {
-					this->existing_network->activate(this->existing_state_histories[h_index],
-													 0.0);
-					new_network->activate(this->existing_state_histories[h_index],
-										  0.0);
+					this->existing_network->activate(this->existing_state_histories[h_index]);
+					new_network->activate(this->existing_state_histories[h_index]);
 					if (new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
 						existing_sum_vals += this->existing_target_val_histories[h_index];
 						existing_count++;
@@ -241,10 +232,8 @@ void ExploreExperiment::train_new_backprop(
 				double new_sum_vals = 0.0;
 				int new_count = 0;
 				for (int h_index = num_new_train; h_index < (int)this->new_dependencies_is_hit_histories.size(); h_index++) {
-					this->existing_network->activate(this->new_state_histories[h_index],
-													 0.0);
-					new_network->activate(this->new_state_histories[h_index],
-										  0.0);
+					this->existing_network->activate(this->new_state_histories[h_index]);
+					new_network->activate(this->new_state_histories[h_index]);
 					if (new_network->output->acti_vals[0] >= this->existing_network->output->acti_vals[0]) {
 						new_sum_vals += this->new_target_val_histories[h_index];
 						new_count++;

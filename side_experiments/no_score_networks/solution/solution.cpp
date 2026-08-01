@@ -118,8 +118,6 @@ void Solution::init(ProblemType* problem_type) {
 	start_node->next_node_id = -1;
 	start_node->next_node = NULL;
 
-	new_scope->start_score_network = new ScoreNetwork(this->num_states);
-
 	new_scope->end_score_network = new ScoreNetwork(this->num_states);
 
 	this->starting_scope = new_scope;

@@ -45,7 +45,6 @@ void ExploreExperiment::train_existing_check_activate(
 	history->dependencies_obs_histories.push_back(curr_dependencies_obs);
 	history->state_histories.push_back(wrapper->state);
 
-	history->norm_histories.push_back(scope_history->start_score);
 	history->signal_histories.push_back(0.0);
 	wrapper->scope_histories.back()->experiment_callback_histories.push_back(history);
 	wrapper->scope_histories.back()->experiment_callback_indexes.push_back(history->signal_histories.size()-1);
@@ -60,8 +59,7 @@ void ExploreExperiment::train_existing_backprop(
 		this->existing_dependencies_state_histories.push_back(history->dependencies_state_histories[i_index]);
 		this->existing_dependencies_obs_histories.push_back(history->dependencies_obs_histories[i_index]);
 		this->existing_state_histories.push_back(history->state_histories[i_index]);
-		this->existing_norm_histories.push_back(history->norm_histories[i_index]);
-		this->existing_signal_histories.push_back(history->norm_histories[i_index] + history->signal_histories[i_index]);
+		this->existing_signal_histories.push_back(history->signal_histories[i_index]);
 		this->existing_target_val_histories.push_back(target_val);
 	}
 
@@ -85,10 +83,6 @@ void ExploreExperiment::train_existing_backprop(
 		}
 		{
 			default_random_engine generator_copy = generator;
-			shuffle(this->existing_norm_histories.begin(), this->existing_norm_histories.end(), generator_copy);
-		}
-		{
-			default_random_engine generator_copy = generator;
 			shuffle(this->existing_signal_histories.begin(), this->existing_signal_histories.end(), generator_copy);
 		}
 		{
@@ -104,8 +98,7 @@ void ExploreExperiment::train_existing_backprop(
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int rand_index = train_distribution(generator);
 
-			this->existing_network->activate(this->existing_state_histories[rand_index],
-											 this->existing_norm_histories[rand_index]);
+			this->existing_network->activate(this->existing_state_histories[rand_index]);
 
 			if (this->use_signal) {
 				this->existing_network->init_backprop(this->existing_signal_histories[rand_index]);

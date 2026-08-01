@@ -9,6 +9,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "score_network.h"
 #include "solution.h"
 #include "utilities.h"
 
@@ -104,6 +105,12 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 	bool is_done = false;
 	while (!is_next) {
 		if (this->node_context.back() == NULL) {
+			// // temp
+			// Scope* scope = this->scope_histories.back()->scope;
+			// scope->end_score_network->activate(this->state,
+			// 								   0.0);
+			// cout << "scope->end_score_network->output->acti_vals(0): " << scope->end_score_network->output->acti_vals(0) << endl;
+
 			if (this->scope_histories.size() == 1) {
 				is_next = true;
 				is_done = true;

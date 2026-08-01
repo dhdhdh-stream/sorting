@@ -37,7 +37,12 @@ public:
 	std::vector<std::vector<Scope*>> start_init_network_scope_contexts;
 	std::vector<std::vector<int>> start_init_network_node_contexts;
 	std::vector<InitNetwork*> start_init_networks;
-	ScoreNetwork* start_score_network;
+
+	/**
+	 * - having start_score_network and diff-ing against bad(?)
+	 *   - maybe because state needs to track start + diff instead of just score?
+	 *   - maybe on creating new scope, requires shifting around too much state?
+	 */
 
 	ScoreNetwork* end_score_network;
 
@@ -74,8 +79,6 @@ public:
 
 	Eigen::VectorXf state;
 	std::vector<double> obs;
-
-	double start_score;
 
 	std::map<int, AbstractNodeHistory*> node_histories;
 

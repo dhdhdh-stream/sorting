@@ -157,7 +157,6 @@ void create_experiment(ScopeHistory* scope_history,
 		AbstractNode* exit_next_node = explore_node_histories[random_index];
 
 		vector<vector<int>> dependencies;
-		dependencies.push_back(vector<int>{context_it->second.explore_node->id});
 		vector<vector<int>> indexes;
 		for (int try_index = 0; try_index < GATHER_DEPENDENCIES_NUM_TRIES; try_index++) {
 			vector<int> curr_context;
@@ -200,7 +199,8 @@ void create_experiment(ScopeHistory* scope_history,
 		}
 
 		uniform_int_distribution<int> use_signal_distribution(0, 1);
-		bool use_signal = use_signal_distribution(generator) == 0;
+		// bool use_signal = use_signal_distribution(generator) == 0;
+		bool use_signal = false;
 
 		ExploreExperiment* new_experiment = new ExploreExperiment(
 			context_it->second.explore_node->parent,

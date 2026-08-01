@@ -37,8 +37,6 @@ Scope::~Scope() {
 		delete this->start_init_networks[n_index];
 	}
 
-	delete this->start_score_network;
-
 	delete this->end_score_network;
 }
 
@@ -114,8 +112,6 @@ void Scope::copy_from(Scope* original,
 		this->start_init_networks.push_back(new InitNetwork(original->start_init_networks[n_index]));
 	}
 
-	this->start_score_network = new ScoreNetwork(original->start_score_network);
-
 	this->end_score_network = new ScoreNetwork(original->end_score_network);
 
 	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
@@ -154,8 +150,6 @@ void Scope::save(ofstream& output_file) {
 
 		this->start_init_networks[n_index]->save(output_file);
 	}
-
-	this->start_score_network->save(output_file);
 
 	this->end_score_network->save(output_file);
 
@@ -268,8 +262,6 @@ void Scope::load(ifstream& input_file,
 
 		this->start_init_networks.push_back(new InitNetwork(input_file));
 	}
-
-	this->start_score_network = new ScoreNetwork(input_file);
 
 	this->end_score_network = new ScoreNetwork(input_file);
 
