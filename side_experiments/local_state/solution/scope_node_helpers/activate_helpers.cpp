@@ -41,22 +41,8 @@ void ScopeNode::step(vector<double>& obs,
 		wrapper->states.back()[pass_through_network->back_state_index] += val;
 	}
 
-	// // temp
-	// cout << "pre in wrapper->states.back():";
-	// for (int s_index = 0; s_index < (int)wrapper->states.back().size(); s_index++) {
-	// 	cout << " " << wrapper->states.back()[s_index];
-	// }
-	// cout << endl;
-
 	this->in_network->activate(wrapper->states[wrapper->states.size()-2],
 							   wrapper->states.back());
-
-	// // temp
-	// cout << "post in wrapper->states.back():";
-	// for (int s_index = 0; s_index < (int)wrapper->states.back().size(); s_index++) {
-	// 	cout << " " << wrapper->states.back()[s_index];
-	// }
-	// cout << endl;
 
 	this->scope->start_activate(obs,
 								wrapper);
@@ -78,22 +64,8 @@ void ScopeNode::exit_step(vector<double>& obs,
 		wrapper->states[wrapper->states.size()-2][pass_through_network->back_state_index] += val;
 	}
 
-	// // temp
-	// cout << "pre out wrapper->states[wrapper->states.size()-2]:";
-	// for (int s_index = 0; s_index < (int)wrapper->states[wrapper->states.size()-2].size(); s_index++) {
-	// 	cout << " " << wrapper->states[wrapper->states.size()-2][s_index];
-	// }
-	// cout << endl;
-
 	this->out_network->activate(wrapper->states.back(),
 								wrapper->states[wrapper->states.size()-2]);
-
-	// // temp
-	// cout << "post out wrapper->states[wrapper->states.size()-2]:";
-	// for (int s_index = 0; s_index < (int)wrapper->states[wrapper->states.size()-2].size(); s_index++) {
-	// 	cout << " " << wrapper->states[wrapper->states.size()-2][s_index];
-	// }
-	// cout << endl;
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();

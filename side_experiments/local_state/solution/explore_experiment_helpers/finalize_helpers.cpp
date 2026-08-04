@@ -56,11 +56,6 @@ void ExploreExperiment::add(bool is_new_state,
 		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
 	}
 
-	// temp
-	ss << "this->existing_val_average: " << this->existing_val_average << "; ";
-	ss << "this->new_val_average: " << this->new_val_average << "; ";
-	ss << "ratio: " << ratio << "; ";
-
 	vector<AbstractNode*> new_nodes;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -513,12 +508,12 @@ void ExploreExperiment::add(bool is_new_state,
 	wrapper->solution->improvement_history.push_back(wrapper->solution->curr_score);
 	cout << "previous_val_average: " << wrapper->solution->curr_score << endl;
 
-	// temp
-	{
-		double val_average = measure_helper(wrapper);
-		cout << "post val_average: " << val_average << endl;
-		ss << "post val_average: " << val_average << "; ";
-	}
+	// // temp
+	// {
+	// 	double val_average = measure_helper(wrapper);
+	// 	cout << "post val_average: " << val_average << endl;
+	// 	ss << "post val_average: " << val_average << "; ";
+	// }
 
 	wrapper->solution->change_history.push_back(ss.str());
 

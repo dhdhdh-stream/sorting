@@ -238,18 +238,6 @@ void ExploreExperiment::train_new_backprop(
 					this->existing_network->activate(this->existing_state_histories[h_index]);
 					new_network->activate(this->existing_state_histories[h_index]);
 
-					// // temp
-					// if (h_index < num_existing_train + 10) {
-					// 	cout << h_index << endl;
-					// 	cout << "this->existing_state_histories[h_index]:";
-					// 	for (int s_index = 0; s_index < (int)this->existing_state_histories[h_index].size(); s_index++) {
-					// 		cout << " " << this->existing_state_histories[h_index][s_index];
-					// 	}
-					// 	cout << endl;
-					// 	cout << "this->existing_network->output->acti_vals(0): " << this->existing_network->output->acti_vals(0) << endl;
-					// 	cout << "new_network->output->acti_vals(0): " << new_network->output->acti_vals(0) << endl;
-					// }
-
 					if (new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
 						existing_sum_vals += this->existing_target_val_histories[h_index];
 						existing_count++;
@@ -261,18 +249,6 @@ void ExploreExperiment::train_new_backprop(
 				for (int h_index = num_new_train; h_index < (int)this->new_dependencies_is_hit_histories.size(); h_index++) {
 					this->existing_network->activate(this->new_state_histories[h_index]);
 					new_network->activate(this->new_state_histories[h_index]);
-
-					// // temp
-					// if (h_index < num_new_train + 10) {
-					// 	cout << h_index << endl;
-					// 	cout << "this->new_state_histories[h_index]:";
-					// 	for (int s_index = 0; s_index < (int)this->new_state_histories[h_index].size(); s_index++) {
-					// 		cout << " " << this->new_state_histories[h_index][s_index];
-					// 	}
-					// 	cout << endl;
-					// 	cout << "this->existing_network->output->acti_vals(0): " << this->existing_network->output->acti_vals(0) << endl;
-					// 	cout << "new_network->output->acti_vals(0): " << new_network->output->acti_vals(0) << endl;
-					// }
 
 					if (new_network->output->acti_vals[0] >= this->existing_network->output->acti_vals[0]) {
 						new_sum_vals += this->new_target_val_histories[h_index];
@@ -355,68 +331,60 @@ void ExploreExperiment::train_new_backprop(
 					#else
 					if (is_success) {
 					#endif /* MDEBUG */
-						// add(false,
-						// 	new_network,
-						// 	wrapper);
+						add(false,
+							new_network,
+							wrapper);
 
-						// delete this;
+						delete this;
 
-						// wrapper->experiment_iter++;
-						// if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
-						// 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-						// 		Scope* scope = wrapper->solution->scopes[s_index];
-						// 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-						// 				it != scope->nodes.end(); it++) {
-						// 			switch (it->second->type) {
-						// 			case NODE_TYPE_NOOP:
-						// 				{
-						// 					NoopNode* noop_node = (NoopNode*)it->second;
-						// 					if (noop_node->experiment != NULL) {
-						// 						delete noop_node->experiment;
-						// 					}
-						// 				}
-						// 				break;
-						// 			case NODE_TYPE_ACTION:
-						// 				{
-						// 					ActionNode* action_node = (ActionNode*)it->second;
-						// 					if (action_node->experiment != NULL) {
-						// 						delete action_node->experiment;
-						// 					}
-						// 				}
-						// 				break;
-						// 			case NODE_TYPE_SCOPE:
-						// 				{
-						// 					ScopeNode* scope_node = (ScopeNode*)it->second;
-						// 					if (scope_node->experiment != NULL) {
-						// 						delete scope_node->experiment;
-						// 					}
-						// 				}
-						// 				break;
-						// 			case NODE_TYPE_BRANCH:
-						// 				{
-						// 					BranchNode* branch_node = (BranchNode*)it->second;
-						// 					if (branch_node->original_experiment != NULL) {
-						// 						delete branch_node->original_experiment;
-						// 					}
-						// 					if (branch_node->branch_experiment != NULL) {
-						// 						delete branch_node->branch_experiment;
-						// 					}
-						// 				}
-						// 				break;
-						// 			}
-						// 		}
-						// 	}
+						wrapper->experiment_iter++;
+						if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
+							for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+								Scope* scope = wrapper->solution->scopes[s_index];
+								for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+										it != scope->nodes.end(); it++) {
+									switch (it->second->type) {
+									case NODE_TYPE_NOOP:
+										{
+											NoopNode* noop_node = (NoopNode*)it->second;
+											if (noop_node->experiment != NULL) {
+												delete noop_node->experiment;
+											}
+										}
+										break;
+									case NODE_TYPE_ACTION:
+										{
+											ActionNode* action_node = (ActionNode*)it->second;
+											if (action_node->experiment != NULL) {
+												delete action_node->experiment;
+											}
+										}
+										break;
+									case NODE_TYPE_SCOPE:
+										{
+											ScopeNode* scope_node = (ScopeNode*)it->second;
+											if (scope_node->experiment != NULL) {
+												delete scope_node->experiment;
+											}
+										}
+										break;
+									case NODE_TYPE_BRANCH:
+										{
+											BranchNode* branch_node = (BranchNode*)it->second;
+											if (branch_node->original_experiment != NULL) {
+												delete branch_node->original_experiment;
+											}
+											if (branch_node->branch_experiment != NULL) {
+												delete branch_node->branch_experiment;
+											}
+										}
+										break;
+									}
+								}
+							}
 
-						// 	wrapper->experiment_iter = 0;
-						// }
-
-						this->is_new_state = false;
-						this->measure_new_network = new_network;
-						this->sum_vals = 0.0;
-						this->start_iter = wrapper->iters_since_update;
-
-						this->state = EXPLORE_EXPERIMENT_STATE_MEASURE;
-						this->state_iter = 0;
+							wrapper->experiment_iter = 0;
+						}
 					} else {
 						delete new_network;
 					}

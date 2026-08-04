@@ -121,13 +121,6 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		new_network->init_activate(this->existing_state_histories[h_index],
 								   new_state);
 
-		// // temp
-		// if (h_index < num_existing_train + 10) {
-		// 	cout << "this->existing_network->output->acti_vals(0): " << this->existing_network->output->acti_vals(0) << endl;
-		// 	cout << "new_network->output->acti_vals(0): " << new_network->output->acti_vals(0) << endl;
-		// 	cout << "this->existing_target_val_histories[h_index]: " << this->existing_target_val_histories[h_index] << endl;
-		// }
-
 		if (new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
 			existing_sum_vals += this->existing_target_val_histories[h_index];
 			existing_count++;
@@ -149,13 +142,6 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		}
 		new_network->init_activate(this->new_state_histories[h_index],
 								   new_state);
-
-		// // temp
-		// if (h_index < num_new_train + 10) {
-		// 	cout << "this->existing_network->output->acti_vals(0): " << this->existing_network->output->acti_vals(0) << endl;
-		// 	cout << "new_network->output->acti_vals(0): " << new_network->output->acti_vals(0) << endl;
-		// 	cout << "this->new_target_val_histories[h_index]: " << this->new_target_val_histories[h_index] << endl;
-		// }
 
 		if (new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
 			new_sum_vals += this->new_target_val_histories[h_index];
@@ -249,174 +235,165 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		// 	cout << endl;
 		// }
 
-		// set<Scope*> scopes_needed;
-		// set<ScopeNode*> transitions_needed;
-		// scopes_needed.insert(this->scope_context);
-		// for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
-		// 	get_dependency_changes_helper(this->scope_context,
-		// 								  this->dependencies[d_index],
-		// 								  0,
-		// 								  scopes_needed,
-		// 								  transitions_needed);
-		// }
+		set<Scope*> scopes_needed;
+		set<ScopeNode*> transitions_needed;
+		scopes_needed.insert(this->scope_context);
+		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+			get_dependency_changes_helper(this->scope_context,
+										  this->dependencies[d_index],
+										  0,
+										  scopes_needed,
+										  transitions_needed);
+		}
 
-		// for (set<ScopeNode*>::iterator it = transitions_needed.begin();
-		// 		it != transitions_needed.end(); it++) {
-		// 	ScopeNode* scope_node = *it;
-		// 	int out_num_states = scope_node->parent->num_states;
-		// 	int in_num_states = scope_node->scope->num_states;
-		// 	for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
-		// 		PassThroughNetwork* new_in_pass_through_network = new PassThroughNetwork(
-		// 			out_num_states + s_index,
-		// 			in_num_states + s_index);
-		// 		scope_node->in_pass_through_networks.push_back(new_in_pass_through_network);
+		for (set<ScopeNode*>::iterator it = transitions_needed.begin();
+				it != transitions_needed.end(); it++) {
+			ScopeNode* scope_node = *it;
+			int out_num_states = scope_node->parent->num_states;
+			int in_num_states = scope_node->scope->num_states;
+			for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
+				PassThroughNetwork* new_in_pass_through_network = new PassThroughNetwork(
+					out_num_states + s_index,
+					in_num_states + s_index);
+				scope_node->in_pass_through_networks.push_back(new_in_pass_through_network);
 
-		// 		PassThroughNetwork* new_out_pass_through_network = new PassThroughNetwork(
-		// 			in_num_states + s_index,
-		// 			out_num_states + s_index);
-		// 		scope_node->out_pass_through_networks.push_back(new_out_pass_through_network);
-		// 	}
-		// }
+				PassThroughNetwork* new_out_pass_through_network = new PassThroughNetwork(
+					in_num_states + s_index,
+					out_num_states + s_index);
+				scope_node->out_pass_through_networks.push_back(new_out_pass_through_network);
+			}
+		}
 
-		// for (set<Scope*>::iterator it = scopes_needed.begin();
-		// 		it != scopes_needed.end(); it++) {
-		// 	Scope* scope = *it;
+		for (set<Scope*>::iterator it = scopes_needed.begin();
+				it != scopes_needed.end(); it++) {
+			Scope* scope = *it;
 
-		// 	scope->num_states += NEW_STATE_NUM_ADD;
+			scope->num_states += NEW_STATE_NUM_ADD;
 
-		// 	scope->start_obs_network->add_states(scope->num_states);
-		// 	for (int n_index = 0; n_index < (int)scope->start_init_networks.size(); n_index++) {
-		// 		scope->start_init_networks[n_index]->add_states(scope->num_states);
-		// 	}
-		// 	scope->end_score_network->add_states(scope->num_states);
+			scope->start_obs_network->add_states(scope->num_states);
+			for (int n_index = 0; n_index < (int)scope->start_init_networks.size(); n_index++) {
+				scope->start_init_networks[n_index]->add_states(scope->num_states);
+			}
+			scope->end_score_network->add_states(scope->num_states);
 
-		// 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-		// 			it != scope->nodes.end(); it++) {
-		// 		switch (it->second->type) {
-		// 		case NODE_TYPE_ACTION:
-		// 			{
-		// 				ActionNode* action_node = (ActionNode*)it->second;
+			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+					it != scope->nodes.end(); it++) {
+				switch (it->second->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)it->second;
 
-		// 				action_node->action_network->add_states(scope->num_states);
-		// 				action_node->obs_network->add_states(scope->num_states);
-		// 				for (int n_index = 0; n_index < (int)action_node->init_networks.size(); n_index++) {
-		// 					action_node->init_networks[n_index]->add_states(scope->num_states);
-		// 				}
-		// 			}
-		// 			break;
-		// 		case NODE_TYPE_SCOPE:
-		// 			{
-		// 				ScopeNode* scope_node = (ScopeNode*)it->second;
+						action_node->action_network->add_states(scope->num_states);
+						action_node->obs_network->add_states(scope->num_states);
+						for (int n_index = 0; n_index < (int)action_node->init_networks.size(); n_index++) {
+							action_node->init_networks[n_index]->add_states(scope->num_states);
+						}
+					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)it->second;
 
-		// 				scope_node->in_network->add_front_states(scope->num_states);
-		// 				scope_node->out_network->add_back_states(scope->num_states);
-		// 			}
-		// 			break;
-		// 		case NODE_TYPE_BRANCH:
-		// 			{
-		// 				BranchNode* branch_node = (BranchNode*)it->second;
+						scope_node->in_network->add_front_states(scope->num_states);
+						scope_node->out_network->add_back_states(scope->num_states);
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)it->second;
 
-		// 				branch_node->original_network->add_states(scope->num_states);
-		// 				branch_node->branch_network->add_states(scope->num_states);
-		// 			}
-		// 			break;
-		// 		}
-		// 	}
+						branch_node->original_network->add_states(scope->num_states);
+						branch_node->branch_network->add_states(scope->num_states);
+					}
+					break;
+				}
+			}
 
-		// 	for (int a_index = 0; a_index < (int)scope->generic_action_nodes.size(); a_index++) {
-		// 		ActionNode* action_node = scope->generic_action_nodes[a_index];
+			for (int a_index = 0; a_index < (int)scope->generic_action_nodes.size(); a_index++) {
+				ActionNode* action_node = scope->generic_action_nodes[a_index];
 
-		// 		action_node->action_network->add_states(scope->num_states);
-		// 		action_node->obs_network->add_states(scope->num_states);
-		// 	}
+				action_node->action_network->add_states(scope->num_states);
+				action_node->obs_network->add_states(scope->num_states);
+			}
 
-		// 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		// 		Scope* p_outer_scope = wrapper->solution->scopes[s_index];
-		// 		for (map<int, AbstractNode*>::iterator it = p_outer_scope->nodes.begin();
-		// 				it != p_outer_scope->nodes.end(); it++) {
-		// 			if (it->second->type == NODE_TYPE_SCOPE) {
-		// 				ScopeNode* scope_node = (ScopeNode*)it->second;
-		// 				if (scope_node->scope == scope) {
-		// 					scope_node->in_network->add_back_states(scope->num_states);
-		// 					scope_node->out_network->add_front_states(scope->num_states);
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// }
+			for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+				Scope* p_outer_scope = wrapper->solution->scopes[s_index];
+				for (map<int, AbstractNode*>::iterator it = p_outer_scope->nodes.begin();
+						it != p_outer_scope->nodes.end(); it++) {
+					if (it->second->type == NODE_TYPE_SCOPE) {
+						ScopeNode* scope_node = (ScopeNode*)it->second;
+						if (scope_node->scope == scope) {
+							scope_node->in_network->add_back_states(scope->num_states);
+							scope_node->out_network->add_front_states(scope->num_states);
+						}
+					}
+				}
+			}
+		}
 
-		// for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
-		// 	vector<Scope*> init_network_scope_context;
-		// 	add_dependency_helper(this->scope_context,
-		// 						  init_network_scope_context,
-		// 						  this->dependencies[d_index],
-		// 						  0,
-		// 						  init_networks[d_index]);
-		// }
+		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+			vector<Scope*> init_network_scope_context;
+			add_dependency_helper(this->scope_context,
+								  init_network_scope_context,
+								  this->dependencies[d_index],
+								  0,
+								  init_networks[d_index]);
+		}
 
-		// this->existing_network->add_states(this->scope_context->num_states);
+		this->existing_network->add_states(this->scope_context->num_states);
 
-		// add(true,
-		// 	new_network,
-		// 	wrapper);
+		add(true,
+			new_network,
+			wrapper);
 
-		// /**
-		//  * - includes "delete this"
-		//  */
-		// for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		// 	Scope* scope = wrapper->solution->scopes[s_index];
-		// 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-		// 			it != scope->nodes.end(); it++) {
-		// 		switch (it->second->type) {
-		// 		case NODE_TYPE_NOOP:
-		// 			{
-		// 				NoopNode* noop_node = (NoopNode*)it->second;
-		// 				if (noop_node->experiment != NULL) {
-		// 					delete noop_node->experiment;
-		// 				}
-		// 			}
-		// 			break;
-		// 		case NODE_TYPE_ACTION:
-		// 			{
-		// 				ActionNode* action_node = (ActionNode*)it->second;
-		// 				if (action_node->experiment != NULL) {
-		// 					delete action_node->experiment;
-		// 				}
-		// 			}
-		// 			break;
-		// 		case NODE_TYPE_SCOPE:
-		// 			{
-		// 				ScopeNode* scope_node = (ScopeNode*)it->second;
-		// 				if (scope_node->experiment != NULL) {
-		// 					delete scope_node->experiment;
-		// 				}
-		// 			}
-		// 			break;
-		// 		case NODE_TYPE_BRANCH:
-		// 			{
-		// 				BranchNode* branch_node = (BranchNode*)it->second;
-		// 				if (branch_node->original_experiment != NULL) {
-		// 					delete branch_node->original_experiment;
-		// 				}
-		// 				if (branch_node->branch_experiment != NULL) {
-		// 					delete branch_node->branch_experiment;
-		// 				}
-		// 			}
-		// 			break;
-		// 		}
-		// 	}
-		// }
+		/**
+		 * - includes "delete this"
+		 */
+		for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+			Scope* scope = wrapper->solution->scopes[s_index];
+			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+					it != scope->nodes.end(); it++) {
+				switch (it->second->type) {
+				case NODE_TYPE_NOOP:
+					{
+						NoopNode* noop_node = (NoopNode*)it->second;
+						if (noop_node->experiment != NULL) {
+							delete noop_node->experiment;
+						}
+					}
+					break;
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)it->second;
+						if (action_node->experiment != NULL) {
+							delete action_node->experiment;
+						}
+					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)it->second;
+						if (scope_node->experiment != NULL) {
+							delete scope_node->experiment;
+						}
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)it->second;
+						if (branch_node->original_experiment != NULL) {
+							delete branch_node->original_experiment;
+						}
+						if (branch_node->branch_experiment != NULL) {
+							delete branch_node->branch_experiment;
+						}
+					}
+					break;
+				}
+			}
+		}
 
-		// wrapper->experiment_iter = 0;
-
-		this->is_new_state = true;
-		this->measure_init_networks = init_networks;
-		this->measure_new_network = new_network;
-		this->sum_vals = 0.0;
-		this->start_iter = wrapper->iters_since_update;
-
-		this->state = EXPLORE_EXPERIMENT_STATE_MEASURE;
-		this->state_iter = 0;
+		wrapper->experiment_iter = 0;
 	} else {
 		for (int n_index = 0; n_index < (int)init_networks.size(); n_index++) {
 			delete init_networks[n_index];
