@@ -90,4 +90,6 @@ void SolutionWrapper::end() {
 
 	this->scope_histories.clear();
 	this->node_context.clear();
+
+	this->states.clear();
 }

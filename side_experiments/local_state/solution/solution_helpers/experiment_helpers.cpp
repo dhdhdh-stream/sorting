@@ -198,8 +198,9 @@ void create_experiment(ScopeHistory* scope_history,
 			}
 		}
 
-		uniform_int_distribution<int> use_signal_distribution(0, 1);
-		bool use_signal = use_signal_distribution(generator) == 0;
+		// uniform_int_distribution<int> use_signal_distribution(0, 1);
+		// bool use_signal = use_signal_distribution(generator) == 0;
+		bool use_signal = false;
 
 		ExploreExperiment* new_experiment = new ExploreExperiment(
 			context_it->second.explore_node->parent,

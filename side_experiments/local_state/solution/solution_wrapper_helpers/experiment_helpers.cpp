@@ -29,10 +29,10 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	#endif /* MDEBUG */
 
 	if (this->iters_since_update < UPDATE_NUM_ITERS) {
-		uniform_int_distribution<int> type_distribution(0, 1);
-		this->run_type = type_distribution(generator);
+		// uniform_int_distribution<int> type_distribution(0, 1);
+		// this->run_type = type_distribution(generator);
 
-		// this->run_type = RUN_TYPE_EXISTING;
+		this->run_type = RUN_TYPE_EXISTING;
 	} else {
 		this->run_type = RUN_TYPE_EXPLORE;
 	}
@@ -183,6 +183,9 @@ void SolutionWrapper::experiment_end(double result) {
 	this->scope_histories.clear();
 	this->node_context.clear();
 	this->experiment_context.clear();
+
+	this->states.clear();
+	this->partial_states.clear();
 
 	if (this->run_type == RUN_TYPE_EXPLORE) {
 		if (this->explore_experiment_histories.size() == 1) {

@@ -41,6 +41,9 @@ void set_dependency_helper(Scope* scope,
 						   std::vector<int>& dependency,
 						   int l_index,
 						   AbstractExperiment* experiment);
+Scope* get_dependency_scope(Scope* scope,
+							std::vector<int>& dependency,
+							int l_index);
 void get_dependency_changes_helper(Scope* scope,
 								   std::vector<int>& dependency,
 								   int l_index,

@@ -34,9 +34,9 @@ Scope::~Scope() {
 
 	delete this->end_score_network;
 
-	for (int a_index = 0; a_index < (int)this->generic_action_nodes.size(); a_index++) {
-		delete this->generic_action_nodes[a_index];
-	}
+	/**
+	 * - generic_action_nodes deleted in nodes
+	 */
 }
 
 void Scope::copy_from(Scope* original,
@@ -112,11 +112,7 @@ void Scope::copy_from(Scope* original,
 	this->end_score_network = new ScoreNetwork(original->end_score_network);
 
 	for (int a_index = 0; a_index < (int)original->generic_action_nodes.size(); a_index++) {
-		ActionNode* action_node = new ActionNode();
-		action_node->parent = this;
-		action_node->id = -1;
-		action_node->copy_from(original->generic_action_nodes[a_index],
-							   parent_solution);
+		ActionNode* action_node = (ActionNode*)this->nodes[original->generic_action_nodes[a_index]->id];
 		this->generic_action_nodes.push_back(action_node);
 	}
 
@@ -158,7 +154,7 @@ void Scope::save(ofstream& output_file) {
 
 	output_file << this->generic_action_nodes.size() << endl;
 	for (int a_index = 0; a_index < (int)this->generic_action_nodes.size(); a_index++) {
-		this->generic_action_nodes[a_index]->save(output_file);
+		output_file << this->generic_action_nodes[a_index]->id << endl;
 	}
 
 	output_file << this->child_scopes.size() << endl;
@@ -274,11 +270,11 @@ void Scope::load(ifstream& input_file,
 	getline(input_file, num_actions_line);
 	int num_actions = stoi(num_actions_line);
 	for (int a_index = 0; a_index < num_actions; a_index++) {
-		ActionNode* action_node = new ActionNode();
-		action_node->parent = this;
-		action_node->id = -1;
-		action_node->load(input_file,
-						  parent_solution);
+		string id_line;
+		getline(input_file, id_line);
+		int id = stoi(id_line);
+
+		ActionNode* action_node = (ActionNode*)this->nodes[id];
 		this->generic_action_nodes.push_back(action_node);
 	}
 

@@ -170,7 +170,7 @@ void TransitionNetwork::backprop(Eigen::VectorXf& back_state_errors,
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
 
-	back_state_errors += this->state_input->errors;
+	front_state_errors += this->state_input->errors;
 	this->state_input->errors.setConstant(0.0);
 
 	this->num_instances++;

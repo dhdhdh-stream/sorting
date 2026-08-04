@@ -32,8 +32,8 @@ void BranchNode::experiment_step(vector<double>& obs,
 		#if defined(MDEBUG) && MDEBUG
 		uniform_int_distribution<int> ramp_distribution(-5, 20);
 		#else
-		// uniform_int_distribution<int> ramp_distribution(-50000, 200000);
-		uniform_int_distribution<int> ramp_distribution(-100000, 400000);
+		uniform_int_distribution<int> ramp_distribution(-50000, 200000);
+		// uniform_int_distribution<int> ramp_distribution(-100000, 400000);
 		/**
 		 * - make sure fully ramped up before update ends
 		 */

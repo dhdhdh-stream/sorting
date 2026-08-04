@@ -34,13 +34,15 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 
 	vector<InitNetwork*> init_networks(this->dependencies.size());
 	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
-		int scope_num_states = this->new_dependencies_state_histories[0][d_index].size();
+		Scope* scope = get_dependency_scope(this->scope_context,
+											this->dependencies[d_index],
+											0);
 		vector<int> init_states;
 		for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
-			init_states.push_back(scope_num_states + s_index);
+			init_states.push_back(scope->num_states + s_index);
 		}
 		init_networks[d_index] = new InitNetwork(init_states,
-												 scope_num_states + NEW_STATE_NUM_ADD,
+												 scope->num_states + NEW_STATE_NUM_ADD,
 												 wrapper->solution->num_obs);
 	}
 	ScoreNetwork* new_network = new ScoreNetwork(this->scope_context->num_states + NEW_STATE_NUM_ADD);

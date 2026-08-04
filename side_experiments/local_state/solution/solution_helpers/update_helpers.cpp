@@ -144,15 +144,17 @@ void backprop_helper(ScopeHistory* scope_history,
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)in_order[h_index];
-				BranchNode* branch_node = (BranchNode*)node;
-				if (branch_node_history->is_branch) {
-					branch_node->branch_network->load(branch_node_history->score_network_history);
-					branch_node->branch_network->backprop(target_val,
-														  state_errors.back());
-				} else {
-					branch_node->original_network->load(branch_node_history->score_network_history);
-					branch_node->original_network->backprop(target_val,
-															state_errors.back());
+				if (branch_node_history->score_network_history != NULL) {
+					BranchNode* branch_node = (BranchNode*)node;
+					if (branch_node_history->is_branch) {
+						branch_node->branch_network->load(branch_node_history->score_network_history);
+						branch_node->branch_network->backprop(target_val,
+															  state_errors.back());
+					} else {
+						branch_node->original_network->load(branch_node_history->score_network_history);
+						branch_node->original_network->backprop(target_val,
+																state_errors.back());
+					}
 				}
 			}
 			break;
@@ -254,18 +256,20 @@ void update_helper(ScopeHistory* scope_history,
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-				BranchNode* branch_node = (BranchNode*)node;
-				if (branch_node_history->is_branch) {
-					if (branch_node->branch_network->last_update_iter != wrapper->iters_since_update) {
-						branch_node->branch_network->update();
+				if (branch_node_history->score_network_history != NULL) {
+					BranchNode* branch_node = (BranchNode*)node;
+					if (branch_node_history->is_branch) {
+						if (branch_node->branch_network->last_update_iter != wrapper->iters_since_update) {
+							branch_node->branch_network->update();
 
-						branch_node->branch_network->last_update_iter = wrapper->iters_since_update;
-					}
-				} else {
-					if (branch_node->original_network->last_update_iter != wrapper->iters_since_update) {
-						branch_node->original_network->update();
+							branch_node->branch_network->last_update_iter = wrapper->iters_since_update;
+						}
+					} else {
+						if (branch_node->original_network->last_update_iter != wrapper->iters_since_update) {
+							branch_node->original_network->update();
 
-						branch_node->original_network->last_update_iter = wrapper->iters_since_update;
+							branch_node->original_network->last_update_iter = wrapper->iters_since_update;
+						}
 					}
 				}
 			}

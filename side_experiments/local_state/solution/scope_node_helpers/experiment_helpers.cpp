@@ -28,7 +28,7 @@ void ScopeNode::experiment_step(vector<double>& obs,
 		}
 	}
 
-	ScopeHistory* scope_history = wrapper->scope_histories[wrapper->scope_histories.size() - 2];
+	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
@@ -50,20 +50,21 @@ void ScopeNode::experiment_step(vector<double>& obs,
 	for (int n_index = 0; n_index < (int)this->in_pass_through_networks.size(); n_index++) {
 		PassThroughNetwork* pass_through_network = this->in_pass_through_networks[n_index];
 		double val = wrapper->states[wrapper->states.size()-2][pass_through_network->front_state_index];
-		wrapper->states.back()[pass_through_network->back_state_index] = val;
+		wrapper->states.back()[pass_through_network->back_state_index] += val;
 	}
 
 	this->in_network->activate(wrapper->states[wrapper->states.size()-2],
 							   wrapper->states.back());
 
 	uniform_int_distribution<int> drop_distribution(0, 19);
-	history->in_is_drop = drop_distribution(generator) == 0;
+	// history->in_is_drop = drop_distribution(generator) == 0;
+	history->in_is_drop = false;
 
 	if (!history->in_is_drop) {
 		for (int n_index = 0; n_index < (int)this->in_pass_through_networks.size(); n_index++) {
 			PassThroughNetwork* pass_through_network = this->in_pass_through_networks[n_index];
 			double val = wrapper->partial_states[wrapper->partial_states.size()-2][pass_through_network->front_state_index];
-			wrapper->partial_states.back()[pass_through_network->back_state_index] = val;
+			wrapper->partial_states.back()[pass_through_network->back_state_index] += val;
 		}
 
 		this->in_network->activate(wrapper->partial_states[wrapper->partial_states.size()-2],
@@ -86,20 +87,21 @@ void ScopeNode::experiment_exit_step(vector<double>& obs,
 	for (int n_index = 0; n_index < (int)this->out_pass_through_networks.size(); n_index++) {
 		PassThroughNetwork* pass_through_network = this->out_pass_through_networks[n_index];
 		double val = wrapper->states.back()[pass_through_network->front_state_index];
-		wrapper->states[wrapper->states.size()-2][pass_through_network->back_state_index] = val;
+		wrapper->states[wrapper->states.size()-2][pass_through_network->back_state_index] += val;
 	}
 
 	this->out_network->activate(wrapper->states.back(),
 								wrapper->states[wrapper->states.size()-2]);
 
 	uniform_int_distribution<int> drop_distribution(0, 19);
-	history->out_is_drop = drop_distribution(generator) == 0;
+	// history->out_is_drop = drop_distribution(generator) == 0;
+	history->out_is_drop = false;
 
 	if (!history->out_is_drop) {
 		for (int n_index = 0; n_index < (int)this->out_pass_through_networks.size(); n_index++) {
 			PassThroughNetwork* pass_through_network = this->out_pass_through_networks[n_index];
 			double val = wrapper->partial_states.back()[pass_through_network->front_state_index];
-			wrapper->partial_states[wrapper->partial_states.size()-2][pass_through_network->back_state_index] = val;
+			wrapper->partial_states[wrapper->partial_states.size()-2][pass_through_network->back_state_index] += val;
 		}
 
 		this->out_network->activate(wrapper->partial_states.back(),

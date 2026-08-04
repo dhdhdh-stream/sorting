@@ -91,33 +91,33 @@ void gather_dependencies_top_helper(ScopeHistory* scope_history,
 			switch (h_it->second->node->type) {
 			case NODE_TYPE_ACTION:
 				{
-
+					uniform_int_distribution<int> distribution(0, count);
+					count++;
+					if (distribution(generator) == 0) {
+						curr_context.push_back(h_it->first);
+						curr_index.push_back(h_it->second->index);
+						dependency = curr_context;
+						index = curr_index;
+						curr_context.pop_back();
+						curr_index.pop_back();
+					}
 				}
 				break;
-			}
-			if (h_it->second->node->type == NODE_TYPE_SCOPE) {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
-				curr_context.push_back(h_it->first);
-				curr_index.push_back(h_it->second->index);
-				gather_dependencies_helper(scope_node_history->scope_history,
-										   curr_context,
-										   curr_index,
-										   count,
-										   dependency,
-										   index);
-				curr_context.pop_back();
-				curr_index.pop_back();
-			}
-
-			uniform_int_distribution<int> distribution(0, count);
-			count++;
-			if (distribution(generator) == 0) {
-				curr_context.push_back(h_it->first);
-				curr_index.push_back(h_it->second->index);
-				dependency = curr_context;
-				index = curr_index;
-				curr_context.pop_back();
-				curr_index.pop_back();
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
+					curr_context.push_back(h_it->first);
+					curr_index.push_back(h_it->second->index);
+					gather_dependencies_helper(scope_node_history->scope_history,
+											   curr_context,
+											   curr_index,
+											   count,
+											   dependency,
+											   index);
+					curr_context.pop_back();
+					curr_index.pop_back();
+				}
+				break;
 			}
 		}
 	}
@@ -140,6 +140,19 @@ void set_dependency_helper(Scope* scope,
 							  dependency,
 							  l_index+1,
 							  experiment);
+	}
+}
+
+Scope* get_dependency_scope(Scope* scope,
+							vector<int>& dependency,
+							int l_index) {
+	if (l_index == (int)dependency.size()-1) {
+		return scope;
+	} else {
+		ScopeNode* scope_node = (ScopeNode*)scope->nodes[dependency[l_index]];
+		return get_dependency_scope(scope_node->scope,
+									dependency,
+									l_index+1);
 	}
 }
 
