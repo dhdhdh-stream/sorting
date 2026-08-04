@@ -28,6 +28,8 @@ const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
  *     - ...but also the solution's adjustments to it
  *       - so any results from a measure step less meaningful
  */
+// temp
+const int EXPLORE_EXPERIMENT_STATE_MEASURE = 3;
 
 class ExploreExperimentHistory;
 class ExploreExperiment : public AbstractExperiment {
@@ -61,6 +63,12 @@ public:
 	std::vector<Eigen::VectorXf> new_state_histories;
 	std::vector<double> new_signal_histories;
 	std::vector<double> new_target_val_histories;
+
+	// temp
+	bool is_new_state;
+	std::vector<InitNetwork*> measure_init_networks;
+	ScoreNetwork* measure_new_network;
+	double sum_vals;
 
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,
@@ -124,6 +132,20 @@ public:
 	void train_new_backprop(double target_val,
 							ExploreExperimentHistory* history,
 							SolutionWrapper* wrapper);
+
+	void measure_check_activate(std::vector<double>& obs,
+								ExploreExperimentHistory* history,
+								SolutionWrapper* wrapper);
+	void measure_step(std::vector<double>& obs,
+					  int& action,
+					  bool& is_next,
+					  SolutionWrapper* wrapper);
+	void measure_callback(std::vector<double>& obs,
+						  SolutionWrapper* wrapper);
+	void measure_exit_step(SolutionWrapper* wrapper);
+	void measure_backprop(double target_val,
+						  ExploreExperimentHistory* history,
+						  SolutionWrapper* wrapper);
 
 	void new_state_helper(SolutionWrapper* wrapper);
 
