@@ -314,7 +314,7 @@ void Scope::link(Solution* parent_solution) {
 }
 
 void Scope::save_for_display(ofstream& output_file) {
-	output_file << this->nodes.size() << endl;
+	output_file << this->nodes.size() - this->generic_action_nodes.size() << endl;
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		if (it->second->type != NODE_TYPE_ACTION

@@ -41,6 +41,9 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 							  this);
 	}
 
+	// temp
+	this->sum_vals = 0.0;
+
 	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 }

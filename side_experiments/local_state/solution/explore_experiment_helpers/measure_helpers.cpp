@@ -152,8 +152,10 @@ void ExploreExperiment::measure_backprop(
 
 		this->state_iter++;
 		if (this->state_iter >= EXPERIMENT_NUM_DATAPOINTS) {
-			double new_val_average = this->sum_vals / this->state_iter;
-			cout << "new_val_average: " << new_val_average << endl;
+			this->new_val_average = this->sum_vals / this->state_iter;
+
+			int total_num_iters = wrapper->iters_since_update - this->start_iter;
+			this->ratio = (double)this->state_iter / (double)total_num_iters;
 
 			if (this->is_new_state) {
 				set<Scope*> scopes_needed;

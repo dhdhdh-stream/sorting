@@ -121,6 +121,13 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		new_network->init_activate(this->existing_state_histories[h_index],
 								   new_state);
 
+		// // temp
+		// if (h_index < num_existing_train + 10) {
+		// 	cout << "this->existing_network->output->acti_vals(0): " << this->existing_network->output->acti_vals(0) << endl;
+		// 	cout << "new_network->output->acti_vals(0): " << new_network->output->acti_vals(0) << endl;
+		// 	cout << "this->existing_target_val_histories[h_index]: " << this->existing_target_val_histories[h_index] << endl;
+		// }
+
 		if (new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
 			existing_sum_vals += this->existing_target_val_histories[h_index];
 			existing_count++;
@@ -142,6 +149,13 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		}
 		new_network->init_activate(this->new_state_histories[h_index],
 								   new_state);
+
+		// // temp
+		// if (h_index < num_new_train + 10) {
+		// 	cout << "this->existing_network->output->acti_vals(0): " << this->existing_network->output->acti_vals(0) << endl;
+		// 	cout << "new_network->output->acti_vals(0): " << new_network->output->acti_vals(0) << endl;
+		// 	cout << "this->new_target_val_histories[h_index]: " << this->new_target_val_histories[h_index] << endl;
+		// }
 
 		if (new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
 			new_sum_vals += this->new_target_val_histories[h_index];
@@ -399,6 +413,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		this->measure_init_networks = init_networks;
 		this->measure_new_network = new_network;
 		this->sum_vals = 0.0;
+		this->start_iter = wrapper->iters_since_update;
 
 		this->state = EXPLORE_EXPERIMENT_STATE_MEASURE;
 		this->state_iter = 0;

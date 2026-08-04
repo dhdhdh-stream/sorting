@@ -413,6 +413,7 @@ void ExploreExperiment::train_new_backprop(
 						this->is_new_state = false;
 						this->measure_new_network = new_network;
 						this->sum_vals = 0.0;
+						this->start_iter = wrapper->iters_since_update;
 
 						this->state = EXPLORE_EXPERIMENT_STATE_MEASURE;
 						this->state_iter = 0;

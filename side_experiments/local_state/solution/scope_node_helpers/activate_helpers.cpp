@@ -35,13 +35,6 @@ void ScopeNode::step(vector<double>& obs,
 	wrapper->states.back().resize(this->scope->num_states);
 	wrapper->states.back().setConstant(0.0);
 
-	// // temp
-	// cout << "wrapper->states.back():";
-	// for (int s_index = 0; s_index < (int)wrapper->states.back().size(); s_index++) {
-	// 	cout << " " << wrapper->states.back()[s_index];
-	// }
-	// cout << endl;
-
 	for (int n_index = 0; n_index < (int)this->in_pass_through_networks.size(); n_index++) {
 		PassThroughNetwork* pass_through_network = this->in_pass_through_networks[n_index];
 		double val = wrapper->states[wrapper->states.size()-2][pass_through_network->front_state_index];
@@ -49,7 +42,7 @@ void ScopeNode::step(vector<double>& obs,
 	}
 
 	// // temp
-	// cout << "after pass_through wrapper->states.back():";
+	// cout << "pre in wrapper->states.back():";
 	// for (int s_index = 0; s_index < (int)wrapper->states.back().size(); s_index++) {
 	// 	cout << " " << wrapper->states.back()[s_index];
 	// }
@@ -59,7 +52,7 @@ void ScopeNode::step(vector<double>& obs,
 							   wrapper->states.back());
 
 	// // temp
-	// cout << "after in wrapper->states.back():";
+	// cout << "post in wrapper->states.back():";
 	// for (int s_index = 0; s_index < (int)wrapper->states.back().size(); s_index++) {
 	// 	cout << " " << wrapper->states.back()[s_index];
 	// }
@@ -79,13 +72,6 @@ void ScopeNode::exit_step(vector<double>& obs,
 
 	history->scope_history = wrapper->scope_histories.back();
 
-	// // temp
-	// cout << "wrapper->states[wrapper->states.size()-2]:";
-	// for (int s_index = 0; s_index < (int)wrapper->states[wrapper->states.size()-2].size(); s_index++) {
-	// 	cout << " " << wrapper->states[wrapper->states.size()-2][s_index];
-	// }
-	// cout << endl;
-
 	for (int n_index = 0; n_index < (int)this->out_pass_through_networks.size(); n_index++) {
 		PassThroughNetwork* pass_through_network = this->out_pass_through_networks[n_index];
 		double val = wrapper->states.back()[pass_through_network->front_state_index];
@@ -93,7 +79,7 @@ void ScopeNode::exit_step(vector<double>& obs,
 	}
 
 	// // temp
-	// cout << "after pass_through wrapper->states[wrapper->states.size()-2]:";
+	// cout << "pre out wrapper->states[wrapper->states.size()-2]:";
 	// for (int s_index = 0; s_index < (int)wrapper->states[wrapper->states.size()-2].size(); s_index++) {
 	// 	cout << " " << wrapper->states[wrapper->states.size()-2][s_index];
 	// }
@@ -103,7 +89,7 @@ void ScopeNode::exit_step(vector<double>& obs,
 								wrapper->states[wrapper->states.size()-2]);
 
 	// // temp
-	// cout << "after out wrapper->states[wrapper->states.size()-2]:";
+	// cout << "post out wrapper->states[wrapper->states.size()-2]:";
 	// for (int s_index = 0; s_index < (int)wrapper->states[wrapper->states.size()-2].size(); s_index++) {
 	// 	cout << " " << wrapper->states[wrapper->states.size()-2][s_index];
 	// }

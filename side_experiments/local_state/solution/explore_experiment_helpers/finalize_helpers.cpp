@@ -56,6 +56,11 @@ void ExploreExperiment::add(bool is_new_state,
 		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
 	}
 
+	// temp
+	ss << "this->existing_val_average: " << this->existing_val_average << "; ";
+	ss << "this->new_val_average: " << this->new_val_average << "; ";
+	ss << "ratio: " << ratio << "; ";
+
 	vector<AbstractNode*> new_nodes;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

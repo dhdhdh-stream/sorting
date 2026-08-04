@@ -65,10 +65,14 @@ public:
 	std::vector<double> new_target_val_histories;
 
 	// temp
+	double existing_val_average;
 	bool is_new_state;
 	std::vector<InitNetwork*> measure_init_networks;
 	ScoreNetwork* measure_new_network;
 	double sum_vals;
+	double new_val_average;
+	int start_iter;
+	double ratio;
 
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,

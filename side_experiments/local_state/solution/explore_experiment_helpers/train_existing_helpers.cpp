@@ -63,8 +63,13 @@ void ExploreExperiment::train_existing_backprop(
 		this->existing_target_val_histories.push_back(target_val);
 	}
 
+	// temp
+	this->sum_vals += target_val;
+
 	this->state_iter++;
 	if (this->state_iter >= EXPERIMENT_NUM_DATAPOINTS) {
+		this->existing_val_average = this->sum_vals / this->state_iter;
+
 		{
 			default_random_engine generator_copy = generator;
 			shuffle(this->existing_dependencies_is_hit_histories.begin(), this->existing_dependencies_is_hit_histories.end(), generator_copy);
