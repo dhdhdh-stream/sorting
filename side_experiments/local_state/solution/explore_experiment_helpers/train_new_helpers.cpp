@@ -123,9 +123,6 @@ void ExploreExperiment::train_new_step(vector<double>& obs,
 			wrapper->states.push_back(Eigen::VectorXf());
 			wrapper->states.back().resize(inner_scope->num_states);
 			wrapper->states.back().setConstant(0.0);
-			wrapper->partial_states.push_back(Eigen::VectorXf());
-			wrapper->partial_states.back().resize(inner_scope->num_states);
-			wrapper->partial_states.back().setConstant(0.0);
 
 			inner_scope->experiment_start_activate(
 				obs,
@@ -159,7 +156,6 @@ void ExploreExperiment::train_new_exit_step(SolutionWrapper* wrapper) {
 	wrapper->experiment_context.pop_back();
 
 	wrapper->states.pop_back();
-	wrapper->partial_states.pop_back();
 
 	experiment_state->step_index++;
 }

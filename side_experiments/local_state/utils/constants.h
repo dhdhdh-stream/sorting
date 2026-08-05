@@ -15,6 +15,8 @@ const int INIT_EPOCH_SIZE = 10;
 const int RAMP_EPOCH_SIZE = 20;
 const int UPDATE_EPOCH_SIZE = 100;
 
+const int HISTORIES_NUM_SAVE = 100;
+
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_NUM_DATAPOINTS = 20;
 #else
@@ -61,9 +63,15 @@ const double NEW_STATE_LAST_BETTER_THAN_RATIO = 0.9;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
+const int RAMP_LOWER = -5;
+const int RAMP_UPPER = 20;
 const int UPDATE_NUM_ITERS = 40;
 #else
-const int UPDATE_NUM_ITERS = 400000;
+const int RAMP_LOWER = -1000;
+const int RAMP_UPPER = 4000;
+const int UPDATE_NUM_ITERS = 10000;
+// const int RAMP_LOWER = -100000;
+// const int RAMP_UPPER = 400000;
 // const int UPDATE_NUM_ITERS = 1000000;
 #endif /* MDEBUG */
 

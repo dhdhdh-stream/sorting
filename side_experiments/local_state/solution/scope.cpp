@@ -328,13 +328,23 @@ void Scope::save_for_display(ofstream& output_file) {
 
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
+}
+
+ScopeHistory::~ScopeHistory() {
+	for (int h_index = 0; h_index < (int)this->node_histories.size(); h_index++) {
+		delete this->node_histories[h_index];
+	}
+}
+
+TrainScopeHistory::TrainScopeHistory(Scope* scope) {
+	this->scope = scope;
 
 	this->start_obs_network_history = NULL;
 
 	this->end_score_network_history = NULL;
 }
 
-ScopeHistory::~ScopeHistory() {
+TrainScopeHistory::~TrainScopeHistory() {
 	if (this->start_obs_network_history != NULL) {
 		delete this->start_obs_network_history;
 	}
@@ -345,9 +355,8 @@ ScopeHistory::~ScopeHistory() {
 		}
 	}
 
-	for (map<int, AbstractNodeHistory*>::iterator it = this->node_histories.begin();
-			it != this->node_histories.end(); it++) {
-		delete it->second;
+	for (int h_index = 0; h_index < (int)this->node_histories.size(); h_index++) {
+		delete this->node_histories[h_index];
 	}
 
 	if (this->end_score_network_history != NULL) {

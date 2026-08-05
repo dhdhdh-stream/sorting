@@ -61,6 +61,11 @@ public:
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
 
+	void train_step(AbstractNodeHistory* history,
+					bool allow_drop,
+					Eigen::VectorXf& state,
+					TrainScopeHistory* train_scope_history);
+
 	void copy_from(BranchNode* original,
 				   Solution* parent_solution);
 
@@ -76,10 +81,17 @@ class BranchNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_branch;
 
+	BranchNodeHistory(BranchNode* node);
+};
+
+class TrainBranchNodeHistory : public TrainAbstractNodeHistory {
+public:
+	bool is_branch;
+
 	ScoreNetworkHistory* score_network_history;
 
-	BranchNodeHistory(BranchNode* node);
-	~BranchNodeHistory();
+	TrainBranchNodeHistory(BranchNode* node);
+	~TrainBranchNodeHistory();
 };
 
 #endif /* BRANCH_NODE_H */

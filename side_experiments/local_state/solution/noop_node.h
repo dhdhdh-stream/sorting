@@ -40,6 +40,11 @@ public:
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
 
+	void train_step(AbstractNodeHistory* history,
+					bool allow_drop,
+					Eigen::VectorXf& state,
+					TrainScopeHistory* train_scope_history);
+
 	void copy_from(NoopNode* original,
 				   Solution* parent_solution);
 

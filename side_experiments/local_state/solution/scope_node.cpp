@@ -150,13 +150,21 @@ void ScopeNode::save_for_display(ofstream& output_file) {
 
 ScopeNodeHistory::ScopeNodeHistory(ScopeNode* node) {
 	this->node = node;
+}
+
+ScopeNodeHistory::~ScopeNodeHistory() {
+	delete this->scope_history;
+}
+
+TrainScopeNodeHistory::TrainScopeNodeHistory(ScopeNode* node) {
+	this->node = node;
 
 	this->in_network_history = NULL;
 
 	this->out_network_history = NULL;
 }
 
-ScopeNodeHistory::~ScopeNodeHistory() {
+TrainScopeNodeHistory::~TrainScopeNodeHistory() {
 	if (this->in_network_history != NULL) {
 		delete this->in_network_history;
 	}

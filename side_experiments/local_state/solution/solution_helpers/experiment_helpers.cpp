@@ -40,9 +40,8 @@ void gather_helper(ScopeHistory* scope_history,
 		context_it->second.explore_node = NULL;
 	}
 
-	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
-			h_it != scope_history->node_histories.end(); h_it++) {
-		AbstractNode* node = h_it->second->node;
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		AbstractNode* node = scope_history->node_histories[h_index]->node;
 		switch (node->type) {
 		case NODE_TYPE_NOOP:
 		case NODE_TYPE_ACTION:
@@ -53,13 +52,13 @@ void gather_helper(ScopeHistory* scope_history,
 					context_it->second.explore_node = node;
 					context_it->second.explore_is_branch = false;
 					context_it->second.scope_history = scope_history;
-					context_it->second.explore_index = h_it->second->index;
+					context_it->second.explore_index = h_index;
 				}
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
 
 				gather_helper(scope_node_history->scope_history,
 							  explore_contexts);
@@ -70,13 +69,13 @@ void gather_helper(ScopeHistory* scope_history,
 					context_it->second.explore_node = node;
 					context_it->second.explore_is_branch = false;
 					context_it->second.scope_history = scope_history;
-					context_it->second.explore_index = h_it->second->index;
+					context_it->second.explore_index = h_index;
 				}
 			}
 			break;
 		case NODE_TYPE_BRANCH:
 			{
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)scope_history->node_histories[h_index];
 				if (branch_node_history->is_branch) {
 					uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
 					context_it->second.node_count++;
@@ -84,7 +83,7 @@ void gather_helper(ScopeHistory* scope_history,
 						context_it->second.explore_node = node;
 						context_it->second.explore_is_branch = true;
 						context_it->second.scope_history = scope_history;
-						context_it->second.explore_index = h_it->second->index;
+						context_it->second.explore_index = h_index;
 					}
 				} else {
 					uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
@@ -93,7 +92,7 @@ void gather_helper(ScopeHistory* scope_history,
 						context_it->second.explore_node = node;
 						context_it->second.explore_is_branch = false;
 						context_it->second.scope_history = scope_history;
-						context_it->second.explore_index = h_it->second->index;
+						context_it->second.explore_index = h_index;
 					}
 				}
 			}
@@ -139,22 +138,16 @@ void create_experiment(ScopeHistory* scope_history,
 	}
 	if (context_it->second.explore_node != NULL) {
 		ScopeHistory* explore_scope_history = context_it->second.scope_history;
-		vector<AbstractNode*> explore_node_histories(explore_scope_history->node_histories.size());
-		for (map<int, AbstractNodeHistory*>::iterator h_it = explore_scope_history->node_histories.begin();
-				h_it != explore_scope_history->node_histories.end(); h_it++) {
-			explore_node_histories[h_it->second->index] = h_it->second->node;
-		}
-		explore_node_histories.push_back(NULL);
 
 		geometric_distribution<int> exit_distribution(0.1);
 		int random_index;
 		while (true) {
 			random_index = context_it->second.explore_index + 1 + exit_distribution(generator);
-			if (random_index < (int)explore_node_histories.size()) {
+			if (random_index < (int)explore_scope_history->node_histories.size()) {
 				break;
 			}
 		}
-		AbstractNode* exit_next_node = explore_node_histories[random_index];
+		AbstractNode* exit_next_node = explore_scope_history->node_histories[random_index]->node;
 
 		vector<vector<int>> dependencies;
 		vector<vector<int>> indexes;

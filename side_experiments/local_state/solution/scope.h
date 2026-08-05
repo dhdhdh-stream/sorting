@@ -23,8 +23,10 @@ class ScoreNetwork;
 class ScoreNetworkHistory;
 class Solution;
 class SolutionWrapper;
+class TrainAbstractNodeHistory;
 
 class ScopeHistory;
+class TrainScopeHistory;
 class Scope {
 public:
 	int id;
@@ -62,6 +64,11 @@ public:
 	void experiment_start_activate(std::vector<double>& obs,
 								   SolutionWrapper* wrapper);
 
+	void train_activate(ScopeHistory* history,
+						bool allow_drop,
+						Eigen::VectorXf& state,
+						TrainScopeHistory* train_scope_history);
+
 	void copy_from(Scope* original,
 				   Solution* parent_solution);
 
@@ -77,22 +84,35 @@ class ScopeHistory {
 public:
 	Scope* scope;
 
-	bool is_drop;
-	ObsNetworkHistory* start_obs_network_history;
-	std::vector<InitNetworkHistory*> start_init_network_histories;
-
-	Eigen::VectorXf state;
 	std::vector<double> obs;
 
-	std::map<int, AbstractNodeHistory*> node_histories;
+	std::vector<bool> init_is_match;
 
-	ScoreNetworkHistory* end_score_network_history;
+	std::vector<AbstractNodeHistory*> node_histories;
+
+	Eigen::VectorXf state;
 
 	std::vector<AbstractExperimentHistory*> experiment_callback_histories;
 	std::vector<int> experiment_callback_indexes;
 
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();
+};
+
+class TrainScopeHistory {
+public:
+	Scope* scope;
+
+	bool is_drop;
+	ObsNetworkHistory* start_obs_network_history;
+	std::vector<InitNetworkHistory*> start_init_network_histories;
+
+	std::vector<TrainAbstractNodeHistory*> node_histories;
+
+	ScoreNetworkHistory* end_score_network_history;
+
+	TrainScopeHistory(Scope* scope);
+	~TrainScopeHistory();
 };
 
 #endif /* SCOPE_H */

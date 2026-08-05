@@ -61,6 +61,11 @@ public:
 	void experiment_step_callback(std::vector<double>& obs,
 								  SolutionWrapper* wrapper);
 
+	void train_step(AbstractNodeHistory* history,
+					bool allow_drop,
+					Eigen::VectorXf& state,
+					TrainScopeHistory* train_scope_history);
+
 	void copy_from(ActionNode* original,
 				   Solution* parent_solution);
 
@@ -74,16 +79,23 @@ public:
 
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
-	bool is_drop;
+	std::vector<double> obs;
+
+	std::vector<bool> init_is_match;
+
+	Eigen::VectorXf state;
+
+	ActionNodeHistory(ActionNode* node);
+};
+
+class TrainActionNodeHistory : public TrainAbstractNodeHistory {
+public:
 	ActionNetworkHistory* action_network_history;
 	ObsNetworkHistory* obs_network_history;
 	std::vector<InitNetworkHistory*> init_network_histories;
 
-	Eigen::VectorXf state;
-	std::vector<double> obs;
-
-	ActionNodeHistory(ActionNode* node);
-	~ActionNodeHistory();
+	TrainActionNodeHistory(ActionNode* node);
+	~TrainActionNodeHistory();
 };
 
 #endif /* ACTION_NODE_H */

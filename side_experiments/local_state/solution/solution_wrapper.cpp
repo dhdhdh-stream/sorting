@@ -16,6 +16,9 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->experiment_iter = 0;
 
+	this->train_histories_index = 0;
+	this->train_iter_index = 0;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
@@ -36,6 +39,9 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 	this->experiment_iter = 0;
 
+	this->train_histories_index = 0;
+	this->train_iter_index = 0;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
@@ -47,6 +53,10 @@ SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
 
 	delete this->prev_solution;
+
+	for (int h_index = 0; h_index < (int)this->train_scope_histories.size(); h_index++) {
+		delete this->train_scope_histories[h_index];
+	}
 }
 
 bool SolutionWrapper::is_done() {

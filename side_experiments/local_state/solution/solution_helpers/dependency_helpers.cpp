@@ -29,16 +29,16 @@ void gather_dependencies_helper(ScopeHistory* scope_history,
 		}
 	}
 
-	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
-			h_it != scope_history->node_histories.end(); h_it++) {
-		switch (h_it->second->node->type) {
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		AbstractNode* node = scope_history->node_histories[h_index]->node;
+		switch (node->type) {
 		case NODE_TYPE_ACTION:
 			{
 				uniform_int_distribution<int> distribution(0, count);
 				count++;
 				if (distribution(generator) == 0) {
-					curr_context.push_back(h_it->first);
-					curr_index.push_back(h_it->second->index);
+					curr_context.push_back(node->id);
+					curr_index.push_back(h_index);
 					dependency = curr_context;
 					index = curr_index;
 					curr_context.pop_back();
@@ -48,9 +48,9 @@ void gather_dependencies_helper(ScopeHistory* scope_history,
 			break;
 		case NODE_TYPE_SCOPE:
 			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
-				curr_context.push_back(h_it->first);
-				curr_index.push_back(h_it->second->index);
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
+				curr_context.push_back(node->id);
+				curr_index.push_back(h_index);
 				gather_dependencies_helper(scope_node_history->scope_history,
 										   curr_context,
 										   curr_index,
@@ -85,40 +85,38 @@ void gather_dependencies_top_helper(ScopeHistory* scope_history,
 		}
 	}
 
-	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
-			h_it != scope_history->node_histories.end(); h_it++) {
-		if (h_it->second->index <= top_index) {
-			switch (h_it->second->node->type) {
-			case NODE_TYPE_ACTION:
-				{
-					uniform_int_distribution<int> distribution(0, count);
-					count++;
-					if (distribution(generator) == 0) {
-						curr_context.push_back(h_it->first);
-						curr_index.push_back(h_it->second->index);
-						dependency = curr_context;
-						index = curr_index;
-						curr_context.pop_back();
-						curr_index.pop_back();
-					}
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
-					curr_context.push_back(h_it->first);
-					curr_index.push_back(h_it->second->index);
-					gather_dependencies_helper(scope_node_history->scope_history,
-											   curr_context,
-											   curr_index,
-											   count,
-											   dependency,
-											   index);
+	for (int h_index = 0; h_index <= top_index; h_index++) {
+		AbstractNode* node = scope_history->node_histories[h_index]->node;
+		switch (node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				uniform_int_distribution<int> distribution(0, count);
+				count++;
+				if (distribution(generator) == 0) {
+					curr_context.push_back(node->id);
+					curr_index.push_back(h_index);
+					dependency = curr_context;
+					index = curr_index;
 					curr_context.pop_back();
 					curr_index.pop_back();
 				}
-				break;
 			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
+				curr_context.push_back(node->id);
+				curr_index.push_back(h_index);
+				gather_dependencies_helper(scope_node_history->scope_history,
+										   curr_context,
+										   curr_index,
+										   count,
+										   dependency,
+										   index);
+				curr_context.pop_back();
+				curr_index.pop_back();
+			}
+			break;
 		}
 	}
 }
@@ -218,17 +216,24 @@ void fetch_dependency_helper(ScopeHistory* scope_history,
 		state = scope_history->state;
 		obs = scope_history->obs;
 	} else {
-		map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.find(dependency[l_index]);
-		if (it == scope_history->node_histories.end()) {
+		int index = -1;
+		for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+			if (scope_history->node_histories[h_index]->node->id == dependency[l_index]) {
+				index = h_index;
+				break;
+			}
+		}
+
+		if (index == -1) {
 			is_hit = false;
 		} else {
 			if (l_index == (int)dependency.size()-1) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[index];
 				is_hit = true;
 				state = action_node_history->state;
 				obs = action_node_history->obs;
 			} else {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[index];
 				fetch_dependency_helper(scope_node_history->scope_history,
 										dependency,
 										l_index+1,

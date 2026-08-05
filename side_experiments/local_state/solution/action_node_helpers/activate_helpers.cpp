@@ -38,8 +38,7 @@ void ActionNode::step_callback(vector<double>& obs,
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 	ActionNodeHistory* history = new ActionNodeHistory(this);
-	history->index = (int)scope_history->node_histories.size();
-	scope_history->node_histories[this->id] = history;
+	scope_history->node_histories.push_back(history);
 
 	this->action_network->activate(wrapper->states.back());
 

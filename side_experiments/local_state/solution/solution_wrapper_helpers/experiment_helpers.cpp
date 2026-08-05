@@ -47,9 +47,6 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->states.push_back(Eigen::VectorXf());
 	this->states.back().resize(this->solution->starting_scope->num_states);
 	this->states.back().setConstant(0.0);
-	this->partial_states.push_back(Eigen::VectorXf());
-	this->partial_states.back().resize(this->solution->starting_scope->num_states);
-	this->partial_states.back().setConstant(0.0);
 
 	this->solution->starting_scope->experiment_start_activate(
 		obs,
@@ -91,13 +88,6 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 	while (!is_next) {
 		if (this->node_context.back() == NULL
 				&& this->experiment_context.back() == NULL) {
-			if (this->run_type == RUN_TYPE_DAMAGE) {
-				Scope* scope = this->scope_histories.back()->scope;
-				scope->end_score_network->activate(this->partial_states.back());
-				this->scope_histories.back()->end_score_network_history = new ScoreNetworkHistory(scope->end_score_network);
-				scope->end_score_network->save(this->scope_histories.back()->end_score_network_history);
-			}
-
 			if (this->scope_histories.back()->experiment_callback_histories.size() > 0) {
 				Scope* scope = this->scope_histories.back()->scope;
 				scope->end_score_network->activate(this->states.back());
@@ -148,12 +138,9 @@ void SolutionWrapper::set_action(int action) {
 
 void SolutionWrapper::experiment_end(double result) {
 	if (this->run_type == RUN_TYPE_EXISTING) {
-		this->solution->curr_score = 0.9999*this->solution->curr_score + 0.0001*result;
-
-		update_helper(this->scope_histories[0]);
+		update_helper(result,
+					  this);
 	}
-	update_helper(result,
-				  this);
 
 	if (this->run_type == RUN_TYPE_EXPLORE) {
 		if (this->explore_experiment_histories.size() == 0) {
@@ -178,14 +165,30 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	}
 
-	delete this->scope_histories[0];
+	if (this->run_type != RUN_TYPE_EXPLORE) {
+		if (this->train_scope_histories.size() < HISTORIES_NUM_SAVE) {
+			this->train_scope_histories.push_back(this->scope_histories[0]);
+			this->train_target_val_histories.push_back(result);
+		} else {
+			delete this->train_scope_histories[this->train_histories_index];
+			this->train_scope_histories[this->train_histories_index] = this->scope_histories[0];
+			this->train_target_val_histories[this->train_histories_index] = result;
+		}
+		this->train_histories_index++;
+		if (this->train_histories_index >= HISTORIES_NUM_SAVE) {
+			this->train_histories_index = 0;
+		}
+
+		train_helper(this);
+	} else {
+		delete this->scope_histories[0];
+	}
 
 	this->scope_histories.clear();
 	this->node_context.clear();
 	this->experiment_context.clear();
 
 	this->states.clear();
-	this->partial_states.clear();
 
 	if (this->run_type == RUN_TYPE_EXPLORE) {
 		if (this->explore_experiment_histories.size() == 1) {

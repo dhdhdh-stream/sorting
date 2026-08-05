@@ -171,12 +171,16 @@ void ActionNode::save_for_display(ofstream& output_file) {
 
 ActionNodeHistory::ActionNodeHistory(ActionNode* node) {
 	this->node = node;
+}
+
+TrainActionNodeHistory::TrainActionNodeHistory(ActionNode* node) {
+	this->node = node;
 
 	this->action_network_history = NULL;
 	this->obs_network_history = NULL;
 }
 
-ActionNodeHistory::~ActionNodeHistory() {
+TrainActionNodeHistory::~TrainActionNodeHistory() {
 	if (this->action_network_history != NULL) {
 		delete this->action_network_history;
 	}

@@ -19,8 +19,7 @@ void NoopNode::experiment_step(vector<double>& obs,
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 	NoopNodeHistory* history = new NoopNodeHistory(this);
-	history->index = (int)scope_history->node_histories.size();
-	scope_history->node_histories[this->id] = history;
+	scope_history->node_histories.push_back(history);
 
 	wrapper->node_context.back() = this->next_node;
 

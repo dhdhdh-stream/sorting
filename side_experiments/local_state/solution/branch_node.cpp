@@ -164,11 +164,15 @@ void BranchNode::save_for_display(ofstream& output_file) {
 
 BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
 	this->node = node;
+}
+
+TrainBranchNodeHistory::TrainBranchNodeHistory(BranchNode* node) {
+	this->node = node;
 
 	this->score_network_history = NULL;
 }
 
-BranchNodeHistory::~BranchNodeHistory() {
+TrainBranchNodeHistory::~TrainBranchNodeHistory() {
 	if (this->score_network_history != NULL) {
 		delete this->score_network_history;
 	}

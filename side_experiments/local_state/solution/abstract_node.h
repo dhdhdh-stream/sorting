@@ -12,12 +12,14 @@ class Scope;
 class ScopeHistory;
 class Solution;
 class SolutionWrapper;
+class TrainScopeHistory;
 
 const int NODE_TYPE_NOOP = 0;
 const int NODE_TYPE_ACTION = 1;
 const int NODE_TYPE_SCOPE = 2;
 const int NODE_TYPE_BRANCH = 3;
 
+class AbstractNodeHistory;
 class AbstractNode {
 public:
 	int type;
@@ -42,6 +44,11 @@ public:
 								 bool& is_next,
 								 SolutionWrapper* wrapper) = 0;
 
+	virtual void train_step(AbstractNodeHistory* history,
+							bool allow_drop,
+							Eigen::VectorXf& state,
+							TrainScopeHistory* train_scope_history) = 0;
+
 	virtual void save(std::ofstream& output_file) = 0;
 	virtual void link(Solution* parent_solution) = 0;
 	virtual void save_for_display(std::ofstream& output_file) = 0;
@@ -50,9 +57,15 @@ public:
 class AbstractNodeHistory {
 public:
 	AbstractNode* node;
-	int index;
 
 	virtual ~AbstractNodeHistory() {};
+};
+
+class TrainAbstractNodeHistory {
+public:
+	AbstractNode* node;
+
+	virtual ~TrainAbstractNodeHistory() {};
 };
 
 #endif /* ABSTRACT_NODE_H */

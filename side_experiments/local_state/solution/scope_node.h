@@ -66,6 +66,11 @@ public:
 	void experiment_exit_step(std::vector<double>& obs,
 							  SolutionWrapper* wrapper);
 
+	void train_step(AbstractNodeHistory* history,
+					bool allow_drop,
+					Eigen::VectorXf& state,
+					TrainScopeHistory* train_scope_history);
+
 	void copy_from(ScopeNode* original,
 				   Solution* parent_solution);
 
@@ -79,16 +84,24 @@ public:
 
 class ScopeNodeHistory : public AbstractNodeHistory {
 public:
+	ScopeHistory* scope_history;
+
+	ScopeNodeHistory(ScopeNode* node);
+	~ScopeNodeHistory();
+};
+
+class TrainScopeNodeHistory : public TrainAbstractNodeHistory {
+public:
 	bool in_is_drop;
 	TransitionNetworkHistory* in_network_history;
 
-	ScopeHistory* scope_history;
+	TrainScopeHistory* scope_history;
 
 	bool out_is_drop;
 	TransitionNetworkHistory* out_network_history;
 
-	ScopeNodeHistory(ScopeNode* node);
-	~ScopeNodeHistory();
+	TrainScopeNodeHistory(ScopeNode* node);
+	~TrainScopeNodeHistory();
 };
 
 #endif /* SCOPE_NODE_H */
