@@ -143,11 +143,16 @@ void create_experiment(ScopeHistory* scope_history,
 		int random_index;
 		while (true) {
 			random_index = context_it->second.explore_index + 1 + exit_distribution(generator);
-			if (random_index < (int)explore_scope_history->node_histories.size()) {
+			if (random_index < (int)explore_scope_history->node_histories.size() + 1) {
 				break;
 			}
 		}
-		AbstractNode* exit_next_node = explore_scope_history->node_histories[random_index]->node;
+		AbstractNode* exit_next_node;
+		if (random_index >= (int)explore_scope_history->node_histories.size()) {
+			exit_next_node = NULL;
+		} else {
+			exit_next_node = explore_scope_history->node_histories[random_index]->node;
+		}
 
 		vector<vector<int>> dependencies;
 		vector<vector<int>> indexes;

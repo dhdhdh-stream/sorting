@@ -43,6 +43,8 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 	ActionNodeHistory* history = new ActionNodeHistory(this);
 	scope_history->node_histories.push_back(history);
 
+	history->obs = obs;
+
 	this->action_network->activate(wrapper->states.back());
 
 	this->obs_network->activate(wrapper->states.back(),
@@ -65,7 +67,6 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 	if (!this->is_generic) {
 		if (this->dependencies.size() > 0) {
 			history->state = wrapper->states.back();
-			history->obs = obs;
 		}
 
 		wrapper->node_context.back() = this->next_node;

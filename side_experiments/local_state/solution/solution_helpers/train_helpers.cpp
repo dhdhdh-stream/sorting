@@ -3,6 +3,7 @@
 #include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "init_network.h"
 #include "obs_network.h"
@@ -225,9 +226,11 @@ void update_helper(TrainScopeHistory* scope_history,
 }
 
 void train_helper(SolutionWrapper* wrapper) {
+	int num_iters = min(MAX_ITERS_PER, (int)wrapper->train_scope_histories.size());
+
 	uniform_int_distribution<int> sample_distribution(0, wrapper->train_scope_histories.size()-1);
 	uniform_int_distribution<int> allow_drop_distribution(0, 1);
-	for (int iter_index = 0; iter_index < (int)wrapper->train_scope_histories.size(); iter_index++) {
+	for (int iter_index = 0; iter_index < num_iters; iter_index++) {
 		int index = sample_distribution(generator);
 
 		bool allow_drop = allow_drop_distribution(generator) == 0;
