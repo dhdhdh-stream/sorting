@@ -16,7 +16,6 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->experiment_iter = 0;
 
-	this->train_histories_index = 0;
 	this->train_iter_index = 0;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -39,7 +38,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 	this->experiment_iter = 0;
 
-	this->train_histories_index = 0;
 	this->train_iter_index = 0;
 
 	#if defined(MDEBUG) && MDEBUG

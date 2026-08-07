@@ -56,7 +56,6 @@ public:
 
 	std::vector<ScopeHistory*> train_scope_histories;
 	std::vector<double> train_target_val_histories;
-	int train_histories_index;
 	int train_iter_index;
 
 	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_experiment_histories;

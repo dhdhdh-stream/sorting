@@ -65,22 +65,6 @@ void update_helper(ScopeHistory* scope_history) {
 
 void update_helper(double target_val,
 				   SolutionWrapper* wrapper) {
-	// if (wrapper->run_type != RUN_TYPE_EXPLORE) {
-	// 	vector<Eigen::VectorXf> state_errors;
-
-	// 	state_errors.push_back(Eigen::VectorXf());
-	// 	state_errors.back().resize(wrapper->solution->starting_scope->num_states);
-	// 	state_errors.back().setConstant(0.0);
-
-	// 	backprop_helper(wrapper->scope_histories[0],
-	// 					state_errors,
-	// 					target_val,
-	// 					wrapper);
-
-	// 	update_helper(wrapper->scope_histories[0],
-	// 				  wrapper);
-	// }
-
 	wrapper->solution->curr_score = 0.999*wrapper->solution->curr_score + 0.001*target_val;
 
 	update_helper(wrapper->scope_histories[0]);

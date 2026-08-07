@@ -28,6 +28,9 @@ public:
 	std::vector<double> constant_ms;
 	std::vector<std::vector<Eigen::VectorXf>> weight_vs;
 	std::vector<double> constant_vs;
+	/**
+	 * - greatly speeds up update as gradients initially small
+	 */
 	double m_bch;
 	double v_bch;
 

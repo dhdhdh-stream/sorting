@@ -15,8 +15,8 @@ const int INIT_EPOCH_SIZE = 10;
 const int RAMP_EPOCH_SIZE = 20;
 const int UPDATE_EPOCH_SIZE = 100;
 
-const int MAX_ITERS_PER = 10;
-const int HISTORIES_NUM_SAVE = 100;
+const int BATCH_SIZE = 1000;
+const int ITERS_PER_BATCH = 10000;
 
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_NUM_DATAPOINTS = 20;
@@ -28,7 +28,7 @@ const double VERIFY_RATIO = 0.2;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;
 #else
-const int TRAIN_ITERS = 300000;
+const int TRAIN_ITERS = 100000;
 #endif /* MDEBUG */
 
 /**
@@ -68,9 +68,9 @@ const int RAMP_LOWER = -5;
 const int RAMP_UPPER = 20;
 const int UPDATE_NUM_ITERS = 40;
 #else
-const int RAMP_LOWER = -10000;
-const int RAMP_UPPER = 20000;
-const int UPDATE_NUM_ITERS = 40000;
+const int RAMP_LOWER = -1000;
+const int RAMP_UPPER = 4000;
+const int UPDATE_NUM_ITERS = 10000;
 // const int RAMP_LOWER = -100000;
 // const int RAMP_UPPER = 400000;
 // const int UPDATE_NUM_ITERS = 1000000;

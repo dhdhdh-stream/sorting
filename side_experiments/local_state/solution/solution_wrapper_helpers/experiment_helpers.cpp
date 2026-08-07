@@ -166,20 +166,11 @@ void SolutionWrapper::experiment_end(double result) {
 	}
 
 	if (this->run_type != RUN_TYPE_EXPLORE) {
-		if (this->train_scope_histories.size() < HISTORIES_NUM_SAVE) {
-			this->train_scope_histories.push_back(this->scope_histories[0]);
-			this->train_target_val_histories.push_back(result);
-		} else {
-			delete this->train_scope_histories[this->train_histories_index];
-			this->train_scope_histories[this->train_histories_index] = this->scope_histories[0];
-			this->train_target_val_histories[this->train_histories_index] = result;
+		this->train_scope_histories.push_back(this->scope_histories[0]);
+		this->train_target_val_histories.push_back(result);
+		if (this->train_scope_histories.size() >= BATCH_SIZE) {
+			train_helper(this);
 		}
-		this->train_histories_index++;
-		if (this->train_histories_index >= HISTORIES_NUM_SAVE) {
-			this->train_histories_index = 0;
-		}
-
-		train_helper(this);
 	} else {
 		delete this->scope_histories[0];
 	}

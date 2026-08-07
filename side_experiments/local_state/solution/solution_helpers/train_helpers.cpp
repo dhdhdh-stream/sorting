@@ -226,11 +226,9 @@ void update_helper(TrainScopeHistory* scope_history,
 }
 
 void train_helper(SolutionWrapper* wrapper) {
-	int num_iters = min(MAX_ITERS_PER, (int)wrapper->train_scope_histories.size());
-
 	uniform_int_distribution<int> sample_distribution(0, wrapper->train_scope_histories.size()-1);
 	uniform_int_distribution<int> allow_drop_distribution(0, 1);
-	for (int iter_index = 0; iter_index < num_iters; iter_index++) {
+	for (int iter_index = 0; iter_index < ITERS_PER_BATCH; iter_index++) {
 		int index = sample_distribution(generator);
 
 		bool allow_drop = allow_drop_distribution(generator) == 0;
@@ -257,4 +255,10 @@ void train_helper(SolutionWrapper* wrapper) {
 
 		delete train_scope_history;
 	}
+
+	for (int h_index = 0; h_index < (int)wrapper->train_scope_histories.size(); h_index++) {
+		delete wrapper->train_scope_histories[h_index];
+	}
+	wrapper->train_scope_histories.clear();
+	wrapper->train_target_val_histories.clear();
 }
