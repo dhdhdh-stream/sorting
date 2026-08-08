@@ -35,6 +35,7 @@ public:
 	std::vector<std::vector<double>> existing_obs_histories;
 	std::vector<double> existing_target_val_histories;
 
+	double existing_val_average;
 	Network* existing_network;
 
 	double average_instances_per_hit;
@@ -50,6 +51,7 @@ public:
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
 
+	double new_val_average;
 	Network* new_network;
 
 	ExploreExperiment(Scope* scope_context,

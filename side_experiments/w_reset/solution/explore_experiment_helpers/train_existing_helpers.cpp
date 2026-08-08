@@ -42,6 +42,12 @@ void ExploreExperiment::train_existing_backprop(
 
 		int num_existing_train = (1.0 - VERIFY_RATIO) * (double)this->existing_obs_histories.size();
 
+		double sum_vals = 0.0;
+		for (int h_index = 0; h_index < num_existing_train; h_index++) {
+			sum_vals += this->existing_target_val_histories[h_index];
+		}
+		this->existing_val_average = sum_vals / num_existing_train;
+
 		this->existing_network = new Network(this->existing_obs_histories[0].size());
 		double hidden_1_average_max_update = 0.0;
 		double hidden_2_average_max_update = 0.0;
@@ -54,7 +60,7 @@ void ExploreExperiment::train_existing_backprop(
 
 			this->existing_network->activate(this->existing_obs_histories[rand_index]);
 
-			double error = this->existing_target_val_histories[rand_index] - this->existing_network->output->acti_vals[0];
+			double error = (this->existing_target_val_histories[rand_index] - this->existing_val_average) - this->existing_network->output->acti_vals[0];
 
 			this->existing_network->init_backprop(error,
 												  hidden_1_average_max_update,

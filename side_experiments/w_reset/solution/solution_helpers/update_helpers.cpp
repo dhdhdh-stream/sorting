@@ -40,14 +40,18 @@ void update_helper(ScopeHistory* scope_history,
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
 
 				if (branch_node_history->is_branch) {
+					branch_node->branch_val_average = 0.999*branch_node->branch_val_average + 0.001*target_val;
+
 					branch_node->branch_network->activate(branch_node_history->obs);
-					double error = target_val - branch_node->branch_network->output->acti_vals(0);
+					double error = (target_val - branch_node->branch_val_average) - branch_node->branch_network->output->acti_vals(0);
 					branch_node->branch_network->backprop(error);
 
 					hit_branch.insert(branch_node);
 				} else {
+					branch_node->original_val_average = 0.999*branch_node->original_val_average + 0.001*target_val;
+
 					branch_node->original_network->activate(branch_node_history->obs);
-					double error = target_val - branch_node->original_network->output->acti_vals(0);
+					double error = (target_val - branch_node->original_val_average) - branch_node->original_network->output->acti_vals(0);
 					branch_node->original_network->backprop(error);
 
 					hit_original.insert(branch_node);

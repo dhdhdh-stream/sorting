@@ -49,8 +49,10 @@ void BranchNode::experiment_step(vector<double>& obs,
 
 	bool is_branch;
 	this->original_network->activate(obs);
+	double original_predicted = this->original_val_average + this->original_network->output->acti_vals[0];
 	this->branch_network->activate(obs);
-	if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+	double branch_predicted = this->branch_val_average + this->branch_network->output->acti_vals[0];
+	if (branch_predicted >= original_predicted) {
 		is_branch = true;
 	} else {
 		is_branch = false;
