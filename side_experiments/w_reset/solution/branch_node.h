@@ -38,8 +38,15 @@ public:
 	int consec_original;
 	int consec_branch;
 
+	double original_average_instances_per_hit;
+	double original_average_instances_per_run;
 	AbstractExperiment* original_experiment;
+	double branch_average_instances_per_hit;
+	double branch_average_instances_per_run;
 	AbstractExperiment* branch_experiment;
+
+	int original_curr_num_instances;
+	int branch_curr_num_instances;
 
 	BranchNode();
 	~BranchNode();

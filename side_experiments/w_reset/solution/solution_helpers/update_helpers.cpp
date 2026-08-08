@@ -13,6 +13,8 @@
 
 using namespace std;
 
+const double BASE_FACTOR = 0.001;
+
 const int RAMP_EPOCH_SIZE = 20;
 const int UPDATE_EPOCH_SIZE = 100;
 
@@ -40,7 +42,10 @@ void update_helper(ScopeHistory* scope_history,
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
 
 				if (branch_node_history->is_branch) {
-					branch_node->branch_val_average = 0.999*branch_node->branch_val_average + 0.001*target_val;
+					branch_node->branch_curr_num_instances++;
+
+					double factor = BASE_FACTOR / branch_node->branch_average_instances_per_hit;
+					branch_node->branch_val_average = (1.0-factor)*branch_node->branch_val_average + factor*target_val;
 
 					branch_node->branch_network->activate(branch_node_history->obs);
 					double error = (target_val - branch_node->branch_val_average) - branch_node->branch_network->output->acti_vals(0);
@@ -48,7 +53,10 @@ void update_helper(ScopeHistory* scope_history,
 
 					hit_branch.insert(branch_node);
 				} else {
-					branch_node->original_val_average = 0.999*branch_node->original_val_average + 0.001*target_val;
+					branch_node->original_curr_num_instances++;
+
+					double factor = BASE_FACTOR / branch_node->original_average_instances_per_hit;
+					branch_node->original_val_average = (1.0-factor)*branch_node->original_val_average + factor*target_val;
 
 					branch_node->original_network->activate(branch_node_history->obs);
 					double error = (target_val - branch_node->original_val_average) - branch_node->original_network->output->acti_vals(0);
@@ -105,6 +113,32 @@ void update_helper(set<BranchNode*>& hit_original,
 				branch_node->branch_network->update();
 
 				branch_node->branch_network->epoch_iter = 0;
+			}
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			switch (it->second->type) {
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)it->second;
+					branch_node->original_average_instances_per_run = 0.999*branch_node->original_average_instances_per_run + 0.001*branch_node->original_curr_num_instances;
+					if (branch_node->original_curr_num_instances > 0) {
+						branch_node->original_average_instances_per_hit = 0.999*branch_node->original_average_instances_per_hit + 0.001*branch_node->original_curr_num_instances;
+
+						branch_node->original_curr_num_instances = 0;
+					}
+					branch_node->branch_average_instances_per_run = 0.999*branch_node->branch_average_instances_per_run + 0.001*branch_node->branch_curr_num_instances;
+					if (branch_node->branch_curr_num_instances > 0) {
+						branch_node->branch_average_instances_per_hit = 0.999*branch_node->branch_average_instances_per_hit + 0.001*branch_node->branch_curr_num_instances;
+
+						branch_node->branch_curr_num_instances = 0;
+					}
+				}
+				break;
 			}
 		}
 	}
