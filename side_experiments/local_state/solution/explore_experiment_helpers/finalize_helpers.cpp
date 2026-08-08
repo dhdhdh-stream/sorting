@@ -313,8 +313,10 @@ void ExploreExperiment::add(bool is_new_state,
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
+	new_branch_node->original_val_average = this->existing_val_average;
 	new_branch_node->original_network = this->existing_network;
 	this->existing_network = NULL;
+	new_branch_node->branch_val_average = this->new_val_average;
 	new_branch_node->branch_network = new_network;
 
 	new_branch_node->is_ramp = true;
@@ -504,6 +506,11 @@ void ExploreExperiment::add(bool is_new_state,
 			scope->generic_action_nodes[a_index]->obs_network->clear_momentum();
 		}
 	}
+	for (int h_index = 0; h_index < (int)wrapper->train_scope_histories.size(); h_index++) {
+		delete wrapper->train_scope_histories[h_index];
+	}
+	wrapper->train_scope_histories.clear();
+	wrapper->train_target_val_histories.clear();
 
 	wrapper->solution->improvement_history.push_back(wrapper->solution->curr_score);
 	cout << "previous_val_average: " << wrapper->solution->curr_score << endl;

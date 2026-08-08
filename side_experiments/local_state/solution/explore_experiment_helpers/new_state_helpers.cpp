@@ -76,10 +76,10 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		vector<double> new_state_errors(NEW_STATE_NUM_ADD, 0.0);
 
 		if (this->use_signal) {
-			new_network->init_backprop(this->new_signal_histories[rand_index],
+			new_network->init_backprop(this->new_signal_histories[rand_index] - this->new_val_average,
 									   new_state_errors);
 		} else {
-			new_network->init_backprop(this->new_target_val_histories[rand_index],
+			new_network->init_backprop(this->new_target_val_histories[rand_index] - this->new_val_average,
 									   new_state_errors);
 		}
 
@@ -109,6 +109,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	int existing_count = 0;
 	for (int h_index = num_existing_train; h_index < (int)this->existing_dependencies_is_hit_histories.size(); h_index++) {
 		this->existing_network->activate(this->existing_state_histories[h_index]);
+		double existing_predicted = this->existing_val_average + this->existing_network->output->acti_vals[0];
 
 		vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
 		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
@@ -120,8 +121,9 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		}
 		new_network->init_activate(this->existing_state_histories[h_index],
 								   new_state);
+		double new_predicted = this->new_val_average + new_network->output->acti_vals[0];
 
-		if (new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
+		if (new_predicted >= existing_predicted) {
 			existing_sum_vals += this->existing_target_val_histories[h_index];
 			existing_count++;
 		}
@@ -131,6 +133,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	int new_count = 0;
 	for (int h_index = num_new_train; h_index < (int)this->new_dependencies_is_hit_histories.size(); h_index++) {
 		this->existing_network->activate(this->new_state_histories[h_index]);
+		double existing_predicted = this->existing_val_average + this->existing_network->output->acti_vals[0];
 
 		vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
 		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
@@ -142,8 +145,9 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		}
 		new_network->init_activate(this->new_state_histories[h_index],
 								   new_state);
+		double new_predicted = this->new_val_average + new_network->output->acti_vals[0];
 
-		if (new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
+		if (new_predicted >= existing_predicted) {
 			new_sum_vals += this->new_target_val_histories[h_index];
 			new_count++;
 		}

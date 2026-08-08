@@ -206,6 +206,12 @@ void ExploreExperiment::train_new_backprop(
 
 				int num_new_train = (1.0 - VERIFY_RATIO) * (double)this->new_dependencies_is_hit_histories.size();
 
+				double sum_vals = 0.0;
+				for (int h_index = 0; h_index < num_new_train; h_index++) {
+					sum_vals += this->new_target_val_histories[h_index];
+				}
+				this->new_val_average = sum_vals / num_new_train;
+
 				ScoreNetwork* new_network = new ScoreNetwork(this->scope_context->num_states);
 
 				uniform_int_distribution<int> new_train_distribution(0, num_new_train-1);
@@ -215,9 +221,11 @@ void ExploreExperiment::train_new_backprop(
 					new_network->activate(this->new_state_histories[rand_index]);
 
 					if (this->use_signal) {
-						new_network->init_backprop(this->new_signal_histories[rand_index]);
+						new_network->init_backprop(
+							this->new_signal_histories[rand_index] - this->new_val_average);
 					} else {
-						new_network->init_backprop(this->new_target_val_histories[rand_index]);
+						new_network->init_backprop(
+							this->new_target_val_histories[rand_index] - this->new_val_average);
 					}
 
 					if ((iter_index+1)%INIT_EPOCH_SIZE == 0) {
@@ -232,9 +240,11 @@ void ExploreExperiment::train_new_backprop(
 				int existing_count = 0;
 				for (int h_index = num_existing_train; h_index < (int)this->existing_dependencies_is_hit_histories.size(); h_index++) {
 					this->existing_network->activate(this->existing_state_histories[h_index]);
+					double existing_predicted = this->existing_val_average + this->existing_network->output->acti_vals[0];
 					new_network->activate(this->existing_state_histories[h_index]);
+					double new_predicted = this->new_val_average + new_network->output->acti_vals[0];
 
-					if (new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
+					if (new_predicted >= existing_predicted) {
 						existing_sum_vals += this->existing_target_val_histories[h_index];
 						existing_count++;
 					}
@@ -244,9 +254,11 @@ void ExploreExperiment::train_new_backprop(
 				int new_count = 0;
 				for (int h_index = num_new_train; h_index < (int)this->new_dependencies_is_hit_histories.size(); h_index++) {
 					this->existing_network->activate(this->new_state_histories[h_index]);
+					double existing_predicted = this->existing_val_average + this->existing_network->output->acti_vals[0];
 					new_network->activate(this->new_state_histories[h_index]);
+					double new_predicted = this->new_val_average + new_network->output->acti_vals[0];
 
-					if (new_network->output->acti_vals[0] >= this->existing_network->output->acti_vals[0]) {
+					if (new_predicted >= existing_predicted) {
 						new_sum_vals += this->new_target_val_histories[h_index];
 						new_count++;
 					}

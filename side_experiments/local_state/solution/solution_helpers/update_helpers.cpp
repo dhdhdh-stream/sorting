@@ -20,7 +20,10 @@
 
 using namespace std;
 
-void update_helper(ScopeHistory* scope_history) {
+const double BASE_FACTOR = 0.001;
+
+void update_helper(ScopeHistory* scope_history,
+				   double target_val) {
 	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
 		AbstractNode* node = scope_history->node_histories[h_index]->node;
 		switch (node->type) {
@@ -43,7 +46,8 @@ void update_helper(ScopeHistory* scope_history) {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
 				ScopeNode* scope_node = (ScopeNode*)node;
 
-				update_helper(scope_node_history->scope_history);
+				update_helper(scope_node_history->scope_history,
+							  target_val);
 
 				scope_node->curr_num_instances++;
 			}
@@ -54,8 +58,14 @@ void update_helper(ScopeHistory* scope_history) {
 				BranchNode* branch_node = (BranchNode*)node;
 				if (branch_node_history->is_branch) {
 					branch_node->branch_curr_num_instances++;
+
+					double factor = BASE_FACTOR / branch_node->branch_average_instances_per_hit;
+					branch_node->branch_val_average = (1.0-factor)*branch_node->branch_val_average + factor*target_val;
 				} else {
 					branch_node->original_curr_num_instances++;
+
+					double factor = BASE_FACTOR / branch_node->original_average_instances_per_hit;
+					branch_node->original_val_average = (1.0-factor)*branch_node->original_val_average + factor*target_val;
 				}
 			}
 			break;
@@ -67,7 +77,8 @@ void update_helper(double target_val,
 				   SolutionWrapper* wrapper) {
 	wrapper->solution->curr_score = 0.999*wrapper->solution->curr_score + 0.001*target_val;
 
-	update_helper(wrapper->scope_histories[0]);
+	update_helper(wrapper->scope_histories[0],
+				  target_val);
 
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		Scope* scope = wrapper->solution->scopes[s_index];
