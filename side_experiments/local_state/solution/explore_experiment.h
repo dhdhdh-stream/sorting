@@ -39,7 +39,6 @@ public:
 
 	std::vector<std::vector<int>> dependencies;
 
-	double existing_val_average;
 	ScoreNetwork* existing_network;
 
 	int num_instances_until_target;
@@ -62,8 +61,6 @@ public:
 	std::vector<Eigen::VectorXf> new_state_histories;
 	std::vector<double> new_signal_histories;
 	std::vector<double> new_target_val_histories;
-
-	double new_val_average;
 
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,

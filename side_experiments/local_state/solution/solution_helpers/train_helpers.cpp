@@ -88,11 +88,11 @@ void backprop_helper(TrainScopeHistory* scope_history,
 					BranchNode* branch_node = (BranchNode*)node;
 					if (branch_node_history->is_branch) {
 						branch_node->branch_network->load(branch_node_history->score_network_history);
-						branch_node->branch_network->backprop(target_val - branch_node->branch_val_average,
+						branch_node->branch_network->backprop(target_val,
 															  state_error);
 					} else {
 						branch_node->original_network->load(branch_node_history->score_network_history);
-						branch_node->original_network->backprop(target_val - branch_node->original_val_average,
+						branch_node->original_network->backprop(target_val,
 																state_error);
 					}
 				}

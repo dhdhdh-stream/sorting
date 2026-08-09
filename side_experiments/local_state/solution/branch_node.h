@@ -25,9 +25,7 @@ const int CONSEC_DEPRECATE_LIMIT = 4000;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	double original_val_average;
 	ScoreNetwork* original_network;
-	double branch_val_average;
 	ScoreNetwork* branch_network;
 
 	int original_next_node_id;

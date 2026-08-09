@@ -40,9 +40,7 @@ BranchNode::~BranchNode() {
 
 void BranchNode::copy_from(BranchNode* original,
 						   Solution* parent_solution) {
-	this->original_val_average = original->original_val_average;
 	this->original_network = new ScoreNetwork(original->original_network);
-	this->branch_val_average = original->branch_val_average;
 	this->branch_network = new ScoreNetwork(original->branch_network);
 
 	this->original_next_node_id = original->original_next_node_id;
@@ -62,9 +60,7 @@ void BranchNode::copy_from(BranchNode* original,
 }
 
 void BranchNode::save(ofstream& output_file) {
-	output_file << this->original_val_average << endl;
 	this->original_network->save(output_file);
-	output_file << this->branch_val_average << endl;
 	this->branch_network->save(output_file);
 
 	output_file << this->original_next_node_id << endl;
@@ -88,16 +84,7 @@ void BranchNode::save(ofstream& output_file) {
 
 void BranchNode::load(ifstream& input_file,
 					  Solution* parent_solution) {
-	string original_val_average_line;
-	getline(input_file, original_val_average_line);
-	this->original_val_average = stod(original_val_average_line);
-
 	this->original_network = new ScoreNetwork(input_file);
-
-	string branch_val_average_line;
-	getline(input_file, branch_val_average_line);
-	this->branch_val_average = stod(branch_val_average_line);
-
 	this->branch_network = new ScoreNetwork(input_file);
 
 	string original_next_node_id_line;

@@ -313,10 +313,8 @@ void ExploreExperiment::add(bool is_new_state,
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	new_branch_node->original_val_average = this->existing_val_average;
 	new_branch_node->original_network = this->existing_network;
 	this->existing_network = NULL;
-	new_branch_node->branch_val_average = this->new_val_average;
 	new_branch_node->branch_network = new_network;
 
 	new_branch_node->is_ramp = true;

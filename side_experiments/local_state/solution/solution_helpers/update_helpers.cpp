@@ -20,8 +20,6 @@
 
 using namespace std;
 
-const double BASE_FACTOR = 0.001;
-
 void update_helper(ScopeHistory* scope_history,
 				   double target_val) {
 	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
@@ -58,14 +56,8 @@ void update_helper(ScopeHistory* scope_history,
 				BranchNode* branch_node = (BranchNode*)node;
 				if (branch_node_history->is_branch) {
 					branch_node->branch_curr_num_instances++;
-
-					double factor = BASE_FACTOR / branch_node->branch_average_instances_per_hit;
-					branch_node->branch_val_average = (1.0-factor)*branch_node->branch_val_average + factor*target_val;
 				} else {
 					branch_node->original_curr_num_instances++;
-
-					double factor = BASE_FACTOR / branch_node->original_average_instances_per_hit;
-					branch_node->original_val_average = (1.0-factor)*branch_node->original_val_average + factor*target_val;
 				}
 			}
 			break;

@@ -9,6 +9,9 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
  */
 const double REGRESSION_WEIGHT_LIMIT = 100000.0;
 
+const double SCORE_LEARNING_RATE = 0.001;
+const double STATE_LEARNING_RATE = 0.0002;
+
 const double NETWORK_INIT_MULTIPLIER = 0.01;
 
 const int INIT_EPOCH_SIZE = 10;

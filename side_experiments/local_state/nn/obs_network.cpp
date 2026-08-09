@@ -218,9 +218,12 @@ void ObsNetwork::backprop(Eigen::VectorXf& state_errors) {
 void ObsNetwork::update() {
 	this->epoch_iter++;
 	if (this->epoch_iter == UPDATE_EPOCH_SIZE) {
-		this->hidden_1->update(this->num_instances);
-		this->hidden_2->update(this->num_instances);
-		this->output->update(this->num_instances);
+		this->hidden_1->update(this->num_instances,
+							   STATE_LEARNING_RATE);
+		this->hidden_2->update(this->num_instances,
+							   STATE_LEARNING_RATE);
+		this->output->update(this->num_instances,
+							 STATE_LEARNING_RATE);
 
 		this->num_instances = 0;
 		this->epoch_iter = 0;

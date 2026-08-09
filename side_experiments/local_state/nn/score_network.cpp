@@ -195,9 +195,9 @@ void ScoreNetwork::init_backprop(double target_val,
 }
 
 void ScoreNetwork::init_update() {
-	this->hidden_1->update(1);
-	this->hidden_2->update(1);
-	this->output->update(1);
+	this->hidden_1->update(1, SCORE_LEARNING_RATE);
+	this->hidden_2->update(1, SCORE_LEARNING_RATE);
+	this->output->update(1, SCORE_LEARNING_RATE);
 }
 
 void ScoreNetwork::save(ScoreNetworkHistory* history) {
@@ -232,18 +232,24 @@ void ScoreNetwork::update() {
 	this->epoch_iter++;
 	if (this->is_ramp) {
 		if (this->epoch_iter == RAMP_EPOCH_SIZE) {
-			this->hidden_1->update(this->num_instances);
-			this->hidden_2->update(this->num_instances);
-			this->output->update(this->num_instances);
+			this->hidden_1->update(this->num_instances,
+								   STATE_LEARNING_RATE);
+			this->hidden_2->update(this->num_instances,
+								   STATE_LEARNING_RATE);
+			this->output->update(this->num_instances,
+								 STATE_LEARNING_RATE);
 
 			this->num_instances = 0;
 			this->epoch_iter = 0;
 		}
 	} else {
 		if (this->epoch_iter == UPDATE_EPOCH_SIZE) {
-			this->hidden_1->update(this->num_instances);
-			this->hidden_2->update(this->num_instances);
-			this->output->update(this->num_instances);
+			this->hidden_1->update(this->num_instances,
+								   STATE_LEARNING_RATE);
+			this->hidden_2->update(this->num_instances,
+								   STATE_LEARNING_RATE);
+			this->output->update(this->num_instances,
+								 STATE_LEARNING_RATE);
 
 			this->num_instances = 0;
 			this->epoch_iter = 0;

@@ -10,7 +10,6 @@
 
 using namespace std;
 
-const double LEARNING_RATE = 0.001;
 const double M_CONSTANT = 0.9;
 const double V_CONSTANT = 0.999;
 const double EPSILON = 0.00000001;
@@ -250,7 +249,8 @@ void Layer::backprop() {
 	}
 }
 
-void Layer::update(int num_instances) {
+void Layer::update(int num_instances,
+				   double learning_rate) {
 	this->m_bch *= M_CONSTANT;
 	this->v_bch *= V_CONSTANT;
 
@@ -263,7 +263,7 @@ void Layer::update(int num_instances) {
 			this->weight_vs[n_index][l_index] = V_CONSTANT * this->weight_vs[n_index][l_index]
 				+ (1.0 - V_CONSTANT) * this->weight_updates[n_index][l_index].cwiseProduct(this->weight_updates[n_index][l_index]);
 
-			this->weights[n_index][l_index] += (LEARNING_RATE
+			this->weights[n_index][l_index] += (learning_rate
 				* this->weight_ms[n_index][l_index] / (1.0 - this->m_bch))
 				.cwiseQuotient(
 					(Eigen::VectorXf)(this->weight_vs[n_index][l_index].cwiseSqrt().array() / (1.0 - this->v_bch) + EPSILON));
@@ -278,7 +278,7 @@ void Layer::update(int num_instances) {
 		this->constant_vs[n_index] = V_CONSTANT * this->constant_vs[n_index]
 			+ (1.0 - V_CONSTANT) * this->constant_updates[n_index] * this->constant_updates[n_index];
 
-		this->constants[n_index] += LEARNING_RATE
+		this->constants[n_index] += learning_rate
 			* this->constant_ms[n_index] / (1.0 - this->m_bch)
 			/ (sqrt(this->constant_vs[n_index] / (1.0 - this->v_bch)) + EPSILON);
 

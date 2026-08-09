@@ -92,12 +92,6 @@ void ExploreExperiment::train_existing_backprop(
 
 		int num_existing_train = (1.0 - VERIFY_RATIO) * (double)this->existing_dependencies_is_hit_histories.size();
 
-		double sum_vals = 0.0;
-		for (int h_index = 0; h_index < num_existing_train; h_index++) {
-			sum_vals += this->existing_target_val_histories[h_index];
-		}
-		this->existing_val_average = sum_vals / num_existing_train;
-
 		this->existing_network = new ScoreNetwork(this->existing_state_histories[0].size());
 
 		uniform_int_distribution<int> train_distribution(0, num_existing_train-1);
@@ -107,11 +101,9 @@ void ExploreExperiment::train_existing_backprop(
 			this->existing_network->activate(this->existing_state_histories[rand_index]);
 
 			if (this->use_signal) {
-				this->existing_network->init_backprop(
-					this->existing_signal_histories[rand_index] - this->existing_val_average);
+				this->existing_network->init_backprop(this->existing_signal_histories[rand_index]);
 			} else {
-				this->existing_network->init_backprop(
-					this->existing_target_val_histories[rand_index] - this->existing_val_average);
+				this->existing_network->init_backprop(this->existing_target_val_histories[rand_index]);
 			}
 
 			if ((iter_index+1)%INIT_EPOCH_SIZE == 0) {
