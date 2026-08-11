@@ -1,0 +1,98 @@
+#include "branch_node.h"
+
+#include <iostream>
+
+#include "abstract_experiment.h"
+#include "constants.h"
+#include "globals.h"
+#include "init_network.h"
+#include "scope.h"
+#include "score_network.h"
+#include "solution.h"
+#include "solution_helpers.h"
+#include "solution_wrapper.h"
+#include "utilities.h"
+
+using namespace std;
+
+void BranchNode::experiment_step(vector<double>& obs,
+								 int& action,
+								 bool& is_next,
+								 SolutionWrapper* wrapper) {
+	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
+		wrapper->node_context.back() = this->original_next_node;
+		return;
+	}
+	if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {
+		wrapper->node_context.back() = this->branch_next_node;
+		return;
+	}
+
+	if (this->is_ramp) {
+		uniform_int_distribution<int> ramp_distribution(RAMP_LOWER, RAMP_UPPER);
+		/**
+		 * - make sure fully ramped up before update ends
+		 */
+		if (ramp_distribution(generator) >= wrapper->iters_since_update) {
+			wrapper->node_context.back() = this->original_next_node;
+			return;
+		}
+	}
+
+	ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+	BranchNodeHistory* history = new BranchNodeHistory(this);
+	scope_history->node_histories.push_back(history);
+
+	history->obs = obs;
+
+	bool is_branch;
+	this->original_network->activate(wrapper->states.back(),
+									 obs);
+	this->branch_network->activate(wrapper->states.back(),
+								   obs);
+	if (this->branch_network->output->acti_vals(0) >= this->original_network->output->acti_vals(0)) {
+		is_branch = true;
+	} else {
+		is_branch = false;
+	}
+
+	#if defined(MDEBUG) && MDEBUG
+	if (wrapper->curr_run_seed%2 == 0) {
+		is_branch = true;
+	} else {
+		is_branch = false;
+	}
+	wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
+	#endif /* MDEBUG */
+
+	history->is_branch = is_branch;
+
+	if (is_branch) {
+		if (wrapper->run_type == RUN_TYPE_EXISTING) {
+			this->consec_original = 0;
+			this->consec_branch++;
+		}
+
+		wrapper->node_context.back() = this->branch_next_node;
+
+		if (this->branch_experiment != NULL) {
+			this->branch_experiment->experiment_check_activate(
+				obs,
+				wrapper);
+		}
+	} else {
+		if (wrapper->run_type == RUN_TYPE_EXISTING) {
+			this->consec_original++;
+			this->consec_branch = 0;
+		}
+
+		wrapper->node_context.back() = this->original_next_node;
+
+		if (this->original_experiment != NULL) {
+			this->original_experiment->experiment_check_activate(
+				obs,
+				wrapper);
+		}
+	}
+}
