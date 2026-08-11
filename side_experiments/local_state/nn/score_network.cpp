@@ -233,11 +233,11 @@ void ScoreNetwork::update() {
 	if (this->is_ramp) {
 		if (this->epoch_iter == RAMP_EPOCH_SIZE) {
 			this->hidden_1->update(this->num_instances,
-								   STATE_LEARNING_RATE);
+								   SCORE_LEARNING_RATE);
 			this->hidden_2->update(this->num_instances,
-								   STATE_LEARNING_RATE);
+								   SCORE_LEARNING_RATE);
 			this->output->update(this->num_instances,
-								 STATE_LEARNING_RATE);
+								 SCORE_LEARNING_RATE);
 
 			this->num_instances = 0;
 			this->epoch_iter = 0;
@@ -245,11 +245,11 @@ void ScoreNetwork::update() {
 	} else {
 		if (this->epoch_iter == UPDATE_EPOCH_SIZE) {
 			this->hidden_1->update(this->num_instances,
-								   STATE_LEARNING_RATE);
+								   SCORE_LEARNING_RATE);
 			this->hidden_2->update(this->num_instances,
-								   STATE_LEARNING_RATE);
+								   SCORE_LEARNING_RATE);
 			this->output->update(this->num_instances,
-								 STATE_LEARNING_RATE);
+								 SCORE_LEARNING_RATE);
 
 			this->num_instances = 0;
 			this->epoch_iter = 0;

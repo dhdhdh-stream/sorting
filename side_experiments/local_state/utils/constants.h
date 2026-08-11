@@ -10,16 +10,13 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 const double REGRESSION_WEIGHT_LIMIT = 100000.0;
 
 const double SCORE_LEARNING_RATE = 0.001;
-const double STATE_LEARNING_RATE = 0.0002;
+const double STATE_LEARNING_RATE = 0.0001;
 
 const double NETWORK_INIT_MULTIPLIER = 0.01;
 
 const int INIT_EPOCH_SIZE = 10;
 const int RAMP_EPOCH_SIZE = 20;
 const int UPDATE_EPOCH_SIZE = 100;
-
-const int BATCH_SIZE = 1000;
-const int ITERS_PER_BATCH = 10000;
 
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_NUM_DATAPOINTS = 20;
@@ -31,7 +28,7 @@ const double VERIFY_RATIO = 0.2;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;
 #else
-const int TRAIN_ITERS = 100000;
+const int TRAIN_ITERS = 300000;
 #endif /* MDEBUG */
 
 /**
@@ -70,13 +67,22 @@ const double NEW_STATE_LAST_BETTER_THAN_RATIO = 0.9;
 const int RAMP_LOWER = -5;
 const int RAMP_UPPER = 20;
 const int UPDATE_NUM_ITERS = 40;
+const int BATCH_SIZE = 10;
+const int ITERS_PER_BATCH = 10;
 #else
-const int RAMP_LOWER = -1000;
-const int RAMP_UPPER = 4000;
-const int UPDATE_NUM_ITERS = 10000;
+// const int RAMP_LOWER = -1000;
+// const int RAMP_UPPER = 4000;
+// const int UPDATE_NUM_ITERS = 10000;
+const int RAMP_LOWER = -10000;
+const int RAMP_UPPER = 40000;
+const int UPDATE_NUM_ITERS = 100000;
+const int BATCH_SIZE = 1000;
+const int ITERS_PER_BATCH = 10000;
 // const int RAMP_LOWER = -100000;
 // const int RAMP_UPPER = 400000;
 // const int UPDATE_NUM_ITERS = 1000000;
+// const int BATCH_SIZE = 1;
+// const int ITERS_PER_BATCH = 1;
 #endif /* MDEBUG */
 
 const int GENERALIZE_ITER = 3;
