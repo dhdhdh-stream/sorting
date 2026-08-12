@@ -299,10 +299,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	new_branch_node->original_val_average = this->existing_val_average;
 	new_branch_node->original_network = this->existing_network;
 	this->existing_network = NULL;
-	new_branch_node->branch_val_average = this->new_val_average;
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
 
@@ -413,4 +411,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			}
 		}
 	}
+	for (int h_index = 0; h_index < (int)wrapper->train_scope_histories.size(); h_index++) {
+		delete wrapper->train_scope_histories[h_index];
+	}
+	wrapper->train_scope_histories.clear();
+	wrapper->train_target_val_histories.clear();
 }

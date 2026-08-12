@@ -42,6 +42,9 @@ public:
 
 	int num_actions;
 
+	std::vector<ScopeHistory*> train_scope_histories;
+	std::vector<double> train_target_val_histories;
+
 	bool should_explore;
 	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_experiment_histories;
 

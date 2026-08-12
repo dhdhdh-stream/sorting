@@ -102,12 +102,6 @@ void ExploreExperiment::train_new_backprop(
 
 				int num_new_train = (1.0 - VERIFY_RATIO) * (double)this->new_obs_histories.size();
 
-				double sum_vals = 0.0;
-				for (int h_index = 0; h_index < num_new_train; h_index++) {
-					sum_vals += this->new_target_val_histories[h_index];
-				}
-				this->new_val_average = sum_vals / num_new_train;
-
 				this->new_network = new Network(this->new_obs_histories[0].size());
 				double hidden_1_average_max_update = 0.0;
 				double hidden_2_average_max_update = 0.0;
@@ -120,7 +114,7 @@ void ExploreExperiment::train_new_backprop(
 
 					this->new_network->activate(this->new_obs_histories[rand_index]);
 
-					double error = (this->new_target_val_histories[rand_index] - this->new_val_average) - this->new_network->output->acti_vals[0];
+					double error = this->new_target_val_histories[rand_index] - this->new_network->output->acti_vals[0];
 
 					this->new_network->init_backprop(error,
 													 hidden_1_average_max_update,
@@ -133,9 +127,9 @@ void ExploreExperiment::train_new_backprop(
 				int existing_count = 0;
 				for (int h_index = num_existing_train; h_index < (int)this->existing_obs_histories.size(); h_index++) {
 					this->existing_network->activate(this->existing_obs_histories[h_index]);
-					double existing_predicted = this->existing_val_average + this->existing_network->output->acti_vals[0];
+					double existing_predicted = this->existing_network->output->acti_vals[0];
 					this->new_network->activate(this->existing_obs_histories[h_index]);
-					double new_predicted = this->new_val_average + this->new_network->output->acti_vals[0];
+					double new_predicted = this->new_network->output->acti_vals[0];
 					if (new_predicted >= existing_predicted) {
 						existing_sum_vals += this->existing_target_val_histories[h_index];
 						existing_count++;
@@ -146,9 +140,9 @@ void ExploreExperiment::train_new_backprop(
 				int new_count = 0;
 				for (int h_index = num_new_train; h_index < (int)this->new_obs_histories.size(); h_index++) {
 					this->existing_network->activate(this->new_obs_histories[h_index]);
-					double existing_predicted = this->existing_val_average + this->existing_network->output->acti_vals[0];
+					double existing_predicted = this->existing_network->output->acti_vals[0];
 					this->new_network->activate(this->new_obs_histories[h_index]);
-					double new_predicted = this->new_val_average + this->new_network->output->acti_vals[0];
+					double new_predicted = this->new_network->output->acti_vals[0];
 					if (new_predicted >= existing_predicted) {
 						new_sum_vals += this->new_target_val_histories[h_index];
 						new_count++;

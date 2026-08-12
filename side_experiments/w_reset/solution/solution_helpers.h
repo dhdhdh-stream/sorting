@@ -20,13 +20,9 @@ class SolutionWrapper;
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper);
 
-void update_helper(ScopeHistory* scope_history,
-				   double target_val,
-				   std::set<BranchNode*>& hit_original,
-				   std::set<BranchNode*>& hit_branch,
-				   SolutionWrapper* wrapper);
-void update_helper(std::set<BranchNode*>& hit_original,
-				   std::set<BranchNode*>& hit_branch,
-				   SolutionWrapper* wrapper);
+void update_helper(SolutionWrapper* wrapper,
+				   double target_val);
+
+void train_helper(SolutionWrapper* wrapper);
 
 #endif /* SOLUTION_HELPERS_H */

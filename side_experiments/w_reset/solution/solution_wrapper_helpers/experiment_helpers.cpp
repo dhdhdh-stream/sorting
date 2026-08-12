@@ -93,18 +93,8 @@ void SolutionWrapper::set_action(int action) {
 
 void SolutionWrapper::experiment_end(double result) {
 	if (!this->should_explore) {
-		set<BranchNode*> hit_original;
-		set<BranchNode*> hit_branch;
-		update_helper(this->scope_histories[0],
-					  result,
-					  hit_original,
-					  hit_branch,
-					  this);
-		update_helper(hit_original,
-					  hit_branch,
-					  this);
-
-		this->solution->curr_score = 0.9999*this->solution->curr_score + 0.0001*result;
+		update_helper(this,
+					  result);
 	}
 
 	if (this->explore_experiment_histories.size() == 0) {
@@ -128,7 +118,15 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	}
 
-	delete this->scope_histories[0];
+	if (!this->should_explore) {
+		this->train_scope_histories.push_back(this->scope_histories[0]);
+		this->train_target_val_histories.push_back(result);
+		if (this->train_scope_histories.size() >= BATCH_SIZE) {
+			train_helper(this);
+		}
+	} else {
+		delete this->scope_histories[0];
+	}
 
 	this->scope_histories.clear();
 	this->node_context.clear();

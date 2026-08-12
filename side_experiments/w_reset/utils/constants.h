@@ -43,9 +43,17 @@ const double LAST_BETTER_THAN_RATIO = 0.8;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
+const int RAMP_LOWER = -5;
+const int RAMP_UPPER = 20;
 const int UPDATE_NUM_ITERS = 40;
+const int BATCH_SIZE = 10;
+const int ITERS_PER_BATCH = 10;
 #else
-const int UPDATE_NUM_ITERS = 400000;
+const int RAMP_LOWER = -5000;
+const int RAMP_UPPER = 20000;
+const int UPDATE_NUM_ITERS = 40000;
+const int BATCH_SIZE = 1000;
+const int ITERS_PER_BATCH = 10000;
 #endif /* MDEBUG */
 
 const int GENERALIZE_ITER = 3;
