@@ -24,6 +24,7 @@ class Problem;
 class Scope;
 class ScopeHistory;
 class ScoreNetwork;
+class ScoreNetworkHistory;
 class Solution;
 class SolutionWrapper;
 class TransitionNetwork;
@@ -45,6 +46,9 @@ public:
 
 	double average_instances_per_hit;
 	double average_instances_per_run;
+
+	ScoreNetwork* score_network;
+
 	AbstractExperiment* experiment;
 
 	int curr_num_instances;
@@ -99,6 +103,8 @@ public:
 
 	bool out_is_drop;
 	TransitionNetworkHistory* out_network_history;
+
+	ScoreNetworkHistory* score_network_history;
 
 	TrainScopeNodeHistory(ScopeNode* node);
 	~TrainScopeNodeHistory();

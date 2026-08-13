@@ -32,6 +32,8 @@ ActionNode::~ActionNode() {
 		delete this->init_networks[n_index];
 	}
 
+	delete this->score_network;
+
 	if (this->experiment != NULL) {
 		delete this->experiment;
 	}
@@ -62,6 +64,8 @@ void ActionNode::copy_from(ActionNode* original,
 	this->average_instances_per_hit = original->average_instances_per_hit;
 	this->average_instances_per_run = original->average_instances_per_run;
 
+	this->score_network = new ScoreNetwork(original->score_network);
+
 	this->is_generic = original->is_generic;
 
 	this->ancestor_ids = original->ancestor_ids;
@@ -89,6 +93,8 @@ void ActionNode::save(ofstream& output_file) {
 
 	output_file << this->average_instances_per_hit << endl;
 	output_file << this->average_instances_per_run << endl;
+
+	this->score_network->save(output_file);
 
 	output_file << this->is_generic << endl;
 
@@ -142,6 +148,8 @@ void ActionNode::load(ifstream& input_file,
 	getline(input_file, average_instances_per_run_line);
 	this->average_instances_per_run = stod(average_instances_per_run_line);
 
+	this->score_network = new ScoreNetwork(input_file);
+
 	string is_generic_line;
 	getline(input_file, is_generic_line);
 	this->is_generic = stoi(is_generic_line);
@@ -178,6 +186,8 @@ TrainActionNodeHistory::TrainActionNodeHistory(ActionNode* node) {
 
 	this->action_network_history = NULL;
 	this->obs_network_history = NULL;
+
+	this->score_network_history = NULL;
 }
 
 TrainActionNodeHistory::~TrainActionNodeHistory() {
@@ -193,5 +203,9 @@ TrainActionNodeHistory::~TrainActionNodeHistory() {
 		if (this->init_network_histories[n_index] != NULL) {
 			delete this->init_network_histories[n_index];
 		}
+	}
+
+	if (this->score_network_history != NULL) {
+		delete this->score_network_history;
 	}
 }

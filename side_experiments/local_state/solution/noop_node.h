@@ -12,6 +12,7 @@ class Network;
 class Problem;
 class ScopeHistory;
 class ScoreNetwork;
+class ScoreNetworkHistory;
 class Solution;
 class SolutionWrapper;
 
@@ -23,6 +24,9 @@ public:
 
 	double average_instances_per_hit;
 	double average_instances_per_run;
+
+	ScoreNetwork* score_network;
+
 	AbstractExperiment* experiment;
 
 	int curr_num_instances;
@@ -59,6 +63,14 @@ public:
 class NoopNodeHistory : public AbstractNodeHistory {
 public:
 	NoopNodeHistory(NoopNode* node);
+};
+
+class TrainNoopNodeHistory : public TrainAbstractNodeHistory {
+public:
+	ScoreNetworkHistory* score_network_history;
+
+	TrainNoopNodeHistory(NoopNode* node);
+	~TrainNoopNodeHistory();
 };
 
 #endif /* NOOP_NODE_H */

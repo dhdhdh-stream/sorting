@@ -5,6 +5,7 @@
 #include "init_network.h"
 #include "obs_network.h"
 #include "scope.h"
+#include "score_network.h"
 
 using namespace std;
 
@@ -44,5 +45,9 @@ void ActionNode::train_step(AbstractNodeHistory* history,
 				this->init_networks[n_index]->save(train_history->init_network_histories[n_index]);
 			}
 		}
+
+		this->score_network->activate(state);
+		train_history->score_network_history = new ScoreNetworkHistory(this->score_network);
+		this->score_network->save(train_history->score_network_history);
 	}
 }

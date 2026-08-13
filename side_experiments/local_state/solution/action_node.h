@@ -16,6 +16,7 @@ class ObsNetworkHistory;
 class Problem;
 class ScopeHistory;
 class ScoreNetwork;
+class ScoreNetworkHistory;
 class SolutionWrapper;
 
 class ActionNodeHistory;
@@ -36,6 +37,9 @@ public:
 
 	double average_instances_per_hit;
 	double average_instances_per_run;
+
+	ScoreNetwork* score_network;
+
 	AbstractExperiment* experiment;
 
 	bool is_generic;
@@ -93,6 +97,8 @@ public:
 	ActionNetworkHistory* action_network_history;
 	ObsNetworkHistory* obs_network_history;
 	std::vector<InitNetworkHistory*> init_network_histories;
+
+	ScoreNetworkHistory* score_network_history;
 
 	TrainActionNodeHistory(ActionNode* node);
 	~TrainActionNodeHistory();

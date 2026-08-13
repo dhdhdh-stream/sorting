@@ -3,6 +3,7 @@
 #include "globals.h"
 #include "pass_through_network.h"
 #include "scope.h"
+#include "score_network.h"
 #include "transition_network.h"
 
 using namespace std;
@@ -67,4 +68,8 @@ void ScopeNode::train_step(AbstractNodeHistory* history,
 		train_history->out_network_history = new TransitionNetworkHistory(this->out_network);
 		this->out_network->save(train_history->out_network_history);
 	}
+
+	this->score_network->activate(state);
+	train_history->score_network_history = new ScoreNetworkHistory(this->score_network);
+	this->score_network->save(train_history->score_network_history);
 }
