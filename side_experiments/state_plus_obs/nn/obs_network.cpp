@@ -8,7 +8,8 @@
 using namespace std;
 
 ObsNetwork::ObsNetwork(int num_states,
-					   int num_obs) {
+					   int num_obs,
+					   double multiplier) {
 	this->type = NETWORK_TYPE_OBS;
 
 	this->state_input = new Layer(LINEAR_LAYER);
@@ -44,7 +45,7 @@ ObsNetwork::ObsNetwork(int num_states,
 	this->output->errors.setConstant(0.0);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
-	this->output->update_structure(0.0);
+	this->output->update_structure(multiplier);
 	/**
 	 * - don't directly connect input to output
 	 *   - update size will be large even when network has no impact

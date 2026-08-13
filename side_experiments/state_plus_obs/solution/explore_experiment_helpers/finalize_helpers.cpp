@@ -421,7 +421,8 @@ void ExploreExperiment::add(bool is_new_state,
 			end_node->next_node = NULL;
 
 			new_scope->start_obs_network = new ObsNetwork(new_scope->num_states,
-														  wrapper->solution->num_obs);
+														  wrapper->solution->num_obs,
+														  0.0);
 
 			new_scope->end_score_network = new ScoreNetwork(wrapper->solution->starting_scope->end_score_network);
 
@@ -434,10 +435,12 @@ void ExploreExperiment::add(bool is_new_state,
 
 				new_action_node->action = a_index;
 
-				new_action_node->action_network = new ActionNetwork(new_scope->num_states);
+				new_action_node->action_network = new ActionNetwork(new_scope->num_states,
+																	0.0);
 
 				new_action_node->obs_network = new ObsNetwork(new_scope->num_states,
-															  wrapper->solution->num_obs);
+															  wrapper->solution->num_obs,
+															  0.0);
 
 				new_action_node->next_node_id = -1;
 				new_action_node->next_node = NULL;

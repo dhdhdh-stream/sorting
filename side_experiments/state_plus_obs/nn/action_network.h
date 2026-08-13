@@ -21,7 +21,8 @@ public:
 	int last_update_iter;
 	int epoch_iter;
 
-	ActionNetwork(int num_states);
+	ActionNetwork(int num_states,
+				  double multiplier);
 	ActionNetwork(ActionNetwork* original);
 	ActionNetwork(std::ifstream& input_file);
 	~ActionNetwork();

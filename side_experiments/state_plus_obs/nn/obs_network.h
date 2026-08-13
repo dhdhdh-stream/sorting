@@ -29,7 +29,8 @@ public:
 	int epoch_iter;
 
 	ObsNetwork(int num_states,
-			   int num_obs);
+			   int num_obs,
+			   double multiplier);
 	ObsNetwork(ObsNetwork* original);
 	ObsNetwork(std::ifstream& input_file);
 	~ObsNetwork();

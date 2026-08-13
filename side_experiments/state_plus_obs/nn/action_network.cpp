@@ -7,7 +7,8 @@
 
 using namespace std;
 
-ActionNetwork::ActionNetwork(int num_states) {
+ActionNetwork::ActionNetwork(int num_states,
+							 double multiplier) {
 	this->type = NETWORK_TYPE_ACTION;
 
 	this->state_input = new Layer(LINEAR_LAYER);
@@ -36,7 +37,7 @@ ActionNetwork::ActionNetwork(int num_states) {
 	this->output->errors.setConstant(0.0);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
-	this->output->update_structure(0.0);
+	this->output->update_structure(multiplier);
 
 	this->num_instances = 0;
 	this->last_update_iter = -1;

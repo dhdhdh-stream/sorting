@@ -24,6 +24,8 @@ const int INIT_MEASURE_ITERS = 10;
 const int INIT_MEASURE_ITERS = 4000;
 #endif /* MDEBUG */
 
+const int INIT_NUM_STATES = 2;
+
 Solution::Solution() {
 	// do nothing
 }
@@ -102,10 +104,11 @@ void Solution::init(ProblemType* problem_type) {
 	start_node->next_node_id = -1;
 	start_node->next_node = NULL;
 
-	new_scope->num_states = 0;
+	new_scope->num_states = INIT_NUM_STATES;
 
 	new_scope->start_obs_network = new ObsNetwork(new_scope->num_states,
-												  this->num_obs);
+												  this->num_obs,
+												  NETWORK_INIT_MULTIPLIER);
 
 	new_scope->end_score_network = new ScoreNetwork(new_scope->num_states,
 													this->num_obs);
@@ -119,10 +122,12 @@ void Solution::init(ProblemType* problem_type) {
 
 		new_action_node->action = a_index;
 
-		new_action_node->action_network = new ActionNetwork(new_scope->num_states);
+		new_action_node->action_network = new ActionNetwork(new_scope->num_states,
+															NETWORK_INIT_MULTIPLIER);
 
 		new_action_node->obs_network = new ObsNetwork(new_scope->num_states,
-													  this->num_obs);
+													  this->num_obs,
+													  NETWORK_INIT_MULTIPLIER);
 
 		new_action_node->next_node_id = -1;
 		new_action_node->next_node = NULL;
