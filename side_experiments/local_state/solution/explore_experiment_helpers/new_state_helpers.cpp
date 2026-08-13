@@ -283,6 +283,13 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 					it != scope->nodes.end(); it++) {
 				switch (it->second->type) {
+				case NODE_TYPE_NOOP:
+					{
+						NoopNode* noop_node = (NoopNode*)it->second;
+
+						noop_node->score_network->add_states(scope->num_states);
+					}
+					break;
 				case NODE_TYPE_ACTION:
 					{
 						ActionNode* action_node = (ActionNode*)it->second;
@@ -292,6 +299,10 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 						for (int n_index = 0; n_index < (int)action_node->init_networks.size(); n_index++) {
 							action_node->init_networks[n_index]->add_states(scope->num_states);
 						}
+
+						if (!action_node->is_generic) {
+							action_node->score_network->add_states(scope->num_states);
+						}
 					}
 					break;
 				case NODE_TYPE_SCOPE:
@@ -300,6 +311,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 
 						scope_node->in_network->add_front_states(scope->num_states);
 						scope_node->out_network->add_back_states(scope->num_states);
+
+						scope_node->score_network->add_states(scope->num_states);
 					}
 					break;
 				case NODE_TYPE_BRANCH:
@@ -311,13 +324,6 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 					}
 					break;
 				}
-			}
-
-			for (int a_index = 0; a_index < (int)scope->generic_action_nodes.size(); a_index++) {
-				ActionNode* action_node = scope->generic_action_nodes[a_index];
-
-				action_node->action_network->add_states(scope->num_states);
-				action_node->obs_network->add_states(scope->num_states);
 			}
 
 			for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {

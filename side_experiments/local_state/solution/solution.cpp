@@ -93,16 +93,17 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->node_counter = 0;
 	this->scopes.push_back(new_scope);
 
+	new_scope->num_states = 0;
+
 	NoopNode* start_node = new NoopNode();
 	start_node->parent = new_scope;
 	start_node->id = new_scope->node_counter;
 	new_scope->node_counter++;
 	new_scope->nodes[start_node->id] = start_node;
+	start_node->score_network = new ScoreNetwork(new_scope->num_states);
 
 	start_node->next_node_id = -1;
 	start_node->next_node = NULL;
-
-	new_scope->num_states = 0;
 
 	new_scope->start_obs_network = new ObsNetwork(new_scope->num_states,
 												  this->num_obs);
@@ -116,6 +117,7 @@ void Solution::init(ProblemType* problem_type) {
 		new_scope->node_counter++;
 		new_scope->nodes[new_action_node->id] = new_action_node;
 
+		new_action_node->is_generic = true;
 		new_action_node->action = a_index;
 
 		new_action_node->action_network = new ActionNetwork(new_scope->num_states);
@@ -125,8 +127,6 @@ void Solution::init(ProblemType* problem_type) {
 
 		new_action_node->next_node_id = -1;
 		new_action_node->next_node = NULL;
-
-		new_action_node->is_generic = true;
 
 		new_scope->generic_action_nodes.push_back(new_action_node);
 	}

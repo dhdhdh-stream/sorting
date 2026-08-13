@@ -32,7 +32,9 @@ ActionNode::~ActionNode() {
 		delete this->init_networks[n_index];
 	}
 
-	delete this->score_network;
+	if (!this->is_generic) {
+		delete this->score_network;
+	}
 
 	if (this->experiment != NULL) {
 		delete this->experiment;
@@ -41,6 +43,8 @@ ActionNode::~ActionNode() {
 
 void ActionNode::copy_from(ActionNode* original,
 						   Solution* parent_solution) {
+	this->is_generic = original->is_generic;
+
 	this->action = original->action;
 
 	this->action_network = new ActionNetwork(original->action_network);
@@ -64,14 +68,16 @@ void ActionNode::copy_from(ActionNode* original,
 	this->average_instances_per_hit = original->average_instances_per_hit;
 	this->average_instances_per_run = original->average_instances_per_run;
 
-	this->score_network = new ScoreNetwork(original->score_network);
-
-	this->is_generic = original->is_generic;
+	if (!this->is_generic) {
+		this->score_network = new ScoreNetwork(original->score_network);
+	}
 
 	this->ancestor_ids = original->ancestor_ids;
 }
 
 void ActionNode::save(ofstream& output_file) {
+	output_file << this->is_generic << endl;
+
 	output_file << this->action << endl;
 
 	this->action_network->save(output_file);
@@ -94,9 +100,9 @@ void ActionNode::save(ofstream& output_file) {
 	output_file << this->average_instances_per_hit << endl;
 	output_file << this->average_instances_per_run << endl;
 
-	this->score_network->save(output_file);
-
-	output_file << this->is_generic << endl;
+	if (!this->is_generic) {
+		this->score_network->save(output_file);
+	}
 
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
@@ -106,6 +112,10 @@ void ActionNode::save(ofstream& output_file) {
 
 void ActionNode::load(ifstream& input_file,
 					  Solution* parent_solution) {
+	string is_generic_line;
+	getline(input_file, is_generic_line);
+	this->is_generic = stoi(is_generic_line);
+
 	string action_line;
 	getline(input_file, action_line);
 	this->action = stoi(action_line);
@@ -148,11 +158,9 @@ void ActionNode::load(ifstream& input_file,
 	getline(input_file, average_instances_per_run_line);
 	this->average_instances_per_run = stod(average_instances_per_run_line);
 
-	this->score_network = new ScoreNetwork(input_file);
-
-	string is_generic_line;
-	getline(input_file, is_generic_line);
-	this->is_generic = stoi(is_generic_line);
+	if (!this->is_generic) {
+		this->score_network = new ScoreNetwork(input_file);
+	}
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);

@@ -43,9 +43,11 @@ void backprop_helper(TrainScopeHistory* scope_history,
 			{
 				TrainActionNodeHistory* action_node_history = (TrainActionNodeHistory*)scope_history->node_histories[h_index];
 				ActionNode* action_node = (ActionNode*)node;
-				action_node->score_network->load(action_node_history->score_network_history);
-				action_node->score_network->backprop(target_val,
-													 state_error);
+				if (!action_node->is_generic) {
+					action_node->score_network->load(action_node_history->score_network_history);
+					action_node->score_network->backprop(target_val,
+														 state_error);
+				}
 				for (int h_index = (int)action_node_history->init_network_histories.size()-1; h_index >= 0; h_index--) {
 					if (action_node_history->init_network_histories[h_index] != NULL) {
 						action_node->init_networks[h_index]->load(action_node_history->init_network_histories[h_index]);
@@ -194,10 +196,12 @@ void update_helper(TrainScopeHistory* scope_history,
 					}
 				}
 
-				if (action_node->score_network->last_update_iter != iter_index) {
-					action_node->score_network->update();
+				if (!action_node->is_generic) {
+					if (action_node->score_network->last_update_iter != iter_index) {
+						action_node->score_network->update();
 
-					action_node->score_network->last_update_iter = iter_index;
+						action_node->score_network->last_update_iter = iter_index;
+					}
 				}
 			}
 			break;

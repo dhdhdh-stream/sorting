@@ -22,6 +22,8 @@ class SolutionWrapper;
 class ActionNodeHistory;
 class ActionNode : public AbstractNode {
 public:
+	bool is_generic;
+
 	int action;
 
 	ActionNetwork* action_network;
@@ -41,8 +43,6 @@ public:
 	ScoreNetwork* score_network;
 
 	AbstractExperiment* experiment;
-
-	bool is_generic;
 
 	int curr_num_instances;
 
