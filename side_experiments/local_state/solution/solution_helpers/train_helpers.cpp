@@ -103,17 +103,23 @@ void backprop_helper(TrainScopeHistory* scope_history,
 		case NODE_TYPE_BRANCH:
 			{
 				TrainBranchNodeHistory* branch_node_history = (TrainBranchNodeHistory*)scope_history->node_histories[h_index];
-				if (branch_node_history->score_network_history != NULL) {
-					BranchNode* branch_node = (BranchNode*)node;
-					if (branch_node_history->is_branch) {
-						branch_node->branch_network->load(branch_node_history->score_network_history);
-						branch_node->branch_network->backprop(target_val,
-															  state_error);
-					} else {
-						branch_node->original_network->load(branch_node_history->score_network_history);
-						branch_node->original_network->backprop(target_val,
-																state_error);
-					}
+				BranchNode* branch_node = (BranchNode*)node;
+				if (branch_node_history->is_branch) {
+					branch_node->branch_network->load(branch_node_history->branch_network_history);
+					branch_node->branch_network->backprop(target_val,
+														  state_error);
+
+					branch_node->original_network->load(branch_node_history->original_network_history);
+					branch_node->original_network->backprop(branch_node_history->preserve_original_network_val,
+															state_error);
+				} else {
+					branch_node->original_network->load(branch_node_history->original_network_history);
+					branch_node->original_network->backprop(target_val,
+															state_error);
+
+					branch_node->branch_network->load(branch_node_history->branch_network_history);
+					branch_node->branch_network->backprop(branch_node_history->preserve_branch_network_val,
+														  state_error);
 				}
 			}
 			break;
@@ -238,22 +244,18 @@ void update_helper(TrainScopeHistory* scope_history,
 			break;
 		case NODE_TYPE_BRANCH:
 			{
-				TrainBranchNodeHistory* branch_node_history = (TrainBranchNodeHistory*)scope_history->node_histories[h_index];
-				if (branch_node_history->score_network_history != NULL) {
-					BranchNode* branch_node = (BranchNode*)node;
-					if (branch_node_history->is_branch) {
-						if (branch_node->branch_network->last_update_iter != iter_index) {
-							branch_node->branch_network->update();
+				BranchNode* branch_node = (BranchNode*)node;
 
-							branch_node->branch_network->last_update_iter = iter_index;
-						}
-					} else {
-						if (branch_node->original_network->last_update_iter != iter_index) {
-							branch_node->original_network->update();
+				if (branch_node->original_network->last_update_iter != iter_index) {
+					branch_node->original_network->update();
 
-							branch_node->original_network->last_update_iter = iter_index;
-						}
-					}
+					branch_node->original_network->last_update_iter = iter_index;
+				}
+
+				if (branch_node->branch_network->last_update_iter != iter_index) {
+					branch_node->branch_network->update();
+
+					branch_node->branch_network->last_update_iter = iter_index;
 				}
 			}
 			break;
@@ -270,6 +272,18 @@ void update_helper(TrainScopeHistory* scope_history,
 }
 
 void train_helper(SolutionWrapper* wrapper) {
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			if (it->second->type == NODE_TYPE_BRANCH) {
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->preserve_original_network = new ScoreNetwork(branch_node->original_network);
+				branch_node->preserve_branch_network = new ScoreNetwork(branch_node->branch_network);
+			}
+		}
+	}
+
 	uniform_int_distribution<int> sample_distribution(0, wrapper->train_scope_histories.size()-1);
 	uniform_int_distribution<int> allow_drop_distribution(0, 1);
 	for (int iter_index = 0; iter_index < ITERS_PER_BATCH; iter_index++) {
@@ -298,6 +312,18 @@ void train_helper(SolutionWrapper* wrapper) {
 		wrapper->train_iter_index++;
 
 		delete train_scope_history;
+	}
+
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			if (it->second->type == NODE_TYPE_BRANCH) {
+				BranchNode* branch_node = (BranchNode*)it->second;
+				delete branch_node->preserve_original_network;
+				delete branch_node->preserve_branch_network;
+			}
+		}
 	}
 
 	for (int h_index = 0; h_index < (int)wrapper->train_scope_histories.size(); h_index++) {

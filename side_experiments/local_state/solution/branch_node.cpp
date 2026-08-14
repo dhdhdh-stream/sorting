@@ -169,11 +169,16 @@ BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
 TrainBranchNodeHistory::TrainBranchNodeHistory(BranchNode* node) {
 	this->node = node;
 
-	this->score_network_history = NULL;
+	this->original_network_history = NULL;
+	this->branch_network_history = NULL;
 }
 
 TrainBranchNodeHistory::~TrainBranchNodeHistory() {
-	if (this->score_network_history != NULL) {
-		delete this->score_network_history;
+	if (this->original_network_history != NULL) {
+		delete this->original_network_history;
+	}
+
+	if (this->branch_network_history != NULL) {
+		delete this->branch_network_history;
 	}
 }

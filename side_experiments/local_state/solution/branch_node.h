@@ -48,6 +48,9 @@ public:
 	int original_curr_num_instances;
 	int branch_curr_num_instances;
 
+	ScoreNetwork* preserve_original_network;
+	ScoreNetwork* preserve_branch_network;
+
 	BranchNode();
 	~BranchNode();
 
@@ -88,7 +91,11 @@ class TrainBranchNodeHistory : public TrainAbstractNodeHistory {
 public:
 	bool is_branch;
 
-	ScoreNetworkHistory* score_network_history;
+	ScoreNetworkHistory* original_network_history;
+	ScoreNetworkHistory* branch_network_history;
+
+	double preserve_original_network_val;
+	double preserve_branch_network_val;
 
 	TrainBranchNodeHistory(BranchNode* node);
 	~TrainBranchNodeHistory();

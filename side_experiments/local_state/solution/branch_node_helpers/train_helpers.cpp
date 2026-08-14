@@ -16,13 +16,17 @@ void BranchNode::train_step(AbstractNodeHistory* history,
 
 	train_history->is_branch = branch_node_history->is_branch;
 
-	if (branch_node_history->is_branch) {
-		this->branch_network->activate(state);
-		train_history->score_network_history = new ScoreNetworkHistory(this->branch_network);
-		this->branch_network->save(train_history->score_network_history);
-	} else {
-		this->original_network->activate(state);
-		train_history->score_network_history = new ScoreNetworkHistory(this->original_network);
-		this->original_network->save(train_history->score_network_history);
-	}
+	this->original_network->activate(state);
+	train_history->original_network_history = new ScoreNetworkHistory(this->original_network);
+	this->original_network->save(train_history->original_network_history);
+
+	this->branch_network->activate(state);
+	train_history->branch_network_history = new ScoreNetworkHistory(this->branch_network);
+	this->branch_network->save(train_history->branch_network_history);
+
+	this->preserve_original_network->activate(state);
+	train_history->preserve_original_network_val = this->preserve_original_network->output->acti_vals(0);
+
+	this->preserve_branch_network->activate(state);
+	train_history->preserve_branch_network_val = this->preserve_branch_network->output->acti_vals(0);
 }
