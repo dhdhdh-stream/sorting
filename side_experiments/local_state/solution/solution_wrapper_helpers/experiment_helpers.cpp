@@ -200,37 +200,6 @@ void SolutionWrapper::experiment_end(double result) {
 
 	this->iters_since_update++;
 	if (this->iters_since_update == UPDATE_NUM_ITERS) {
-		for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
-			Scope* scope = this->solution->scopes[s_index];
-			for (int n_index = 0; n_index < (int)scope->start_init_networks.size(); n_index++) {
-				scope->start_init_networks[n_index]->is_ramp = false;
-			}
-			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-					it != scope->nodes.end(); it++) {
-				switch (it->second->type) {
-				case NODE_TYPE_ACTION:
-					{
-						ActionNode* action_node = (ActionNode*)it->second;
-
-						for (int n_index = 0; n_index < (int)action_node->init_networks.size(); n_index++) {
-							action_node->init_networks[n_index]->is_ramp = false;
-						}
-					}
-					break;
-				case NODE_TYPE_BRANCH:
-					{
-						BranchNode* branch_node = (BranchNode*)it->second;
-
-						branch_node->original_network->is_ramp = false;
-						branch_node->branch_network->is_ramp = false;
-
-						branch_node->is_ramp = false;
-					}
-					break;
-				}
-			}
-		}
-
 		if (this->solution->timestamp != 0) {
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {

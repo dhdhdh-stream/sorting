@@ -33,8 +33,6 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
-	bool is_ramp;
-
 	int consec_original;
 	int consec_branch;
 
@@ -47,9 +45,6 @@ public:
 
 	int original_curr_num_instances;
 	int branch_curr_num_instances;
-
-	ScoreNetwork* preserve_original_network;
-	ScoreNetwork* preserve_branch_network;
 
 	BranchNode();
 	~BranchNode();
@@ -91,11 +86,7 @@ class TrainBranchNodeHistory : public TrainAbstractNodeHistory {
 public:
 	bool is_branch;
 
-	ScoreNetworkHistory* original_network_history;
-	ScoreNetworkHistory* branch_network_history;
-
-	double preserve_original_network_val;
-	double preserve_branch_network_val;
+	ScoreNetworkHistory* score_network_history;
 
 	TrainBranchNodeHistory(BranchNode* node);
 	~TrainBranchNodeHistory();

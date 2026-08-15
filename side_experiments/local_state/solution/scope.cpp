@@ -120,8 +120,10 @@ void Scope::copy_from(Scope* original,
 		this->child_scopes.push_back(parent_solution->scopes[original->child_scopes[c_index]->id]);
 	}
 
-	this->reuse_last_scores = original->reuse_last_scores;
-	this->new_state_last_scores = original->new_state_last_scores;
+	this->train_reuse_last_scores = original->train_reuse_last_scores;
+	this->measure_reuse_last_scores = original->measure_reuse_last_scores;
+	this->train_new_state_last_scores = original->train_new_state_last_scores;
+	this->measure_new_state_last_scores = original->measure_new_state_last_scores;
 }
 
 void Scope::save(ofstream& output_file) {
@@ -162,15 +164,27 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
 
-	output_file << this->reuse_last_scores.size() << endl;
-	for (list<double>::iterator it = this->reuse_last_scores.begin();
-			it != this->reuse_last_scores.end(); it++) {
+	output_file << this->train_reuse_last_scores.size() << endl;
+	for (list<double>::iterator it = this->train_reuse_last_scores.begin();
+			it != this->train_reuse_last_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 
-	output_file << this->new_state_last_scores.size() << endl;
-	for (list<double>::iterator it = this->new_state_last_scores.begin();
-			it != this->new_state_last_scores.end(); it++) {
+	output_file << this->measure_reuse_last_scores.size() << endl;
+	for (list<double>::iterator it = this->measure_reuse_last_scores.begin();
+			it != this->measure_reuse_last_scores.end(); it++) {
+		output_file << *it << endl;
+	}
+
+	output_file << this->train_new_state_last_scores.size() << endl;
+	for (list<double>::iterator it = this->train_new_state_last_scores.begin();
+			it != this->train_new_state_last_scores.end(); it++) {
+		output_file << *it << endl;
+	}
+
+	output_file << this->measure_new_state_last_scores.size() << endl;
+	for (list<double>::iterator it = this->measure_new_state_last_scores.begin();
+			it != this->measure_new_state_last_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 }
@@ -287,22 +301,40 @@ void Scope::load(ifstream& input_file,
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
 
-	string num_reuse_last_scores_line;
-	getline(input_file, num_reuse_last_scores_line);
-	int num_reuse_last_scores = stoi(num_reuse_last_scores_line);
-	for (int e_index = 0; e_index < num_reuse_last_scores; e_index++) {
+	string num_train_reuse_last_scores_line;
+	getline(input_file, num_train_reuse_last_scores_line);
+	int num_train_reuse_last_scores = stoi(num_train_reuse_last_scores_line);
+	for (int e_index = 0; e_index < num_train_reuse_last_scores; e_index++) {
 		string score_line;
 		getline(input_file, score_line);
-		this->reuse_last_scores.push_back(stod(score_line));
+		this->train_reuse_last_scores.push_back(stod(score_line));
 	}
 
-	string num_new_state_last_scores_line;
-	getline(input_file, num_new_state_last_scores_line);
-	int num_new_state_last_scores = stoi(num_new_state_last_scores_line);
-	for (int e_index = 0; e_index < num_new_state_last_scores; e_index++) {
+	string num_measure_reuse_last_scores_line;
+	getline(input_file, num_measure_reuse_last_scores_line);
+	int num_measure_reuse_last_scores = stoi(num_measure_reuse_last_scores_line);
+	for (int e_index = 0; e_index < num_measure_reuse_last_scores; e_index++) {
 		string score_line;
 		getline(input_file, score_line);
-		this->new_state_last_scores.push_back(stod(score_line));
+		this->measure_reuse_last_scores.push_back(stod(score_line));
+	}
+
+	string num_train_new_state_last_scores_line;
+	getline(input_file, num_train_new_state_last_scores_line);
+	int num_train_new_state_last_scores = stoi(num_train_new_state_last_scores_line);
+	for (int e_index = 0; e_index < num_train_new_state_last_scores; e_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->train_new_state_last_scores.push_back(stod(score_line));
+	}
+
+	string num_measure_new_state_last_scores_line;
+	getline(input_file, num_measure_new_state_last_scores_line);
+	int num_measure_new_state_last_scores = stoi(num_measure_new_state_last_scores_line);
+	for (int e_index = 0; e_index < num_measure_new_state_last_scores; e_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->measure_new_state_last_scores.push_back(stod(score_line));
 	}
 }
 

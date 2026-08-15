@@ -32,6 +32,7 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 	this->use_signal = use_signal;
 
 	this->existing_network = NULL;
+	this->new_network = NULL;
 
 	this->dependencies = dependencies;
 	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
@@ -40,6 +41,8 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 							  0,
 							  this);
 	}
+
+	this->sum_vals = 0.0;
 
 	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
@@ -86,6 +89,14 @@ ExploreExperiment::~ExploreExperiment() {
 
 	if (this->existing_network != NULL) {
 		delete this->existing_network;
+	}
+
+	if (this->new_network != NULL) {
+		delete this->new_network;
+	}
+
+	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
+		delete this->init_networks[n_index];
 	}
 }
 

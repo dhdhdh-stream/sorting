@@ -160,10 +160,9 @@ void ExploreExperiment::train_new_exit_step(SolutionWrapper* wrapper) {
 	experiment_state->step_index++;
 }
 
-void ExploreExperiment::train_new_backprop(
-		double target_val,
-		ExploreExperimentHistory* history,
-		SolutionWrapper* wrapper) {
+void ExploreExperiment::train_new_backprop(double target_val,
+										   ExploreExperimentHistory* history,
+										   SolutionWrapper* wrapper) {
 	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
 		if (history->dependencies_is_hit_histories.size() > 0) {
 			for (int i_index = 0; i_index < (int)history->dependencies_is_hit_histories.size(); i_index++) {
@@ -176,65 +175,36 @@ void ExploreExperiment::train_new_backprop(
 			}
 
 			this->state_iter++;
-			if (this->state_iter >= EXPERIMENT_NUM_DATAPOINTS) {
-				int num_existing_train = (1.0 - VERIFY_RATIO) * (double)this->existing_dependencies_is_hit_histories.size();
+			if (this->state_iter >= EXPERIMENT_TRAIN_NUM_DATAPOINTS) {
+				ScoreNetwork* potential_new_network = new ScoreNetwork(this->scope_context->num_states);
 
-				{
-					default_random_engine generator_copy = generator;
-					shuffle(this->new_dependencies_is_hit_histories.begin(), this->new_dependencies_is_hit_histories.end(), generator_copy);
-				}
-				{
-					default_random_engine generator_copy = generator;
-					shuffle(this->new_dependencies_state_histories.begin(), this->new_dependencies_state_histories.end(), generator_copy);
-				}
-				{
-					default_random_engine generator_copy = generator;
-					shuffle(this->new_dependencies_obs_histories.begin(), this->new_dependencies_obs_histories.end(), generator_copy);
-				}
-				{
-					default_random_engine generator_copy = generator;
-					shuffle(this->new_state_histories.begin(), this->new_state_histories.end(), generator_copy);
-				}
-				{
-					default_random_engine generator_copy = generator;
-					shuffle(this->new_signal_histories.begin(), this->new_signal_histories.end(), generator_copy);
-				}
-				{
-					default_random_engine generator_copy = generator;
-					shuffle(this->new_target_val_histories.begin(), this->new_target_val_histories.end(), generator_copy);
-				}
-
-				int num_new_train = (1.0 - VERIFY_RATIO) * (double)this->new_dependencies_is_hit_histories.size();
-
-				ScoreNetwork* new_network = new ScoreNetwork(this->scope_context->num_states);
-
-				uniform_int_distribution<int> new_train_distribution(0, num_new_train-1);
+				uniform_int_distribution<int> new_train_distribution(0, this->new_dependencies_is_hit_histories.size()-1);
 				for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 					int rand_index = new_train_distribution(generator);
 
-					new_network->activate(this->new_state_histories[rand_index]);
+					potential_new_network->activate(this->new_state_histories[rand_index]);
 
 					if (this->use_signal) {
-						new_network->init_backprop(this->new_signal_histories[rand_index]);
+						potential_new_network->init_backprop(this->new_signal_histories[rand_index]);
 					} else {
-						new_network->init_backprop(this->new_target_val_histories[rand_index]);
+						potential_new_network->init_backprop(this->new_target_val_histories[rand_index]);
 					}
 
 					if ((iter_index+1)%INIT_EPOCH_SIZE == 0) {
-						new_network->init_update();
+						potential_new_network->init_update();
 					}
 				}
-				for (int s_index = 0; s_index < (int)new_network->state_input->errors.size(); s_index++) {
-					new_network->state_input->errors(s_index) = 0.0;
+				for (int s_index = 0; s_index < (int)potential_new_network->state_input->errors.size(); s_index++) {
+					potential_new_network->state_input->errors(s_index) = 0.0;
 				}
 
 				double existing_sum_vals = 0.0;
 				int existing_count = 0;
-				for (int h_index = num_existing_train; h_index < (int)this->existing_dependencies_is_hit_histories.size(); h_index++) {
+				for (int h_index = 0; h_index < (int)this->existing_dependencies_is_hit_histories.size(); h_index++) {
 					this->existing_network->activate(this->existing_state_histories[h_index]);
 					double existing_predicted = this->existing_network->output->acti_vals[0];
-					new_network->activate(this->existing_state_histories[h_index]);
-					double new_predicted = new_network->output->acti_vals[0];
+					potential_new_network->activate(this->existing_state_histories[h_index]);
+					double new_predicted = potential_new_network->output->acti_vals[0];
 
 					if (new_predicted >= existing_predicted) {
 						existing_sum_vals += this->existing_target_val_histories[h_index];
@@ -244,11 +214,11 @@ void ExploreExperiment::train_new_backprop(
 				double existing_average = existing_sum_vals / (double)existing_count;
 				double new_sum_vals = 0.0;
 				int new_count = 0;
-				for (int h_index = num_new_train; h_index < (int)this->new_dependencies_is_hit_histories.size(); h_index++) {
+				for (int h_index = 0; h_index < (int)this->new_dependencies_is_hit_histories.size(); h_index++) {
 					this->existing_network->activate(this->new_state_histories[h_index]);
 					double existing_predicted = this->existing_network->output->acti_vals[0];
-					new_network->activate(this->new_state_histories[h_index]);
-					double new_predicted = new_network->output->acti_vals[0];
+					potential_new_network->activate(this->new_state_histories[h_index]);
+					double new_predicted = potential_new_network->output->acti_vals[0];
 
 					if (new_predicted >= existing_predicted) {
 						new_sum_vals += this->new_target_val_histories[h_index];
@@ -257,8 +227,8 @@ void ExploreExperiment::train_new_backprop(
 				}
 				double new_average = new_sum_vals / (double)new_count;
 				double average_ratio = (existing_count + new_count)
-					/ ((double)this->existing_dependencies_is_hit_histories.size() - num_existing_train
-						+ (double)this->new_dependencies_is_hit_histories.size() - num_new_train);
+					/ ((double)this->existing_dependencies_is_hit_histories.size()
+						+ (double)this->new_dependencies_is_hit_histories.size());
 				double local_improvement = (new_average - existing_average) * average_ratio;
 
 				double average_instances_per_run;
@@ -303,27 +273,27 @@ void ExploreExperiment::train_new_backprop(
 
 				if (local_improvement > 0.0) {
 					bool is_success = false;
-					if (this->scope_context->reuse_last_scores.size() >= REUSE_MIN_NUM_LAST_TRACK) {
+					if (this->scope_context->train_reuse_last_scores.size() >= MIN_NUM_LAST_TRACK) {
 						int num_better_than = 0;
-						for (list<double>::iterator it = this->scope_context->reuse_last_scores.begin();
-								it != this->scope_context->reuse_last_scores.end(); it++) {
+						for (list<double>::iterator it = this->scope_context->train_reuse_last_scores.begin();
+								it != this->scope_context->train_reuse_last_scores.end(); it++) {
 							if (global_improvement >= *it) {
 								num_better_than++;
 							}
 						}
 
-						double target_better_than = REUSE_LAST_BETTER_THAN_RATIO * (double)this->scope_context->reuse_last_scores.size();
+						double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->train_reuse_last_scores.size();
 
 						if (num_better_than >= target_better_than) {
 							is_success = true;
 						}
 
-						if (this->scope_context->reuse_last_scores.size() >= REUSE_NUM_LAST_TRACK) {
-							this->scope_context->reuse_last_scores.pop_front();
+						if (this->scope_context->train_reuse_last_scores.size() >= NUM_LAST_TRACK) {
+							this->scope_context->train_reuse_last_scores.pop_front();
 						}
-						this->scope_context->reuse_last_scores.push_back(global_improvement);
+						this->scope_context->train_reuse_last_scores.push_back(global_improvement);
 					} else {
-						this->scope_context->reuse_last_scores.push_back(global_improvement);
+						this->scope_context->train_reuse_last_scores.push_back(global_improvement);
 					}
 
 					#if defined(MDEBUG) && MDEBUG
@@ -331,65 +301,68 @@ void ExploreExperiment::train_new_backprop(
 					#else
 					if (is_success) {
 					#endif /* MDEBUG */
-						add(false,
-							new_network,
-							wrapper);
+						this->new_network = potential_new_network;
 
-						delete this;
+						this->sum_vals = 0.0;
 
-						wrapper->experiment_iter++;
-						if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
-							for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-								Scope* scope = wrapper->solution->scopes[s_index];
-								for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-										it != scope->nodes.end(); it++) {
-									switch (it->second->type) {
-									case NODE_TYPE_NOOP:
-										{
-											NoopNode* noop_node = (NoopNode*)it->second;
-											if (noop_node->experiment != NULL) {
-												delete noop_node->experiment;
-											}
+						this->state = EXPLORE_EXPERIMENT_STATE_REUSE_MEASURE;
+						this->state_iter = 0;
+					} else {
+						delete potential_new_network;
+					}
+
+					delete this;
+
+					wrapper->experiment_iter++;
+					if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
+						for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+							Scope* scope = wrapper->solution->scopes[s_index];
+							for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+									it != scope->nodes.end(); it++) {
+								switch (it->second->type) {
+								case NODE_TYPE_NOOP:
+									{
+										NoopNode* noop_node = (NoopNode*)it->second;
+										if (noop_node->experiment != NULL) {
+											delete noop_node->experiment;
 										}
-										break;
-									case NODE_TYPE_ACTION:
-										{
-											ActionNode* action_node = (ActionNode*)it->second;
-											if (action_node->experiment != NULL) {
-												delete action_node->experiment;
-											}
-										}
-										break;
-									case NODE_TYPE_SCOPE:
-										{
-											ScopeNode* scope_node = (ScopeNode*)it->second;
-											if (scope_node->experiment != NULL) {
-												delete scope_node->experiment;
-											}
-										}
-										break;
-									case NODE_TYPE_BRANCH:
-										{
-											BranchNode* branch_node = (BranchNode*)it->second;
-											if (branch_node->original_experiment != NULL) {
-												delete branch_node->original_experiment;
-											}
-											if (branch_node->branch_experiment != NULL) {
-												delete branch_node->branch_experiment;
-											}
-										}
-										break;
 									}
+									break;
+								case NODE_TYPE_ACTION:
+									{
+										ActionNode* action_node = (ActionNode*)it->second;
+										if (action_node->experiment != NULL) {
+											delete action_node->experiment;
+										}
+									}
+									break;
+								case NODE_TYPE_SCOPE:
+									{
+										ScopeNode* scope_node = (ScopeNode*)it->second;
+										if (scope_node->experiment != NULL) {
+											delete scope_node->experiment;
+										}
+									}
+									break;
+								case NODE_TYPE_BRANCH:
+									{
+										BranchNode* branch_node = (BranchNode*)it->second;
+										if (branch_node->original_experiment != NULL) {
+											delete branch_node->original_experiment;
+										}
+										if (branch_node->branch_experiment != NULL) {
+											delete branch_node->branch_experiment;
+										}
+									}
+									break;
 								}
 							}
-
-							wrapper->experiment_iter = 0;
 						}
-					} else {
-						delete new_network;
+
+						wrapper->experiment_iter = 0;
 					}
 				} else {
-					delete new_network;
+					delete potential_new_network;
 
 					new_state_helper(wrapper);
 				}

@@ -25,7 +25,6 @@
 using namespace std;
 
 void ExploreExperiment::add(bool is_new_state,
-							ScoreNetwork* new_network,
 							SolutionWrapper* wrapper) {
 	delete wrapper->prev_solution;
 	wrapper->prev_solution = new Solution(wrapper->solution);
@@ -72,7 +71,7 @@ void ExploreExperiment::add(bool is_new_state,
 			new_action_node->action_network = new ActionNetwork(generic_action_node->action_network);
 			new_action_node->obs_network = new ObsNetwork(generic_action_node->obs_network);
 
-			new_action_node->score_network = new ScoreNetwork(new_network);
+			new_action_node->score_network = new ScoreNetwork(this->new_network);
 
 			new_nodes.push_back(new_action_node);
 		} else {
@@ -90,7 +89,7 @@ void ExploreExperiment::add(bool is_new_state,
 			new_scope_node->out_network = new TransitionNetwork(this->best_scopes[s_index]->num_states,
 																this->scope_context->num_states);
 
-			new_scope_node->score_network = new ScoreNetwork(new_network);
+			new_scope_node->score_network = new ScoreNetwork(this->new_network);
 
 			new_nodes.push_back(new_scope_node);
 		}
@@ -322,9 +321,8 @@ void ExploreExperiment::add(bool is_new_state,
 
 	new_branch_node->original_network = this->existing_network;
 	this->existing_network = NULL;
-	new_branch_node->branch_network = new_network;
-
-	new_branch_node->is_ramp = true;
+	new_branch_node->branch_network = this->new_network;
+	this->new_network = NULL;
 
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;
@@ -458,8 +456,10 @@ void ExploreExperiment::add(bool is_new_state,
 				new_scope->generic_action_nodes.push_back(new_action_node);
 			}
 
-			new_scope->reuse_last_scores = wrapper->solution->starting_scope->reuse_last_scores;
-			new_scope->new_state_last_scores = wrapper->solution->starting_scope->new_state_last_scores;
+			new_scope->train_reuse_last_scores = wrapper->solution->starting_scope->train_reuse_last_scores;
+			new_scope->measure_reuse_last_scores = wrapper->solution->starting_scope->measure_reuse_last_scores;
+			new_scope->train_new_state_last_scores = wrapper->solution->starting_scope->train_new_state_last_scores;
+			new_scope->measure_new_state_last_scores = wrapper->solution->starting_scope->measure_new_state_last_scores;
 
 			wrapper->solution->starting_scope = new_scope;
 			wrapper->solution->starting_num_improvements = 0;

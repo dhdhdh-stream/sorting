@@ -49,8 +49,6 @@ InitNetwork::InitNetwork(vector<int>& init_states,
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 
-	this->is_ramp = true;
-
 	this->num_instances = 0;
 	this->last_update_iter = -1;
 	this->epoch_iter = 0;
@@ -98,8 +96,6 @@ InitNetwork::InitNetwork(InitNetwork* original) {
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure(NETWORK_INIT_MULTIPLIER);
 	this->output->copy_weights_from(original->output);
-
-	this->is_ramp = original->is_ramp;
 
 	this->num_instances = 0;
 	this->last_update_iter = -1;
@@ -168,10 +164,6 @@ InitNetwork::InitNetwork(ifstream& input_file) {
 	this->hidden_1->load_weights_from(input_file);
 	this->hidden_2->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
-
-	string is_ramp_line;
-	getline(input_file, is_ramp_line);
-	this->is_ramp = stoi(is_ramp_line);
 
 	this->num_instances = 0;
 	this->last_update_iter = -1;
@@ -277,30 +269,16 @@ void InitNetwork::backprop(Eigen::VectorXf& state_errors) {
 
 void InitNetwork::update() {
 	this->epoch_iter++;
-	if (this->is_ramp) {
-		if (this->epoch_iter == RAMP_EPOCH_SIZE) {
-			this->hidden_1->update(this->num_instances,
-								   STATE_LEARNING_RATE);
-			this->hidden_2->update(this->num_instances,
-								   STATE_LEARNING_RATE);
-			this->output->update(this->num_instances,
-								 STATE_LEARNING_RATE);
+	if (this->epoch_iter == UPDATE_EPOCH_SIZE) {
+		this->hidden_1->update(this->num_instances,
+							   STATE_LEARNING_RATE);
+		this->hidden_2->update(this->num_instances,
+							   STATE_LEARNING_RATE);
+		this->output->update(this->num_instances,
+							 STATE_LEARNING_RATE);
 
-			this->num_instances = 0;
-			this->epoch_iter = 0;
-		}
-	} else {
-		if (this->epoch_iter == UPDATE_EPOCH_SIZE) {
-			this->hidden_1->update(this->num_instances,
-								   STATE_LEARNING_RATE);
-			this->hidden_2->update(this->num_instances,
-								   STATE_LEARNING_RATE);
-			this->output->update(this->num_instances,
-								 STATE_LEARNING_RATE);
-
-			this->num_instances = 0;
-			this->epoch_iter = 0;
-		}
+		this->num_instances = 0;
+		this->epoch_iter = 0;
 	}
 }
 
@@ -341,8 +319,6 @@ void InitNetwork::save(ofstream& output_file) {
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);
 	this->output->save_weights(output_file);
-
-	output_file << this->is_ramp << endl;
 }
 
 InitNetworkHistory::InitNetworkHistory(InitNetwork* network) {

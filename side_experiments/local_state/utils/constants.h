@@ -10,20 +10,20 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 const double REGRESSION_WEIGHT_LIMIT = 100000.0;
 
 const double SCORE_LEARNING_RATE = 0.001;
-const double STATE_LEARNING_RATE = 0.0001;
+const double STATE_LEARNING_RATE = 0.0002;
 
 const double NETWORK_INIT_MULTIPLIER = 0.01;
 
 const int INIT_EPOCH_SIZE = 10;
-const int RAMP_EPOCH_SIZE = 20;
 const int UPDATE_EPOCH_SIZE = 100;
 
 #if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_NUM_DATAPOINTS = 20;
+const int EXPERIMENT_TRAIN_NUM_DATAPOINTS = 20;
+const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 10;
 #else
-const int EXPERIMENT_NUM_DATAPOINTS = 5000;
+const int EXPERIMENT_TRAIN_NUM_DATAPOINTS = 4000;
+const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
-const double VERIFY_RATIO = 0.2;
 
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;
@@ -44,42 +44,24 @@ const int STEP_TYPE_SCOPE = 1;
 const int NEW_STATE_NUM_ADD = 2;
 
 #if defined(MDEBUG) && MDEBUG
-const int REUSE_NUM_LAST_TRACK = 4;
-const int REUSE_MIN_NUM_LAST_TRACK = 2;
-const double REUSE_LAST_BETTER_THAN_RATIO = 0.5;
+const int NUM_LAST_TRACK = 4;
+const int MIN_NUM_LAST_TRACK = 2;
+const double LAST_BETTER_THAN_RATIO = 0.5;
 #else
-const int REUSE_NUM_LAST_TRACK = 20;
-const int REUSE_MIN_NUM_LAST_TRACK = 10;
-const double REUSE_LAST_BETTER_THAN_RATIO = 0.9;
+const int NUM_LAST_TRACK = 10;
+const int MIN_NUM_LAST_TRACK = 5;
+const double LAST_BETTER_THAN_RATIO = 0.6;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int NEW_STATE_NUM_LAST_TRACK = 4;
-const int NEW_STATE_MIN_NUM_LAST_TRACK = 2;
-const double NEW_STATE_LAST_BETTER_THAN_RATIO = 0.5;
-#else
-const int NEW_STATE_NUM_LAST_TRACK = 20;
-const int NEW_STATE_MIN_NUM_LAST_TRACK = 10;
-const double NEW_STATE_LAST_BETTER_THAN_RATIO = 0.9;
-#endif /* MDEBUG */
-
-#if defined(MDEBUG) && MDEBUG
-const int RAMP_LOWER = -5;
-const int RAMP_UPPER = 20;
 const int UPDATE_NUM_ITERS = 40;
 const int BATCH_SIZE = 10;
 const int ITERS_PER_BATCH = 10;
 #else
-// const int RAMP_LOWER = -1000;
-// const int RAMP_UPPER = 4000;
 // const int UPDATE_NUM_ITERS = 10000;
-const int RAMP_LOWER = -10000;
-const int RAMP_UPPER = 40000;
 const int UPDATE_NUM_ITERS = 100000;
 const int BATCH_SIZE = 1000;
 const int ITERS_PER_BATCH = 10000;
-// const int RAMP_LOWER = -100000;
-// const int RAMP_UPPER = 400000;
 // const int UPDATE_NUM_ITERS = 1000000;
 // const int BATCH_SIZE = 1;
 // const int ITERS_PER_BATCH = 1;

@@ -22,12 +22,8 @@ class SolutionWrapper;
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
-/**
- * - no measure step
- *   - improvement not just the experiment change itself...
- *     - ...but also the solution's adjustments to it
- *       - so any results from a measure step less meaningful
- */
+const int EXPLORE_EXPERIMENT_STATE_REUSE_MEASURE = 3;
+const int EXPLORE_EXPERIMENT_STATE_NEW_STATE_MEASURE = 4;
 
 class ExploreExperimentHistory;
 class ExploreExperiment : public AbstractExperiment {
@@ -38,6 +34,8 @@ public:
 	int state_iter;
 
 	std::vector<std::vector<int>> dependencies;
+
+	double existing_val_average;
 
 	ScoreNetwork* existing_network;
 
@@ -61,6 +59,11 @@ public:
 	std::vector<Eigen::VectorXf> new_state_histories;
 	std::vector<double> new_signal_histories;
 	std::vector<double> new_target_val_histories;
+
+	ScoreNetwork* new_network;
+	std::vector<InitNetwork*> init_networks;
+
+	double sum_vals;
 
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,
@@ -127,8 +130,35 @@ public:
 
 	void new_state_helper(SolutionWrapper* wrapper);
 
+	void reuse_measure_check_activate(std::vector<double>& obs,
+									  ExploreExperimentHistory* history,
+									  SolutionWrapper* wrapper);
+	void reuse_measure_step(std::vector<double>& obs,
+							int& action,
+							bool& is_next,
+							SolutionWrapper* wrapper);
+	void reuse_measure_callback(std::vector<double>& obs,
+								SolutionWrapper* wrapper);
+	void reuse_measure_exit_step(SolutionWrapper* wrapper);
+	void reuse_measure_backprop(double target_val,
+								ExploreExperimentHistory* history,
+								SolutionWrapper* wrapper);
+
+	void new_state_measure_check_activate(std::vector<double>& obs,
+										  ExploreExperimentHistory* history,
+										  SolutionWrapper* wrapper);
+	void new_state_measure_step(std::vector<double>& obs,
+								int& action,
+								bool& is_next,
+								SolutionWrapper* wrapper);
+	void new_state_measure_callback(std::vector<double>& obs,
+									SolutionWrapper* wrapper);
+	void new_state_measure_exit_step(SolutionWrapper* wrapper);
+	void new_state_measure_backprop(double target_val,
+									ExploreExperimentHistory* history,
+									SolutionWrapper* wrapper);
+
 	void add(bool is_new_state,
-			 ScoreNetwork* new_network,
 			 SolutionWrapper* wrapper);
 
 	bool further_than(ExploreExperiment* other);

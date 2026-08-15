@@ -64,37 +64,12 @@ void ExploreExperiment::train_existing_backprop(
 	}
 
 	this->state_iter++;
-	if (this->state_iter >= EXPERIMENT_NUM_DATAPOINTS) {
-		{
-			default_random_engine generator_copy = generator;
-			shuffle(this->existing_dependencies_is_hit_histories.begin(), this->existing_dependencies_is_hit_histories.end(), generator_copy);
-		}
-		{
-			default_random_engine generator_copy = generator;
-			shuffle(this->existing_dependencies_state_histories.begin(), this->existing_dependencies_state_histories.end(), generator_copy);
-		}
-		{
-			default_random_engine generator_copy = generator;
-			shuffle(this->existing_dependencies_obs_histories.begin(), this->existing_dependencies_obs_histories.end(), generator_copy);
-		}
-		{
-			default_random_engine generator_copy = generator;
-			shuffle(this->existing_state_histories.begin(), this->existing_state_histories.end(), generator_copy);
-		}
-		{
-			default_random_engine generator_copy = generator;
-			shuffle(this->existing_signal_histories.begin(), this->existing_signal_histories.end(), generator_copy);
-		}
-		{
-			default_random_engine generator_copy = generator;
-			shuffle(this->existing_target_val_histories.begin(), this->existing_target_val_histories.end(), generator_copy);
-		}
-
-		int num_existing_train = (1.0 - VERIFY_RATIO) * (double)this->existing_dependencies_is_hit_histories.size();
+	if (this->state_iter >= EXPERIMENT_TRAIN_NUM_DATAPOINTS) {
+		this->existing_val_average = this->sum_vals / this->state_iter;
 
 		this->existing_network = new ScoreNetwork(this->existing_state_histories[0].size());
 
-		uniform_int_distribution<int> train_distribution(0, num_existing_train-1);
+		uniform_int_distribution<int> train_distribution(0, this->existing_dependencies_is_hit_histories.size()-1);
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int rand_index = train_distribution(generator);
 
