@@ -266,7 +266,7 @@ void ExploreExperiment::train_new_backprop(double target_val,
 				double global_improvement = average_instances_per_run * local_improvement;
 
 				// // temp
-				// cout << "train_new" << endl;
+				// cout << "train reuse" << endl;
 				// cout << "this->scope_context->id: " << this->scope_context->id << endl;
 				// cout << "local_improvement: " << local_improvement << endl;
 				// cout << "global_improvement: " << global_improvement << endl;
@@ -309,57 +309,57 @@ void ExploreExperiment::train_new_backprop(double target_val,
 						this->state_iter = 0;
 					} else {
 						delete potential_new_network;
-					}
 
-					delete this;
+						delete this;
 
-					wrapper->experiment_iter++;
-					if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
-						for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-							Scope* scope = wrapper->solution->scopes[s_index];
-							for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-									it != scope->nodes.end(); it++) {
-								switch (it->second->type) {
-								case NODE_TYPE_NOOP:
-									{
-										NoopNode* noop_node = (NoopNode*)it->second;
-										if (noop_node->experiment != NULL) {
-											delete noop_node->experiment;
+						wrapper->experiment_iter++;
+						if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
+							for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+								Scope* scope = wrapper->solution->scopes[s_index];
+								for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+										it != scope->nodes.end(); it++) {
+									switch (it->second->type) {
+									case NODE_TYPE_NOOP:
+										{
+											NoopNode* noop_node = (NoopNode*)it->second;
+											if (noop_node->experiment != NULL) {
+												delete noop_node->experiment;
+											}
 										}
+										break;
+									case NODE_TYPE_ACTION:
+										{
+											ActionNode* action_node = (ActionNode*)it->second;
+											if (action_node->experiment != NULL) {
+												delete action_node->experiment;
+											}
+										}
+										break;
+									case NODE_TYPE_SCOPE:
+										{
+											ScopeNode* scope_node = (ScopeNode*)it->second;
+											if (scope_node->experiment != NULL) {
+												delete scope_node->experiment;
+											}
+										}
+										break;
+									case NODE_TYPE_BRANCH:
+										{
+											BranchNode* branch_node = (BranchNode*)it->second;
+											if (branch_node->original_experiment != NULL) {
+												delete branch_node->original_experiment;
+											}
+											if (branch_node->branch_experiment != NULL) {
+												delete branch_node->branch_experiment;
+											}
+										}
+										break;
 									}
-									break;
-								case NODE_TYPE_ACTION:
-									{
-										ActionNode* action_node = (ActionNode*)it->second;
-										if (action_node->experiment != NULL) {
-											delete action_node->experiment;
-										}
-									}
-									break;
-								case NODE_TYPE_SCOPE:
-									{
-										ScopeNode* scope_node = (ScopeNode*)it->second;
-										if (scope_node->experiment != NULL) {
-											delete scope_node->experiment;
-										}
-									}
-									break;
-								case NODE_TYPE_BRANCH:
-									{
-										BranchNode* branch_node = (BranchNode*)it->second;
-										if (branch_node->original_experiment != NULL) {
-											delete branch_node->original_experiment;
-										}
-										if (branch_node->branch_experiment != NULL) {
-											delete branch_node->branch_experiment;
-										}
-									}
-									break;
 								}
 							}
-						}
 
-						wrapper->experiment_iter = 0;
+							wrapper->experiment_iter = 0;
+						}
 					}
 				} else {
 					delete potential_new_network;

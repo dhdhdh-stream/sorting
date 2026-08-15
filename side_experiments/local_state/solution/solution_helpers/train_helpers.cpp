@@ -31,31 +31,31 @@ void backprop_helper(TrainScopeHistory* scope_history,
 					 double target_val) {
 	Scope* scope = scope_history->scope;
 
-	scope->end_score_network->load(scope_history->end_score_network_history);
-	scope->end_score_network->backprop(target_val,
-									   state_error);
+	// scope->end_score_network->load(scope_history->end_score_network_history);
+	// scope->end_score_network->backprop(target_val,
+	// 								   state_error);
 
 	for (int h_index = (int)scope_history->node_histories.size()-1; h_index >= 0; h_index--) {
 		AbstractNode* node = scope_history->node_histories[h_index]->node;
 		switch (node->type) {
-		case NODE_TYPE_NOOP:
-			{
-				TrainNoopNodeHistory* noop_node_history = (TrainNoopNodeHistory*)scope_history->node_histories[h_index];
-				NoopNode* noop_node = (NoopNode*)node;
-				noop_node->score_network->load(noop_node_history->score_network_history);
-				noop_node->score_network->backprop(target_val,
-												   state_error);
-			}
-			break;
+		// case NODE_TYPE_NOOP:
+		// 	{
+		// 		TrainNoopNodeHistory* noop_node_history = (TrainNoopNodeHistory*)scope_history->node_histories[h_index];
+		// 		NoopNode* noop_node = (NoopNode*)node;
+		// 		noop_node->score_network->load(noop_node_history->score_network_history);
+		// 		noop_node->score_network->backprop(target_val,
+		// 										   state_error);
+		// 	}
+		// 	break;
 		case NODE_TYPE_ACTION:
 			{
 				TrainActionNodeHistory* action_node_history = (TrainActionNodeHistory*)scope_history->node_histories[h_index];
 				ActionNode* action_node = (ActionNode*)node;
-				if (!action_node->is_generic) {
-					action_node->score_network->load(action_node_history->score_network_history);
-					action_node->score_network->backprop(target_val,
-														 state_error);
-				}
+				// if (!action_node->is_generic) {
+				// 	action_node->score_network->load(action_node_history->score_network_history);
+				// 	action_node->score_network->backprop(target_val,
+				// 										 state_error);
+				// }
 				for (int h_index = (int)action_node_history->init_network_histories.size()-1; h_index >= 0; h_index--) {
 					if (action_node_history->init_network_histories[h_index] != NULL) {
 						action_node->init_networks[h_index]->load(action_node_history->init_network_histories[h_index]);
@@ -73,9 +73,9 @@ void backprop_helper(TrainScopeHistory* scope_history,
 				TrainScopeNodeHistory* scope_node_history = (TrainScopeNodeHistory*)scope_history->node_histories[h_index];
 				ScopeNode* scope_node = (ScopeNode*)node;
 
-				scope_node->score_network->load(scope_node_history->score_network_history);
-				scope_node->score_network->backprop(target_val,
-													state_error);
+				// scope_node->score_network->load(scope_node_history->score_network_history);
+				// scope_node->score_network->backprop(target_val,
+				// 									state_error);
 
 				Eigen::VectorXf inner_state_error;
 				inner_state_error.resize(scope_node->scope->num_states);
@@ -164,17 +164,17 @@ void update_helper(TrainScopeHistory* scope_history,
 	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
 		AbstractNode* node = scope_history->node_histories[h_index]->node;
 		switch (node->type) {
-		case NODE_TYPE_NOOP:
-			{
-				NoopNode* noop_node = (NoopNode*)node;
+		// case NODE_TYPE_NOOP:
+		// 	{
+		// 		NoopNode* noop_node = (NoopNode*)node;
 
-				if (noop_node->score_network->last_update_iter != iter_index) {
-					noop_node->score_network->update();
+		// 		if (noop_node->score_network->last_update_iter != iter_index) {
+		// 			noop_node->score_network->update();
 
-					noop_node->score_network->last_update_iter = iter_index;
-				}
-			}
-			break;
+		// 			noop_node->score_network->last_update_iter = iter_index;
+		// 		}
+		// 	}
+		// 	break;
 		case NODE_TYPE_ACTION:
 			{
 				TrainActionNodeHistory* action_node_history = (TrainActionNodeHistory*)scope_history->node_histories[h_index];
@@ -202,13 +202,13 @@ void update_helper(TrainScopeHistory* scope_history,
 					}
 				}
 
-				if (!action_node->is_generic) {
-					if (action_node->score_network->last_update_iter != iter_index) {
-						action_node->score_network->update();
+				// if (!action_node->is_generic) {
+				// 	if (action_node->score_network->last_update_iter != iter_index) {
+				// 		action_node->score_network->update();
 
-						action_node->score_network->last_update_iter = iter_index;
-					}
-				}
+				// 		action_node->score_network->last_update_iter = iter_index;
+				// 	}
+				// }
 			}
 			break;
 		case NODE_TYPE_SCOPE:
@@ -235,11 +235,11 @@ void update_helper(TrainScopeHistory* scope_history,
 					}
 				}
 
-				if (scope_node->score_network->last_update_iter != iter_index) {
-					scope_node->score_network->update();
+				// if (scope_node->score_network->last_update_iter != iter_index) {
+				// 	scope_node->score_network->update();
 
-					scope_node->score_network->last_update_iter = iter_index;
-				}
+				// 	scope_node->score_network->last_update_iter = iter_index;
+				// }
 			}
 			break;
 		case NODE_TYPE_BRANCH:
@@ -264,13 +264,13 @@ void update_helper(TrainScopeHistory* scope_history,
 		}
 	}
 
-	if (scope_history->end_score_network_history != NULL) {
-		if (scope->end_score_network->last_update_iter != iter_index) {
-			scope->end_score_network->update();
+	// if (scope_history->end_score_network_history != NULL) {
+	// 	if (scope->end_score_network->last_update_iter != iter_index) {
+	// 		scope->end_score_network->update();
 
-			scope->end_score_network->last_update_iter = iter_index;
-		}
-	}
+	// 		scope->end_score_network->last_update_iter = iter_index;
+	// 	}
+	// }
 }
 
 void train_helper(SolutionWrapper* wrapper) {

@@ -46,10 +46,10 @@ void ActionNode::train_step(AbstractNodeHistory* history,
 			}
 		}
 
-		if (!this->is_generic) {
-			this->score_network->activate(state);
-			train_history->score_network_history = new ScoreNetworkHistory(this->score_network);
-			this->score_network->save(train_history->score_network_history);
-		}
+		// if (!this->is_generic) {
+		// 	this->score_network->activate(state);
+		// 	train_history->score_network_history = new ScoreNetworkHistory(this->score_network);
+		// 	this->score_network->save(train_history->score_network_history);
+		// }
 	}
 }

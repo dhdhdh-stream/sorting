@@ -44,7 +44,7 @@ void Scope::train_activate(ScopeHistory* history,
 						 train_scope_history);
 	}
 
-	this->end_score_network->activate(state);
-	train_scope_history->end_score_network_history = new ScoreNetworkHistory(this->end_score_network);
-	this->end_score_network->save(train_scope_history->end_score_network_history);
+	// this->end_score_network->activate(state);
+	// train_scope_history->end_score_network_history = new ScoreNetworkHistory(this->end_score_network);
+	// this->end_score_network->save(train_scope_history->end_score_network_history);
 }

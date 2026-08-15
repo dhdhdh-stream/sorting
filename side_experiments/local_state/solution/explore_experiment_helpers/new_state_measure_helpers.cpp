@@ -161,19 +161,19 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 			case NODE_TYPE_NOOP:
 				{
 					NoopNode* noop_node = (NoopNode*)this->node_context;
-					average_hits_per_run = noop_node->average_instances_per_hit / noop_node->average_instances_per_run;
+					average_hits_per_run = noop_node->average_instances_per_run / noop_node->average_instances_per_hit;
 				}
 				break;
 			case NODE_TYPE_ACTION:
 				{
 					ActionNode* action_node = (ActionNode*)this->node_context;
-					average_hits_per_run = action_node->average_instances_per_hit / action_node->average_instances_per_run;
+					average_hits_per_run = action_node->average_instances_per_run / action_node->average_instances_per_hit;
 				}
 				break;
 			case NODE_TYPE_SCOPE:
 				{
 					ScopeNode* scope_node = (ScopeNode*)this->node_context;
-					average_hits_per_run = scope_node->average_instances_per_hit / scope_node->average_instances_per_run;
+					average_hits_per_run = scope_node->average_instances_per_run / scope_node->average_instances_per_hit;
 				}
 				break;
 			default:
@@ -181,9 +181,9 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 				{
 					BranchNode* branch_node = (BranchNode*)this->node_context;
 					if (this->is_branch) {
-						average_hits_per_run = branch_node->branch_average_instances_per_hit / branch_node->branch_average_instances_per_run;
+						average_hits_per_run = branch_node->branch_average_instances_per_run / branch_node->branch_average_instances_per_hit;
 					} else {
-						average_hits_per_run = branch_node->original_average_instances_per_hit / branch_node->original_average_instances_per_run;
+						average_hits_per_run = branch_node->original_average_instances_per_run / branch_node->original_average_instances_per_hit;
 					}
 				}
 				break;
@@ -331,6 +331,7 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 										  0,
 										  this->init_networks[d_index]);
 				}
+				this->init_networks.clear();
 
 				this->existing_network->add_states(this->scope_context->num_states);
 

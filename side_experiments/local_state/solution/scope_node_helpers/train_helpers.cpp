@@ -69,7 +69,7 @@ void ScopeNode::train_step(AbstractNodeHistory* history,
 		this->out_network->save(train_history->out_network_history);
 	}
 
-	this->score_network->activate(state);
-	train_history->score_network_history = new ScoreNetworkHistory(this->score_network);
-	this->score_network->save(train_history->score_network_history);
+	// this->score_network->activate(state);
+	// train_history->score_network_history = new ScoreNetworkHistory(this->score_network);
+	// this->score_network->save(train_history->score_network_history);
 }
