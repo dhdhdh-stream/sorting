@@ -89,26 +89,13 @@ void ExploreExperiment::train_new_backprop(
 
 			this->state_iter++;
 			if (this->state_iter >= EXPERIMENT_NUM_DATAPOINTS) {
-				int num_existing_train = (1.0 - VERIFY_RATIO) * (double)this->existing_obs_histories.size();
-
-				{
-					default_random_engine generator_copy = generator;
-					shuffle(this->new_obs_histories.begin(), this->new_obs_histories.end(), generator_copy);
-				}
-				{
-					default_random_engine generator_copy = generator;
-					shuffle(this->new_target_val_histories.begin(), this->new_target_val_histories.end(), generator_copy);
-				}
-
-				int num_new_train = (1.0 - VERIFY_RATIO) * (double)this->new_obs_histories.size();
-
 				this->new_network = new Network(this->new_obs_histories[0].size());
 				double hidden_1_average_max_update = 0.0;
 				double hidden_2_average_max_update = 0.0;
 				double hidden_3_average_max_update = 0.0;
 				double output_average_max_update = 0.0;
 
-				uniform_int_distribution<int> new_train_distribution(0, num_new_train-1);
+				uniform_int_distribution<int> new_train_distribution(0, this->new_obs_histories.size()-1);
 				for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 					int rand_index = new_train_distribution(generator);
 
@@ -125,7 +112,7 @@ void ExploreExperiment::train_new_backprop(
 
 				double existing_sum_vals = 0.0;
 				int existing_count = 0;
-				for (int h_index = num_existing_train; h_index < (int)this->existing_obs_histories.size(); h_index++) {
+				for (int h_index = 0; h_index < (int)this->existing_obs_histories.size(); h_index++) {
 					this->existing_network->activate(this->existing_obs_histories[h_index]);
 					double existing_predicted = this->existing_network->output->acti_vals[0];
 					this->new_network->activate(this->existing_obs_histories[h_index]);
@@ -138,7 +125,7 @@ void ExploreExperiment::train_new_backprop(
 				double existing_average = existing_sum_vals / (double)existing_count;
 				double new_sum_vals = 0.0;
 				int new_count = 0;
-				for (int h_index = num_new_train; h_index < (int)this->new_obs_histories.size(); h_index++) {
+				for (int h_index = 0; h_index < (int)this->new_obs_histories.size(); h_index++) {
 					this->existing_network->activate(this->new_obs_histories[h_index]);
 					double existing_predicted = this->existing_network->output->acti_vals[0];
 					this->new_network->activate(this->new_obs_histories[h_index]);
@@ -150,8 +137,8 @@ void ExploreExperiment::train_new_backprop(
 				}
 				double new_average = new_sum_vals / (double)new_count;
 				double average_ratio = (existing_count + new_count)
-					/ ((double)this->existing_obs_histories.size() - num_existing_train
-						+ (double)this->new_obs_histories.size() - num_new_train);
+					/ ((double)this->existing_obs_histories.size()
+						+ (double)this->new_obs_histories.size());
 				double local_improvement = (new_average - existing_average) * average_ratio;
 
 				int total_iters = wrapper->iters_since_update - this->start_iter;

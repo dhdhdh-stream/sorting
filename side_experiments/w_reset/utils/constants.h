@@ -12,9 +12,8 @@ const double REGRESSION_WEIGHT_LIMIT = 100000.0;
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_NUM_DATAPOINTS = 20;
 #else
-const int EXPERIMENT_NUM_DATAPOINTS = 5000;
+const int EXPERIMENT_NUM_DATAPOINTS = 4000;
 #endif /* MDEBUG */
-const double VERIFY_RATIO = 0.2;
 
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;

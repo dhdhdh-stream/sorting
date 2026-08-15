@@ -1,3 +1,11 @@
+/**
+ * - OK to train on only paths taken:
+ *   - initially, paths not taken are ones that have low score
+ *   - since bad paths are no longer taken, score increase overall...
+ *   - ...increasing score for bad paths, leading to them being taken again
+ *   - ultimately, bad paths will be predicted as bad, but not accurately
+ */
+
 #include "solution_helpers.h"
 
 #include "branch_node.h"
