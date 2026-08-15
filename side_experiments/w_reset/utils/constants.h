@@ -20,7 +20,7 @@ const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 1000;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;
 #else
-const int TRAIN_ITERS = 300000;
+const int TRAIN_ITERS = 100000;
 #endif /* MDEBUG */
 
 /**
@@ -51,6 +51,10 @@ const int ITERS_PER_BATCH = 10;
 const int UPDATE_NUM_ITERS = 40000;
 const int BATCH_SIZE = 1000;
 const int ITERS_PER_BATCH = 10000;
+/**
+ * - need large BATCH_SIZE and low ITERS_PER_BATCH
+ *   - adam easily overfits
+ */
 #endif /* MDEBUG */
 
 const int GENERALIZE_ITER = 3;
