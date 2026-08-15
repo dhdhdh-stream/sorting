@@ -26,17 +26,6 @@ void BranchNode::experiment_step(vector<double>& obs,
 		return;
 	}
 
-	if (this->is_ramp) {
-		uniform_int_distribution<int> ramp_distribution(RAMP_LOWER, RAMP_UPPER);
-		/**
-		 * - make sure fully ramped up before update ends
-		 */
-		if (ramp_distribution(generator) >= wrapper->iters_since_update) {
-			wrapper->node_context.back() = this->original_next_node;
-			return;
-		}
-	}
-
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 	BranchNodeHistory* history = new BranchNodeHistory(this);

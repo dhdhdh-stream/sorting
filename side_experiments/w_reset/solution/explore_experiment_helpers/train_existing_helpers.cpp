@@ -29,8 +29,12 @@ void ExploreExperiment::train_existing_backprop(
 		this->existing_target_val_histories.push_back(target_val);
 	}
 
+	this->sum_vals += target_val;
+
 	this->state_iter++;
-	if (this->state_iter >= EXPERIMENT_NUM_DATAPOINTS) {
+	if (this->state_iter >= EXPERIMENT_TRAIN_NUM_DATAPOINTS) {
+		this->existing_val_average = this->sum_vals / this->state_iter;
+
 		this->existing_network = new Network(this->existing_obs_histories[0].size());
 		double hidden_1_average_max_update = 0.0;
 		double hidden_2_average_max_update = 0.0;

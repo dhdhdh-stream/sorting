@@ -31,8 +31,6 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
-	bool is_ramp;
-
 	int consec_original;
 	int consec_branch;
 

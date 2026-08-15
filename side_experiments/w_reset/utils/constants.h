@@ -10,9 +10,11 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 const double REGRESSION_WEIGHT_LIMIT = 100000.0;
 
 #if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_NUM_DATAPOINTS = 20;
+const int EXPERIMENT_TRAIN_NUM_DATAPOINTS = 20;
+const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 10;
 #else
-const int EXPERIMENT_NUM_DATAPOINTS = 4000;
+const int EXPERIMENT_TRAIN_NUM_DATAPOINTS = 4000;
+const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
@@ -37,19 +39,15 @@ const int MIN_NUM_LAST_TRACK = 2;
 const double LAST_BETTER_THAN_RATIO = 0.5;
 #else
 const int NUM_LAST_TRACK = 10;
-const int MIN_NUM_LAST_TRACK = 5;
-const double LAST_BETTER_THAN_RATIO = 0.8;
+const int MIN_NUM_LAST_TRACK = 3;
+const double LAST_BETTER_THAN_RATIO = 0.6;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int RAMP_LOWER = -5;
-const int RAMP_UPPER = 20;
 const int UPDATE_NUM_ITERS = 40;
 const int BATCH_SIZE = 10;
 const int ITERS_PER_BATCH = 10;
 #else
-const int RAMP_LOWER = -5000;
-const int RAMP_UPPER = 20000;
 const int UPDATE_NUM_ITERS = 40000;
 const int BATCH_SIZE = 1000;
 const int ITERS_PER_BATCH = 10000;
