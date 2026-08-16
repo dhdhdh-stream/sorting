@@ -26,13 +26,9 @@ using namespace std;
 
 void ExploreExperiment::add(bool is_new_state,
 							SolutionWrapper* wrapper) {
-	delete wrapper->prev_solution;
-	wrapper->prev_solution = new Solution(wrapper->solution);
-
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
-	ss << "curr_num_resets: " << wrapper->solution->curr_num_resets << "; ";
 	ss << "Experiment" << "; ";
 	ss << "is_new_state: " << is_new_state << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
@@ -359,7 +355,6 @@ void ExploreExperiment::add(bool is_new_state,
 	}
 
 	wrapper->solution->timestamp++;
-	wrapper->solution->curr_num_resets = 0;
 
 	if (this->scope_context == wrapper->solution->starting_scope) {
 		wrapper->solution->starting_num_improvements++;

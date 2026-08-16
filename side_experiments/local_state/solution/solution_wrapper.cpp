@@ -10,7 +10,7 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->solution = new Solution();
 	this->solution->init(problem_type);
 
-	this->prev_solution = new Solution(this->solution);
+	this->best_solution = new Solution(this->solution);
 
 	this->iters_since_update = 0;
 
@@ -31,8 +31,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution = new Solution();
 	this->solution->load(input_file);
 
-	this->prev_solution = new Solution();
-	this->prev_solution->load(input_file);
+	this->best_solution = new Solution();
+	this->best_solution->load(input_file);
 
 	this->iters_since_update = 0;
 
@@ -50,7 +50,7 @@ SolutionWrapper::SolutionWrapper(std::string path,
 SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
 
-	delete this->prev_solution;
+	delete this->best_solution;
 
 	for (int h_index = 0; h_index < (int)this->train_scope_histories.size(); h_index++) {
 		delete this->train_scope_histories[h_index];
@@ -102,7 +102,7 @@ void SolutionWrapper::save(string path,
 
 	this->solution->save(output_file);
 
-	this->prev_solution->save(output_file);
+	this->best_solution->save(output_file);
 
 	output_file.close();
 

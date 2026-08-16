@@ -40,8 +40,6 @@ public:
 	int timestamp;
 	double curr_score;
 
-	int curr_num_resets;
-
 	int num_obs;
 	int num_actions;
 

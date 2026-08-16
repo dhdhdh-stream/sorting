@@ -200,25 +200,15 @@ void SolutionWrapper::experiment_end(double result) {
 
 	this->iters_since_update++;
 	if (this->iters_since_update == UPDATE_NUM_ITERS) {
-		if (this->solution->timestamp != 0) {
-			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
-			#else
-			if (this->prev_solution->curr_score > this->solution->curr_score) {
-			#endif /* MDEBUG */
-				// temp
-				cout << "reset" << endl;
-				cout << "this->prev_solution->curr_num_resets: " << this->prev_solution->curr_num_resets << endl;
-				cout << "this->prev_solution->curr_score: " << this->prev_solution->curr_score << endl;
-				cout << "this->solution->curr_score: " << this->solution->curr_score << endl;
-
-				this->prev_solution->curr_num_resets++;
-				if (this->prev_solution->curr_num_resets >= STUCK_NUM_ITERS) {
-					this->prev_solution->timestamp = -1;
-				}
+		if (this->solution->curr_score > this->best_solution->curr_score) {
+			delete this->best_solution;
+			this->best_solution = new Solution(this->solution);
+		} else {
+			if (this->solution->timestamp >= this->best_solution->timestamp + STUCK_NUM_ITERS) {
+				this->best_solution->timestamp = -1;
 
 				delete this->solution;
-				this->solution = new Solution(this->prev_solution);
+				this->solution = new Solution(this->best_solution);
 			}
 		}
 	}
