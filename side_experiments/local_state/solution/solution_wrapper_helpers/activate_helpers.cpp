@@ -14,15 +14,12 @@
 
 using namespace std;
 
-void SolutionWrapper::init(int run_type,
-						   vector<double> obs) {
+void SolutionWrapper::init(vector<double> obs) {
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
 	this->starting_run_seed = this->run_index;
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
-
-	this->run_type = run_type;
 
 	this->states.push_back(Eigen::VectorXf());
 	this->states.back().resize(this->solution->starting_scope->num_states);
@@ -49,20 +46,6 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 	int action;
 	bool is_next = false;
 	bool is_done = false;
-
-	if (this->run_type == RUN_TYPE_DAMAGE) {
-		uniform_int_distribution<int> damage_distribution(0, 19);
-		if (damage_distribution(generator) == 0) {
-			Scope* scope = this->scope_histories.back()->scope;
-
-			uniform_int_distribution<int> distribution(0, scope->generic_action_nodes.size()-1);
-			scope->generic_action_nodes[distribution(generator)]->step(
-				obs,
-				action,
-				is_next,
-				this);
-		}
-	}
 
 	while (!is_next) {
 		if (this->node_context.back() == NULL) {

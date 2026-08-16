@@ -62,6 +62,7 @@ public:
 	void train_step(AbstractNodeHistory* history,
 					bool allow_drop,
 					Eigen::VectorXf& state,
+					int run_type,
 					TrainScopeHistory* train_scope_history);
 
 	void copy_from(BranchNode* original,

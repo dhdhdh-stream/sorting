@@ -47,6 +47,7 @@ public:
 	virtual void train_step(AbstractNodeHistory* history,
 							bool allow_drop,
 							Eigen::VectorXf& state,
+							int run_type,
 							TrainScopeHistory* train_scope_history) = 0;
 
 	virtual void save(std::ofstream& output_file) = 0;

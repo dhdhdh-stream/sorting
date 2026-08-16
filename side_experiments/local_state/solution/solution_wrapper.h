@@ -24,10 +24,6 @@ class Scope;
 class ScopeHistory;
 class Solution;
 
-const int RUN_TYPE_EXISTING = 0;
-const int RUN_TYPE_DAMAGE = 1;
-const int RUN_TYPE_EXPLORE = 2;
-
 class SolutionWrapper {
 public:
 	Solution* solution;
@@ -53,9 +49,11 @@ public:
 	int run_num_actions;
 
 	int run_type;
+	int diversity_index;
 
 	std::vector<ScopeHistory*> train_scope_histories;
 	std::vector<double> train_target_val_histories;
+	std::vector<int> train_run_type_histories;
 	int train_iter_index;
 
 	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_experiment_histories;
@@ -73,8 +71,7 @@ public:
 					std::string name);
 	~SolutionWrapper();
 
-	void init(int run_type,
-			  std::vector<double> obs);
+	void init(std::vector<double> obs);
 	std::pair<bool,int> step(std::vector<double> obs);
 	void end();
 

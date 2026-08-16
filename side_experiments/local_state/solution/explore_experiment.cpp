@@ -17,13 +17,16 @@
 
 using namespace std;
 
-ExploreExperiment::ExploreExperiment(Scope* scope_context,
+ExploreExperiment::ExploreExperiment(int diversity_index,
+									 Scope* scope_context,
 									 AbstractNode* node_context,
 									 bool is_branch,
 									 AbstractNode* exit_next_node,
 									 vector<vector<int>>& dependencies,
 									 bool use_signal,
 									 SolutionWrapper* wrapper) {
+	this->diversity_index = diversity_index;
+
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;

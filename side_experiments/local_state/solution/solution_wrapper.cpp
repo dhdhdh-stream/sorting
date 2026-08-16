@@ -2,7 +2,9 @@
 
 #include "constants.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
+#include "transition_network.h"
 
 using namespace std;
 
@@ -80,7 +82,30 @@ void SolutionWrapper::combine(string other_path,
 		this->solution->scopes.push_back(other->scopes[o_index]);
 
 		for (int s_index = 0; s_index < starting_num_scopes; s_index++) {
-			this->solution->scopes[s_index]->child_scopes.push_back(other->scopes[o_index]);
+			Scope* scope = this->solution->scopes[s_index];
+
+			scope->child_scopes.push_back(other->scopes[o_index]);
+
+			ScopeNode* new_scope_node = new ScopeNode();
+			new_scope_node->parent = scope;
+			new_scope_node->id = scope->node_counter;
+			scope->node_counter++;
+			scope->nodes[new_scope_node->id] = new_scope_node;
+
+			new_scope_node->is_generic = true;
+
+			new_scope_node->in_network = new TransitionNetwork(scope->num_states,
+															   other->scopes[o_index]->num_states);
+
+			new_scope_node->scope = other->scopes[o_index];
+
+			new_scope_node->out_network = new TransitionNetwork(other->scopes[o_index]->num_states,
+																scope->num_states);
+
+			new_scope_node->next_node_id = -1;
+			new_scope_node->next_node = NULL;
+
+			scope->generic_scope_nodes.push_back(new_scope_node);
 		}
 	}
 

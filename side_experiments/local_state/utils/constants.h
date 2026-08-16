@@ -21,14 +21,14 @@ const int UPDATE_EPOCH_SIZE = 100;
 const int EXPERIMENT_TRAIN_NUM_DATAPOINTS = 20;
 const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 10;
 #else
-const int EXPERIMENT_TRAIN_NUM_DATAPOINTS = 4000;
-const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 1000;
+const int EXPERIMENT_TRAIN_NUM_DATAPOINTS = 200;
+const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 50;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;
 #else
-const int TRAIN_ITERS = 300000;
+const int TRAIN_ITERS = 100000;
 #endif /* MDEBUG */
 
 /**
@@ -58,14 +58,13 @@ const int UPDATE_NUM_ITERS = 40;
 const int BATCH_SIZE = 10;
 const int ITERS_PER_BATCH = 10;
 #else
-// const int UPDATE_NUM_ITERS = 10000;
-const int UPDATE_NUM_ITERS = 100000;
+const int UPDATE_NUM_ITERS = 10000;
 const int BATCH_SIZE = 1000;
 const int ITERS_PER_BATCH = 10000;
-// const int UPDATE_NUM_ITERS = 1000000;
-// const int BATCH_SIZE = 1;
-// const int ITERS_PER_BATCH = 1;
 #endif /* MDEBUG */
+
+const int RUN_TYPE_EXISTING = 0;
+const int RUN_TYPE_EXPLORE = 1;
 
 const int GENERALIZE_ITER = 3;
 

@@ -96,7 +96,6 @@ void Solution::init(ProblemType* problem_type) {
 	start_node->id = new_scope->node_counter;
 	new_scope->node_counter++;
 	new_scope->nodes[start_node->id] = start_node;
-	start_node->score_network = new ScoreNetwork(new_scope->num_states);
 
 	start_node->next_node_id = -1;
 	start_node->next_node = NULL;

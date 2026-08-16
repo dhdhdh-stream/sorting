@@ -61,7 +61,8 @@ void BranchNode::experiment_step(vector<double>& obs,
 
 		wrapper->node_context.back() = this->branch_next_node;
 
-		if (this->branch_experiment != NULL) {
+		if (this->branch_experiment != NULL
+				&& this->branch_experiment->diversity_index == wrapper->diversity_index) {
 			this->branch_experiment->experiment_check_activate(
 				obs,
 				wrapper);
@@ -74,7 +75,8 @@ void BranchNode::experiment_step(vector<double>& obs,
 
 		wrapper->node_context.back() = this->original_next_node;
 
-		if (this->original_experiment != NULL) {
+		if (this->original_experiment != NULL
+				&& this->original_experiment->diversity_index == wrapper->diversity_index) {
 			this->original_experiment->experiment_check_activate(
 				obs,
 				wrapper);

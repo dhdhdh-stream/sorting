@@ -86,19 +86,24 @@ void ExploreExperiment::set_action(int action,
 					   wrapper);
 }
 
-void ExploreExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
+void ExploreExperiment::experiment_exit_step(vector<double>& obs,
+											 SolutionWrapper* wrapper) {
 	switch (this->state) {
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
-		explore_exit_step(wrapper);
+		explore_exit_step(obs,
+						  wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
-		train_new_exit_step(wrapper);
+		train_new_exit_step(obs,
+							wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_REUSE_MEASURE:
-		reuse_measure_exit_step(wrapper);
+		reuse_measure_exit_step(obs,
+								wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_NEW_STATE_MEASURE:
-		new_state_measure_exit_step(wrapper);
+		new_state_measure_exit_step(obs,
+									wrapper);
 		break;
 	}
 }

@@ -40,8 +40,6 @@ public:
 	double average_instances_per_hit;
 	double average_instances_per_run;
 
-	ScoreNetwork* score_network;
-
 	AbstractExperiment* experiment;
 
 	int curr_num_instances;
@@ -68,6 +66,7 @@ public:
 	void train_step(AbstractNodeHistory* history,
 					bool allow_drop,
 					Eigen::VectorXf& state,
+					int run_type,
 					TrainScopeHistory* train_scope_history);
 
 	void copy_from(ActionNode* original,
@@ -97,8 +96,6 @@ public:
 	ActionNetworkHistory* action_network_history;
 	ObsNetworkHistory* obs_network_history;
 	std::vector<InitNetworkHistory*> init_network_histories;
-
-	ScoreNetworkHistory* score_network_history;
 
 	TrainActionNodeHistory(ActionNode* node);
 	~TrainActionNodeHistory();

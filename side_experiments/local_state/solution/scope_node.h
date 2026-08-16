@@ -33,6 +33,8 @@ class TransitionNetworkHistory;
 class ScopeNodeHistory;
 class ScopeNode : public AbstractNode {
 public:
+	bool is_generic;
+
 	std::vector<PassThroughNetwork*> in_pass_through_networks;
 	TransitionNetwork* in_network;
 
@@ -46,8 +48,6 @@ public:
 
 	double average_instances_per_hit;
 	double average_instances_per_run;
-
-	ScoreNetwork* score_network;
 
 	AbstractExperiment* experiment;
 
@@ -73,6 +73,7 @@ public:
 	void train_step(AbstractNodeHistory* history,
 					bool allow_drop,
 					Eigen::VectorXf& state,
+					int run_type,
 					TrainScopeHistory* train_scope_history);
 
 	void copy_from(ScopeNode* original,
@@ -103,8 +104,6 @@ public:
 
 	bool out_is_drop;
 	TransitionNetworkHistory* out_network_history;
-
-	ScoreNetworkHistory* score_network_history;
 
 	TrainScopeNodeHistory(ScopeNode* node);
 	~TrainScopeNodeHistory();

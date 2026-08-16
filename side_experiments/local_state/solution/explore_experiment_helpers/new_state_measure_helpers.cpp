@@ -23,60 +23,62 @@ void ExploreExperiment::new_state_measure_check_activate(
 		vector<double>& obs,
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
-	ScopeHistory* scope_history = wrapper->scope_histories.back();
+	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
+		ScopeHistory* scope_history = wrapper->scope_histories.back();
 
-	vector<bool> curr_dependencies_is_hit(this->dependencies.size());
-	vector<Eigen::VectorXf> curr_dependencies_state(this->dependencies.size());
-	vector<vector<double>> curr_dependencies_obs(this->dependencies.size());
-	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
-		bool is_hit;
-		Eigen::VectorXf state;
-		vector<double> obs;
-		fetch_dependency_helper(scope_history,
-								this->dependencies[d_index],
-								0,
-								is_hit,
-								state,
-								obs);
-		curr_dependencies_is_hit[d_index] = is_hit;
-		curr_dependencies_state[d_index] = state;
-		curr_dependencies_obs[d_index] = obs;
-	}
-
-	this->existing_network->activate(wrapper->states.back());
-
-	vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
-	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
-		if (curr_dependencies_is_hit[d_index]) {
-			this->init_networks[d_index]->init_activate(
-				curr_dependencies_state[d_index],
-				new_state,
-				curr_dependencies_obs[d_index]);
+		vector<bool> curr_dependencies_is_hit(this->dependencies.size());
+		vector<Eigen::VectorXf> curr_dependencies_state(this->dependencies.size());
+		vector<vector<double>> curr_dependencies_obs(this->dependencies.size());
+		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+			bool is_hit;
+			Eigen::VectorXf state;
+			vector<double> obs;
+			fetch_dependency_helper(scope_history,
+									this->dependencies[d_index],
+									0,
+									is_hit,
+									state,
+									obs);
+			curr_dependencies_is_hit[d_index] = is_hit;
+			curr_dependencies_state[d_index] = state;
+			curr_dependencies_obs[d_index] = obs;
 		}
-	}
-	this->new_network->init_activate(wrapper->states.back(),
-									 new_state);
 
-	bool is_branch;
-	if (this->new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
-		is_branch = true;
-	} else {
-		is_branch = false;
-	}
+		this->existing_network->activate(wrapper->states.back());
 
-	#if defined(MDEBUG) && MDEBUG
-	if (wrapper->curr_run_seed%2 == 0) {
-		is_branch = true;
-	} else {
-		is_branch = false;
-	}
-	wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
-	#endif /* MDEBUG */
+		vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
+		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
+			if (curr_dependencies_is_hit[d_index]) {
+				this->init_networks[d_index]->init_activate(
+					curr_dependencies_state[d_index],
+					new_state,
+					curr_dependencies_obs[d_index]);
+			}
+		}
+		this->new_network->init_activate(wrapper->states.back(),
+										 new_state);
 
-	if (is_branch) {
-		ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
-		new_experiment_state->step_index = 0;
-		wrapper->experiment_context.back() = new_experiment_state;
+		bool is_branch;
+		if (this->new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
+
+		#if defined(MDEBUG) && MDEBUG
+		if (wrapper->curr_run_seed%2 == 0) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
+		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
+		#endif /* MDEBUG */
+
+		if (is_branch) {
+			ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
+			new_experiment_state->step_index = 0;
+			wrapper->experiment_context.back() = new_experiment_state;
+		}
 	}
 }
 
@@ -93,24 +95,17 @@ void ExploreExperiment::new_state_measure_step(vector<double>& obs,
 		wrapper->experiment_context.back() = NULL;
 	} else {
 		if (this->best_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
-			action = this->best_actions[experiment_state->step_index];
+			action = this->best_indexes[experiment_state->step_index];
 			is_next = true;
 
 			wrapper->run_num_actions++;
 		} else {
-			Scope* inner_scope = this->best_scopes[experiment_state->step_index];
-			ScopeHistory* inner_scope_history = new ScopeHistory(inner_scope);
-			wrapper->scope_histories.push_back(inner_scope_history);
-			wrapper->node_context.push_back(inner_scope->nodes[0]);
-			wrapper->experiment_context.push_back(NULL);
-
-			wrapper->states.push_back(Eigen::VectorXf());
-			wrapper->states.back().resize(inner_scope->num_states);
-			wrapper->states.back().setConstant(0.0);
-
-			inner_scope->experiment_start_activate(
-				obs,
-				wrapper);
+			ScopeNode* generic_scope_node = this->scope_context->generic_scope_nodes[
+				this->best_indexes[experiment_state->step_index]];
+			generic_scope_node->experiment_step(obs,
+												action,
+												is_next,
+												wrapper);
 		}
 	}
 }
@@ -119,27 +114,22 @@ void ExploreExperiment::new_state_measure_callback(vector<double>& obs,
 												   SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
 
-	int action = this->best_actions[experiment_state->step_index];
+	int action = this->best_indexes[experiment_state->step_index];
 	ActionNode* generic_action_node = this->scope_context->generic_action_nodes[action];
-
-	generic_action_node->action_network->activate(wrapper->states.back());
-
-	generic_action_node->obs_network->activate(wrapper->states.back(),
-											   obs);
+	generic_action_node->experiment_step_callback(obs,
+												  wrapper);
 
 	experiment_state->step_index++;
 }
 
-void ExploreExperiment::new_state_measure_exit_step(SolutionWrapper* wrapper) {
+void ExploreExperiment::new_state_measure_exit_step(vector<double>& obs,
+													SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
 
-	delete wrapper->scope_histories.back();
-
-	wrapper->scope_histories.pop_back();
-	wrapper->node_context.pop_back();
-	wrapper->experiment_context.pop_back();
-
-	wrapper->states.pop_back();
+	ScopeNode* generic_scope_node = this->scope_context->generic_scope_nodes[
+		this->best_indexes[experiment_state->step_index]];
+	generic_scope_node->experiment_exit_step(obs,
+											 wrapper);
 
 	experiment_state->step_index++;
 }
@@ -265,13 +255,6 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 					for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 							it != scope->nodes.end(); it++) {
 						switch (it->second->type) {
-						case NODE_TYPE_NOOP:
-							{
-								NoopNode* noop_node = (NoopNode*)it->second;
-
-								noop_node->score_network->add_states(scope->num_states);
-							}
-							break;
 						case NODE_TYPE_ACTION:
 							{
 								ActionNode* action_node = (ActionNode*)it->second;
@@ -281,10 +264,6 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 								for (int n_index = 0; n_index < (int)action_node->init_networks.size(); n_index++) {
 									action_node->init_networks[n_index]->add_states(scope->num_states);
 								}
-
-								if (!action_node->is_generic) {
-									action_node->score_network->add_states(scope->num_states);
-								}
 							}
 							break;
 						case NODE_TYPE_SCOPE:
@@ -293,8 +272,6 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 
 								scope_node->in_network->add_front_states(scope->num_states);
 								scope_node->out_network->add_back_states(scope->num_states);
-
-								scope_node->score_network->add_states(scope->num_states);
 							}
 							break;
 						case NODE_TYPE_BRANCH:

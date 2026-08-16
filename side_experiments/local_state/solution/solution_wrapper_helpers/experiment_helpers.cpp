@@ -21,6 +21,8 @@
 
 using namespace std;
 
+const int DIVERSITY_RANGE = 20;
+
 void SolutionWrapper::experiment_init(vector<double> obs) {
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
@@ -29,13 +31,14 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	#endif /* MDEBUG */
 
 	if (this->iters_since_update < UPDATE_NUM_ITERS) {
-		// uniform_int_distribution<int> type_distribution(0, 1);
-		// this->run_type = type_distribution(generator);
-
 		this->run_type = RUN_TYPE_EXISTING;
 	} else {
-		this->run_type = RUN_TYPE_EXPLORE;
+		uniform_int_distribution<int> type_distribution(0, 1);
+		this->run_type = type_distribution(generator);
 	}
+
+	uniform_int_distribution<int> diversity_distribution(0, DIVERSITY_RANGE-1);
+	this->diversity_index = diversity_distribution(generator);
 
 	this->run_num_actions = 0;
 
@@ -71,20 +74,6 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 	bool is_done = false;
 	bool fetch_action = false;
 
-	if (this->run_type == RUN_TYPE_DAMAGE) {
-		uniform_int_distribution<int> damage_distribution(0, 19);
-		if (damage_distribution(generator) == 0) {
-			Scope* scope = this->scope_histories.back()->scope;
-
-			uniform_int_distribution<int> distribution(0, scope->generic_action_nodes.size()-1);
-			scope->generic_action_nodes[distribution(generator)]->experiment_step(
-				obs,
-				action,
-				is_next,
-				this);
-		}
-	}
-
 	while (!is_next) {
 		if (this->node_context.back() == NULL
 				&& this->experiment_context.back() == NULL) {
@@ -105,7 +94,8 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 			} else {
 				if (this->experiment_context[this->experiment_context.size() - 2] != NULL) {
 					AbstractExperiment* experiment = this->experiment_context[this->experiment_context.size() - 2]->experiment;
-					experiment->experiment_exit_step(this);
+					experiment->experiment_exit_step(obs,
+													 this);
 				} else {
 					ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
 					scope_node->experiment_exit_step(obs,
@@ -165,14 +155,11 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	}
 
-	if (this->run_type != RUN_TYPE_EXPLORE) {
-		this->train_scope_histories.push_back(this->scope_histories[0]);
-		this->train_target_val_histories.push_back(result);
-		if (this->train_scope_histories.size() >= BATCH_SIZE) {
-			train_helper(this);
-		}
-	} else {
-		delete this->scope_histories[0];
+	this->train_scope_histories.push_back(this->scope_histories[0]);
+	this->train_target_val_histories.push_back(result);
+	this->train_run_type_histories.push_back(this->run_type);
+	if (this->train_scope_histories.size() >= BATCH_SIZE) {
+		train_helper(this);
 	}
 
 	this->scope_histories.clear();

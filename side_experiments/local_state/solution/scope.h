@@ -19,6 +19,7 @@ class Network;
 class ObsNetwork;
 class ObsNetworkHistory;
 class Problem;
+class ScopeNode;
 class ScoreNetwork;
 class ScoreNetworkHistory;
 class Solution;
@@ -46,9 +47,10 @@ public:
 
 	ScoreNetwork* end_score_network;
 
-	std::vector<ActionNode*> generic_action_nodes;
-
 	std::vector<Scope*> child_scopes;
+
+	std::vector<ActionNode*> generic_action_nodes;
+	std::vector<ScopeNode*> generic_scope_nodes;
 
 	std::list<double> train_reuse_last_scores;
 	std::list<double> measure_reuse_last_scores;
@@ -69,6 +71,7 @@ public:
 	void train_activate(ScopeHistory* history,
 						bool allow_drop,
 						Eigen::VectorXf& state,
+						int run_type,
 						TrainScopeHistory* train_scope_history);
 
 	void copy_from(Scope* original,

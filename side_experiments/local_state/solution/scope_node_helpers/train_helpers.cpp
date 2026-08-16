@@ -11,6 +11,7 @@ using namespace std;
 void ScopeNode::train_step(AbstractNodeHistory* history,
 						   bool allow_drop,
 						   Eigen::VectorXf& state,
+						   int run_type,
 						   TrainScopeHistory* train_scope_history) {
 	ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history;
 
@@ -47,6 +48,7 @@ void ScopeNode::train_step(AbstractNodeHistory* history,
 	this->scope->train_activate(scope_node_history->scope_history,
 								allow_drop,
 								inner_state,
+								run_type,
 								inner_train_scope_history);
 
 	if (allow_drop) {
@@ -68,8 +70,4 @@ void ScopeNode::train_step(AbstractNodeHistory* history,
 		train_history->out_network_history = new TransitionNetworkHistory(this->out_network);
 		this->out_network->save(train_history->out_network_history);
 	}
-
-	// this->score_network->activate(state);
-	// train_history->score_network_history = new ScoreNetworkHistory(this->score_network);
-	// this->score_network->save(train_history->score_network_history);
 }

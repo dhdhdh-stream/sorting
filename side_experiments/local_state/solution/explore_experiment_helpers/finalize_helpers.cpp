@@ -38,9 +38,9 @@ void ExploreExperiment::add(bool is_new_state,
 	ss << "new explore path:";
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			ss << " " << this->best_actions[s_index];
+			ss << " " << this->best_indexes[s_index];
 		} else {
-			ss << " E" << this->best_scopes[s_index]->id;
+			ss << " E" << this->scope_context->child_scopes[this->best_indexes[s_index]]->id;
 		}
 	}
 	ss << "; ";
@@ -61,13 +61,11 @@ void ExploreExperiment::add(bool is_new_state,
 			scope_context->nodes[new_action_node->id] = new_action_node;
 
 			new_action_node->is_generic = false;
-			new_action_node->action = this->best_actions[s_index];
+			new_action_node->action = this->best_indexes[s_index];
 
-			ActionNode* generic_action_node = this->scope_context->generic_action_nodes[this->best_actions[s_index]];
+			ActionNode* generic_action_node = this->scope_context->generic_action_nodes[this->best_indexes[s_index]];
 			new_action_node->action_network = new ActionNetwork(generic_action_node->action_network);
 			new_action_node->obs_network = new ObsNetwork(generic_action_node->obs_network);
-
-			new_action_node->score_network = new ScoreNetwork(this->new_network);
 
 			new_nodes.push_back(new_action_node);
 		} else {
@@ -77,15 +75,15 @@ void ExploreExperiment::add(bool is_new_state,
 			scope_context->node_counter++;
 			scope_context->nodes[new_scope_node->id] = new_scope_node;
 
-			new_scope_node->in_network = new TransitionNetwork(this->scope_context->num_states,
-															   this->best_scopes[s_index]->num_states);
+			new_scope_node->is_generic = false;
 
-			new_scope_node->scope = this->best_scopes[s_index];
+			ScopeNode* generic_scope_node = this->scope_context->generic_scope_nodes[this->best_indexes[s_index]];
 
-			new_scope_node->out_network = new TransitionNetwork(this->best_scopes[s_index]->num_states,
-																this->scope_context->num_states);
+			new_scope_node->in_network = new TransitionNetwork(generic_scope_node->in_network);
 
-			new_scope_node->score_network = new ScoreNetwork(this->new_network);
+			new_scope_node->scope = this->scope_context->child_scopes[this->best_indexes[s_index]];
+
+			new_scope_node->out_network = new TransitionNetwork(generic_scope_node->out_network);
 
 			new_nodes.push_back(new_scope_node);
 		}
@@ -120,8 +118,6 @@ void ExploreExperiment::add(bool is_new_state,
 
 		new_ending_node->next_node_id = -1;
 		new_ending_node->next_node = NULL;
-
-		new_ending_node->score_network = new ScoreNetwork(this->existing_network);
 
 		exit_node_id = new_ending_node->id;
 		exit_node = new_ending_node;
@@ -172,8 +168,6 @@ void ExploreExperiment::add(bool is_new_state,
 
 					new_ending_node->next_node_id = -1;
 					new_ending_node->next_node = NULL;
-
-					new_ending_node->score_network = new ScoreNetwork(this->existing_network);
 
 					new_ending_node->ancestor_ids.push_back(new_branch_node->id);
 
@@ -374,7 +368,6 @@ void ExploreExperiment::add(bool is_new_state,
 			start_node->id = new_scope->node_counter;
 			new_scope->node_counter++;
 			new_scope->nodes[start_node->id] = start_node;
-			start_node->score_network = new ScoreNetwork(new_scope->num_states);
 
 			ScopeNode* scope_node = new ScopeNode();
 			scope_node->parent = new_scope;
@@ -402,15 +395,11 @@ void ExploreExperiment::add(bool is_new_state,
 			scope_node->out_network = new TransitionNetwork(new_scope->num_states,
 															new_scope->num_states);
 
-			scope_node->score_network = new ScoreNetwork(wrapper->solution->starting_scope->end_score_network);
-
 			NoopNode* end_node = new NoopNode();
 			end_node->parent = new_scope;
 			end_node->id = new_scope->node_counter;
 			new_scope->node_counter++;
 			new_scope->nodes[end_node->id] = end_node;
-
-			end_node->score_network = new ScoreNetwork(wrapper->solution->starting_scope->end_score_network);
 
 			start_node->next_node_id = scope_node->id;
 			start_node->next_node = scope_node;
@@ -451,6 +440,29 @@ void ExploreExperiment::add(bool is_new_state,
 				new_scope->generic_action_nodes.push_back(new_action_node);
 			}
 
+			for (int c_index = 0; c_index < (int)new_scope->child_scopes.size(); c_index++) {
+				ScopeNode* new_scope_node = new ScopeNode();
+				new_scope_node->parent = new_scope;
+				new_scope_node->id = new_scope->node_counter;
+				new_scope->node_counter++;
+				new_scope->nodes[new_scope_node->id] = new_scope_node;
+
+				new_scope_node->is_generic = true;
+
+				new_scope_node->in_network = new TransitionNetwork(new_scope->num_states,
+																   new_scope->child_scopes[c_index]->num_states);
+
+				new_scope_node->scope = new_scope->child_scopes[c_index];
+
+				new_scope_node->out_network = new TransitionNetwork(new_scope->child_scopes[c_index]->num_states,
+																	new_scope->num_states);
+
+				new_scope_node->next_node_id = -1;
+				new_scope_node->next_node = NULL;
+
+				new_scope->generic_scope_nodes.push_back(new_scope_node);
+			}
+
 			new_scope->train_reuse_last_scores = wrapper->solution->starting_scope->train_reuse_last_scores;
 			new_scope->measure_reuse_last_scores = wrapper->solution->starting_scope->measure_reuse_last_scores;
 			new_scope->train_new_state_last_scores = wrapper->solution->starting_scope->train_new_state_last_scores;
@@ -478,12 +490,6 @@ void ExploreExperiment::add(bool is_new_state,
 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 				it != scope->nodes.end(); it++) {
 			switch (it->second->type) {
-			case NODE_TYPE_NOOP:
-				{
-					NoopNode* noop_node = (NoopNode*)it->second;
-					noop_node->score_network->clear_momentum();
-				}
-				break;
 			case NODE_TYPE_ACTION:
 				{
 					ActionNode* action_node = (ActionNode*)it->second;
@@ -492,9 +498,6 @@ void ExploreExperiment::add(bool is_new_state,
 					for (int n_index = 0; n_index < (int)action_node->init_networks.size(); n_index++) {
 						action_node->init_networks[n_index]->clear_momentum();
 					}
-					if (!action_node->is_generic) {
-						action_node->score_network->clear_momentum();
-					}
 				}
 				break;
 			case NODE_TYPE_SCOPE:
@@ -502,7 +505,6 @@ void ExploreExperiment::add(bool is_new_state,
 					ScopeNode* scope_node = (ScopeNode*)it->second;
 					scope_node->in_network->clear_momentum();
 					scope_node->out_network->clear_momentum();
-					scope_node->score_network->clear_momentum();
 				}
 				break;
 			case NODE_TYPE_BRANCH:
@@ -520,6 +522,7 @@ void ExploreExperiment::add(bool is_new_state,
 	}
 	wrapper->train_scope_histories.clear();
 	wrapper->train_target_val_histories.clear();
+	wrapper->train_run_type_histories.clear();
 
 	wrapper->solution->improvement_history.push_back(wrapper->solution->curr_score);
 	cout << "previous_val_average: " << wrapper->solution->curr_score << endl;

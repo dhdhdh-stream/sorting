@@ -19,14 +19,6 @@ void ScopeNode::step(vector<double>& obs,
 					 int& action,
 					 bool& is_next,
 					 SolutionWrapper* wrapper) {
-	if (wrapper->run_type == RUN_TYPE_DAMAGE) {
-		uniform_int_distribution<int> damage_distribution(0, 19);
-		if (damage_distribution(generator) == 0) {
-			wrapper->node_context.back() = this->next_node;
-			return;
-		}
-	}
-
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->scope);
 	wrapper->scope_histories.push_back(inner_scope_history);
 	wrapper->node_context.push_back(this->scope->nodes[0]);

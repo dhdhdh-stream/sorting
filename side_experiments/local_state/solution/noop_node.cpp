@@ -6,7 +6,6 @@
 #include "globals.h"
 #include "init_network.h"
 #include "scope.h"
-#include "score_network.h"
 #include "solution.h"
 
 using namespace std;
@@ -22,8 +21,6 @@ NoopNode::NoopNode() {
 }
 
 NoopNode::~NoopNode() {
-	delete this->score_network;
-
 	if (this->experiment != NULL) {
 		delete this->experiment;
 	}
@@ -36,8 +33,6 @@ void NoopNode::copy_from(NoopNode* original,
 	this->average_instances_per_hit = original->average_instances_per_hit;
 	this->average_instances_per_run = original->average_instances_per_run;
 
-	this->score_network = new ScoreNetwork(original->score_network);
-
 	this->ancestor_ids = original->ancestor_ids;
 }
 
@@ -46,8 +41,6 @@ void NoopNode::save(ofstream& output_file) {
 
 	output_file << this->average_instances_per_hit << endl;
 	output_file << this->average_instances_per_run << endl;
-
-	this->score_network->save(output_file);
 
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
@@ -68,8 +61,6 @@ void NoopNode::load(ifstream& input_file,
 	string average_instances_per_run_line;
 	getline(input_file, average_instances_per_run_line);
 	this->average_instances_per_run = stod(average_instances_per_run_line);
-
-	this->score_network = new ScoreNetwork(input_file);
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);
@@ -95,16 +86,4 @@ void NoopNode::save_for_display(ofstream& output_file) {
 
 NoopNodeHistory::NoopNodeHistory(NoopNode* node) {
 	this->node = node;
-}
-
-TrainNoopNodeHistory::TrainNoopNodeHistory(NoopNode* node) {
-	this->node = node;
-
-	this->score_network_history = NULL;
-}
-
-TrainNoopNodeHistory::~TrainNoopNodeHistory() {
-	if (this->score_network_history != NULL) {
-		delete this->score_network_history;
-	}
 }

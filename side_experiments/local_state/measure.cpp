@@ -47,8 +47,7 @@ int main(int argc, char* argv[]) {
 
 		vector<double> obs = problem->get_observations();
 
-		solution_wrapper->init(RUN_TYPE_EXISTING,
-							   obs);
+		solution_wrapper->init(obs);
 
 		while (true) {
 			pair<bool,int> next = solution_wrapper->step(obs);

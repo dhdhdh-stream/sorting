@@ -12,6 +12,7 @@ using namespace std;
 void ActionNode::train_step(AbstractNodeHistory* history,
 							bool allow_drop,
 							Eigen::VectorXf& state,
+							int run_type,
 							TrainScopeHistory* train_scope_history) {
 	ActionNodeHistory* action_node_history = (ActionNodeHistory*)history;
 
@@ -45,11 +46,5 @@ void ActionNode::train_step(AbstractNodeHistory* history,
 				this->init_networks[n_index]->save(train_history->init_network_histories[n_index]);
 			}
 		}
-
-		// if (!this->is_generic) {
-		// 	this->score_network->activate(state);
-		// 	train_history->score_network_history = new ScoreNetworkHistory(this->score_network);
-		// 	this->score_network->save(train_history->score_network_history);
-		// }
 	}
 }

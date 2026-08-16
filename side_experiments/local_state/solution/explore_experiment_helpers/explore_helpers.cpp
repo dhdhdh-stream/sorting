@@ -123,16 +123,11 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 				}
 				if (is_scope) {
 					history->curr_step_types.push_back(STEP_TYPE_SCOPE);
-					history->curr_actions.push_back(-1);
-
 					int child_index = possible_child_indexes[child_index_distribution(generator)];
-					history->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
+					history->curr_indexes.push_back(child_index);
 				} else {
 					history->curr_step_types.push_back(STEP_TYPE_ACTION);
-
-					history->curr_actions.push_back(-1);
-
-					history->curr_scopes.push_back(NULL);
+					history->curr_indexes.push_back(-1);
 				}
 			}
 
@@ -167,19 +162,12 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 
 			wrapper->run_num_actions++;
 		} else {
-			Scope* inner_scope = history->curr_scopes[experiment_state->step_index];
-			ScopeHistory* inner_scope_history = new ScopeHistory(inner_scope);
-			wrapper->scope_histories.push_back(inner_scope_history);
-			wrapper->node_context.push_back(inner_scope->nodes[0]);
-			wrapper->experiment_context.push_back(NULL);
-
-			wrapper->states.push_back(Eigen::VectorXf());
-			wrapper->states.back().resize(inner_scope->num_states);
-			wrapper->states.back().setConstant(0.0);
-
-			inner_scope->experiment_start_activate(
-				obs,
-				wrapper);
+			ScopeNode* generic_scope_node = this->scope_context->generic_scope_nodes[
+				history->curr_indexes[experiment_state->step_index]];
+			generic_scope_node->experiment_step(obs,
+												action,
+												is_next,
+												wrapper);
 		}
 	}
 }
@@ -189,7 +177,7 @@ void ExploreExperiment::explore_set_action(int action,
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
 	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
 
-	history->curr_actions[experiment_state->step_index] = action;
+	history->curr_indexes[experiment_state->step_index] = action;
 }
 
 void ExploreExperiment::explore_callback(vector<double>& obs,
@@ -197,27 +185,23 @@ void ExploreExperiment::explore_callback(vector<double>& obs,
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
 	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
 
-	int action = history->curr_actions[experiment_state->step_index];
+	int action = history->curr_indexes[experiment_state->step_index];
 	ActionNode* generic_action_node = this->scope_context->generic_action_nodes[action];
-
-	generic_action_node->action_network->activate(wrapper->states.back());
-
-	generic_action_node->obs_network->activate(wrapper->states.back(),
-											   obs);
+	generic_action_node->experiment_step_callback(obs,
+												  wrapper);
 
 	experiment_state->step_index++;
 }
 
-void ExploreExperiment::explore_exit_step(SolutionWrapper* wrapper) {
+void ExploreExperiment::explore_exit_step(vector<double>& obs,
+										  SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
+	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
 
-	delete wrapper->scope_histories.back();
-
-	wrapper->scope_histories.pop_back();
-	wrapper->node_context.pop_back();
-	wrapper->experiment_context.pop_back();
-
-	wrapper->states.pop_back();
+	ScopeNode* generic_scope_node = this->scope_context->generic_scope_nodes[
+		history->curr_indexes[experiment_state->step_index]];
+	generic_scope_node->experiment_exit_step(obs,
+											 wrapper);
 
 	experiment_state->step_index++;
 }
@@ -271,8 +255,7 @@ void ExploreExperiment::explore_backprop(double target_val,
 			#endif /* MDEBUG */
 				this->best_surprise = curr_surprise;
 				this->best_step_types = history->curr_step_types;
-				this->best_actions = history->curr_actions;
-				this->best_scopes = history->curr_scopes;
+				this->best_indexes = history->curr_indexes;
 			}
 
 			this->state_iter++;

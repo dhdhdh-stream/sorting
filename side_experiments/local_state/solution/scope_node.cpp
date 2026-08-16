@@ -35,8 +35,6 @@ ScopeNode::~ScopeNode() {
 	}
 	delete this->out_network;
 
-	delete this->score_network;
-
 	if (this->experiment != NULL) {
 		delete this->experiment;
 	}
@@ -44,6 +42,8 @@ ScopeNode::~ScopeNode() {
 
 void ScopeNode::copy_from(ScopeNode* original,
 						  Solution* parent_solution) {
+	this->is_generic = original->is_generic;
+
 	for (int n_index = 0; n_index < (int)original->in_pass_through_networks.size(); n_index++) {
 		this->in_pass_through_networks.push_back(new PassThroughNetwork(original->in_pass_through_networks[n_index]));
 	}
@@ -61,12 +61,12 @@ void ScopeNode::copy_from(ScopeNode* original,
 	this->average_instances_per_hit = original->average_instances_per_hit;
 	this->average_instances_per_run = original->average_instances_per_run;
 
-	this->score_network = new ScoreNetwork(original->score_network);
-
 	this->ancestor_ids = original->ancestor_ids;
 }
 
 void ScopeNode::save(ofstream& output_file) {
+	output_file << this->is_generic << endl;
+
 	output_file << this->in_pass_through_networks.size() << endl;
 	for (int n_index = 0; n_index < (int)this->in_pass_through_networks.size(); n_index++) {
 		this->in_pass_through_networks[n_index]->save(output_file);
@@ -86,8 +86,6 @@ void ScopeNode::save(ofstream& output_file) {
 	output_file << this->average_instances_per_hit << endl;
 	output_file << this->average_instances_per_run << endl;
 
-	this->score_network->save(output_file);
-
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
@@ -96,6 +94,10 @@ void ScopeNode::save(ofstream& output_file) {
 
 void ScopeNode::load(ifstream& input_file,
 					 Solution* parent_solution) {
+	string is_generic_line;
+	getline(input_file, is_generic_line);
+	this->is_generic = stoi(is_generic_line);
+
 	string in_pass_through_networks_size_line;
 	getline(input_file, in_pass_through_networks_size_line);
 	int in_pass_through_networks_size = stoi(in_pass_through_networks_size_line);
@@ -129,8 +131,6 @@ void ScopeNode::load(ifstream& input_file,
 	string average_instances_per_run_line;
 	getline(input_file, average_instances_per_run_line);
 	this->average_instances_per_run = stod(average_instances_per_run_line);
-
-	this->score_network = new ScoreNetwork(input_file);
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);
@@ -170,8 +170,6 @@ TrainScopeNodeHistory::TrainScopeNodeHistory(ScopeNode* node) {
 	this->in_network_history = NULL;
 
 	this->out_network_history = NULL;
-
-	this->score_network_history = NULL;
 }
 
 TrainScopeNodeHistory::~TrainScopeNodeHistory() {
@@ -183,9 +181,5 @@ TrainScopeNodeHistory::~TrainScopeNodeHistory() {
 
 	if (this->out_network_history != NULL) {
 		delete this->out_network_history;
-	}
-
-	if (this->score_network_history != NULL) {
-		delete this->score_network_history;
 	}
 }

@@ -21,28 +21,30 @@ void ExploreExperiment::reuse_measure_check_activate(
 		vector<double>& obs,
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
-	bool is_branch;
-	this->existing_network->activate(wrapper->states.back());
-	this->new_network->activate(wrapper->states.back());
-	if (this->new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
-		is_branch = true;
-	} else {
-		is_branch = false;
-	}
+	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
+		bool is_branch;
+		this->existing_network->activate(wrapper->states.back());
+		this->new_network->activate(wrapper->states.back());
+		if (this->new_network->output->acti_vals(0) >= this->existing_network->output->acti_vals(0)) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
 
-	#if defined(MDEBUG) && MDEBUG
-	if (wrapper->curr_run_seed%2 == 0) {
-		is_branch = true;
-	} else {
-		is_branch = false;
-	}
-	wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
-	#endif /* MDEBUG */
+		#if defined(MDEBUG) && MDEBUG
+		if (wrapper->curr_run_seed%2 == 0) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
+		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
+		#endif /* MDEBUG */
 
-	if (is_branch) {
-		ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
-		new_experiment_state->step_index = 0;
-		wrapper->experiment_context.back() = new_experiment_state;
+		if (is_branch) {
+			ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
+			new_experiment_state->step_index = 0;
+			wrapper->experiment_context.back() = new_experiment_state;
+		}
 	}
 }
 
@@ -59,24 +61,17 @@ void ExploreExperiment::reuse_measure_step(vector<double>& obs,
 		wrapper->experiment_context.back() = NULL;
 	} else {
 		if (this->best_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
-			action = this->best_actions[experiment_state->step_index];
+			action = this->best_indexes[experiment_state->step_index];
 			is_next = true;
 
 			wrapper->run_num_actions++;
 		} else {
-			Scope* inner_scope = this->best_scopes[experiment_state->step_index];
-			ScopeHistory* inner_scope_history = new ScopeHistory(inner_scope);
-			wrapper->scope_histories.push_back(inner_scope_history);
-			wrapper->node_context.push_back(inner_scope->nodes[0]);
-			wrapper->experiment_context.push_back(NULL);
-
-			wrapper->states.push_back(Eigen::VectorXf());
-			wrapper->states.back().resize(inner_scope->num_states);
-			wrapper->states.back().setConstant(0.0);
-
-			inner_scope->experiment_start_activate(
-				obs,
-				wrapper);
+			ScopeNode* generic_scope_node = this->scope_context->generic_scope_nodes[
+				this->best_indexes[experiment_state->step_index]];
+			generic_scope_node->experiment_step(obs,
+												action,
+												is_next,
+												wrapper);
 		}
 	}
 }
@@ -85,27 +80,22 @@ void ExploreExperiment::reuse_measure_callback(vector<double>& obs,
 											   SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
 
-	int action = this->best_actions[experiment_state->step_index];
+	int action = this->best_indexes[experiment_state->step_index];
 	ActionNode* generic_action_node = this->scope_context->generic_action_nodes[action];
-
-	generic_action_node->action_network->activate(wrapper->states.back());
-
-	generic_action_node->obs_network->activate(wrapper->states.back(),
-											   obs);
+	generic_action_node->experiment_step_callback(obs,
+												  wrapper);
 
 	experiment_state->step_index++;
 }
 
-void ExploreExperiment::reuse_measure_exit_step(SolutionWrapper* wrapper) {
+void ExploreExperiment::reuse_measure_exit_step(vector<double>& obs,
+												SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
 
-	delete wrapper->scope_histories.back();
-
-	wrapper->scope_histories.pop_back();
-	wrapper->node_context.pop_back();
-	wrapper->experiment_context.pop_back();
-
-	wrapper->states.pop_back();
+	ScopeNode* generic_scope_node = this->scope_context->generic_scope_nodes[
+		this->best_indexes[experiment_state->step_index]];
+	generic_scope_node->experiment_exit_step(obs,
+											 wrapper);
 
 	experiment_state->step_index++;
 }

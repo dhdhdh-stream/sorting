@@ -14,6 +14,8 @@ class SolutionWrapper;
 class AbstractExperimentHistory;
 class AbstractExperiment {
 public:
+	int diversity_index;
+
 	Scope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;
@@ -32,7 +34,8 @@ public:
 							SolutionWrapper* wrapper) = 0;
 	virtual void experiment_step_callback(std::vector<double>& obs,
 										  SolutionWrapper* wrapper) = 0;
-	virtual void experiment_exit_step(SolutionWrapper* wrapper) = 0;
+	virtual void experiment_exit_step(std::vector<double>& obs,
+									  SolutionWrapper* wrapper) = 0;
 };
 
 class AbstractExperimentHistory {

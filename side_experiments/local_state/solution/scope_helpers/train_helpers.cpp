@@ -1,6 +1,7 @@
 #include "scope.h"
 
 #include "abstract_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "init_network.h"
 #include "score_network.h"
@@ -11,6 +12,7 @@ using namespace std;
 void Scope::train_activate(ScopeHistory* history,
 						   bool allow_drop,
 						   Eigen::VectorXf& state,
+						   int run_type,
 						   TrainScopeHistory* train_scope_history) {
 	if (allow_drop) {
 		uniform_int_distribution<int> drop_distribution(0, 19);
@@ -41,10 +43,13 @@ void Scope::train_activate(ScopeHistory* history,
 		node->train_step(history->node_histories[h_index],
 						 allow_drop,
 						 state,
+						 run_type,
 						 train_scope_history);
 	}
 
-	// this->end_score_network->activate(state);
-	// train_scope_history->end_score_network_history = new ScoreNetworkHistory(this->end_score_network);
-	// this->end_score_network->save(train_scope_history->end_score_network_history);
+	if (run_type == RUN_TYPE_EXPLORE) {
+		this->end_score_network->activate(state);
+		train_scope_history->end_score_network_history = new ScoreNetworkHistory(this->end_score_network);
+		this->end_score_network->save(train_scope_history->end_score_network_history);
+	}
 }

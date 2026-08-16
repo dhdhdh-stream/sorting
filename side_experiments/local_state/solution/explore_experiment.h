@@ -43,8 +43,7 @@ public:
 
 	double best_surprise;
 	std::vector<int> best_step_types;
-	std::vector<int> best_actions;
-	std::vector<Scope*> best_scopes;
+	std::vector<int> best_indexes;
 
 	std::vector<std::vector<bool>> existing_dependencies_is_hit_histories;
 	std::vector<std::vector<Eigen::VectorXf>> existing_dependencies_state_histories;
@@ -65,7 +64,8 @@ public:
 
 	double sum_vals;
 
-	ExploreExperiment(Scope* scope_context,
+	ExploreExperiment(int diversity_index,
+					  Scope* scope_context,
 					  AbstractNode* node_context,
 					  bool is_branch,
 					  AbstractNode* exit_next_node,
@@ -85,7 +85,8 @@ public:
 					SolutionWrapper* wrapper);
 	void experiment_step_callback(std::vector<double>& obs,
 								  SolutionWrapper* wrapper);
-	void experiment_exit_step(SolutionWrapper* wrapper);
+	void experiment_exit_step(std::vector<double>& obs,
+							  SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  ExploreExperimentHistory* history,
 				  SolutionWrapper* wrapper);
@@ -109,7 +110,8 @@ public:
 							SolutionWrapper* wrapper);
 	void explore_callback(std::vector<double>& obs,
 						  SolutionWrapper* wrapper);
-	void explore_exit_step(SolutionWrapper* wrapper);
+	void explore_exit_step(std::vector<double>& obs,
+						   SolutionWrapper* wrapper);
 	void explore_backprop(double target_val,
 						  ExploreExperimentHistory* history,
 						  SolutionWrapper* wrapper);
@@ -123,7 +125,8 @@ public:
 						SolutionWrapper* wrapper);
 	void train_new_callback(std::vector<double>& obs,
 							SolutionWrapper* wrapper);
-	void train_new_exit_step(SolutionWrapper* wrapper);
+	void train_new_exit_step(std::vector<double>& obs,
+							 SolutionWrapper* wrapper);
 	void train_new_backprop(double target_val,
 							ExploreExperimentHistory* history,
 							SolutionWrapper* wrapper);
@@ -139,7 +142,8 @@ public:
 							SolutionWrapper* wrapper);
 	void reuse_measure_callback(std::vector<double>& obs,
 								SolutionWrapper* wrapper);
-	void reuse_measure_exit_step(SolutionWrapper* wrapper);
+	void reuse_measure_exit_step(std::vector<double>& obs,
+								 SolutionWrapper* wrapper);
 	void reuse_measure_backprop(double target_val,
 								ExploreExperimentHistory* history,
 								SolutionWrapper* wrapper);
@@ -153,7 +157,8 @@ public:
 								SolutionWrapper* wrapper);
 	void new_state_measure_callback(std::vector<double>& obs,
 									SolutionWrapper* wrapper);
-	void new_state_measure_exit_step(SolutionWrapper* wrapper);
+	void new_state_measure_exit_step(std::vector<double>& obs,
+									 SolutionWrapper* wrapper);
 	void new_state_measure_backprop(double target_val,
 									ExploreExperimentHistory* history,
 									SolutionWrapper* wrapper);
@@ -169,8 +174,7 @@ public:
 	std::vector<double> existing_predicted;
 
 	std::vector<int> curr_step_types;
-	std::vector<int> curr_actions;
-	std::vector<Scope*> curr_scopes;
+	std::vector<int> curr_indexes;
 
 	std::vector<std::vector<bool>> dependencies_is_hit_histories;
 	std::vector<std::vector<Eigen::VectorXf>> dependencies_state_histories;
