@@ -30,6 +30,8 @@ void SolutionWrapper::experiment_init() {
 
 	if (this->iters_since_update < UPDATE_NUM_ITERS) {
 		this->should_explore = false;
+
+		this->diversity_index = -1;
 	} else {
 		uniform_int_distribution<int> should_explore_distribution(0, 1);
 		if (should_explore_distribution(generator) == 0) {
@@ -39,6 +41,8 @@ void SolutionWrapper::experiment_init() {
 			this->diversity_index = diversity_distribution(generator);
 		} else {
 			this->should_explore = false;
+
+			this->diversity_index = -1;
 		}
 	}
 
