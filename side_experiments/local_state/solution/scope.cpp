@@ -35,7 +35,7 @@ Scope::~Scope() {
 	delete this->end_score_network;
 
 	/**
-	 * - generic_action_nodes deleted in nodes
+	 * - generic_action_nodes, generic_scope_nodes deleted in nodes
 	 */
 }
 
@@ -111,13 +111,18 @@ void Scope::copy_from(Scope* original,
 
 	this->end_score_network = new ScoreNetwork(original->end_score_network);
 
+	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
+		this->child_scopes.push_back(parent_solution->scopes[original->child_scopes[c_index]->id]);
+	}
+
 	for (int a_index = 0; a_index < (int)original->generic_action_nodes.size(); a_index++) {
 		ActionNode* action_node = (ActionNode*)this->nodes[original->generic_action_nodes[a_index]->id];
 		this->generic_action_nodes.push_back(action_node);
 	}
 
-	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
-		this->child_scopes.push_back(parent_solution->scopes[original->child_scopes[c_index]->id]);
+	for (int s_index = 0; s_index < (int)original->generic_scope_nodes.size(); s_index++) {
+		ScopeNode* scope_node = (ScopeNode*)this->nodes[original->generic_scope_nodes[s_index]->id];
+		this->generic_scope_nodes.push_back(scope_node);
 	}
 
 	this->train_reuse_last_scores = original->train_reuse_last_scores;
@@ -154,14 +159,18 @@ void Scope::save(ofstream& output_file) {
 
 	this->end_score_network->save(output_file);
 
+	output_file << this->child_scopes.size() << endl;
+	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
+		output_file << this->child_scopes[c_index]->id << endl;
+	}
+
 	output_file << this->generic_action_nodes.size() << endl;
 	for (int a_index = 0; a_index < (int)this->generic_action_nodes.size(); a_index++) {
 		output_file << this->generic_action_nodes[a_index]->id << endl;
 	}
 
-	output_file << this->child_scopes.size() << endl;
-	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
-		output_file << this->child_scopes[c_index]->id << endl;
+	for (int s_index = 0; s_index < (int)this->generic_scope_nodes.size(); s_index++) {
+		output_file << this->generic_scope_nodes[s_index]->id << endl;
 	}
 
 	output_file << this->train_reuse_last_scores.size() << endl;
@@ -280,6 +289,15 @@ void Scope::load(ifstream& input_file,
 
 	this->end_score_network = new ScoreNetwork(input_file);
 
+	string num_child_scopes_line;
+	getline(input_file, num_child_scopes_line);
+	int num_child_scopes = stoi(num_child_scopes_line);
+	for (int c_index = 0; c_index < num_child_scopes; c_index++) {
+		string scope_id_line;
+		getline(input_file, scope_id_line);
+		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
+	}
+
 	string num_actions_line;
 	getline(input_file, num_actions_line);
 	int num_actions = stoi(num_actions_line);
@@ -292,13 +310,13 @@ void Scope::load(ifstream& input_file,
 		this->generic_action_nodes.push_back(action_node);
 	}
 
-	string num_child_scopes_line;
-	getline(input_file, num_child_scopes_line);
-	int num_child_scopes = stoi(num_child_scopes_line);
-	for (int c_index = 0; c_index < num_child_scopes; c_index++) {
-		string scope_id_line;
-		getline(input_file, scope_id_line);
-		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
+	for (int s_index = 0; s_index < num_child_scopes; s_index++) {
+		string id_line;
+		getline(input_file, id_line);
+		int id = stoi(id_line);
+
+		ScopeNode* scope_node = (ScopeNode*)this->nodes[id];
+		this->generic_scope_nodes.push_back(scope_node);
 	}
 
 	string num_train_reuse_last_scores_line;

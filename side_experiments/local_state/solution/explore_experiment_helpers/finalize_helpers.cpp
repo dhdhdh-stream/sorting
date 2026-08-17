@@ -375,6 +375,7 @@ void ExploreExperiment::add(bool is_new_state,
 			new_scope->node_counter++;
 			new_scope->nodes[scope_node->id] = scope_node;
 
+			scope_node->is_generic = false;
 			scope_node->scope = wrapper->solution->starting_scope;
 
 			for (int s_index = 0; s_index < new_scope->num_states; s_index++) {
@@ -473,11 +474,6 @@ void ExploreExperiment::add(bool is_new_state,
 		}
 	}
 
-	wrapper->experiment_iter = EXPERIMENT_REFRESH_NUM_ITERS;
-	/**
-	 * - reset all other experiments
-	 */
-
 	wrapper->iters_since_update = 0;
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		Scope* scope = wrapper->solution->scopes[s_index];
@@ -537,4 +533,51 @@ void ExploreExperiment::add(bool is_new_state,
 	wrapper->solution->change_history.push_back(ss.str());
 
 	cout << ss.str() << endl;
+
+	/**
+	 * - includes delete this
+	 */
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			switch (it->second->type) {
+			case NODE_TYPE_NOOP:
+				{
+					NoopNode* noop_node = (NoopNode*)it->second;
+					if (noop_node->experiment != NULL) {
+						delete noop_node->experiment;
+					}
+				}
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)it->second;
+					if (action_node->experiment != NULL) {
+						delete action_node->experiment;
+					}
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)it->second;
+					if (scope_node->experiment != NULL) {
+						delete scope_node->experiment;
+					}
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)it->second;
+					if (branch_node->original_experiment != NULL) {
+						delete branch_node->original_experiment;
+					}
+					if (branch_node->branch_experiment != NULL) {
+						delete branch_node->branch_experiment;
+					}
+				}
+				break;
+			}
+		}
+	}
 }

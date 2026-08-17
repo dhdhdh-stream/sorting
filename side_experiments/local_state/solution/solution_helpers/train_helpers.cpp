@@ -31,9 +31,11 @@ void backprop_helper(TrainScopeHistory* scope_history,
 					 double target_val) {
 	Scope* scope = scope_history->scope;
 
-	scope->end_score_network->load(scope_history->end_score_network_history);
-	scope->end_score_network->backprop(target_val,
-									   state_error);
+	if (scope_history->end_score_network_history != NULL) {
+		scope->end_score_network->load(scope_history->end_score_network_history);
+		scope->end_score_network->backprop(target_val,
+										   state_error);
+	}
 
 	for (int h_index = (int)scope_history->node_histories.size()-1; h_index >= 0; h_index--) {
 		AbstractNode* node = scope_history->node_histories[h_index]->node;

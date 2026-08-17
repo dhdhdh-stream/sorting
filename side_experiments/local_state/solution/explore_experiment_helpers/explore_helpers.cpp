@@ -22,7 +22,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int EXPLORE_ITERS = 10;
 #else
-const int EXPLORE_ITERS = 400;
+const int EXPLORE_ITERS = 200;
 #endif /* MDEBUG */
 
 void ExploreExperiment::explore_check_activate(vector<double>& obs,

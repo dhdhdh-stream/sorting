@@ -16,8 +16,6 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->iters_since_update = 0;
 
-	this->experiment_iter = 0;
-
 	this->train_iter_index = 0;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -37,8 +35,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->best_solution->load(input_file);
 
 	this->iters_since_update = 0;
-
-	this->experiment_iter = 0;
 
 	this->train_iter_index = 0;
 

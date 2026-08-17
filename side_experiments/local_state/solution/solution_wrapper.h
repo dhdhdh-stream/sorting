@@ -31,12 +31,6 @@ public:
 
 	int iters_since_update;
 
-	int experiment_iter;
-	/**
-	 * - fully reset experiments every so often
-	 *   - to enable experiments in different places
-	 */
-
 	/**
 	 * - run variables
 	 */
