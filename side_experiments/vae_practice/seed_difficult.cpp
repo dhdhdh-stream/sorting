@@ -1,7 +1,3 @@
-// - instead of exponential, try evenly split?
-//   - too few big layers for the probabilistic noise direction
-//   - too many low impact small layers?
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -16,27 +12,18 @@ int seed;
 
 default_random_engine generator;
 
-// const int DENOISE_NUM_LAYERS = 6;
+// const int DENOISE_NUM_LAYERS = 5;
 // const vector<double> NOISE_MULTIPLIERS{
-// 	0.05, 0.1, 0.2, 0.4, 0.8, 1.6
+// 	0.05, 0.25, 0.45, 0.65, 0.85
 // };
-// const int DENOISE_NUM_LAYERS = 6;
+// const int DENOISE_NUM_LAYERS = 4;
 // const vector<double> NOISE_MULTIPLIERS{
-// 	0.05, 0.35, 0.65, 0.95, 1.25, 1.55
+// 	0.05, 0.3, 0.55, 0.8
 // };
-const int DENOISE_NUM_LAYERS = 6;
+const int DENOISE_NUM_LAYERS = 4;
 const vector<double> NOISE_MULTIPLIERS{
-	0.1, 0.4, 0.7, 1.0, 1.3, 1.6
+	0.05, 0.25, 0.45, 0.65
 };
-// const int DENOISE_NUM_LAYERS = 6;
-// const vector<double> NOISE_MULTIPLIERS{
-// 	0.1, 0.7, 1.3, 1.9, 2.5, 3.1
-// };
-// - too much variance
-// const int DENOISE_NUM_LAYERS = 8;
-// const vector<double> NOISE_MULTIPLIERS{
-// 	0.1, 0.3, 0.5, 0.7, 0.9, 1.1, 1.3, 1.5
-// };
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -170,27 +157,43 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	double in_standard_deviation_0 = sqrt(in_variance_0);
-	double in_standard_deviation_1 = sqrt(in_variance_1);
+	vector<vector<double>> seeds;
+	for (int s_index = 0; s_index < 1000; s_index++) {
+		int type = type_distribution(generator);
 
-	cout << "in_mean_0: " << in_mean_0 << endl;
-	cout << "in_variance_0: " << in_variance_0 << endl;
-	cout << "in_standard_deviation_0: " << in_standard_deviation_0 << endl;
-	cout << "in_mean_1: " << in_mean_1 << endl;
-	cout << "in_variance_1: " << in_variance_1 << endl;
-	cout << "in_standard_deviation_1: " << in_standard_deviation_1 << endl;
+		double base_0;
+		double base_1;
+		if (type == 0) {
+			if (base_0_distribution(generator) == 0) {
+				base_0 = 1.0;
+				base_1 = -1.0;
+			} else {
+				base_0 = -1.0;
+				base_1 = 1.0;
+			}
+		} else {
+			if (base_1_distribution(generator) == 0) {
+				base_0 = 2.0;
+				base_1 = 2.0;
+			} else {
+				base_0 = -0.3;
+				base_1 = 0.3;
+			}
+		}
+		seeds.push_back({base_0, base_1});
+	}
 
-	normal_distribution<double> init_distribution_0(in_mean_0, 2.0 * in_standard_deviation_0);
-	normal_distribution<double> init_distribution_1(in_mean_1, 2.0 * in_standard_deviation_1);
+	uniform_int_distribution<int> seed_distribution(0, seeds.size()-1);
 	for (int iter_index = 0; iter_index < 40; iter_index++) {
 		cout << iter_index << endl;
 
 		int type = type_distribution(generator);
 		cout << "type: " << type << endl;
 
-		double curr_0 = init_distribution_0(generator);
+		int seed_index = seed_distribution(generator);
+		double curr_0 = seeds[seed_index][0];
 		cout << "curr_0: " << curr_0 << endl;
-		double curr_1 = init_distribution_1(generator);
+		double curr_1 = seeds[seed_index][1];
 		cout << "curr_1: " << curr_1 << endl;
 
 		for (int layer_index = DENOISE_NUM_LAYERS-1; layer_index >= 0; layer_index--) {

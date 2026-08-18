@@ -1,7 +1,3 @@
-// - instead of exponential, try evenly split?
-//   - too few big layers for the probabilistic noise direction
-//   - too many low impact small layers?
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -18,25 +14,12 @@ default_random_engine generator;
 
 // const int DENOISE_NUM_LAYERS = 6;
 // const vector<double> NOISE_MULTIPLIERS{
-// 	0.05, 0.1, 0.2, 0.4, 0.8, 1.6
-// };
-// const int DENOISE_NUM_LAYERS = 6;
-// const vector<double> NOISE_MULTIPLIERS{
-// 	0.05, 0.35, 0.65, 0.95, 1.25, 1.55
+// 	0.1, 0.4, 0.7, 1.0, 1.3, 1.6
 // };
 const int DENOISE_NUM_LAYERS = 6;
 const vector<double> NOISE_MULTIPLIERS{
-	0.1, 0.4, 0.7, 1.0, 1.3, 1.6
+	0.05, 0.1, 0.2, 0.4, 0.8, 1.6
 };
-// const int DENOISE_NUM_LAYERS = 6;
-// const vector<double> NOISE_MULTIPLIERS{
-// 	0.1, 0.7, 1.3, 1.9, 2.5, 3.1
-// };
-// - too much variance
-// const int DENOISE_NUM_LAYERS = 8;
-// const vector<double> NOISE_MULTIPLIERS{
-// 	0.1, 0.3, 0.5, 0.7, 0.9, 1.1, 1.3, 1.5
-// };
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -62,7 +45,7 @@ int main(int argc, char* argv[]) {
 	 */
 	vector<Network*> networks(DENOISE_NUM_LAYERS);
 	for (int layer_index = 0; layer_index < DENOISE_NUM_LAYERS; layer_index++) {
-		networks[layer_index] = new Network(3, 6);
+		networks[layer_index] = new Network(2, 6);
 	}
 
 	double in_mean_0 = 0.0;
@@ -70,33 +53,19 @@ int main(int argc, char* argv[]) {
 	double in_mean_1 = 0.0;
 	double in_variance_1 = 1.0;
 
-	uniform_int_distribution<int> type_distribution(0, 1);
-	uniform_int_distribution<int> base_0_distribution(0, 3);
-	uniform_int_distribution<int> base_1_distribution(0, 1);
+	uniform_int_distribution<int> base_distribution(0, 3);
 	normal_distribution<double> noise_distribution(0, 1);
 	uniform_real_distribution<double> direction_distribution(-1.0, 1.0);
 	// for (int iter_index = 0; iter_index < 1000000; iter_index++) {
 	for (int iter_index = 0; iter_index < 3000000; iter_index++) {
-		int type = type_distribution(generator);
-
 		double base_0;
 		double base_1;
-		if (type == 0) {
-			if (base_0_distribution(generator) == 0) {
-				base_0 = 1.0;
-				base_1 = -1.0;
-			} else {
-				base_0 = -1.0;
-				base_1 = 1.0;
-			}
+		if (base_distribution(generator) == 0) {
+			base_0 = 1.0;
+			base_1 = -1.0;
 		} else {
-			if (base_1_distribution(generator) == 0) {
-				base_0 = 2.0;
-				base_1 = 2.0;
-			} else {
-				base_0 = -0.3;
-				base_1 = 0.3;
-			}
+			base_0 = -1.0;
+			base_1 = 1.0;
 		}
 
 		in_mean_0 = 0.999*in_mean_0 + 0.001*base_0;
@@ -114,7 +83,6 @@ int main(int argc, char* argv[]) {
 			double noise_1 = NOISE_MULTIPLIERS[layer_index] * in_standard_deviation_1 * noise_distribution(generator);
 
 			vector<double> inputs{
-				(double)type,
 				base_0 + noise_0,
 				base_1 + noise_1,
 				(double)layer_index
@@ -185,16 +153,13 @@ int main(int argc, char* argv[]) {
 	for (int iter_index = 0; iter_index < 40; iter_index++) {
 		cout << iter_index << endl;
 
-		int type = type_distribution(generator);
-		cout << "type: " << type << endl;
-
 		double curr_0 = init_distribution_0(generator);
 		cout << "curr_0: " << curr_0 << endl;
 		double curr_1 = init_distribution_1(generator);
 		cout << "curr_1: " << curr_1 << endl;
 
 		for (int layer_index = DENOISE_NUM_LAYERS-1; layer_index >= 0; layer_index--) {
-			vector<double> inputs{(double)type, curr_0, curr_1, (double)layer_index};
+			vector<double> inputs{curr_0, curr_1, (double)layer_index};
 			networks[layer_index]->activate(inputs);
 			double positive_noise_0 = networks[layer_index]->output->acti_vals[0];
 			cout << "positive_noise_0: " << positive_noise_0 << endl;

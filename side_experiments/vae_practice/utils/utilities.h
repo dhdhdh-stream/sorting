@@ -8,6 +8,4 @@ inline unsigned long xorshift(unsigned long x) {
 	return x;
 }
 
-char* get_time();
-
 #endif /* UTILITIES_H */
