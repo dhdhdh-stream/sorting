@@ -2,6 +2,7 @@
 
 #include "globals.h"
 #include "pass_through_network.h"
+#include "predict_network.h"
 #include "scope.h"
 #include "score_network.h"
 #include "transition_network.h"
@@ -20,6 +21,8 @@ void ScopeNode::train_step(AbstractNodeHistory* history,
 
 	TrainScopeHistory* inner_train_scope_history = new TrainScopeHistory(this->scope);
 	train_history->scope_history = inner_train_scope_history;
+
+	Eigen::VectorXf starting_state = state;
 
 	Eigen::VectorXf inner_state;
 	inner_state.resize(this->scope->num_states);
@@ -41,7 +44,7 @@ void ScopeNode::train_step(AbstractNodeHistory* history,
 
 		this->in_network->activate(state,
 								   inner_state);
-		train_history->in_network_history = new TransitionNetworkHistory(this->in_network);
+		train_history->in_network_history = new TransitionNetworkHistory();
 		this->in_network->save(train_history->in_network_history);
 	}
 
@@ -67,7 +70,12 @@ void ScopeNode::train_step(AbstractNodeHistory* history,
 
 		this->out_network->activate(inner_state,
 									state);
-		train_history->out_network_history = new TransitionNetworkHistory(this->out_network);
+		train_history->out_network_history = new TransitionNetworkHistory();
 		this->out_network->save(train_history->out_network_history);
 	}
+
+	Eigen::VectorXf state_diff = state - starting_state;
+
+	this->predict_network->backprop(starting_state,
+									state_diff);
 }

@@ -20,6 +20,7 @@
 class InitNetwork;
 class InitNetworkHistory;
 class PassThroughNetwork;
+class PredictNetwork;
 class Problem;
 class Scope;
 class ScopeHistory;
@@ -42,6 +43,8 @@ public:
 
 	std::vector<PassThroughNetwork*> out_pass_through_networks;
 	TransitionNetwork* out_network;
+
+	PredictNetwork* predict_network;
 
 	int next_node_id;
 	AbstractNode* next_node;
@@ -75,6 +78,9 @@ public:
 					Eigen::VectorXf& state,
 					int run_type,
 					TrainScopeHistory* train_scope_history);
+
+	void predict_step(Eigen::VectorXf& state,
+					  AbstractNode*& node_context);
 
 	void copy_from(ScopeNode* original,
 				   Solution* parent_solution);

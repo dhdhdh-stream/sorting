@@ -5,11 +5,10 @@
 
 #include <Eigen/Dense>
 
-#include "abstract_network.h"
 #include "layer.h"
 
 class ScoreNetworkHistory;
-class ScoreNetwork : public AbstractNetwork {
+class ScoreNetwork {
 public:
 	Layer* state_input;
 
@@ -52,14 +51,12 @@ public:
 	void save(std::ofstream& output_file);
 };
 
-class ScoreNetworkHistory : public AbstractNetworkHistory {
+class ScoreNetworkHistory {
 public:
 	Eigen::VectorXf state_input_history;
 	Eigen::VectorXf hidden_1_history;
 	Eigen::VectorXf hidden_2_history;
 	double output_history;
-
-	ScoreNetworkHistory(ScoreNetwork* network);
 };
 
 #endif /* SCORE_NETWORK_H */

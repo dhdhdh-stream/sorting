@@ -10,11 +10,10 @@
 
 #include <Eigen/Dense>
 
-#include "abstract_network.h"
 #include "layer.h"
 
 class ObsNetworkHistory;
-class ObsNetwork : public AbstractNetwork {
+class ObsNetwork {
 public:
 	Layer* state_input;
 
@@ -51,14 +50,12 @@ public:
 	void save(std::ofstream& output_file);
 };
 
-class ObsNetworkHistory : public AbstractNetworkHistory {
+class ObsNetworkHistory {
 public:
 	Eigen::VectorXf state_input_history;
 	Eigen::VectorXf obs_input_history;
 	Eigen::VectorXf hidden_1_history;
 	Eigen::VectorXf hidden_2_history;
-
-	ObsNetworkHistory(ObsNetwork* network);
 };
 
 #endif /* OBS_NETWORK_H */

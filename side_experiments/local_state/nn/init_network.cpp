@@ -10,8 +10,6 @@ using namespace std;
 InitNetwork::InitNetwork(vector<int>& init_states,
 						 int num_states,
 						 int num_obs) {
-	this->type = NETWORK_TYPE_INIT;
-
 	this->init_states = init_states;
 
 	this->state_input = new Layer(LINEAR_LAYER);
@@ -55,8 +53,6 @@ InitNetwork::InitNetwork(vector<int>& init_states,
 }
 
 InitNetwork::InitNetwork(InitNetwork* original) {
-	this->type = NETWORK_TYPE_INIT;
-
 	this->init_states = original->init_states;
 
 	this->state_input = new Layer(LINEAR_LAYER);
@@ -103,8 +99,6 @@ InitNetwork::InitNetwork(InitNetwork* original) {
 }
 
 InitNetwork::InitNetwork(ifstream& input_file) {
-	this->type = NETWORK_TYPE_INIT;
-
 	string num_init_states_line;
 	getline(input_file, num_init_states_line);
 	int num_init_states = stoi(num_init_states_line);
@@ -319,8 +313,4 @@ void InitNetwork::save(ofstream& output_file) {
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);
 	this->output->save_weights(output_file);
-}
-
-InitNetworkHistory::InitNetworkHistory(InitNetwork* network) {
-	this->network = network;
 }

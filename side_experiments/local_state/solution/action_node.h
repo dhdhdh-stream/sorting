@@ -13,6 +13,7 @@ class InitNetwork;
 class InitNetworkHistory;
 class ObsNetwork;
 class ObsNetworkHistory;
+class PredictNetwork;
 class Problem;
 class ScopeHistory;
 class ScoreNetwork;
@@ -33,6 +34,8 @@ public:
 	std::vector<std::vector<Scope*>> init_network_scope_contexts;
 	std::vector<std::vector<int>> init_network_node_contexts;
 	std::vector<InitNetwork*> init_networks;
+
+	PredictNetwork* predict_network;
 
 	int next_node_id;
 	AbstractNode* next_node;
@@ -68,6 +71,9 @@ public:
 					Eigen::VectorXf& state,
 					int run_type,
 					TrainScopeHistory* train_scope_history);
+
+	void predict_step(Eigen::VectorXf& state,
+					  AbstractNode*& node_context);
 
 	void copy_from(ActionNode* original,
 				   Solution* parent_solution);

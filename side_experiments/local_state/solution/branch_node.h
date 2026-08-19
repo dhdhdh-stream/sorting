@@ -65,6 +65,9 @@ public:
 					int run_type,
 					TrainScopeHistory* train_scope_history);
 
+	void predict_step(Eigen::VectorXf& state,
+					  AbstractNode*& node_context);
+
 	void copy_from(BranchNode* original,
 				   Solution* parent_solution);
 

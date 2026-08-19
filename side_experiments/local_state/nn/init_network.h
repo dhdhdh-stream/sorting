@@ -5,11 +5,10 @@
 
 #include <Eigen/Dense>
 
-#include "abstract_network.h"
 #include "layer.h"
 
 class InitNetworkHistory;
-class InitNetwork : public AbstractNetwork {
+class InitNetwork {
 public:
 	std::vector<int> init_states;
 
@@ -55,14 +54,12 @@ public:
 	void save(std::ofstream& output_file);
 };
 
-class InitNetworkHistory : public AbstractNetworkHistory {
+class InitNetworkHistory {
 public:
 	Eigen::VectorXf state_input_history;
 	Eigen::VectorXf obs_input_history;
 	Eigen::VectorXf hidden_1_history;
 	Eigen::VectorXf hidden_2_history;
-
-	InitNetworkHistory(InitNetwork* network);
 };
 
 #endif /* INIT_NETWORK_H */

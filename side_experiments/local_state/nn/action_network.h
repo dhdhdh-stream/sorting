@@ -5,11 +5,10 @@
 
 #include <Eigen/Dense>
 
-#include "abstract_network.h"
 #include "layer.h"
 
 class ActionNetworkHistory;
-class ActionNetwork : public AbstractNetwork {
+class ActionNetwork {
 public:
 	Layer* state_input;
 
@@ -42,13 +41,11 @@ public:
 	void save(std::ofstream& output_file);
 };
 
-class ActionNetworkHistory : public AbstractNetworkHistory {
+class ActionNetworkHistory {
 public:
 	Eigen::VectorXf state_input_history;
 	Eigen::VectorXf hidden_1_history;
 	Eigen::VectorXf hidden_2_history;
-
-	ActionNetworkHistory(ActionNetwork* network);
 };
 
 #endif /* ACTION_NETWORK_H */

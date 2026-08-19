@@ -6,8 +6,6 @@ using namespace std;
 
 TransitionNetwork::TransitionNetwork(int front_num_states,
 									 int back_num_states) {
-	this->type = NETWORK_TYPE_TRANSITION;
-
 	this->state_input = new Layer(LINEAR_LAYER);
 	this->state_input->acti_vals.resize(front_num_states);
 	this->state_input->errors.resize(front_num_states);
@@ -42,8 +40,6 @@ TransitionNetwork::TransitionNetwork(int front_num_states,
 }
 
 TransitionNetwork::TransitionNetwork(TransitionNetwork* original) {
-	this->type = NETWORK_TYPE_ACTION;
-
 	this->state_input = new Layer(LINEAR_LAYER);
 	this->state_input->acti_vals.resize(original->state_input->acti_vals.size());
 	this->state_input->errors.resize(original->state_input->errors.size());
@@ -81,8 +77,6 @@ TransitionNetwork::TransitionNetwork(TransitionNetwork* original) {
 }
 
 TransitionNetwork::TransitionNetwork(ifstream& input_file) {
-	this->type = NETWORK_TYPE_ACTION;
-
 	this->state_input = new Layer(LINEAR_LAYER);
 	string front_num_states_line;
 	getline(input_file, front_num_states_line);
@@ -226,8 +220,4 @@ void TransitionNetwork::save(ofstream& output_file) {
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);
 	this->output->save_weights(output_file);
-}
-
-TransitionNetworkHistory::TransitionNetworkHistory(TransitionNetwork* network) {
-	this->network = network;
 }

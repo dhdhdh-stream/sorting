@@ -4,6 +4,7 @@
 #include "globals.h"
 #include "init_network.h"
 #include "obs_network.h"
+#include "predict_network.h"
 #include "scope.h"
 #include "score_network.h"
 
@@ -29,12 +30,14 @@ void ActionNode::train_step(AbstractNodeHistory* history,
 		train_scope_history->node_histories.push_back(train_history);
 
 		this->action_network->activate(state);
-		train_history->action_network_history = new ActionNetworkHistory(this->action_network);
+		train_history->action_network_history = new ActionNetworkHistory();
 		this->action_network->save(train_history->action_network_history);
+
+		Eigen::VectorXf starting_state = state;
 
 		this->obs_network->activate(state,
 									action_node_history->obs);
-		train_history->obs_network_history = new ObsNetworkHistory(this->obs_network);
+		train_history->obs_network_history = new ObsNetworkHistory();
 		this->obs_network->save(train_history->obs_network_history);
 
 		train_history->init_network_histories = vector<InitNetworkHistory*>(this->init_networks.size(), NULL);
@@ -42,9 +45,14 @@ void ActionNode::train_step(AbstractNodeHistory* history,
 			if (action_node_history->init_is_match[n_index]) {
 				this->init_networks[n_index]->activate(state,
 													   action_node_history->obs);
-				train_history->init_network_histories[n_index] = new InitNetworkHistory(this->init_networks[n_index]);
+				train_history->init_network_histories[n_index] = new InitNetworkHistory();
 				this->init_networks[n_index]->save(train_history->init_network_histories[n_index]);
 			}
 		}
+
+		Eigen::VectorXf state_diff = state - starting_state;
+
+		this->predict_network->backprop(starting_state,
+										state_diff);
 	}
 }

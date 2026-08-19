@@ -21,11 +21,11 @@ void BranchNode::train_step(AbstractNodeHistory* history,
 
 		if (train_history->is_branch) {
 			this->branch_network->activate(state);
-			train_history->score_network_history = new ScoreNetworkHistory(this->branch_network);
+			train_history->score_network_history = new ScoreNetworkHistory();
 			this->branch_network->save(train_history->score_network_history);
 		} else {
 			this->original_network->activate(state);
-			train_history->score_network_history = new ScoreNetworkHistory(this->original_network);
+			train_history->score_network_history = new ScoreNetworkHistory();
 			this->original_network->save(train_history->score_network_history);
 		}
 	}

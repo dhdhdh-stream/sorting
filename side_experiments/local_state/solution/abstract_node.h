@@ -50,6 +50,9 @@ public:
 							int run_type,
 							TrainScopeHistory* train_scope_history) = 0;
 
+	virtual void predict_step(Eigen::VectorXf& state,
+							  AbstractNode*& node_context) = 0;
+
 	virtual void save(std::ofstream& output_file) = 0;
 	virtual void link(Solution* parent_solution) = 0;
 	virtual void save_for_display(std::ofstream& output_file) = 0;

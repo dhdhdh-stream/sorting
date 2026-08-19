@@ -7,9 +7,7 @@
 
 #include <fstream>
 
-#include "abstract_network.h"
-
-class PassThroughNetwork : public AbstractNetwork {
+class PassThroughNetwork {
 public:
 	int front_state_index;
 	int back_state_index;
@@ -20,11 +18,6 @@ public:
 	PassThroughNetwork(std::ifstream& input_file);
 
 	void save(std::ofstream& output_file);
-};
-
-class PassThroughNetworkHistory : public AbstractNetworkHistory {
-public:
-	PassThroughNetworkHistory(PassThroughNetwork* network);
 };
 
 #endif /* PASS_THROUGH_NETWORK_H */

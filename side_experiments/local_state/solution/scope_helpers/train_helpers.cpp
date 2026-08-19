@@ -24,7 +24,7 @@ void Scope::train_activate(ScopeHistory* history,
 	if (!train_scope_history->is_drop) {
 		this->start_obs_network->activate(state,
 										  history->obs);
-		train_scope_history->start_obs_network_history = new ObsNetworkHistory(this->start_obs_network);
+		train_scope_history->start_obs_network_history = new ObsNetworkHistory();
 		this->start_obs_network->save(train_scope_history->start_obs_network_history);
 
 		train_scope_history->start_init_network_histories = vector<InitNetworkHistory*>(this->start_init_networks.size(), NULL);
@@ -32,7 +32,7 @@ void Scope::train_activate(ScopeHistory* history,
 			if (history->init_is_match[n_index]) {
 				this->start_init_networks[n_index]->activate(state,
 															 history->obs);
-				train_scope_history->start_init_network_histories[n_index] = new InitNetworkHistory(this->start_init_networks[n_index]);
+				train_scope_history->start_init_network_histories[n_index] = new InitNetworkHistory();
 				this->start_init_networks[n_index]->save(train_scope_history->start_init_network_histories[n_index]);
 			}
 		}
@@ -49,7 +49,7 @@ void Scope::train_activate(ScopeHistory* history,
 
 	if (run_type == RUN_TYPE_EXPLORE) {
 		this->end_score_network->activate(state);
-		train_scope_history->end_score_network_history = new ScoreNetworkHistory(this->end_score_network);
+		train_scope_history->end_score_network_history = new ScoreNetworkHistory();
 		this->end_score_network->save(train_scope_history->end_score_network_history);
 	}
 }

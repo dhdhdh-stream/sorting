@@ -9,8 +9,6 @@ using namespace std;
 
 ObsNetwork::ObsNetwork(int num_states,
 					   int num_obs) {
-	this->type = NETWORK_TYPE_OBS;
-
 	this->state_input = new Layer(LINEAR_LAYER);
 	this->state_input->acti_vals.resize(num_states);
 	this->state_input->errors.resize(num_states);
@@ -61,8 +59,6 @@ ObsNetwork::ObsNetwork(int num_states,
 }
 
 ObsNetwork::ObsNetwork(ObsNetwork* original) {
-	this->type = NETWORK_TYPE_OBS;
-
 	this->state_input = new Layer(LINEAR_LAYER);
 	this->state_input->acti_vals.resize(original->state_input->acti_vals.size());
 	this->state_input->errors.resize(original->state_input->errors.size());
@@ -107,8 +103,6 @@ ObsNetwork::ObsNetwork(ObsNetwork* original) {
 }
 
 ObsNetwork::ObsNetwork(ifstream& input_file) {
-	this->type = NETWORK_TYPE_OBS;
-
 	this->state_input = new Layer(LINEAR_LAYER);
 	string num_states_line;
 	getline(input_file, num_states_line);
@@ -264,8 +258,4 @@ void ObsNetwork::save(ofstream& output_file) {
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);
 	this->output->save_weights(output_file);
-}
-
-ObsNetworkHistory::ObsNetworkHistory(ObsNetwork* network) {
-	this->network = network;
 }

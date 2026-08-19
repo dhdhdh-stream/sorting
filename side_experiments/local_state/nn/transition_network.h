@@ -3,11 +3,10 @@
 
 #include <Eigen/Dense>
 
-#include "abstract_network.h"
 #include "layer.h"
 
 class TransitionNetworkHistory;
-class TransitionNetwork : public AbstractNetwork {
+class TransitionNetwork {
 public:
 	Layer* state_input;
 
@@ -44,13 +43,11 @@ public:
 	void save(std::ofstream& output_file);
 };
 
-class TransitionNetworkHistory : public AbstractNetworkHistory {
+class TransitionNetworkHistory {
 public:
 	Eigen::VectorXf state_input_history;
 	Eigen::VectorXf hidden_1_history;
 	Eigen::VectorXf hidden_2_history;
-
-	TransitionNetworkHistory(TransitionNetwork* network);
 };
 
 #endif /* TRANSITION_NETWORK_H */
