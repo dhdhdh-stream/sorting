@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "init_network.h"
 #include "obs_network.h"
+#include "predict_network.h"
 #include "scope.h"
 #include "score_network.h"
 #include "solution.h"
@@ -31,6 +32,8 @@ ActionNode::~ActionNode() {
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
 		delete this->init_networks[n_index];
 	}
+
+	delete this->predict_network;
 
 	if (this->experiment != NULL) {
 		delete this->experiment;
@@ -59,6 +62,8 @@ void ActionNode::copy_from(ActionNode* original,
 		this->init_networks.push_back(new InitNetwork(original->init_networks[n_index]));
 	}
 
+	this->predict_network = new PredictNetwork(original->predict_network);
+
 	this->next_node_id = original->next_node_id;
 
 	this->average_instances_per_hit = original->average_instances_per_hit;
@@ -86,6 +91,8 @@ void ActionNode::save(ofstream& output_file) {
 
 		this->init_networks[n_index]->save(output_file);
 	}
+
+	this->predict_network->save(output_file);
 
 	output_file << this->next_node_id << endl;
 
@@ -133,6 +140,8 @@ void ActionNode::load(ifstream& input_file,
 
 		this->init_networks.push_back(new InitNetwork(input_file));
 	}
+
+	this->predict_network = new PredictNetwork(input_file);
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);

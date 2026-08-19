@@ -1,6 +1,7 @@
 #include "solution_wrapper.h"
 
 #include "constants.h"
+#include "predict_network.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -97,6 +98,8 @@ void SolutionWrapper::combine(string other_path,
 
 			new_scope_node->out_network = new TransitionNetwork(other->scopes[o_index]->num_states,
 																scope->num_states);
+
+			new_scope_node->predict_network = new PredictNetwork(scope->num_states);
 
 			new_scope_node->next_node_id = -1;
 			new_scope_node->next_node = NULL;

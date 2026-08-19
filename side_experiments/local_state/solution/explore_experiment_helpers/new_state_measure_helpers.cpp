@@ -8,6 +8,7 @@
 #include "noop_node.h"
 #include "obs_network.h"
 #include "pass_through_network.h"
+#include "predict_network.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "score_network.h"
@@ -264,6 +265,7 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 								for (int n_index = 0; n_index < (int)action_node->init_networks.size(); n_index++) {
 									action_node->init_networks[n_index]->add_states(scope->num_states);
 								}
+								action_node->predict_network->add_states(scope->num_states);
 							}
 							break;
 						case NODE_TYPE_SCOPE:
@@ -272,6 +274,7 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 
 								scope_node->in_network->add_front_states(scope->num_states);
 								scope_node->out_network->add_back_states(scope->num_states);
+								scope_node->predict_network->add_states(scope->num_states);
 							}
 							break;
 						case NODE_TYPE_BRANCH:

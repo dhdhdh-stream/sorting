@@ -10,6 +10,7 @@
 #include "globals.h"
 #include "noop_node.h"
 #include "obs_network.h"
+#include "predict_network.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -119,6 +120,8 @@ void Solution::init(ProblemType* problem_type) {
 
 		new_action_node->obs_network = new ObsNetwork(new_scope->num_states,
 													  this->num_obs);
+
+		new_action_node->predict_network = new PredictNetwork(new_scope->num_states);
 
 		new_action_node->next_node_id = -1;
 		new_action_node->next_node = NULL;

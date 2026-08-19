@@ -19,12 +19,6 @@
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int EXPLORE_ITERS = 10;
-#else
-const int EXPLORE_ITERS = 200;
-#endif /* MDEBUG */
-
 void ExploreExperiment::explore_check_activate(vector<double>& obs,
 											   ExploreExperimentHistory* history,
 											   SolutionWrapper* wrapper) {
@@ -259,7 +253,7 @@ void ExploreExperiment::explore_backprop(double target_val,
 			}
 
 			this->state_iter++;
-			if (this->state_iter >= EXPLORE_ITERS) {
+			if (this->state_iter >= EXPERIMENT_EXPLORE_NUM_DATAPOINTS) {
 				#if defined(MDEBUG) && MDEBUG
 				if (rand()%2 == 0) {
 				#else

@@ -7,6 +7,7 @@
 #include "globals.h"
 #include "init_network.h"
 #include "pass_through_network.h"
+#include "predict_network.h"
 #include "scope.h"
 #include "score_network.h"
 #include "solution.h"
@@ -35,6 +36,8 @@ ScopeNode::~ScopeNode() {
 	}
 	delete this->out_network;
 
+	delete this->predict_network;
+
 	if (this->experiment != NULL) {
 		delete this->experiment;
 	}
@@ -55,6 +58,8 @@ void ScopeNode::copy_from(ScopeNode* original,
 		this->out_pass_through_networks.push_back(new PassThroughNetwork(original->out_pass_through_networks[n_index]));
 	}
 	this->out_network = new TransitionNetwork(original->out_network);
+
+	this->predict_network = new PredictNetwork(original->predict_network);
 
 	this->next_node_id = original->next_node_id;
 
@@ -80,6 +85,8 @@ void ScopeNode::save(ofstream& output_file) {
 		this->out_pass_through_networks[n_index]->save(output_file);
 	}
 	this->out_network->save(output_file);
+
+	this->predict_network->save(output_file);
 
 	output_file << this->next_node_id << endl;
 
@@ -119,6 +126,8 @@ void ScopeNode::load(ifstream& input_file,
 	}
 
 	this->out_network = new TransitionNetwork(input_file);
+
+	this->predict_network = new PredictNetwork(input_file);
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);

@@ -13,6 +13,7 @@
 #include "noop_node.h"
 #include "obs_network.h"
 #include "pass_through_network.h"
+#include "predict_network.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "score_network.h"
@@ -29,6 +30,7 @@ void ExploreExperiment::add(bool is_new_state,
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
+	ss << "iters_since_update: " << wrapper->iters_since_update << "; ";
 	ss << "Experiment" << "; ";
 	ss << "is_new_state: " << is_new_state << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
@@ -66,6 +68,7 @@ void ExploreExperiment::add(bool is_new_state,
 			ActionNode* generic_action_node = this->scope_context->generic_action_nodes[this->best_indexes[s_index]];
 			new_action_node->action_network = new ActionNetwork(generic_action_node->action_network);
 			new_action_node->obs_network = new ObsNetwork(generic_action_node->obs_network);
+			new_action_node->predict_network = new PredictNetwork(generic_action_node->predict_network);
 
 			new_nodes.push_back(new_action_node);
 		} else {
@@ -84,6 +87,8 @@ void ExploreExperiment::add(bool is_new_state,
 			new_scope_node->scope = this->scope_context->child_scopes[this->best_indexes[s_index]];
 
 			new_scope_node->out_network = new TransitionNetwork(generic_scope_node->out_network);
+
+			new_scope_node->predict_network = new PredictNetwork(generic_scope_node->predict_network);
 
 			new_nodes.push_back(new_scope_node);
 		}
@@ -396,6 +401,8 @@ void ExploreExperiment::add(bool is_new_state,
 			scope_node->out_network = new TransitionNetwork(new_scope->num_states,
 															new_scope->num_states);
 
+			scope_node->predict_network = new PredictNetwork(new_scope->num_states);
+
 			NoopNode* end_node = new NoopNode();
 			end_node->parent = new_scope;
 			end_node->id = new_scope->node_counter;
@@ -435,6 +442,8 @@ void ExploreExperiment::add(bool is_new_state,
 				new_action_node->obs_network = new ObsNetwork(new_scope->num_states,
 															  wrapper->solution->num_obs);
 
+				new_action_node->predict_network = new PredictNetwork(new_scope->num_states);
+
 				new_action_node->next_node_id = -1;
 				new_action_node->next_node = NULL;
 
@@ -457,6 +466,8 @@ void ExploreExperiment::add(bool is_new_state,
 
 				new_scope_node->out_network = new TransitionNetwork(new_scope->child_scopes[c_index]->num_states,
 																	new_scope->num_states);
+
+				new_scope_node->predict_network = new PredictNetwork(new_scope->num_states);
 
 				new_scope_node->next_node_id = -1;
 				new_scope_node->next_node = NULL;
@@ -494,6 +505,7 @@ void ExploreExperiment::add(bool is_new_state,
 					for (int n_index = 0; n_index < (int)action_node->init_networks.size(); n_index++) {
 						action_node->init_networks[n_index]->clear_momentum();
 					}
+					action_node->predict_network->clear_momentum();
 				}
 				break;
 			case NODE_TYPE_SCOPE:
@@ -501,6 +513,7 @@ void ExploreExperiment::add(bool is_new_state,
 					ScopeNode* scope_node = (ScopeNode*)it->second;
 					scope_node->in_network->clear_momentum();
 					scope_node->out_network->clear_momentum();
+					scope_node->predict_network->clear_momentum();
 				}
 				break;
 			case NODE_TYPE_BRANCH:
