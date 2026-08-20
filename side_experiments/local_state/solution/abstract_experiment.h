@@ -42,6 +42,8 @@ class AbstractExperimentHistory {
 public:
 	AbstractExperiment* experiment;
 
+	std::vector<double> signal_histories;
+
 	virtual ~AbstractExperimentHistory() {};
 };
 

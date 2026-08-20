@@ -169,7 +169,7 @@ public:
 	bool further_than(ExploreExperiment* other);
 };
 
-class ExploreExperimentHistory : public AbstractExperimentHistory{
+class ExploreExperimentHistory : public AbstractExperimentHistory {
 public:
 	std::vector<double> existing_predicted;
 
@@ -180,7 +180,6 @@ public:
 	std::vector<std::vector<Eigen::VectorXf>> dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> dependencies_obs_histories;
 	std::vector<Eigen::VectorXf> state_histories;
-	std::vector<double> signal_histories;
 
 	ExploreExperimentHistory(ExploreExperiment* experiment);
 };

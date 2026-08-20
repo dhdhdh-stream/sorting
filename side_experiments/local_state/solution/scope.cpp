@@ -129,6 +129,7 @@ void Scope::copy_from(Scope* original,
 	this->measure_reuse_last_scores = original->measure_reuse_last_scores;
 	this->train_new_state_last_scores = original->train_new_state_last_scores;
 	this->measure_new_state_last_scores = original->measure_new_state_last_scores;
+	this->predict_last_scores = original->predict_last_scores;
 }
 
 void Scope::save(ofstream& output_file) {
@@ -194,6 +195,12 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->measure_new_state_last_scores.size() << endl;
 	for (list<double>::iterator it = this->measure_new_state_last_scores.begin();
 			it != this->measure_new_state_last_scores.end(); it++) {
+		output_file << *it << endl;
+	}
+
+	output_file << this->predict_last_scores.size() << endl;
+	for (list<double>::iterator it = this->predict_last_scores.begin();
+			it != this->predict_last_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 }
@@ -353,6 +360,15 @@ void Scope::load(ifstream& input_file,
 		string score_line;
 		getline(input_file, score_line);
 		this->measure_new_state_last_scores.push_back(stod(score_line));
+	}
+
+	string num_predict_last_scores_line;
+	getline(input_file, num_predict_last_scores_line);
+	int num_predict_last_scores = stoi(num_predict_last_scores_line);
+	for (int e_index = 0; e_index < num_predict_last_scores; e_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->predict_last_scores.push_back(stod(score_line));
 	}
 }
 

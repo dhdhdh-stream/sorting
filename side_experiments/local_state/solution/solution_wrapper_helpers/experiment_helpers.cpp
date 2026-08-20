@@ -11,6 +11,7 @@
 #include "init_network.h"
 #include "noop_node.h"
 #include "obs_network.h"
+#include "predict_experiment.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -86,9 +87,8 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 				scope->end_score_network->activate(this->states.back());
 				double signal = scope->end_score_network->output->acti_vals(0);
 				for (int c_index = 0; c_index < (int)this->scope_histories.back()->experiment_callback_histories.size(); c_index++) {
-					ExploreExperimentHistory* explore_experiment_history = (ExploreExperimentHistory*)this->scope_histories.back()->experiment_callback_histories[c_index];
 					int index = this->scope_histories.back()->experiment_callback_indexes[c_index];
-					explore_experiment_history->signal_histories[index] = signal;
+					this->scope_histories.back()->experiment_callback_histories[c_index]->signal_histories[index] = signal;
 				}
 			}
 
@@ -159,6 +159,13 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	}
 
+	if (this->predict_experiment_histories.size() == 0) {
+		if (this->run_type == RUN_TYPE_EXPLORE) {
+			create_predict_experiment(this->scope_histories[0],
+									  this);
+		}
+	}
+
 	this->train_scope_histories.push_back(this->scope_histories[0]);
 	this->train_target_val_histories.push_back(result);
 	this->train_run_type_histories.push_back(this->run_type);
@@ -181,11 +188,24 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	}
 
+	for (map<PredictExperiment*, PredictExperimentHistory*>::iterator it = this->predict_experiment_histories.begin();
+			it != this->predict_experiment_histories.end(); it++) {
+		it->first->backprop(result,
+							it->second,
+							this);
+	}
+
 	for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
 			it != this->explore_experiment_histories.end(); it++) {
 		delete it->second;
 	}
 	this->explore_experiment_histories.clear();
+
+	for (map<PredictExperiment*, PredictExperimentHistory*>::iterator it = this->predict_experiment_histories.begin();
+			it != this->predict_experiment_histories.end(); it++) {
+		delete it->second;
+	}
+	this->predict_experiment_histories.clear();
 
 	this->iters_since_update++;
 	if (this->iters_since_update == UPDATE_NUM_ITERS) {
