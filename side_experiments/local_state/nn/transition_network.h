@@ -32,6 +32,8 @@ public:
 
 	void backprop(Eigen::VectorXf& back_state_errors,
 				  Eigen::VectorXf& front_state_errors);
+	void backprop_through(Eigen::VectorXf& back_state_errors,
+						  Eigen::VectorXf& front_state_errors);
 
 	void update();
 

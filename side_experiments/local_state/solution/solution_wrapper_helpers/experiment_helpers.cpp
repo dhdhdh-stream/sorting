@@ -159,12 +159,12 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	}
 
-	if (this->predict_experiment_histories.size() == 0) {
-		if (this->run_type == RUN_TYPE_EXPLORE) {
-			create_predict_experiment(this->scope_histories[0],
-									  this);
-		}
-	}
+	// if (this->predict_experiment_histories.size() == 0) {
+	// 	if (this->run_type == RUN_TYPE_EXPLORE) {
+	// 		create_predict_experiment(this->scope_histories[0],
+	// 								  this);
+	// 	}
+	// }
 
 	this->train_scope_histories.push_back(this->scope_histories[0]);
 	this->train_target_val_histories.push_back(result);

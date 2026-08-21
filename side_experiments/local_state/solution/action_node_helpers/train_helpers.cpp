@@ -33,7 +33,7 @@ void ActionNode::train_step(AbstractNodeHistory* history,
 		train_history->action_network_history = new ActionNetworkHistory();
 		this->action_network->save(train_history->action_network_history);
 
-		Eigen::VectorXf starting_state = state;
+		// Eigen::VectorXf starting_state = state;
 
 		this->obs_network->activate(state,
 									action_node_history->obs);
@@ -50,9 +50,9 @@ void ActionNode::train_step(AbstractNodeHistory* history,
 			}
 		}
 
-		Eigen::VectorXf state_diff = state - starting_state;
+		// Eigen::VectorXf state_diff = state - starting_state;
 
-		this->predict_network->backprop(starting_state,
-										state_diff);
+		// this->predict_network->backprop(starting_state,
+		// 								state_diff);
 	}
 }

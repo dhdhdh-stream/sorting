@@ -31,6 +31,7 @@ public:
 	void load(ActionNetworkHistory* history);
 
 	void backprop(Eigen::VectorXf& state_errors);
+	void backprop_through(Eigen::VectorXf& state_errors);
 
 	void update();
 

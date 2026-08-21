@@ -22,7 +22,7 @@ void ScopeNode::train_step(AbstractNodeHistory* history,
 	TrainScopeHistory* inner_train_scope_history = new TrainScopeHistory(this->scope);
 	train_history->scope_history = inner_train_scope_history;
 
-	Eigen::VectorXf starting_state = state;
+	// Eigen::VectorXf starting_state = state;
 
 	Eigen::VectorXf inner_state;
 	inner_state.resize(this->scope->num_states);
@@ -74,8 +74,8 @@ void ScopeNode::train_step(AbstractNodeHistory* history,
 		this->out_network->save(train_history->out_network_history);
 	}
 
-	Eigen::VectorXf state_diff = state - starting_state;
+	// Eigen::VectorXf state_diff = state - starting_state;
 
-	this->predict_network->backprop(starting_state,
-									state_diff);
+	// this->predict_network->backprop(starting_state,
+	// 								state_diff);
 }

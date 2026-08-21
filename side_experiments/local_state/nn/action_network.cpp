@@ -167,6 +167,17 @@ void ActionNetwork::backprop(Eigen::VectorXf& state_errors) {
 	this->num_instances++;
 }
 
+void ActionNetwork::backprop_through(Eigen::VectorXf& state_errors) {
+	this->output->errors = state_errors;
+
+	this->output->backprop_through();
+	this->hidden_2->backprop_through();
+	this->hidden_1->backprop_through();
+
+	state_errors += this->state_input->errors;
+	this->state_input->errors.setConstant(0.0);
+}
+
 void ActionNetwork::update() {
 	this->epoch_iter++;
 	if (this->epoch_iter == UPDATE_EPOCH_SIZE) {
