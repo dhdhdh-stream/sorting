@@ -43,7 +43,6 @@ public:
 
 	void activate();
 	void backprop();
-	void backprop_through();
 	void update(int num_instances,
 				double learning_rate);
 

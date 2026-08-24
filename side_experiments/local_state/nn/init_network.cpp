@@ -261,19 +261,6 @@ void InitNetwork::backprop(Eigen::VectorXf& state_errors) {
 	this->num_instances++;
 }
 
-void InitNetwork::backprop_through(Eigen::VectorXf& state_errors) {
-	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
-		this->output->errors(i_index) = state_errors[this->init_states[i_index]];
-	}
-
-	this->output->backprop_through();
-	this->hidden_2->backprop_through();
-	this->hidden_1->backprop_through();
-
-	state_errors += this->state_input->errors;
-	this->state_input->errors.setConstant(0.0);
-}
-
 void InitNetwork::update() {
 	this->epoch_iter++;
 	if (this->epoch_iter == UPDATE_EPOCH_SIZE) {

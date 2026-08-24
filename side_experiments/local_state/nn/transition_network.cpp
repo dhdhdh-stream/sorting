@@ -170,18 +170,6 @@ void TransitionNetwork::backprop(Eigen::VectorXf& back_state_errors,
 	this->num_instances++;
 }
 
-void TransitionNetwork::backprop_through(Eigen::VectorXf& back_state_errors,
-										 Eigen::VectorXf& front_state_errors) {
-	this->output->errors = back_state_errors;
-
-	this->output->backprop_through();
-	this->hidden_2->backprop_through();
-	this->hidden_1->backprop_through();
-
-	front_state_errors += this->state_input->errors;
-	this->state_input->errors.setConstant(0.0);
-}
-
 void TransitionNetwork::update() {
 	this->epoch_iter++;
 	if (this->epoch_iter == UPDATE_EPOCH_SIZE) {
