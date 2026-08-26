@@ -50,11 +50,13 @@ public:
 							  SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  PredictExperimentHistory* history,
-				  SolutionWrapper* wrapper);
+				  SolutionWrapper* wrapper,
+				  bool& is_add);
 
 	void train_existing_helper();
 	void explore_helper();
-	void train_new_helper(SolutionWrapper* wrapper);
+	void train_new_helper(SolutionWrapper* wrapper,
+						  bool& is_add);
 
 	void add(SolutionWrapper* wrapper);
 };
@@ -62,7 +64,6 @@ public:
 class PredictExperimentHistory : public AbstractExperimentHistory {
 public:
 	std::vector<Eigen::VectorXf> state_histories;
-	std::vector<double> signal_histories;
 
 	PredictExperimentHistory(PredictExperiment* experiment);
 };

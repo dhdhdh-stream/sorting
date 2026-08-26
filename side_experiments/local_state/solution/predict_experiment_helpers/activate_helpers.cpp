@@ -1,5 +1,7 @@
 #include "predict_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "scope.h"
 #include "solution_wrapper.h"
@@ -46,7 +48,8 @@ void PredictExperiment::experiment_step_callback(vector<double>& obs,
 
 void PredictExperiment::backprop(double target_val,
 								 PredictExperimentHistory* history,
-								 SolutionWrapper* wrapper) {
+								 SolutionWrapper* wrapper,
+								 bool& is_add) {
 	for (int i_index = 0; i_index < (int)history->state_histories.size(); i_index++) {
 		this->existing_state_histories.push_back(history->state_histories[i_index]);
 		this->existing_signal_histories.push_back(history->signal_histories[i_index]);
@@ -55,6 +58,18 @@ void PredictExperiment::backprop(double target_val,
 
 	this->state_iter++;
 	if (this->state_iter >= EXPERIMENT_TRAIN_NUM_DATAPOINTS) {
+		train_existing_helper();
 
+		explore_helper();
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
+		if (this->best_surprise >= 0.0) {
+		#endif /* MDEBUG */
+			train_new_helper(wrapper,
+							 is_add);
+		} else {
+			delete this;
+		}
 	}
 }

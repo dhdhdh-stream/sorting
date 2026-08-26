@@ -1,5 +1,7 @@
 #include "predict_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -12,7 +14,8 @@
 
 using namespace std;
 
-void PredictExperiment::train_new_helper(SolutionWrapper* wrapper) {
+void PredictExperiment::train_new_helper(SolutionWrapper* wrapper,
+										 bool& is_add) {
 	vector<double> new_target_val_histories;
 	for (int h_index = 0; h_index < (int)this->existing_state_histories.size(); h_index++) {
 		double sum_vals = 0.0;
@@ -33,7 +36,8 @@ void PredictExperiment::train_new_helper(SolutionWrapper* wrapper) {
 			}
 
 			sum_vals += predict_helper(node_context,
-									   state);
+									   state,
+									   this->scope_context);
 		}
 
 		new_target_val_histories.push_back(sum_vals / RUNS_PER_PREDICT);
@@ -65,6 +69,15 @@ void PredictExperiment::train_new_helper(SolutionWrapper* wrapper) {
 		double existing_predicted = this->existing_network->output->acti_vals[0];
 		this->new_network->activate(this->existing_state_histories[h_index]);
 		double new_predicted = this->new_network->output->acti_vals[0];
+
+		// temp
+		if (h_index < 10) {
+			cout << h_index << endl;
+			cout << "existing_predicted: " << existing_predicted << endl;
+			cout << "new_predicted: " << new_predicted << endl;
+			cout << "this->existing_target_val_histories[h_index]: " << this->existing_target_val_histories[h_index] << endl;
+			cout << "new_target_val_histories[h_index]: " << new_target_val_histories[h_index] << endl;
+		}
 
 		if (new_predicted >= existing_predicted) {
 			existing_sum_vals += this->existing_target_val_histories[h_index];
@@ -111,9 +124,19 @@ void PredictExperiment::train_new_helper(SolutionWrapper* wrapper) {
 	}
 	double global_improvement = average_instances_per_run * local_improvement;
 
-	// // temp
-	// cout << "local_improvement: " << local_improvement << endl;
-	// cout << "global_improvement: " << global_improvement << endl;
+	// temp
+	cout << "new explore path:";
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			cout << " " << this->best_indexes[s_index];
+		} else {
+			cout << " E" << this->scope_context->child_scopes[this->best_indexes[s_index]]->id;
+		}
+	}
+	cout << endl;
+	cout << "count: " << count << endl;
+	cout << "local_improvement: " << local_improvement << endl;
+	cout << "global_improvement: " << global_improvement << endl;
 
 	if (local_improvement > 0.0) {
 		bool is_success = false;
@@ -145,6 +168,8 @@ void PredictExperiment::train_new_helper(SolutionWrapper* wrapper) {
 		#else
 		if (is_success) {
 		#endif /* MDEBUG */
+			is_add = true;
+
 			add(wrapper);
 		} else {
 			delete this;

@@ -13,6 +13,8 @@ PredictExperiment::PredictExperiment(Scope* scope_context,
 									 bool is_branch,
 									 AbstractNode* exit_next_node,
 									 bool use_signal) {
+	this->diversity_index = -1;
+
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;

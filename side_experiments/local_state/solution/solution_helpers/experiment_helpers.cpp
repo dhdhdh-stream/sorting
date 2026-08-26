@@ -304,6 +304,8 @@ void create_predict_experiment(ScopeHistory* scope_history,
 			context_it->second.explore_is_branch,
 			exit_next_node,
 			use_signal);
+		// temp
+		cout << "new_experiment" << endl;
 		switch (context_it->second.explore_node->type) {
 		case NODE_TYPE_NOOP:
 			{

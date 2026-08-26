@@ -76,7 +76,8 @@ void update_helper(double target_val,
 void train_helper(SolutionWrapper* wrapper);
 
 double predict_helper(AbstractNode* starting_next_node,
-					  Eigen::VectorXf& starting_state);
+					  Eigen::VectorXf& starting_state,
+					  Scope* scope_context);
 
 double measure_helper(SolutionWrapper* wrapper);
 

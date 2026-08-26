@@ -8,6 +8,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "explore_experiment.h"
 #include "globals.h"
 #include "init_network.h"
 #include "noop_node.h"
@@ -533,12 +534,12 @@ void PredictExperiment::add(SolutionWrapper* wrapper) {
 	wrapper->solution->improvement_history.push_back(wrapper->solution->curr_score);
 	cout << "previous_val_average: " << wrapper->solution->curr_score << endl;
 
-	// // temp
-	// {
-	// 	double val_average = measure_helper(wrapper);
-	// 	cout << "post val_average: " << val_average << endl;
-	// 	ss << "post val_average: " << val_average << "; ";
-	// }
+	// temp
+	{
+		double val_average = measure_helper(wrapper);
+		cout << "post val_average: " << val_average << endl;
+		ss << "post val_average: " << val_average << "; ";
+	}
 
 	wrapper->solution->change_history.push_back(ss.str());
 

@@ -7,9 +7,8 @@
 using namespace std;
 
 double predict_helper(AbstractNode* starting_next_node,
-					  Eigen::VectorXf& starting_state) {
-	Scope* scope = starting_next_node->parent;
-
+					  Eigen::VectorXf& starting_state,
+					  Scope* scope_context) {
 	Eigen::VectorXf state = starting_state;
 	AbstractNode* node_context = starting_next_node;
 	while (node_context != NULL) {
@@ -17,7 +16,7 @@ double predict_helper(AbstractNode* starting_next_node,
 								   node_context);
 	}
 
-	scope->end_score_network->activate(state);
+	scope_context->end_score_network->activate(state);
 
-	return scope->end_score_network->output->acti_vals(0);
+	return scope_context->end_score_network->output->acti_vals(0);
 }

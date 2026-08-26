@@ -69,11 +69,13 @@ void ScopeNode::experiment_exit_step(vector<double>& obs,
 	if (!this->is_generic) {
 		wrapper->node_context.back() = this->next_node;
 
-		if (this->experiment != NULL
-				&& this->experiment->diversity_index == wrapper->diversity_index) {
-			this->experiment->experiment_check_activate(
-				obs,
-				wrapper);
+		if (this->experiment != NULL) {
+			if (this->experiment->diversity_index == -1
+					|| this->experiment->diversity_index == wrapper->diversity_index) {
+				this->experiment->experiment_check_activate(
+					obs,
+					wrapper);
+			}
 		}
 	}
 }

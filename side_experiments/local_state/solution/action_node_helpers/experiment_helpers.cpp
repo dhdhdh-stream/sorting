@@ -61,11 +61,13 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 
 		wrapper->node_context.back() = this->next_node;
 
-		if (this->experiment != NULL
-				&& this->experiment->diversity_index == wrapper->diversity_index) {
-			this->experiment->experiment_check_activate(
-				obs,
-				wrapper);
+		if (this->experiment != NULL) {
+			if (this->experiment->diversity_index == -1
+					|| this->experiment->diversity_index == wrapper->diversity_index) {
+				this->experiment->experiment_check_activate(
+					obs,
+					wrapper);
+			}
 		}
 	}
 }

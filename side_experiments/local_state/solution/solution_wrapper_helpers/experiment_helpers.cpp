@@ -136,28 +136,28 @@ void SolutionWrapper::experiment_end(double result) {
 					  this);
 	}
 
-	if (this->explore_experiment_histories.size() == 0) {
-		if (this->run_type == RUN_TYPE_EXPLORE) {
-			create_experiment(this->scope_histories[0],
-							  this);
-		}
-	} else if (this->explore_experiment_histories.size() >= 2) {
-		ExploreExperiment* keep_experiment = NULL;
-		for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
-				it != this->explore_experiment_histories.end(); it++) {
-			if (keep_experiment == NULL) {
-				keep_experiment = it->first;
-			} else {
-				if (it->first->further_than(keep_experiment)) {
-					delete keep_experiment;
+	// if (this->explore_experiment_histories.size() == 0) {
+	// 	if (this->run_type == RUN_TYPE_EXPLORE) {
+	// 		create_experiment(this->scope_histories[0],
+	// 						  this);
+	// 	}
+	// } else if (this->explore_experiment_histories.size() >= 2) {
+	// 	ExploreExperiment* keep_experiment = NULL;
+	// 	for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
+	// 			it != this->explore_experiment_histories.end(); it++) {
+	// 		if (keep_experiment == NULL) {
+	// 			keep_experiment = it->first;
+	// 		} else {
+	// 			if (it->first->further_than(keep_experiment)) {
+	// 				delete keep_experiment;
 
-					keep_experiment = it->first;
-				} else {
-					delete it->first;
-				}
-			}
-		}
-	}
+	// 				keep_experiment = it->first;
+	// 			} else {
+	// 				delete it->first;
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	if (this->predict_experiment_histories.size() == 0) {
 		if (this->run_type == RUN_TYPE_EXPLORE) {
@@ -190,9 +190,14 @@ void SolutionWrapper::experiment_end(double result) {
 
 	for (map<PredictExperiment*, PredictExperimentHistory*>::iterator it = this->predict_experiment_histories.begin();
 			it != this->predict_experiment_histories.end(); it++) {
+		bool is_add = false;
 		it->first->backprop(result,
 							it->second,
-							this);
+							this,
+							is_add);
+		if (is_add) {
+			break;
+		}
 	}
 
 	for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
@@ -209,6 +214,10 @@ void SolutionWrapper::experiment_end(double result) {
 
 	this->iters_since_update++;
 	if (this->iters_since_update == UPDATE_NUM_ITERS) {
+		// temp
+		cout << "this->solution->curr_score: " << this->solution->curr_score << endl;
+		cout << "this->best_solution->curr_score: " << this->best_solution->curr_score << endl;
+
 		if (this->solution->curr_score > this->best_solution->curr_score) {
 			delete this->best_solution;
 			this->best_solution = new Solution(this->solution);

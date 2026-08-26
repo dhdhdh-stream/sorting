@@ -1,5 +1,7 @@
 #include "predict_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -96,6 +98,7 @@ void PredictExperiment::explore_helper() {
 			}
 		}
 		uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
+		uniform_int_distribution<int> action_distribution(0, this->scope_context->generic_action_nodes.size()-1);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			bool is_scope = false;
 			if (possible_child_indexes.size() > 0) {
@@ -117,7 +120,7 @@ void PredictExperiment::explore_helper() {
 				curr_indexes.push_back(child_index);
 			} else {
 				curr_step_types.push_back(STEP_TYPE_ACTION);
-				curr_indexes.push_back(-1);
+				curr_indexes.push_back(action_distribution(generator));
 			}
 		}
 
@@ -139,7 +142,8 @@ void PredictExperiment::explore_helper() {
 			}
 
 			sum_vals += predict_helper(node_context,
-									   state);
+									   state,
+									   this->scope_context);
 		}
 
 		double curr_predicted = sum_vals / RUNS_PER_PREDICT;
