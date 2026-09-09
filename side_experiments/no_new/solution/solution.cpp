@@ -100,50 +100,53 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->node_counter++;
 	new_scope->nodes[start_node->id] = start_node;
 
-	vector<ActionNode*> nodes;
-	uniform_int_distribution<int> action_distribution(0, this->num_actions-1);
-	for (int n_index = 0; n_index < STARTING_NUM_NODES; n_index++) {
-		ActionNode* new_node = new ActionNode();
-		new_node->parent = new_scope;
-		new_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		new_scope->nodes[new_node->id] = new_node;
+	start_node->next_node_id = -1;
+	start_node->next_node = NULL;
 
-		new_node->is_generic = false;
-		new_node->action = action_distribution(generator);
+	// vector<ActionNode*> nodes;
+	// uniform_int_distribution<int> action_distribution(0, this->num_actions-1);
+	// for (int n_index = 0; n_index < STARTING_NUM_NODES; n_index++) {
+	// 	ActionNode* new_node = new ActionNode();
+	// 	new_node->parent = new_scope;
+	// 	new_node->id = new_scope->node_counter;
+	// 	new_scope->node_counter++;
+	// 	new_scope->nodes[new_node->id] = new_node;
 
-		new_node->action_network = new ActionNetwork(NUM_STATES);
+	// 	new_node->is_generic = false;
+	// 	new_node->action = action_distribution(generator);
 
-		new_node->obs_network = new ObsNetwork(NUM_STATES,
-											   this->num_obs);
+	// 	new_node->action_network = new ActionNetwork(NUM_STATES);
 
-		new_node->predict_network = new PredictNetwork(NUM_STATES);
+	// 	new_node->obs_network = new ObsNetwork(NUM_STATES,
+	// 										   this->num_obs);
 
-		nodes.push_back(new_node);
-	}
+	// 	new_node->predict_network = new PredictNetwork(NUM_STATES);
 
-	NoopNode* end_node = new NoopNode();
-	end_node->parent = new_scope;
-	end_node->id = new_scope->node_counter;
-	new_scope->node_counter++;
-	new_scope->nodes[end_node->id] = end_node;
+	// 	nodes.push_back(new_node);
+	// }
 
-	start_node->next_node_id = nodes[0]->id;
-	start_node->next_node = nodes[0];
-	nodes[0]->ancestor_ids.push_back(start_node->id);
+	// NoopNode* end_node = new NoopNode();
+	// end_node->parent = new_scope;
+	// end_node->id = new_scope->node_counter;
+	// new_scope->node_counter++;
+	// new_scope->nodes[end_node->id] = end_node;
 
-	for (int n_index = 0; n_index < STARTING_NUM_NODES-1; n_index++) {
-		nodes[n_index]->next_node_id = nodes[n_index+1]->id;
-		nodes[n_index]->next_node = nodes[n_index+1];
-		nodes[n_index+1]->ancestor_ids.push_back(nodes[n_index]->id);
-	}
+	// start_node->next_node_id = nodes[0]->id;
+	// start_node->next_node = nodes[0];
+	// nodes[0]->ancestor_ids.push_back(start_node->id);
 
-	nodes.back()->next_node_id = end_node->id;
-	nodes.back()->next_node = end_node;
-	end_node->ancestor_ids.push_back(nodes.back()->id);
+	// for (int n_index = 0; n_index < STARTING_NUM_NODES-1; n_index++) {
+	// 	nodes[n_index]->next_node_id = nodes[n_index+1]->id;
+	// 	nodes[n_index]->next_node = nodes[n_index+1];
+	// 	nodes[n_index+1]->ancestor_ids.push_back(nodes[n_index]->id);
+	// }
 
-	end_node->next_node_id = -1;
-	end_node->next_node = NULL;
+	// nodes.back()->next_node_id = end_node->id;
+	// nodes.back()->next_node = end_node;
+	// end_node->ancestor_ids.push_back(nodes.back()->id);
+
+	// end_node->next_node_id = -1;
+	// end_node->next_node = NULL;
 
 	new_scope->start_obs_network = new ObsNetwork(NUM_STATES,
 												  this->num_obs);

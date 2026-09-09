@@ -28,8 +28,16 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	uniform_int_distribution<int> type_distribution(0, 2);
-	this->run_type = type_distribution(generator);
+	// uniform_int_distribution<int> type_distribution(0, 2);
+	// this->run_type = type_distribution(generator);
+
+	uniform_int_distribution<int> type_distribution(0, 1);
+	if (type_distribution(generator) == 0) {
+		this->run_type = RUN_TYPE_EXISTING;
+	} else {
+		// this->run_type = RUN_TYPE_EXPLORE;
+		this->run_type = RUN_TYPE_EXPERIMENT;
+	}
 
 	this->run_num_actions = 0;
 
@@ -122,12 +130,12 @@ void SolutionWrapper::experiment_end(double result) {
 					  this);
 	}
 
-	if (this->run_type == RUN_TYPE_EXISTING) {
-		if (this->explore_histories.size() == 0) {
-			create_explore(this->scope_histories[0],
-						   this);
-		}
-	}
+	// if (this->run_type == RUN_TYPE_EXISTING) {
+	// 	if (this->explore_histories.size() == 0) {
+	// 		create_explore(this->scope_histories[0],
+	// 					   this);
+	// 	}
+	// }
 
 	for (map<Explore*, ExploreHistory*>::iterator it = this->explore_histories.begin();
 			it != this->explore_histories.end(); it++) {
@@ -144,12 +152,12 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	}
 
-	this->train_scope_histories.push_back(this->scope_histories[0]);
-	this->train_target_val_histories.push_back(result);
-	this->train_run_type_histories.push_back(this->run_type);
-	if (this->train_scope_histories.size() >= BATCH_SIZE) {
-		train_helper(this);
-	}
+	// this->train_scope_histories.push_back(this->scope_histories[0]);
+	// this->train_target_val_histories.push_back(result);
+	// this->train_run_type_histories.push_back(this->run_type);
+	// if (this->train_scope_histories.size() >= BATCH_SIZE) {
+	// 	train_helper(this);
+	// }
 
 	this->scope_histories.clear();
 	this->node_context.clear();
@@ -176,6 +184,13 @@ void SolutionWrapper::experiment_end(double result) {
 	this->predict_experiment_histories.clear();
 
 	this->iters_since_update++;
+	// // temp
+	// if (this->iters_since_update%10000 == 0) {
+	// 	cout << this->iters_since_update << endl;
+	// }
+	// if (this->iters_since_update >= 1000000) {
+	// 	this->solution->timestamp = -1;
+	// }
 	if (this->iters_since_update == UPDATE_NUM_ITERS) {
 		if (this->solution->curr_score > this->best_solution->curr_score) {
 			delete this->best_solution;

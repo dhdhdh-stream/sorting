@@ -1,18 +1,18 @@
 CXX = g++
-CXXFLAGS = -g -std=c++17 -Wall -Werror -MMD \
-		   `pkg-config --cflags eigen3` \
-		   -DMDEBUG=1 \
-		   -Inn \
-		   -Isolution \
-		   -Iutils \
-		   -Iworld
-# CXXFLAGS = -g -std=c++17 -Wall -Werror -MMD -march=native -mtune=native -O2 -DNDEBUG -ffast-math \
+# CXXFLAGS = -g -std=c++17 -Wall -Werror -MMD \
 # 		   `pkg-config --cflags eigen3` \
-# 		   -DMDEBUG=0 \
+# 		   -DMDEBUG=1 \
 # 		   -Inn \
 # 		   -Isolution \
 # 		   -Iutils \
 # 		   -Iworld
+CXXFLAGS = -g -std=c++17 -Wall -MMD -march=native -mtune=native -O2 -DNDEBUG -ffast-math \
+		   `pkg-config --cflags eigen3` \
+		   -DMDEBUG=0 \
+		   -Inn \
+		   -Isolution \
+		   -Iutils \
+		   -Iworld
 LIBS = -pthread
 SOURCES := $(shell find nn -name '*.cpp') \
 		   $(shell find solution -name '*.cpp') \
@@ -22,7 +22,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main viewer worker simple_init measure combine
+all: main viewer worker simple_init measure combine eval predict
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
@@ -42,7 +42,13 @@ measure: ${OBJECTS} measure.o
 combine: ${OBJECTS} combine.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} combine.o -o combine ${LIBS}
 
--include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d combine.d
+eval: ${OBJECTS} eval.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} eval.o -o eval ${LIBS}
+
+predict: ${OBJECTS} predict.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} predict.o -o predict ${LIBS}
+
+-include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d combine.d eval.d predict.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
@@ -51,4 +57,6 @@ clean:
 	worker.o worker.d worker \
 	simple_init.o simple_init.d simple_init \
 	measure.o measure.d measure \
-	combine.o combine.d combine
+	combine.o combine.d combine \
+	eval.o eval.d eval \
+	predict.o predict.d predict
