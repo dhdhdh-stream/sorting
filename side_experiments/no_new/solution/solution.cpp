@@ -122,6 +122,12 @@ void Solution::init(ProblemType* problem_type) {
 		nodes.push_back(new_node);
 	}
 
+	NoopNode* end_node = new NoopNode();
+	end_node->parent = new_scope;
+	end_node->id = new_scope->node_counter;
+	new_scope->node_counter++;
+	new_scope->nodes[end_node->id] = end_node;
+
 	start_node->next_node_id = nodes[0]->id;
 	start_node->next_node = nodes[0];
 	nodes[0]->ancestor_ids.push_back(start_node->id);
@@ -132,8 +138,12 @@ void Solution::init(ProblemType* problem_type) {
 		nodes[n_index+1]->ancestor_ids.push_back(nodes[n_index]->id);
 	}
 
-	nodes.back()->next_node_id = -1;
-	nodes.back()->next_node = NULL;
+	nodes.back()->next_node_id = end_node->id;
+	nodes.back()->next_node = end_node;
+	end_node->ancestor_ids.push_back(nodes.back()->id);
+
+	end_node->next_node_id = -1;
+	end_node->next_node = NULL;
 
 	new_scope->start_obs_network = new ObsNetwork(NUM_STATES,
 												  this->num_obs);

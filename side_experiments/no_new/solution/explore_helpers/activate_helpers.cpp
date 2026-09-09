@@ -10,24 +10,22 @@ using namespace std;
 
 void Explore::experiment_check_activate(vector<double>& obs,
 										SolutionWrapper* wrapper) {
+	map<Explore*, ExploreHistory*>::iterator it =
+		wrapper->explore_histories.find(this);
+	if (it == wrapper->explore_histories.end()) {
+		it = wrapper->explore_histories.insert({this, new ExploreHistory(this)}).first;
+	}
+
 	switch (wrapper->run_type) {
 	case RUN_TYPE_EXPLORE:
-		{
-			map<Explore*, ExploreHistory*>::iterator it =
-				wrapper->explore_histories.find(this);
-			if (it == wrapper->explore_histories.end()) {
-				it = wrapper->explore_histories.insert({this, new ExploreHistory(this)}).first;
-			}
+		this->num_instances_until_target--;
+		if (!it->second->has_explore
+				&& this->num_instances_until_target <= 0) {
+			it->second->has_explore = true;
 
-			this->num_instances_until_target--;
-			if (!it->second->has_explore
-					&& this->num_instances_until_target <= 0) {
-				it->second->has_explore = true;
-
-				ExploreState* new_experiment_state = new ExploreState(this);
-				new_experiment_state->step_index = 0;
-				wrapper->experiment_context.back() = new_experiment_state;
-			}
+			ExploreState* new_experiment_state = new ExploreState(this);
+			new_experiment_state->step_index = 0;
+			wrapper->experiment_context.back() = new_experiment_state;
 		}
 
 		break;

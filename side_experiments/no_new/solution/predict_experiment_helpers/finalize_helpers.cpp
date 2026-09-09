@@ -425,6 +425,8 @@ void PredictExperiment::add(SolutionWrapper* wrapper) {
 				new_action_node->obs_network = new ObsNetwork(NUM_STATES,
 															  wrapper->solution->num_obs);
 
+				new_action_node->predict_network = new PredictNetwork(NUM_STATES);
+
 				new_action_node->next_node_id = -1;
 				new_action_node->next_node = NULL;
 
@@ -456,7 +458,8 @@ void PredictExperiment::add(SolutionWrapper* wrapper) {
 				new_scope->generic_scope_nodes.push_back(new_scope_node);
 			}
 
-			new_scope->predict_last_scores = wrapper->solution->starting_scope->predict_last_scores;
+			new_scope->train_new_last_scores = wrapper->solution->starting_scope->train_new_last_scores;
+			new_scope->measure_last_scores = wrapper->solution->starting_scope->measure_last_scores;
 
 			wrapper->solution->starting_scope = new_scope;
 			wrapper->solution->starting_num_improvements = 0;

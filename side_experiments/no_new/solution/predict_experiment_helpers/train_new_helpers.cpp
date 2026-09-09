@@ -1,5 +1,7 @@
 #include "predict_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -112,44 +114,49 @@ void PredictExperiment::train_new_helper(SolutionWrapper* wrapper) {
 	}
 	double global_improvement = average_instances_per_run * local_improvement;
 
-	// // temp
-	// cout << "local_improvement: " << local_improvement << endl;
-	// cout << "global_improvement: " << global_improvement << endl;
+	// temp
+	cout << "train_new" << endl;
+	cout << "local_improvement: " << local_improvement << endl;
+	cout << "global_improvement: " << global_improvement << endl;
 
+	bool is_success = false;
 	if (local_improvement > 0.0) {
-		bool is_success = false;
-		if (this->scope_context->predict_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+		if (this->scope_context->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
 			int num_better_than = 0;
-			for (list<double>::iterator it = this->scope_context->predict_last_scores.begin();
-					it != this->scope_context->predict_last_scores.end(); it++) {
+			for (list<double>::iterator it = this->scope_context->train_new_last_scores.begin();
+					it != this->scope_context->train_new_last_scores.end(); it++) {
 				if (global_improvement >= *it) {
 					num_better_than++;
 				}
 			}
 
-			double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->predict_last_scores.size();
+			double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->train_new_last_scores.size();
 
 			if (num_better_than >= target_better_than) {
 				is_success = true;
 			}
 
-			if (this->scope_context->predict_last_scores.size() >= NUM_LAST_TRACK) {
-				this->scope_context->predict_last_scores.pop_front();
+			if (this->scope_context->train_new_last_scores.size() >= NUM_LAST_TRACK) {
+				this->scope_context->train_new_last_scores.pop_front();
 			}
-			this->scope_context->predict_last_scores.push_back(global_improvement);
+			this->scope_context->train_new_last_scores.push_back(global_improvement);
 		} else {
-			this->scope_context->predict_last_scores.push_back(global_improvement);
+			this->scope_context->train_new_last_scores.push_back(global_improvement);
 		}
+	}
 
-		#if defined(MDEBUG) && MDEBUG
-		if (is_success || rand()%3 != 0) {
-		#else
-		if (is_success) {
-		#endif /* MDEBUG */
-			add(wrapper);
-		} else {
-			delete this;
-		}
+	#if defined(MDEBUG) && MDEBUG
+	if (is_success || rand()%3 != 0) {
+	#else
+	if (is_success) {
+	#endif /* MDEBUG */
+		this->existing_sum_scores = 0.0;
+		this->existing_count = 0;
+		this->new_sum_scores = 0.0;
+		this->new_count = 0;
+
+		this->state = EXPERIMENT_STATE_MEASURE;
+		this->state_iter = 0;
 	} else {
 		delete this;
 	}

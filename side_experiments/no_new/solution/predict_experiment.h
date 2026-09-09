@@ -20,8 +20,6 @@ public:
 	int state;
 	int state_iter;
 
-	int num_instances_until_target;
-
 	std::vector<Eigen::VectorXf> existing_state_histories;
 	std::vector<double> existing_signal_histories;
 	std::vector<double> existing_target_val_histories;

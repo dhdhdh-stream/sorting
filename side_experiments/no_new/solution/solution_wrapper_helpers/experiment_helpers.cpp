@@ -122,14 +122,26 @@ void SolutionWrapper::experiment_end(double result) {
 					  this);
 	}
 
-	if (this->predict_experiment_histories.size() == 0) {
-		create_predict_experiment(this->scope_histories[0],
-								  this);
+	if (this->run_type == RUN_TYPE_EXISTING) {
+		if (this->explore_histories.size() == 0) {
+			create_explore(this->scope_histories[0],
+						   this);
+		}
 	}
 
-	if (this->run_type == RUN_TYPE_EXPLORE) {
-		create_explore(this->scope_histories[0],
-					   this);
+	for (map<Explore*, ExploreHistory*>::iterator it = this->explore_histories.begin();
+			it != this->explore_histories.end(); it++) {
+		delete it->first;
+		delete it->second;
+	}
+	this->explore_histories.clear();
+
+	if (this->run_type == RUN_TYPE_EXISTING
+			|| this->run_type == RUN_TYPE_EXPERIMENT) {
+		if (this->predict_experiment_histories.size() == 0) {
+			create_predict_experiment(this->scope_histories[0],
+									  this);
+		}
 	}
 
 	this->train_scope_histories.push_back(this->scope_histories[0]);
@@ -162,13 +174,6 @@ void SolutionWrapper::experiment_end(double result) {
 		delete it->second;
 	}
 	this->predict_experiment_histories.clear();
-
-	for (map<Explore*, ExploreHistory*>::iterator it = this->explore_histories.begin();
-			it != this->explore_histories.end(); it++) {
-		delete it->first;
-		delete it->second;
-	}
-	this->explore_histories.clear();
 
 	this->iters_since_update++;
 	if (this->iters_since_update == UPDATE_NUM_ITERS) {

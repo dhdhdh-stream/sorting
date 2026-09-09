@@ -23,6 +23,7 @@ PredictExperiment::PredictExperiment(Scope* scope_context,
 	this->existing_network = NULL;
 	this->new_network = NULL;
 
+	this->state = EXPERIMENT_STATE_GATHER_EXISTING;
 	this->state_iter = 0;
 }
 

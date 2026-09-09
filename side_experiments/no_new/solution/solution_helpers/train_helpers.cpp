@@ -8,6 +8,8 @@
 
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
@@ -187,6 +189,9 @@ void update_helper(TrainScopeHistory* scope_history,
 }
 
 void train_helper(SolutionWrapper* wrapper) {
+	// temp
+	cout << "train start" << endl;
+
 	uniform_int_distribution<int> sample_distribution(0, wrapper->train_scope_histories.size()-1);
 	uniform_int_distribution<int> allow_drop_distribution(0, 1);
 	for (int iter_index = 0; iter_index < ITERS_PER_BATCH; iter_index++) {
@@ -224,4 +229,7 @@ void train_helper(SolutionWrapper* wrapper) {
 	wrapper->train_scope_histories.clear();
 	wrapper->train_target_val_histories.clear();
 	wrapper->train_run_type_histories.clear();
+
+	// temp
+	cout << "train done" << endl;
 }

@@ -59,14 +59,16 @@ void gather_helper(ScopeHistory* scope_history,
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)node;
-				if (action_node->experiment == NULL) {
-					uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
-					context_it->second.node_count++;
-					if (select_distribution(generator) == 0) {
-						context_it->second.explore_node = node;
-						context_it->second.explore_is_branch = false;
-						context_it->second.scope_history = scope_history;
-						context_it->second.explore_index = h_index;
+				if (!action_node->is_generic) {
+					if (action_node->experiment == NULL) {
+						uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
+						context_it->second.node_count++;
+						if (select_distribution(generator) == 0) {
+							context_it->second.explore_node = node;
+							context_it->second.explore_is_branch = false;
+							context_it->second.scope_history = scope_history;
+							context_it->second.explore_index = h_index;
+						}
 					}
 				}
 			}
@@ -74,19 +76,21 @@ void gather_helper(ScopeHistory* scope_history,
 		case NODE_TYPE_SCOPE:
 			{
 				ScopeNode* scope_node = (ScopeNode*)node;
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
+				if (!scope_node->is_generic) {
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
 
-				gather_helper(scope_node_history->scope_history,
-							  explore_contexts);
+					gather_helper(scope_node_history->scope_history,
+								  explore_contexts);
 
-				if (scope_node->experiment == NULL) {
-					uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
-					context_it->second.node_count++;
-					if (select_distribution(generator) == 0) {
-						context_it->second.explore_node = node;
-						context_it->second.explore_is_branch = false;
-						context_it->second.scope_history = scope_history;
-						context_it->second.explore_index = h_index;
+					if (scope_node->experiment == NULL) {
+						uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
+						context_it->second.node_count++;
+						if (select_distribution(generator) == 0) {
+							context_it->second.explore_node = node;
+							context_it->second.explore_is_branch = false;
+							context_it->second.scope_history = scope_history;
+							context_it->second.explore_index = h_index;
+						}
 					}
 				}
 			}
@@ -152,7 +156,8 @@ void create_predict_experiment(ScopeHistory* scope_history,
 
 		// uniform_int_distribution<int> use_signal_distribution(0, 1);
 		// bool use_signal = use_signal_distribution(generator) == 0;
-		bool use_signal = false;
+		// bool use_signal = false;
+		bool use_signal = true;
 
 		PredictExperiment* new_experiment = new PredictExperiment(
 			context_it->second.explore_node->parent,
