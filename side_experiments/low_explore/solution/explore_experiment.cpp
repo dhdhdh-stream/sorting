@@ -20,6 +20,8 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 									 bool is_branch,
 									 AbstractNode* exit_next_node,
 									 SolutionWrapper* wrapper) {
+	this->type = EXPERIMENT_TYPE_EXPLORE;
+
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;

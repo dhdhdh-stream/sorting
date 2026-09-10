@@ -1,4 +1,4 @@
-#include "explore_experiment.h"
+#include "refine.h"
 
 #include <ctime>
 #include <iostream>
@@ -19,7 +19,7 @@
 
 using namespace std;
 
-void ExploreExperiment::add(SolutionWrapper* wrapper) {
+void Refine::add(SolutionWrapper* wrapper) {
 	if (wrapper->solution->curr_score > wrapper->best_solution->curr_score) {
 		delete wrapper->best_solution;
 		wrapper->best_solution = new Solution(wrapper->solution);
@@ -33,11 +33,11 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "this->is_branch: " << this->is_branch << "; ";
 	ss << "new explore path:";
-	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			ss << " " << this->best_actions[s_index];
+	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+			ss << " " << this->actions[s_index];
 		} else {
-			ss << " E" << this->best_scopes[s_index]->id;
+			ss << " E" << this->scopes[s_index]->id;
 		}
 	}
 	ss << "; ";
@@ -56,15 +56,15 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	cout << ss.str() << endl;
 
 	vector<AbstractNode*> new_nodes;
-	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNode* new_action_node = new ActionNode();
 			new_action_node->parent = scope_context;
 			new_action_node->id = scope_context->node_counter;
 			scope_context->node_counter++;
 			scope_context->nodes[new_action_node->id] = new_action_node;
 
-			new_action_node->action = this->best_actions[s_index];
+			new_action_node->action = this->actions[s_index];
 
 			new_nodes.push_back(new_action_node);
 		} else {
@@ -74,7 +74,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			scope_context->node_counter++;
 			scope_context->nodes[new_scope_node->id] = new_scope_node;
 
-			new_scope_node->scope = this->best_scopes[s_index];
+			new_scope_node->scope = this->scopes[s_index];
 
 			new_nodes.push_back(new_scope_node);
 		}
@@ -247,7 +247,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		break;
 	}
 
-	if (this->best_step_types.size() == 0) {
+	if (this->step_types.size() == 0) {
 		exit_node->ancestor_ids.push_back(new_branch_node->id);
 
 		new_branch_node->branch_next_node_id = exit_node_id;
@@ -304,8 +304,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	this->existing_network = NULL;
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
-
-	new_branch_node->ramp_iter = 0;
 
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;

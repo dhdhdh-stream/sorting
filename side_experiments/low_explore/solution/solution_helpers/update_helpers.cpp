@@ -63,10 +63,6 @@ void update_helper(SolutionWrapper* wrapper,
 					if (branch_node->branch_curr_num_instances > 0) {
 						branch_node->branch_average_instances_per_hit = 0.999*branch_node->branch_average_instances_per_hit + 0.001*branch_node->branch_curr_num_instances;
 
-						if (branch_node->ramp_iter < RAMP_NUM_ITERS) {
-							branch_node->ramp_iter++;
-						}
-
 						branch_node->branch_curr_num_instances = 0;
 					}
 				}

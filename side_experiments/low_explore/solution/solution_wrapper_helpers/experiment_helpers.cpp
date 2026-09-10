@@ -9,6 +9,7 @@
 #include "globals.h"
 #include "noop_node.h"
 #include "problem.h"
+#include "refine.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -145,11 +146,24 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	}
 
+	for (map<Refine*, RefineHistory*>::iterator it = this->refine_histories.begin();
+			it != this->refine_histories.end(); it++) {
+		it->first->backprop(result,
+							it->second,
+							this);
+	}
+
 	for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_experiment_histories.begin();
 			it != this->explore_experiment_histories.end(); it++) {
 		delete it->second;
 	}
 	this->explore_experiment_histories.clear();
+
+	for (map<Refine*, RefineHistory*>::iterator it = this->refine_histories.begin();
+			it != this->refine_histories.end(); it++) {
+		delete it->second;
+	}
+	this->refine_histories.clear();
 
 	this->iters_since_update++;
 }

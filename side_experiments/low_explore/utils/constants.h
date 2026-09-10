@@ -29,12 +29,6 @@ const int MIN_NUM_LAST_TRACK = 3;
 const double LAST_BETTER_THAN_RATIO = 0.6;
 #endif /* MDEBUG */
 
-#if defined(MDEBUG) && MDEBUG
-const int RAMP_NUM_ITERS = 100;
-#else
-const int RAMP_NUM_ITERS = 10000;
-#endif /* MDEBUG */
-
 const int GENERALIZE_ITER = 3;
 
 const int EXPERIMENT_REFRESH_NUM_ITERS = 10;

@@ -10,6 +10,7 @@
 #include "network.h"
 #include "noop_node.h"
 #include "problem.h"
+#include "refine.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -197,10 +198,60 @@ void ExploreExperiment::train_new_backprop(
 				#else
 				if (is_success) {
 				#endif /* MDEBUG */
-					add(wrapper);
-				}
+					Refine* refine = new Refine(wrapper);
 
-				delete this;
+					refine->scope_context = this->scope_context;
+					refine->node_context = this->node_context;
+					refine->is_branch = this->is_branch;
+					refine->exit_next_node = this->exit_next_node;
+
+					refine->step_types = this->best_step_types;
+					refine->actions = this->best_actions;
+					refine->scopes = this->best_scopes;
+
+					refine->existing_network = this->existing_network;
+					this->existing_network = NULL;
+					refine->new_network = this->new_network;
+					this->new_network = NULL;
+
+					refine->new_obs_histories = this->new_obs_histories;
+					refine->new_target_val_histories = this->new_target_val_histories;
+
+					delete this;
+
+					switch (refine->node_context->type) {
+					case NODE_TYPE_NOOP:
+						{
+							NoopNode* noop_node = (NoopNode*)refine->node_context;
+							noop_node->experiment = refine;
+						}
+						break;
+					case NODE_TYPE_ACTION:
+						{
+							ActionNode* action_node = (ActionNode*)refine->node_context;
+							action_node->experiment = refine;
+						}
+						break;
+					case NODE_TYPE_SCOPE:
+						{
+							ScopeNode* scope_node = (ScopeNode*)refine->node_context;
+							scope_node->experiment = refine;
+						}
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNode* branch_node = (BranchNode*)refine->node_context;
+							if (refine->is_branch) {
+								branch_node->branch_experiment = refine;
+							} else {
+								branch_node->original_experiment = refine;
+							}
+						}
+						break;
+					}
+				} else {
+					delete this;
+				}
 
 				wrapper->experiment_iter++;
 				if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
@@ -213,8 +264,10 @@ void ExploreExperiment::train_new_backprop(
 								{
 									NoopNode* noop_node = (NoopNode*)it->second;
 									if (noop_node->experiment != NULL) {
-										delete noop_node->experiment;
-										noop_node->experiment = NULL;
+										if (noop_node->experiment->type == EXPERIMENT_TYPE_EXPLORE) {
+											delete noop_node->experiment;
+											noop_node->experiment = NULL;
+										}
 									}
 								}
 								break;
@@ -222,8 +275,10 @@ void ExploreExperiment::train_new_backprop(
 								{
 									ActionNode* action_node = (ActionNode*)it->second;
 									if (action_node->experiment != NULL) {
-										delete action_node->experiment;
-										action_node->experiment = NULL;
+										if (action_node->experiment->type == EXPERIMENT_TYPE_EXPLORE) {
+											delete action_node->experiment;
+											action_node->experiment = NULL;
+										}
 									}
 								}
 								break;
@@ -231,8 +286,10 @@ void ExploreExperiment::train_new_backprop(
 								{
 									ScopeNode* scope_node = (ScopeNode*)it->second;
 									if (scope_node->experiment != NULL) {
-										delete scope_node->experiment;
-										scope_node->experiment = NULL;
+										if (scope_node->experiment->type == EXPERIMENT_TYPE_EXPLORE) {
+											delete scope_node->experiment;
+											scope_node->experiment = NULL;
+										}
 									}
 								}
 								break;
@@ -240,12 +297,16 @@ void ExploreExperiment::train_new_backprop(
 								{
 									BranchNode* branch_node = (BranchNode*)it->second;
 									if (branch_node->original_experiment != NULL) {
-										delete branch_node->original_experiment;
-										branch_node->original_experiment = NULL;
+										if (branch_node->original_experiment->type == EXPERIMENT_TYPE_EXPLORE) {
+											delete branch_node->original_experiment;
+											branch_node->original_experiment = NULL;
+										}
 									}
 									if (branch_node->branch_experiment != NULL) {
-										delete branch_node->branch_experiment;
-										branch_node->branch_experiment = NULL;
+										if (branch_node->branch_experiment->type == EXPERIMENT_TYPE_EXPLORE) {
+											delete branch_node->branch_experiment;
+											branch_node->branch_experiment = NULL;
+										}
 									}
 								}
 								break;

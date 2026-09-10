@@ -11,9 +11,14 @@ class ScopeHistory;
 class Solution;
 class SolutionWrapper;
 
+const int EXPERIMENT_TYPE_EXPLORE = 0;
+const int EXPERIMENT_TYPE_REFINE = 0;
+
 class AbstractExperimentHistory;
 class AbstractExperiment {
 public:
+	int type;
+
 	Scope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;

@@ -16,6 +16,8 @@ class ExploreExperiment;
 class ExploreExperimentHistory;
 class Problem;
 class ProblemType;
+class Refine;
+class RefineHistory;
 class Scope;
 class ScopeHistory;
 class Solution;
@@ -44,6 +46,7 @@ public:
 
 	bool should_explore;
 	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_experiment_histories;
+	std::map<Refine*, RefineHistory*> refine_histories;
 
 	Problem* problem;
 

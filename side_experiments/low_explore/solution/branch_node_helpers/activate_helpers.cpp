@@ -27,14 +27,6 @@ void BranchNode::step(vector<double>& obs,
 		return;
 	}
 
-	if (this->ramp_iter < RAMP_NUM_ITERS) {
-		uniform_int_distribution<int> is_active_distribution(0, 9);
-		if (is_active_distribution(generator) != 0) {
-			wrapper->node_context.back() = this->original_next_node;
-			return;
-		}
-	}
-
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 	BranchNodeHistory* history = new BranchNodeHistory(this);

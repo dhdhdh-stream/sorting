@@ -101,8 +101,6 @@ public:
 							ExploreExperimentHistory* history,
 							SolutionWrapper* wrapper);
 
-	void add(SolutionWrapper* wrapper);
-
 	bool further_than(ExploreExperiment* other);
 };
 
