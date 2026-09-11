@@ -1,10 +1,13 @@
 #include "refine.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
 #include "scope.h"
 #include "solution_wrapper.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -111,99 +114,111 @@ void Refine::experiment_exit_step(SolutionWrapper* wrapper) {
 void Refine::backprop(double target_val,
 					  RefineHistory* history,
 					  SolutionWrapper* wrapper) {
-	if (!wrapper->should_explore
-			&& history->is_active) {
-		for (int i_index = 0; i_index < (int)history->is_branch.size(); i_index++) {
-			if (history->is_branch[i_index]) {
-				uniform_int_distribution<int> sample_distribution(0, this->new_obs_histories.size()-1);
-				for (int iter_index = 0; iter_index < NEW_TRAIN_NUM_ITERS; iter_index++) {
-					this->new_network->activate(history->obs_histories[i_index]);
-					double error = target_val - this->new_network->output->acti_vals(0);
-					this->new_network->backprop(error);
+	if (!wrapper->should_explore) {
+		if (history->is_active) {
+			this->new_sum_scores += target_val;
+			this->new_count++;
 
-					for (int b_index = 0; b_index < BALANCE_TRAIN_NUM_ITERS; b_index++) {
-						int sample_index = sample_distribution(generator);
-
-						this->new_network->activate(this->new_obs_histories[sample_index]);
-						double error = this->new_target_val_histories[sample_index] - this->new_network->output->acti_vals(0);
+			for (int i_index = 0; i_index < (int)history->is_branch.size(); i_index++) {
+				if (history->is_branch[i_index]) {
+					uniform_int_distribution<int> sample_distribution(0, this->new_obs_histories.size()-1);
+					for (int iter_index = 0; iter_index < NEW_TRAIN_NUM_ITERS; iter_index++) {
+						this->new_network->activate(history->obs_histories[i_index]);
+						double error = target_val - this->new_network->output->acti_vals(0);
 						this->new_network->backprop(error);
+
+						for (int b_index = 0; b_index < BALANCE_TRAIN_NUM_ITERS; b_index++) {
+							int sample_index = sample_distribution(generator);
+
+							this->new_network->activate(this->new_obs_histories[sample_index]);
+							double error = this->new_target_val_histories[sample_index] - this->new_network->output->acti_vals(0);
+							this->new_network->backprop(error);
+						}
+
+						this->new_network->update();
+
+						this->new_obs_histories.push_back(history->obs_histories[i_index]);
+						this->new_target_val_histories.push_back(target_val);
 					}
+				} else {
+					this->existing_network->activate(history->obs_histories[i_index]);
+					double error = target_val - this->existing_network->output->acti_vals(0);
+					this->existing_network->backprop(error);
 
-					this->new_network->update();
-
-					this->new_obs_histories.push_back(history->obs_histories[i_index]);
-					this->new_target_val_histories.push_back(target_val);
+					this->existing_network->update();
 				}
-			} else {
-				this->existing_network->activate(history->obs_histories[i_index]);
-				double error = target_val - this->existing_network->output->acti_vals(0);
-				this->existing_network->backprop(error);
-
-				this->existing_network->update();
 			}
-		}
 
-		this->run_iter++;
-		if (this->run_iter >= RUNS_PER_EPOCH) {
-			this->epoch_iter++;
-			if (this->epoch_iter >= NUM_EPOCHS) {
-				double existing_val_average = this->existing_sum_scores / this->existing_count;
-				double new_val_average = this->new_sum_scores / this->new_count;
+			this->run_iter++;
+			if (this->run_iter >= RUNS_PER_EPOCH) {
+				this->epoch_iter++;
+				if (this->epoch_iter >= NUM_EPOCHS) {
+					double existing_val_average = this->existing_sum_scores / this->existing_count;
+					double new_val_average = this->new_sum_scores / this->new_count;
 
-				double local_improvement = new_val_average - existing_val_average;
+					double local_improvement = new_val_average - existing_val_average;
 
-				int total_iters = wrapper->iters_since_update - this->start_iter;
-				if (total_iters < 0) {
-					total_iters += numeric_limits<int>::max();
-				}
-				double average_hits_per_run = (double)this->run_iter / (double)total_iters;
+					int total_iters = wrapper->iters_since_update - this->start_iter;
+					if (total_iters < 0) {
+						total_iters += numeric_limits<int>::max();
+					}
+					double average_hits_per_run = (double)this->run_iter / (double)total_iters;
 
-				double global_improvement = average_hits_per_run * local_improvement;
+					double global_improvement = average_hits_per_run * local_improvement;
 
-				bool is_success = false;
-				if (local_improvement > 0.0) {
-					if (this->scope_context->measure_last_scores.size() >= MIN_NUM_LAST_TRACK) {
-						int num_better_than = 0;
-						for (list<double>::iterator it = this->scope_context->measure_last_scores.begin();
-								it != this->scope_context->measure_last_scores.end(); it++) {
-							if (global_improvement >= *it) {
-								num_better_than++;
+					// temp
+					cout << "measure" << endl;
+					cout << "local_improvement: " << local_improvement << endl;
+					cout << "global_improvement: " << global_improvement << endl;
+
+					bool is_success = false;
+					if (local_improvement > 0.0) {
+						if (this->scope_context->measure_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+							int num_better_than = 0;
+							for (list<double>::iterator it = this->scope_context->measure_last_scores.begin();
+									it != this->scope_context->measure_last_scores.end(); it++) {
+								if (global_improvement >= *it) {
+									num_better_than++;
+								}
 							}
-						}
 
-						double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->measure_last_scores.size();
+							double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->measure_last_scores.size();
 
-						if (num_better_than >= target_better_than) {
-							is_success = true;
-						}
+							if (num_better_than >= target_better_than) {
+								is_success = true;
+							}
 
-						if (this->scope_context->measure_last_scores.size() >= NUM_LAST_TRACK) {
-							this->scope_context->measure_last_scores.pop_front();
+							if (this->scope_context->measure_last_scores.size() >= NUM_LAST_TRACK) {
+								this->scope_context->measure_last_scores.pop_front();
+							}
+							this->scope_context->measure_last_scores.push_back(global_improvement);
+						} else {
+							this->scope_context->measure_last_scores.push_back(global_improvement);
 						}
-						this->scope_context->measure_last_scores.push_back(global_improvement);
-					} else {
-						this->scope_context->measure_last_scores.push_back(global_improvement);
 					}
+
+					#if defined(MDEBUG) && MDEBUG
+					if (is_success || rand()%3 != 0) {
+					#else
+					if (is_success) {
+					#endif /* MDEBUG */
+						add(wrapper);
+					}
+
+					delete this;
+				} else {
+					this->start_iter = wrapper->iters_since_update;
+					this->existing_sum_scores = 0.0;
+					this->existing_count = 0;
+					this->new_sum_scores = 0.0;
+					this->new_count = 0;
+
+					this->run_iter = 0;
 				}
-
-				#if defined(MDEBUG) && MDEBUG
-				if (is_success || rand()%3 != 0) {
-				#else
-				if (is_success) {
-				#endif /* MDEBUG */
-					add(wrapper);
-				}
-
-				delete this;
-			} else {
-				this->start_iter = wrapper->iters_since_update;
-				this->existing_sum_scores = 0.0;
-				this->existing_count = 0;
-				this->new_sum_scores = 0.0;
-				this->new_count = 0;
-
-				this->run_iter = 0;
 			}
+		} else {
+			this->existing_sum_scores += target_val;
+			this->existing_count++;
 		}
 	}
 }
