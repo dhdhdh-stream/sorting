@@ -8,12 +8,13 @@
 
 using namespace std;
 
-PredictExperiment::PredictExperiment(Scope* scope_context,
+PredictExperiment::PredictExperiment(int diversity_index,
+									 Scope* scope_context,
 									 AbstractNode* node_context,
 									 bool is_branch,
 									 AbstractNode* exit_next_node,
 									 bool use_signal) {
-	this->diversity_index = -1;
+	this->diversity_index = diversity_index;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
@@ -24,6 +25,8 @@ PredictExperiment::PredictExperiment(Scope* scope_context,
 
 	this->existing_network = NULL;
 	this->new_network = NULL;
+
+	this->sum_vals = 0.0;
 
 	this->state_iter = 0;
 }
@@ -70,5 +73,9 @@ PredictExperiment::~PredictExperiment() {
 }
 
 PredictExperimentHistory::PredictExperimentHistory(PredictExperiment* experiment) {
+	this->experiment = experiment;
+}
+
+PredictExperimentState::PredictExperimentState(PredictExperiment* experiment) {
 	this->experiment = experiment;
 }

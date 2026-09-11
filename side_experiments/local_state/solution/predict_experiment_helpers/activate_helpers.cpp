@@ -10,17 +10,25 @@ using namespace std;
 
 void PredictExperiment::experiment_check_activate(vector<double>& obs,
 												  SolutionWrapper* wrapper) {
-	map<PredictExperiment*, PredictExperimentHistory*>::iterator it =
-		wrapper->predict_experiment_histories.find(this);
-	if (it == wrapper->predict_experiment_histories.end()) {
-		it = wrapper->predict_experiment_histories.insert({this, new PredictExperimentHistory(this)}).first;
+	map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it =
+		wrapper->experiment_histories[this->diversity_index].find(this);
+	if (it == wrapper->experiment_histories[this->diversity_index].end()) {
+		it = wrapper->experiment_histories[this->diversity_index].insert({this, new PredictExperimentHistory(this)}).first;
 	}
+	PredictExperimentHistory* predict_experiment_history = (PredictExperimentHistory*)it->second;
 
-	it->second->state_histories.push_back(wrapper->states.back());
-
-	it->second->signal_histories.push_back(0.0);
-	wrapper->scope_histories.back()->experiment_callback_histories.push_back(it->second);
-	wrapper->scope_histories.back()->experiment_callback_indexes.push_back(it->second->signal_histories.size()-1);
+	switch (this->state) {
+	case PREDICT_EXPERIMENT_STATE_GATHER_EXISTING:
+		gather_existing_check_activate(obs,
+									   predict_experiment_history,
+									   wrapper);
+		break;
+	case PREDICT_EXPERIMENT_STATE_MEASURE:
+		measure_check_activate(obs,
+							   predict_experiment_history,
+							   wrapper);
+		break;
+	}
 }
 
 void PredictExperiment::experiment_step(vector<double>& obs,
@@ -28,7 +36,14 @@ void PredictExperiment::experiment_step(vector<double>& obs,
 										bool& is_next,
 										bool& fetch_action,
 										SolutionWrapper* wrapper) {
-	// unreachable
+	switch (this->state) {
+	case PREDICT_EXPERIMENT_STATE_MEASURE:
+		measure_step(obs,
+					 action,
+					 is_next,
+					 wrapper);
+		break;
+	}
 }
 
 void PredictExperiment::set_action(int action,
@@ -36,40 +51,41 @@ void PredictExperiment::set_action(int action,
 	// unreachable
 }
 
-void PredictExperiment::experiment_exit_step(vector<double>& obs,
-											 SolutionWrapper* wrapper) {
-	// unreachable
-}
-
 void PredictExperiment::experiment_step_callback(vector<double>& obs,
 												 SolutionWrapper* wrapper) {
-	// unreachable
+	switch (this->state) {
+	case PREDICT_EXPERIMENT_STATE_MEASURE:
+		measure_callback(obs,
+						 wrapper);
+		break;
+	}
+}
+
+void PredictExperiment::experiment_exit_step(vector<double>& obs,
+											 SolutionWrapper* wrapper) {
+	switch (this->state) {
+	case PREDICT_EXPERIMENT_STATE_MEASURE:
+		measure_exit_step(obs,
+						  wrapper);
+		break;
+	}
 }
 
 void PredictExperiment::backprop(double target_val,
-								 PredictExperimentHistory* history,
-								 SolutionWrapper* wrapper,
-								 bool& is_add) {
-	for (int i_index = 0; i_index < (int)history->state_histories.size(); i_index++) {
-		this->existing_state_histories.push_back(history->state_histories[i_index]);
-		this->existing_signal_histories.push_back(history->signal_histories[i_index]);
-		this->existing_target_val_histories.push_back(target_val);
-	}
+								 AbstractExperimentHistory* history,
+								 SolutionWrapper* wrapper) {
+	PredictExperimentHistory* predict_experiment_history = (PredictExperimentHistory*)history;
 
-	this->state_iter++;
-	if (this->state_iter >= EXPERIMENT_TRAIN_NUM_DATAPOINTS) {
-		train_existing_helper();
-
-		explore_helper();
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
-		if (this->best_surprise >= 0.0) {
-		#endif /* MDEBUG */
-			train_new_helper(wrapper,
-							 is_add);
-		} else {
-			delete this;
-		}
+	switch (this->state) {
+	case PREDICT_EXPERIMENT_STATE_GATHER_EXISTING:
+		gather_existing_backprop(target_val,
+								 predict_experiment_history,
+								 wrapper);
+		break;
+	case PREDICT_EXPERIMENT_STATE_MEASURE:
+		measure_backprop(target_val,
+						 predict_experiment_history,
+						 wrapper);
+		break;
 	}
 }

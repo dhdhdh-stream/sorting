@@ -21,7 +21,8 @@ void ExploreExperiment::reuse_measure_check_activate(
 		vector<double>& obs,
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
-	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
+	if (wrapper->run_type == RUN_TYPE_EXPLORE
+			&& wrapper->diversity_index == this->diversity_index) {
 		bool is_branch;
 		this->existing_network->activate(wrapper->states.back());
 		this->new_network->activate(wrapper->states.back());
@@ -103,7 +104,8 @@ void ExploreExperiment::reuse_measure_exit_step(vector<double>& obs,
 void ExploreExperiment::reuse_measure_backprop(double target_val,
 											   ExploreExperimentHistory* history,
 											   SolutionWrapper* wrapper) {
-	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
+	if (wrapper->run_type == RUN_TYPE_EXPLORE
+			&& wrapper->diversity_index == this->diversity_index) {
 		this->sum_vals += target_val;
 
 		this->state_iter++;

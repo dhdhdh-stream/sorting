@@ -56,7 +56,8 @@ public:
 	std::list<double> measure_reuse_last_scores;
 	std::list<double> train_new_state_last_scores;
 	std::list<double> measure_new_state_last_scores;
-	std::list<double> predict_last_scores;
+	std::list<double> predict_train_last_scores;
+	std::list<double> predict_measure_last_scores;
 
 	std::vector<AbstractExperiment*> dependencies;
 

@@ -11,36 +11,37 @@ using namespace std;
 
 void ExploreExperiment::experiment_check_activate(vector<double>& obs,
 												  SolutionWrapper* wrapper) {
-	map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it =
-		wrapper->explore_experiment_histories.find(this);
-	if (it == wrapper->explore_experiment_histories.end()) {
-		it = wrapper->explore_experiment_histories.insert({this, new ExploreExperimentHistory(this)}).first;
+	map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it =
+		wrapper->experiment_histories[this->diversity_index].find(this);
+	if (it == wrapper->experiment_histories[this->diversity_index].end()) {
+		it = wrapper->experiment_histories[this->diversity_index].insert({this, new ExploreExperimentHistory(this)}).first;
 	}
+	ExploreExperimentHistory* explore_experiment_history = (ExploreExperimentHistory*)it->second;
 
 	switch (this->state) {
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_check_activate(obs,
-									  it->second,
+									  explore_experiment_history,
 									  wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_check_activate(obs,
-							   it->second,
+							   explore_experiment_history,
 							   wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_check_activate(obs,
-								 it->second,
+								 explore_experiment_history,
 								 wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_REUSE_MEASURE:
 		reuse_measure_check_activate(obs,
-									 it->second,
+									 explore_experiment_history,
 									 wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_NEW_STATE_MEASURE:
 		new_state_measure_check_activate(obs,
-										 it->second,
+										 explore_experiment_history,
 										 wrapper);
 		break;
 	}
@@ -131,32 +132,34 @@ void ExploreExperiment::experiment_step_callback(vector<double>& obs,
 }
 
 void ExploreExperiment::backprop(double target_val,
-								 ExploreExperimentHistory* history,
+								 AbstractExperimentHistory* history,
 								 SolutionWrapper* wrapper) {
+	ExploreExperimentHistory* explore_experiment_history = (ExploreExperimentHistory*)history;
+
 	switch (this->state) {
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_backprop(target_val,
-								history,
+								explore_experiment_history,
 								wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
-						 history,
+						 explore_experiment_history,
 						 wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
-						   history,
+						   explore_experiment_history,
 						   wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_REUSE_MEASURE:
 		reuse_measure_backprop(target_val,
-							   history,
+							   explore_experiment_history,
 							   wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_NEW_STATE_MEASURE:
 		new_state_measure_backprop(target_val,
-								   history,
+								   explore_experiment_history,
 								   wrapper);
 		break;
 	}

@@ -10,7 +10,7 @@ void PredictExperiment::train_existing_helper() {
 	this->existing_network = new ScoreNetwork(this->existing_state_histories[0].size());
 
 	uniform_int_distribution<int> train_distribution(0, this->existing_state_histories.size()-1);
-	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+	for (int iter_index = 0; iter_index < TRAIN_EXISTING_ITERS; iter_index++) {
 		int rand_index = train_distribution(generator);
 
 		this->existing_network->activate(this->existing_state_histories[rand_index]);

@@ -18,21 +18,25 @@ const int INIT_EPOCH_SIZE = 10;
 const int UPDATE_EPOCH_SIZE = 100;
 
 #if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_TRAIN_NUM_DATAPOINTS = 20;
+const int EXPERIMENT_TRAIN_EXISTING_NUM_DATAPOINTS = 20;
 const int EXPERIMENT_EXPLORE_NUM_DATAPOINTS = 10;
+const int EXPERIMENT_TRAIN_NEW_NUM_DATAPOINTS = 10;
 const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 10;
 const int RUNS_PER_PREDICT = 2;
 #else
-const int EXPERIMENT_TRAIN_NUM_DATAPOINTS = 200;
-const int EXPERIMENT_EXPLORE_NUM_DATAPOINTS = 200;
-const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 50;
-const int RUNS_PER_PREDICT = 20;
+const int EXPERIMENT_TRAIN_EXISTING_NUM_DATAPOINTS = 4000;
+const int EXPERIMENT_EXPLORE_NUM_DATAPOINTS = 100;
+const int EXPERIMENT_TRAIN_NEW_NUM_DATAPOINTS = 100;
+const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 100;
+const int RUNS_PER_PREDICT = 10;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int TRAIN_ITERS = 30;
+const int TRAIN_EXISTING_ITERS = 30;
+const int TRAIN_NEW_ITERS = 30;
 #else
-const int TRAIN_ITERS = 100000;
+const int TRAIN_EXISTING_ITERS = 300000;
+const int TRAIN_NEW_ITERS = 100000;
 #endif /* MDEBUG */
 
 /**
@@ -44,6 +48,12 @@ const int RAW_ACTION_WEIGHT = 8;
 
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
+
+#if defined(MDEBUG) && MDEBUG
+const int DIVERSITY_RANGE = 2;
+#else
+const int DIVERSITY_RANGE = 10;
+#endif /* MDEBUG */
 
 const int NEW_STATE_NUM_ADD = 2;
 
@@ -58,11 +68,9 @@ const double LAST_BETTER_THAN_RATIO = 0.6;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int UPDATE_NUM_ITERS = 40;
 const int BATCH_SIZE = 10;
 const int ITERS_PER_BATCH = 10;
 #else
-const int UPDATE_NUM_ITERS = 10000;
 const int BATCH_SIZE = 1000;
 const int ITERS_PER_BATCH = 10000;
 #endif /* MDEBUG */

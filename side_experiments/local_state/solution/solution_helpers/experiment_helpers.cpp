@@ -149,192 +149,188 @@ void compare_index(vector<int>& left, vector<int>& right, bool& right_later) {
 }
 
 void create_experiment(ScopeHistory* scope_history,
+					   int diversity_index,
 					   SolutionWrapper* wrapper) {
 	map<Scope*, ExploreContext> explore_contexts;
 	gather_helper(scope_history,
 				  explore_contexts);
 
-	map<Scope*, ExploreContext>::iterator context_it;
-	uniform_int_distribution<int> root_distribution(0, 3);
-	if (root_distribution(generator) == 0) {
-		context_it = explore_contexts.find(wrapper->solution->starting_scope);
-	} else {
+	uniform_int_distribution<int> predict_distribution(0, 1);
+	if (predict_distribution(generator) == 0) {
 		uniform_int_distribution<int> scope_distribution(0, explore_contexts.size()-1);
-		context_it = next(explore_contexts.begin(), scope_distribution(generator));
-	}
-	if (context_it->second.explore_node != NULL) {
-		ScopeHistory* explore_scope_history = context_it->second.scope_history;
+		map<Scope*, ExploreContext>::iterator context_it = next(explore_contexts.begin(), scope_distribution(generator));
+		if (context_it->second.explore_node != NULL) {
+			ScopeHistory* explore_scope_history = context_it->second.scope_history;
 
-		geometric_distribution<int> exit_distribution(0.1);
-		int random_index;
-		while (true) {
-			random_index = context_it->second.explore_index + 1 + exit_distribution(generator);
-			if (random_index < (int)explore_scope_history->node_histories.size() + 1) {
-				break;
-			}
-		}
-		AbstractNode* exit_next_node;
-		if (random_index >= (int)explore_scope_history->node_histories.size()) {
-			exit_next_node = NULL;
-		} else {
-			exit_next_node = explore_scope_history->node_histories[random_index]->node;
-		}
-
-		vector<vector<int>> dependencies;
-		vector<vector<int>> indexes;
-		for (int try_index = 0; try_index < GATHER_DEPENDENCIES_NUM_TRIES; try_index++) {
-			vector<int> curr_context;
-			vector<int> curr_index;
-			int count = 0;
-			vector<int> dependency;
-			vector<int> index;
-			gather_dependencies_top_helper(explore_scope_history,
-										   context_it->second.explore_index,
-										   curr_context,
-										   curr_index,
-										   count,
-										   dependency,
-										   index);
-			bool matches_existing = false;
-			for (int d_index = 0; d_index < (int)dependencies.size(); d_index++) {
-				if (dependency == dependencies[d_index]) {
-					matches_existing = true;
+			geometric_distribution<int> exit_distribution(0.1);
+			int random_index;
+			while (true) {
+				random_index = context_it->second.explore_index + 1 + exit_distribution(generator);
+				if (random_index < (int)explore_scope_history->node_histories.size() + 1) {
 					break;
 				}
 			}
-			if (!matches_existing) {
-				int insert_index = 0;
-				for (int i_index = 0; i_index < (int)indexes.size(); i_index++) {
-					bool existing_later;
-					compare_index(index, indexes[i_index], existing_later);
-					if (existing_later) {
-						break;
+			AbstractNode* exit_next_node;
+			if (random_index >= (int)explore_scope_history->node_histories.size()) {
+				exit_next_node = NULL;
+			} else {
+				exit_next_node = explore_scope_history->node_histories[random_index]->node;
+			}
+
+			// uniform_int_distribution<int> use_signal_distribution(0, 1);
+			// bool use_signal = use_signal_distribution(generator) == 0;
+			bool use_signal = false;
+
+			PredictExperiment* new_experiment = new PredictExperiment(
+				diversity_index,
+				context_it->second.explore_node->parent,
+				context_it->second.explore_node,
+				context_it->second.explore_is_branch,
+				exit_next_node,
+				use_signal);
+			switch (context_it->second.explore_node->type) {
+			case NODE_TYPE_NOOP:
+				{
+					NoopNode* noop_node = (NoopNode*)context_it->second.explore_node;
+					noop_node->experiment = new_experiment;
+				}
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)context_it->second.explore_node;
+					action_node->experiment = new_experiment;
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)context_it->second.explore_node;
+					scope_node->experiment = new_experiment;
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)context_it->second.explore_node;
+					if (context_it->second.explore_is_branch) {
+						branch_node->branch_experiment = new_experiment;
 					} else {
-						insert_index++;
+						branch_node->original_experiment = new_experiment;
 					}
 				}
-				indexes.insert(indexes.begin() + insert_index, index);
-				dependencies.insert(dependencies.begin() + insert_index, dependency);
-
-				if (dependencies.size() >= MAX_NUM_DEPENDENCIES) {
-					break;
-				}
-			}
-		}
-
-		// uniform_int_distribution<int> use_signal_distribution(0, 1);
-		// bool use_signal = use_signal_distribution(generator) == 0;
-		bool use_signal = false;
-
-		ExploreExperiment* new_experiment = new ExploreExperiment(
-			wrapper->diversity_index,
-			context_it->second.explore_node->parent,
-			context_it->second.explore_node,
-			context_it->second.explore_is_branch,
-			exit_next_node,
-			dependencies,
-			use_signal,
-			wrapper);
-		switch (context_it->second.explore_node->type) {
-		case NODE_TYPE_NOOP:
-			{
-				NoopNode* noop_node = (NoopNode*)context_it->second.explore_node;
-				noop_node->experiment = new_experiment;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)context_it->second.explore_node;
-				action_node->experiment = new_experiment;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)context_it->second.explore_node;
-				scope_node->experiment = new_experiment;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)context_it->second.explore_node;
-				if (context_it->second.explore_is_branch) {
-					branch_node->branch_experiment = new_experiment;
-				} else {
-					branch_node->original_experiment = new_experiment;
-				}
-			}
-			break;
-		}
-	}
-}
-
-void create_predict_experiment(ScopeHistory* scope_history,
-							   SolutionWrapper* wrapper) {
-	map<Scope*, ExploreContext> explore_contexts;
-	gather_helper(scope_history,
-				  explore_contexts);
-
-	uniform_int_distribution<int> scope_distribution(0, explore_contexts.size()-1);
-	map<Scope*, ExploreContext>::iterator context_it = next(explore_contexts.begin(), scope_distribution(generator));
-	if (context_it->second.explore_node != NULL) {
-		ScopeHistory* explore_scope_history = context_it->second.scope_history;
-
-		geometric_distribution<int> exit_distribution(0.1);
-		int random_index;
-		while (true) {
-			random_index = context_it->second.explore_index + 1 + exit_distribution(generator);
-			if (random_index < (int)explore_scope_history->node_histories.size() + 1) {
 				break;
 			}
 		}
-		AbstractNode* exit_next_node;
-		if (random_index >= (int)explore_scope_history->node_histories.size()) {
-			exit_next_node = NULL;
+	} else {
+		map<Scope*, ExploreContext>::iterator context_it;
+		uniform_int_distribution<int> root_distribution(0, 3);
+		if (root_distribution(generator) == 0) {
+			context_it = explore_contexts.find(wrapper->solution->starting_scope);
 		} else {
-			exit_next_node = explore_scope_history->node_histories[random_index]->node;
+			uniform_int_distribution<int> scope_distribution(0, explore_contexts.size()-1);
+			context_it = next(explore_contexts.begin(), scope_distribution(generator));
 		}
+		if (context_it->second.explore_node != NULL) {
+			ScopeHistory* explore_scope_history = context_it->second.scope_history;
 
-		// uniform_int_distribution<int> use_signal_distribution(0, 1);
-		// bool use_signal = use_signal_distribution(generator) == 0;
-		bool use_signal = false;
-
-		PredictExperiment* new_experiment = new PredictExperiment(
-			context_it->second.explore_node->parent,
-			context_it->second.explore_node,
-			context_it->second.explore_is_branch,
-			exit_next_node,
-			use_signal);
-		// temp
-		cout << "new_experiment" << endl;
-		switch (context_it->second.explore_node->type) {
-		case NODE_TYPE_NOOP:
-			{
-				NoopNode* noop_node = (NoopNode*)context_it->second.explore_node;
-				noop_node->experiment = new_experiment;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)context_it->second.explore_node;
-				action_node->experiment = new_experiment;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)context_it->second.explore_node;
-				scope_node->experiment = new_experiment;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)context_it->second.explore_node;
-				if (context_it->second.explore_is_branch) {
-					branch_node->branch_experiment = new_experiment;
-				} else {
-					branch_node->original_experiment = new_experiment;
+			geometric_distribution<int> exit_distribution(0.1);
+			int random_index;
+			while (true) {
+				random_index = context_it->second.explore_index + 1 + exit_distribution(generator);
+				if (random_index < (int)explore_scope_history->node_histories.size() + 1) {
+					break;
 				}
 			}
-			break;
+			AbstractNode* exit_next_node;
+			if (random_index >= (int)explore_scope_history->node_histories.size()) {
+				exit_next_node = NULL;
+			} else {
+				exit_next_node = explore_scope_history->node_histories[random_index]->node;
+			}
+
+			vector<vector<int>> dependencies;
+			vector<vector<int>> indexes;
+			for (int try_index = 0; try_index < GATHER_DEPENDENCIES_NUM_TRIES; try_index++) {
+				vector<int> curr_context;
+				vector<int> curr_index;
+				int count = 0;
+				vector<int> dependency;
+				vector<int> index;
+				gather_dependencies_top_helper(explore_scope_history,
+											   context_it->second.explore_index,
+											   curr_context,
+											   curr_index,
+											   count,
+											   dependency,
+											   index);
+				bool matches_existing = false;
+				for (int d_index = 0; d_index < (int)dependencies.size(); d_index++) {
+					if (dependency == dependencies[d_index]) {
+						matches_existing = true;
+						break;
+					}
+				}
+				if (!matches_existing) {
+					int insert_index = 0;
+					for (int i_index = 0; i_index < (int)indexes.size(); i_index++) {
+						bool existing_later;
+						compare_index(index, indexes[i_index], existing_later);
+						if (existing_later) {
+							break;
+						} else {
+							insert_index++;
+						}
+					}
+					indexes.insert(indexes.begin() + insert_index, index);
+					dependencies.insert(dependencies.begin() + insert_index, dependency);
+
+					if (dependencies.size() >= MAX_NUM_DEPENDENCIES) {
+						break;
+					}
+				}
+			}
+
+			// uniform_int_distribution<int> use_signal_distribution(0, 1);
+			// bool use_signal = use_signal_distribution(generator) == 0;
+			bool use_signal = false;
+
+			ExploreExperiment* new_experiment = new ExploreExperiment(
+				diversity_index,
+				context_it->second.explore_node->parent,
+				context_it->second.explore_node,
+				context_it->second.explore_is_branch,
+				exit_next_node,
+				dependencies,
+				use_signal,
+				wrapper);
+			switch (context_it->second.explore_node->type) {
+			case NODE_TYPE_NOOP:
+				{
+					NoopNode* noop_node = (NoopNode*)context_it->second.explore_node;
+					noop_node->experiment = new_experiment;
+				}
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)context_it->second.explore_node;
+					action_node->experiment = new_experiment;
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)context_it->second.explore_node;
+					scope_node->experiment = new_experiment;
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)context_it->second.explore_node;
+					if (context_it->second.explore_is_branch) {
+						branch_node->branch_experiment = new_experiment;
+					} else {
+						branch_node->original_experiment = new_experiment;
+					}
+				}
+				break;
+			}
 		}
 	}
 }

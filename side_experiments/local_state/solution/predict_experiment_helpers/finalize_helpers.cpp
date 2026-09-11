@@ -27,6 +27,11 @@
 using namespace std;
 
 void PredictExperiment::add(SolutionWrapper* wrapper) {
+	if (wrapper->solution->curr_score > wrapper->best_solution->curr_score) {
+		delete wrapper->best_solution;
+		wrapper->best_solution = new Solution(wrapper->solution);
+	}
+
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";

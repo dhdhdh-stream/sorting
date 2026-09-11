@@ -24,7 +24,8 @@ void ExploreExperiment::new_state_measure_check_activate(
 		vector<double>& obs,
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
-	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
+	if (wrapper->run_type == RUN_TYPE_EXPLORE
+			&& wrapper->diversity_index == this->diversity_index) {
 		ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 		vector<bool> curr_dependencies_is_hit(this->dependencies.size());
@@ -138,7 +139,8 @@ void ExploreExperiment::new_state_measure_exit_step(vector<double>& obs,
 void ExploreExperiment::new_state_measure_backprop(double target_val,
 												   ExploreExperimentHistory* history,
 												   SolutionWrapper* wrapper) {
-	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
+	if (wrapper->run_type == RUN_TYPE_EXPLORE
+			&& wrapper->diversity_index == this->diversity_index) {
 		this->sum_vals += target_val;
 
 		this->state_iter++;

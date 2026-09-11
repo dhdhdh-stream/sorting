@@ -16,10 +16,6 @@ class AbstractNetworkHistory;
 class AbstractNode;
 class AbstractNodeHistory;
 class BranchNode;
-class ExploreExperiment;
-class ExploreExperimentHistory;
-class PredictExperiment;
-class PredictExperimentHistory;
 class Problem;
 class ProblemType;
 class Scope;
@@ -52,8 +48,7 @@ public:
 	std::vector<int> train_run_type_histories;
 	int train_iter_index;
 
-	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_experiment_histories;
-	std::map<PredictExperiment*, PredictExperimentHistory*> predict_experiment_histories;
+	std::vector<std::map<AbstractExperiment*, AbstractExperimentHistory*>> experiment_histories;
 
 	Problem* problem;
 

@@ -16,6 +16,9 @@ class AbstractExperiment {
 public:
 	int diversity_index;
 
+	int state;
+	int state_iter;
+
 	Scope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;
@@ -36,6 +39,11 @@ public:
 										  SolutionWrapper* wrapper) = 0;
 	virtual void experiment_exit_step(std::vector<double>& obs,
 									  SolutionWrapper* wrapper) = 0;
+	virtual void backprop(double target_val,
+						  AbstractExperimentHistory* history,
+						  SolutionWrapper* wrapper) = 0;
+
+	bool further_than(AbstractExperiment* other);
 };
 
 class AbstractExperimentHistory {

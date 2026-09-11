@@ -1,4 +1,8 @@
 /**
+ * - need explore even with predict
+ *   - difficult to find sharp/different with predict
+ *     - especially when different state needs to be captured
+ * 
  * - too expensive to retrain networks
  *   - means having to activate/backprop every network
  *     - since affects error gradient
@@ -29,9 +33,6 @@ class ExploreExperimentHistory;
 class ExploreExperiment : public AbstractExperiment {
 public:
 	bool use_signal;
-
-	int state;
-	int state_iter;
 
 	std::vector<std::vector<int>> dependencies;
 
@@ -88,7 +89,7 @@ public:
 	void experiment_exit_step(std::vector<double>& obs,
 							  SolutionWrapper* wrapper);
 	void backprop(double target_val,
-				  ExploreExperimentHistory* history,
+				  AbstractExperimentHistory* history,
 				  SolutionWrapper* wrapper);
 
 	void train_existing_check_activate(std::vector<double>& obs,
@@ -165,8 +166,6 @@ public:
 
 	void add(bool is_new_state,
 			 SolutionWrapper* wrapper);
-
-	bool further_than(ExploreExperiment* other);
 };
 
 class ExploreExperimentHistory : public AbstractExperimentHistory {

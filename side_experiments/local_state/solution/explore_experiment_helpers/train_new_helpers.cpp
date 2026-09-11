@@ -23,7 +23,8 @@ using namespace std;
 void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 												 ExploreExperimentHistory* history,
 												 SolutionWrapper* wrapper) {
-	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
+	if (wrapper->run_type == RUN_TYPE_EXPLORE
+			&& wrapper->diversity_index == this->diversity_index) {
 		this->num_instances_until_target--;
 		if (this->num_instances_until_target <= 0) {
 			ScopeHistory* scope_history = wrapper->scope_histories.back();
@@ -151,7 +152,8 @@ void ExploreExperiment::train_new_exit_step(vector<double>& obs,
 void ExploreExperiment::train_new_backprop(double target_val,
 										   ExploreExperimentHistory* history,
 										   SolutionWrapper* wrapper) {
-	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
+	if (wrapper->run_type == RUN_TYPE_EXPLORE
+			&& wrapper->diversity_index == this->diversity_index) {
 		if (history->dependencies_is_hit_histories.size() > 0) {
 			for (int i_index = 0; i_index < (int)history->dependencies_is_hit_histories.size(); i_index++) {
 				this->new_dependencies_is_hit_histories.push_back(history->dependencies_is_hit_histories[i_index]);
@@ -163,11 +165,11 @@ void ExploreExperiment::train_new_backprop(double target_val,
 			}
 
 			this->state_iter++;
-			if (this->state_iter >= EXPERIMENT_TRAIN_NUM_DATAPOINTS) {
+			if (this->state_iter >= EXPERIMENT_TRAIN_NEW_NUM_DATAPOINTS) {
 				ScoreNetwork* potential_new_network = new ScoreNetwork(this->scope_context->num_states);
 
 				uniform_int_distribution<int> new_train_distribution(0, this->new_dependencies_is_hit_histories.size()-1);
-				for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+				for (int iter_index = 0; iter_index < TRAIN_NEW_ITERS; iter_index++) {
 					int rand_index = new_train_distribution(generator);
 
 					potential_new_network->activate(this->new_state_histories[rand_index]);

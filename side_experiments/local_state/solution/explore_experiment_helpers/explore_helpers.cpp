@@ -22,7 +22,8 @@ using namespace std;
 void ExploreExperiment::explore_check_activate(vector<double>& obs,
 											   ExploreExperimentHistory* history,
 											   SolutionWrapper* wrapper) {
-	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
+	if (wrapper->run_type == RUN_TYPE_EXPLORE
+			&& wrapper->diversity_index == this->diversity_index) {
 		this->num_instances_until_target--;
 		if (history->existing_predicted.size() == 0
 				&& this->num_instances_until_target <= 0) {
@@ -142,7 +143,7 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 									 bool& fetch_action,
 									 SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
-	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
+	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_histories[this->diversity_index][this];
 
 	if (experiment_state->step_index >= (int)history->curr_step_types.size()) {
 		wrapper->node_context.back() = this->exit_next_node;
@@ -169,7 +170,7 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 void ExploreExperiment::explore_set_action(int action,
 										   SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
-	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
+	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_histories[this->diversity_index][this];
 
 	history->curr_indexes[experiment_state->step_index] = action;
 }
@@ -177,7 +178,7 @@ void ExploreExperiment::explore_set_action(int action,
 void ExploreExperiment::explore_callback(vector<double>& obs,
 										 SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
-	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
+	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_histories[this->diversity_index][this];
 
 	int action = history->curr_indexes[experiment_state->step_index];
 	ActionNode* generic_action_node = this->scope_context->generic_action_nodes[action];
@@ -190,7 +191,7 @@ void ExploreExperiment::explore_callback(vector<double>& obs,
 void ExploreExperiment::explore_exit_step(vector<double>& obs,
 										  SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
-	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
+	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_histories[this->diversity_index][this];
 
 	ScopeNode* generic_scope_node = this->scope_context->generic_scope_nodes[
 		history->curr_indexes[experiment_state->step_index]];
@@ -203,7 +204,8 @@ void ExploreExperiment::explore_exit_step(vector<double>& obs,
 void ExploreExperiment::explore_backprop(double target_val,
 										 ExploreExperimentHistory* history,
 										 SolutionWrapper* wrapper) {
-	if (wrapper->run_type == RUN_TYPE_EXPLORE) {
+	if (wrapper->run_type == RUN_TYPE_EXPLORE
+			&& wrapper->diversity_index == this->diversity_index) {
 		double average_instances_per_hit;
 		switch (this->node_context->type) {
 		case NODE_TYPE_NOOP:
