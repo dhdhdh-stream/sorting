@@ -29,7 +29,8 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	uniform_int_distribution<int> explore_distribution(0, 9);
+	// uniform_int_distribution<int> explore_distribution(0, 9);
+	uniform_int_distribution<int> explore_distribution(0, 1);
 	if (explore_distribution(generator) == 0) {
 		this->run_type = RUN_TYPE_EXPLORE;
 	} else {

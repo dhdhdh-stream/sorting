@@ -59,6 +59,10 @@ public:
 	std::list<double> predict_train_last_scores;
 	std::list<double> predict_measure_last_scores;
 
+	double explore_average;
+	double naive_misguess;
+
+	double signal_misguess;
 	double average_misguess;
 
 	std::vector<AbstractExperiment*> dependencies;

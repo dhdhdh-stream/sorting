@@ -27,29 +27,29 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 			&& wrapper->diversity_index == this->diversity_index) {
 		this->num_instances_until_target--;
 		if (this->num_instances_until_target <= 0) {
-			double sum_vals = 0.0;
-			for (int r_index = 0; r_index < RUNS_PER_PREDICT; r_index++) {
-				Eigen::VectorXf state = wrapper->states.back();
-				AbstractNode* node_context = this->exit_next_node;
+			// double sum_vals = 0.0;
+			// for (int r_index = 0; r_index < RUNS_PER_PREDICT; r_index++) {
+			// 	Eigen::VectorXf state = wrapper->states.back();
+			// 	AbstractNode* node_context = this->exit_next_node;
 
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						ActionNode* generic_action_node = this->scope_context->generic_action_nodes[this->best_indexes[s_index]];
-						generic_action_node->predict_step(state,
-														  node_context);
-					} else {
-						ScopeNode* generic_scope_node = this->scope_context->generic_scope_nodes[this->best_indexes[s_index]];
-						generic_scope_node->predict_step(state,
-														 node_context);
-					}
-				}
+			// 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			// 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			// 			ActionNode* generic_action_node = this->scope_context->generic_action_nodes[this->best_indexes[s_index]];
+			// 			generic_action_node->predict_step(state,
+			// 											  node_context);
+			// 		} else {
+			// 			ScopeNode* generic_scope_node = this->scope_context->generic_scope_nodes[this->best_indexes[s_index]];
+			// 			generic_scope_node->predict_step(state,
+			// 											 node_context);
+			// 		}
+			// 	}
 
-				sum_vals += predict_helper(node_context,
-										   state,
-										   this->scope_context);
-			}
-			double curr_predicted = sum_vals / RUNS_PER_PREDICT;
-			history->predicted.push_back(curr_predicted);
+			// 	sum_vals += predict_helper(node_context,
+			// 							   state,
+			// 							   this->scope_context);
+			// }
+			// double curr_predicted = sum_vals / RUNS_PER_PREDICT;
+			// history->predicted.push_back(curr_predicted);
 
 			ScopeHistory* scope_history = wrapper->scope_histories.back();
 
@@ -188,10 +188,10 @@ void ExploreExperiment::train_new_backprop(double target_val,
 				this->new_target_val_histories.push_back(target_val);
 			}
 
-			for (int i_index = 0; i_index < (int)history->predicted.size(); i_index++) {
-				double misguess = abs(target_val - history->predicted[i_index]);
-				this->scope_context->average_misguess = 0.999*this->scope_context->average_misguess + 0.001*misguess;
-			}
+			// for (int i_index = 0; i_index < (int)history->predicted.size(); i_index++) {
+			// 	double misguess = abs(target_val - history->predicted[i_index]);
+			// 	this->scope_context->average_misguess = 0.999*this->scope_context->average_misguess + 0.001*misguess;
+			// }
 
 			this->state_iter++;
 			if (this->state_iter >= EXPERIMENT_TRAIN_NEW_NUM_DATAPOINTS) {
@@ -289,6 +289,9 @@ void ExploreExperiment::train_new_backprop(double target_val,
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
 				// cout << "local_improvement: " << local_improvement << endl;
 				// cout << "global_improvement: " << global_improvement << endl;
+				cout << "this->scope_context->explore_average: " << this->scope_context->explore_average << endl;
+				cout << "this->scope_context->naive_misguess: " << this->scope_context->naive_misguess << endl;
+				cout << "this->scope_context->signal_misguess: " << this->scope_context->signal_misguess << endl;
 				cout << "this->scope_context->average_misguess: " << this->scope_context->average_misguess << endl;
 
 				if (local_improvement > 0.0) {

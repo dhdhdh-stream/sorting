@@ -502,6 +502,10 @@ void PredictExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->predict_train_last_scores = wrapper->solution->starting_scope->predict_train_last_scores;
 			new_scope->predict_measure_last_scores = wrapper->solution->starting_scope->predict_measure_last_scores;
 
+			new_scope->explore_average = wrapper->solution->starting_scope->explore_average;
+			new_scope->naive_misguess = wrapper->solution->starting_scope->naive_misguess;
+
+			new_scope->signal_misguess = wrapper->solution->starting_scope->signal_misguess;
 			new_scope->average_misguess = wrapper->solution->starting_scope->average_misguess;
 
 			wrapper->solution->starting_scope = new_scope;

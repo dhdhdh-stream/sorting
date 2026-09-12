@@ -101,6 +101,7 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 				}
 			}
 			uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
+			uniform_int_distribution<int> action_distribution(0, this->scope_context->generic_action_nodes.size()-1);
 			for (int s_index = 0; s_index < new_num_steps; s_index++) {
 				bool is_scope = false;
 				if (possible_child_indexes.size() > 0) {
@@ -122,7 +123,7 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 					history->curr_indexes.push_back(child_index);
 				} else {
 					history->curr_step_types.push_back(STEP_TYPE_ACTION);
-					history->curr_indexes.push_back(-1);
+					history->curr_indexes.push_back(action_distribution(generator));
 				}
 			}
 
@@ -193,10 +194,10 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 
 void ExploreExperiment::explore_set_action(int action,
 										   SolutionWrapper* wrapper) {
-	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
-	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_histories[this->diversity_index][this];
+	// ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
+	// ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_histories[this->diversity_index][this];
 
-	history->curr_indexes[experiment_state->step_index] = action;
+	// history->curr_indexes[experiment_state->step_index] = action;
 }
 
 void ExploreExperiment::explore_callback(vector<double>& obs,
@@ -277,6 +278,13 @@ void ExploreExperiment::explore_backprop(double target_val,
 				this->best_step_types = history->curr_step_types;
 				this->best_indexes = history->curr_indexes;
 			}
+
+			this->scope_context->explore_average = 0.999*this->scope_context->explore_average + 0.001*target_val;
+			double naive_misguess = abs(target_val - this->scope_context->explore_average);
+			this->scope_context->naive_misguess = 0.999*this->scope_context->naive_misguess + 0.001*naive_misguess;
+
+			double signal_misguess = abs(target_val - history->signal_histories[0]);
+			this->scope_context->signal_misguess = 0.999*this->scope_context->signal_misguess + 0.001*signal_misguess;
 
 			double misguess = abs(target_val - history->predicted[0]);
 			this->scope_context->average_misguess = 0.999*this->scope_context->average_misguess + 0.001*misguess;

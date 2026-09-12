@@ -132,6 +132,10 @@ void Scope::copy_from(Scope* original,
 	this->predict_train_last_scores = original->predict_train_last_scores;
 	this->predict_measure_last_scores = original->predict_measure_last_scores;
 
+	this->explore_average = original->explore_average;
+	this->naive_misguess = original->naive_misguess;
+
+	this->signal_misguess = original->signal_misguess;
 	this->average_misguess = original->average_misguess;
 }
 
@@ -213,6 +217,10 @@ void Scope::save(ofstream& output_file) {
 		output_file << *it << endl;
 	}
 
+	output_file << this->explore_average << endl;
+	output_file << this->naive_misguess << endl;
+
+	output_file << this->signal_misguess << endl;
 	output_file << this->average_misguess << endl;
 }
 
@@ -390,6 +398,18 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, score_line);
 		this->predict_measure_last_scores.push_back(stod(score_line));
 	}
+
+	string explore_average_line;
+	getline(input_file, explore_average_line);
+	this->explore_average = stod(explore_average_line);
+
+	string naive_misguess_line;
+	getline(input_file, naive_misguess_line);
+	this->naive_misguess = stod(naive_misguess_line);
+
+	string signal_misguess_line;
+	getline(input_file, signal_misguess_line);
+	this->signal_misguess = stod(signal_misguess_line);
 
 	string average_misguess_line;
 	getline(input_file, average_misguess_line);
