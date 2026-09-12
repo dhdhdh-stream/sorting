@@ -432,9 +432,6 @@ void ExploreExperiment::add(bool is_new_state,
 
 			new_scope->end_score_network = new ScoreNetwork(wrapper->solution->starting_scope->end_score_network);
 
-			// TODO: reuse existing generic networks
-			// TODO: don't use predict until trained
-
 			for (int a_index = 0; a_index < wrapper->solution->num_actions; a_index++) {
 				ActionNode* new_action_node = new ActionNode();
 				new_action_node->parent = new_scope;
@@ -445,12 +442,14 @@ void ExploreExperiment::add(bool is_new_state,
 				new_action_node->is_generic = true;
 				new_action_node->action = a_index;
 
-				new_action_node->action_network = new ActionNetwork(new_scope->num_states);
+				new_action_node->action_network = new ActionNetwork(
+					wrapper->solution->starting_scope->generic_action_nodes[a_index]->action_network);
 
-				new_action_node->obs_network = new ObsNetwork(new_scope->num_states,
-															  wrapper->solution->num_obs);
+				new_action_node->obs_network = new ObsNetwork(
+					wrapper->solution->starting_scope->generic_action_nodes[a_index]->obs_network);
 
-				new_action_node->predict_network = new PredictNetwork(new_scope->num_states);
+				new_action_node->predict_network = new PredictNetwork(
+					wrapper->solution->starting_scope->generic_action_nodes[a_index]->predict_network);
 
 				new_action_node->next_node_id = -1;
 				new_action_node->next_node = NULL;
@@ -467,15 +466,30 @@ void ExploreExperiment::add(bool is_new_state,
 
 				new_scope_node->is_generic = true;
 
-				new_scope_node->in_network = new TransitionNetwork(new_scope->num_states,
-																   new_scope->child_scopes[c_index]->num_states);
+				if (c_index == (int)new_scope->child_scopes.size()-1) {
+					new_scope_node->in_network = new TransitionNetwork(new_scope->num_states,
+																	   new_scope->child_scopes[c_index]->num_states);
+				} else {
+					new_scope_node->in_network = new TransitionNetwork(
+						wrapper->solution->starting_scope->generic_scope_nodes[c_index]->in_network);
+				}
 
 				new_scope_node->scope = new_scope->child_scopes[c_index];
 
-				new_scope_node->out_network = new TransitionNetwork(new_scope->child_scopes[c_index]->num_states,
-																	new_scope->num_states);
+				if (c_index == (int)new_scope->child_scopes.size()-1) {
+					new_scope_node->out_network = new TransitionNetwork(new_scope->child_scopes[c_index]->num_states,
+																		new_scope->num_states);
+				} else {
+					new_scope_node->out_network = new TransitionNetwork(
+						wrapper->solution->starting_scope->generic_scope_nodes[c_index]->out_network);
+				}
 
-				new_scope_node->predict_network = new PredictNetwork(new_scope->num_states);
+				if (c_index == (int)new_scope->child_scopes.size()-1) {
+					new_scope_node->predict_network = new PredictNetwork(new_scope->num_states);
+				} else {
+					new_scope_node->predict_network = new PredictNetwork(
+						wrapper->solution->starting_scope->generic_scope_nodes[c_index]->predict_network);
+				}
 
 				new_scope_node->next_node_id = -1;
 				new_scope_node->next_node = NULL;
@@ -489,6 +503,8 @@ void ExploreExperiment::add(bool is_new_state,
 			new_scope->measure_new_state_last_scores = wrapper->solution->starting_scope->measure_new_state_last_scores;
 			new_scope->predict_train_last_scores = wrapper->solution->starting_scope->predict_train_last_scores;
 			new_scope->predict_measure_last_scores = wrapper->solution->starting_scope->predict_measure_last_scores;
+
+			new_scope->average_misguess = wrapper->solution->starting_scope->average_misguess;
 
 			wrapper->solution->starting_scope = new_scope;
 			wrapper->solution->starting_num_improvements = 0;

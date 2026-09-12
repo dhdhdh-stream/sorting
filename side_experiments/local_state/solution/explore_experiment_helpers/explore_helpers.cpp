@@ -126,6 +126,30 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 				}
 			}
 
+			double sum_vals = 0.0;
+			for (int r_index = 0; r_index < RUNS_PER_PREDICT; r_index++) {
+				Eigen::VectorXf state = wrapper->states.back();
+				AbstractNode* node_context = this->exit_next_node;
+
+				for (int s_index = 0; s_index < (int)history->curr_step_types.size(); s_index++) {
+					if (history->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+						ActionNode* generic_action_node = this->scope_context->generic_action_nodes[history->curr_indexes[s_index]];
+						generic_action_node->predict_step(state,
+														  node_context);
+					} else {
+						ScopeNode* generic_scope_node = this->scope_context->generic_scope_nodes[history->curr_indexes[s_index]];
+						generic_scope_node->predict_step(state,
+														 node_context);
+					}
+				}
+
+				sum_vals += predict_helper(node_context,
+										   state,
+										   this->scope_context);
+			}
+			double curr_predicted = sum_vals / RUNS_PER_PREDICT;
+			history->predicted.push_back(curr_predicted);
+
 			history->signal_histories.push_back(0.0);
 			wrapper->scope_histories.back()->experiment_callback_histories.push_back(history);
 			wrapper->scope_histories.back()->experiment_callback_indexes.push_back(history->signal_histories.size()-1);
@@ -253,6 +277,9 @@ void ExploreExperiment::explore_backprop(double target_val,
 				this->best_step_types = history->curr_step_types;
 				this->best_indexes = history->curr_indexes;
 			}
+
+			double misguess = abs(target_val - history->predicted[0]);
+			this->scope_context->average_misguess = 0.999*this->scope_context->average_misguess + 0.001*misguess;
 
 			this->state_iter++;
 			if (this->state_iter >= EXPERIMENT_EXPLORE_NUM_DATAPOINTS) {

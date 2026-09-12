@@ -131,6 +131,8 @@ void Scope::copy_from(Scope* original,
 	this->measure_new_state_last_scores = original->measure_new_state_last_scores;
 	this->predict_train_last_scores = original->predict_train_last_scores;
 	this->predict_measure_last_scores = original->predict_measure_last_scores;
+
+	this->average_misguess = original->average_misguess;
 }
 
 void Scope::save(ofstream& output_file) {
@@ -210,6 +212,8 @@ void Scope::save(ofstream& output_file) {
 			it != this->predict_measure_last_scores.end(); it++) {
 		output_file << *it << endl;
 	}
+
+	output_file << this->average_misguess << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -386,6 +390,10 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, score_line);
 		this->predict_measure_last_scores.push_back(stod(score_line));
 	}
+
+	string average_misguess_line;
+	getline(input_file, average_misguess_line);
+	this->average_misguess = stod(average_misguess_line);
 }
 
 void Scope::link(Solution* parent_solution) {

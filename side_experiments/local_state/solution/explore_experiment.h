@@ -183,6 +183,8 @@ public:
 	std::vector<std::vector<std::vector<double>>> dependencies_obs_histories;
 	std::vector<Eigen::VectorXf> state_histories;
 
+	std::vector<double> predicted;
+
 	ExploreExperimentHistory(ExploreExperiment* experiment);
 };
 

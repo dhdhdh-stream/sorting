@@ -129,6 +129,8 @@ void Solution::init(ProblemType* problem_type) {
 		new_scope->generic_action_nodes.push_back(new_action_node);
 	}
 
+	new_scope->average_misguess = 0.0;
+
 	this->starting_scope = new_scope;
 	this->starting_num_improvements = 0;
 }

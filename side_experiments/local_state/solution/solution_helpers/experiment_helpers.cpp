@@ -156,7 +156,8 @@ void create_experiment(ScopeHistory* scope_history,
 				  explore_contexts);
 
 	uniform_int_distribution<int> predict_distribution(0, 1);
-	if (predict_distribution(generator) == 0) {
+	// if (predict_distribution(generator) == 0) {
+	if (false) {
 		uniform_int_distribution<int> scope_distribution(0, explore_contexts.size()-1);
 		map<Scope*, ExploreContext>::iterator context_it = next(explore_contexts.begin(), scope_distribution(generator));
 		if (context_it->second.explore_node != NULL) {
