@@ -432,6 +432,9 @@ void ExploreExperiment::add(bool is_new_state,
 
 			new_scope->end_score_network = new ScoreNetwork(wrapper->solution->starting_scope->end_score_network);
 
+			// TODO: reuse existing generic networks
+			// TODO: don't use predict until trained
+
 			for (int a_index = 0; a_index < wrapper->solution->num_actions; a_index++) {
 				ActionNode* new_action_node = new ActionNode();
 				new_action_node->parent = new_scope;

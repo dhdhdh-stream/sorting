@@ -41,7 +41,8 @@ public:
 									  SolutionWrapper* wrapper) = 0;
 	virtual void backprop(double target_val,
 						  AbstractExperimentHistory* history,
-						  SolutionWrapper* wrapper) = 0;
+						  SolutionWrapper* wrapper,
+						  bool& is_add) = 0;
 
 	bool further_than(AbstractExperiment* other);
 };

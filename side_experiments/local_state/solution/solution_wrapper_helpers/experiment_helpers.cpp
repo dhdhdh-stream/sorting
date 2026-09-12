@@ -132,7 +132,7 @@ void SolutionWrapper::experiment_end(double result) {
 
 	for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
 		if (this->experiment_histories[d_index].size() == 0) {
-			if (this->run_type == RUN_TYPE_EXPLORE) {
+			if (this->run_type == RUN_TYPE_EXISTING) {
 				create_experiment(this->scope_histories[0],
 								  d_index,
 								  this);
@@ -170,13 +170,18 @@ void SolutionWrapper::experiment_end(double result) {
 	this->states.clear();
 
 	for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
+		bool is_add = false;
 		if (this->experiment_histories[d_index].size() == 1) {
 			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[d_index].begin();
 					it != this->experiment_histories[d_index].end(); it++) {
 				it->first->backprop(result,
 									it->second,
-									this);
+									this,
+									is_add);
 			}
+		}
+		if (is_add) {
+			break;
 		}
 	}
 

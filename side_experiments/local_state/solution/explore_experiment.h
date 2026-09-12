@@ -90,7 +90,8 @@ public:
 							  SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  AbstractExperimentHistory* history,
-				  SolutionWrapper* wrapper);
+				  SolutionWrapper* wrapper,
+				  bool& is_add);
 
 	void train_existing_check_activate(std::vector<double>& obs,
 									   ExploreExperimentHistory* history,
@@ -147,7 +148,8 @@ public:
 								 SolutionWrapper* wrapper);
 	void reuse_measure_backprop(double target_val,
 								ExploreExperimentHistory* history,
-								SolutionWrapper* wrapper);
+								SolutionWrapper* wrapper,
+								bool& is_add);
 
 	void new_state_measure_check_activate(std::vector<double>& obs,
 										  ExploreExperimentHistory* history,
@@ -162,7 +164,8 @@ public:
 									 SolutionWrapper* wrapper);
 	void new_state_measure_backprop(double target_val,
 									ExploreExperimentHistory* history,
-									SolutionWrapper* wrapper);
+									SolutionWrapper* wrapper,
+									bool& is_add);
 
 	void add(bool is_new_state,
 			 SolutionWrapper* wrapper);

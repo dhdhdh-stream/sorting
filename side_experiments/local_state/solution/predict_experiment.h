@@ -60,7 +60,8 @@ public:
 							  SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  AbstractExperimentHistory* history,
-				  SolutionWrapper* wrapper);
+				  SolutionWrapper* wrapper,
+				  bool& is_add);
 
 	void gather_existing_check_activate(std::vector<double>& obs,
 										PredictExperimentHistory* history,
@@ -86,7 +87,8 @@ public:
 						   SolutionWrapper* wrapper);
 	void measure_backprop(double target_val,
 						  PredictExperimentHistory* history,
-						  SolutionWrapper* wrapper);
+						  SolutionWrapper* wrapper,
+						  bool& is_add);
 
 	void add(SolutionWrapper* wrapper);
 };

@@ -78,7 +78,7 @@ const int ITERS_PER_BATCH = 10000;
 const int RUN_TYPE_EXISTING = 0;
 const int RUN_TYPE_EXPLORE = 1;
 
-const int GENERALIZE_ITER = 3;
+const int GENERALIZE_ITER = 5;
 
 const int EXPERIMENT_REFRESH_NUM_ITERS = 10;
 

@@ -28,6 +28,7 @@ PredictExperiment::PredictExperiment(int diversity_index,
 
 	this->sum_vals = 0.0;
 
+	this->state = PREDICT_EXPERIMENT_STATE_GATHER_EXISTING;
 	this->state_iter = 0;
 }
 

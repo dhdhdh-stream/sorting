@@ -103,7 +103,8 @@ void ExploreExperiment::reuse_measure_exit_step(vector<double>& obs,
 
 void ExploreExperiment::reuse_measure_backprop(double target_val,
 											   ExploreExperimentHistory* history,
-											   SolutionWrapper* wrapper) {
+											   SolutionWrapper* wrapper,
+											   bool& is_add) {
 	if (wrapper->run_type == RUN_TYPE_EXPLORE
 			&& wrapper->diversity_index == this->diversity_index) {
 		this->sum_vals += target_val;
@@ -185,6 +186,8 @@ void ExploreExperiment::reuse_measure_backprop(double target_val,
 			#else
 			if (is_success) {
 			#endif /* MDEBUG */
+				is_add = true;
+
 				add(false,
 					wrapper);
 			} else {

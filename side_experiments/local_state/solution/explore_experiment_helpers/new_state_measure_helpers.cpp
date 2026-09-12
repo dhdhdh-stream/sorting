@@ -138,7 +138,8 @@ void ExploreExperiment::new_state_measure_exit_step(vector<double>& obs,
 
 void ExploreExperiment::new_state_measure_backprop(double target_val,
 												   ExploreExperimentHistory* history,
-												   SolutionWrapper* wrapper) {
+												   SolutionWrapper* wrapper,
+												   bool& is_add) {
 	if (wrapper->run_type == RUN_TYPE_EXPLORE
 			&& wrapper->diversity_index == this->diversity_index) {
 		this->sum_vals += target_val;
@@ -316,6 +317,8 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 				this->init_networks.clear();
 
 				this->existing_network->add_states(this->scope_context->num_states);
+
+				is_add = true;
 
 				add(true,
 					wrapper);

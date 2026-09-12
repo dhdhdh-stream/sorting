@@ -73,7 +73,8 @@ void PredictExperiment::experiment_exit_step(vector<double>& obs,
 
 void PredictExperiment::backprop(double target_val,
 								 AbstractExperimentHistory* history,
-								 SolutionWrapper* wrapper) {
+								 SolutionWrapper* wrapper,
+								 bool& is_add) {
 	PredictExperimentHistory* predict_experiment_history = (PredictExperimentHistory*)history;
 
 	switch (this->state) {
@@ -85,7 +86,8 @@ void PredictExperiment::backprop(double target_val,
 	case PREDICT_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,
 						 predict_experiment_history,
-						 wrapper);
+						 wrapper,
+						 is_add);
 		break;
 	}
 }

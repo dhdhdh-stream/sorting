@@ -133,7 +133,8 @@ void ExploreExperiment::experiment_step_callback(vector<double>& obs,
 
 void ExploreExperiment::backprop(double target_val,
 								 AbstractExperimentHistory* history,
-								 SolutionWrapper* wrapper) {
+								 SolutionWrapper* wrapper,
+								 bool& is_add) {
 	ExploreExperimentHistory* explore_experiment_history = (ExploreExperimentHistory*)history;
 
 	switch (this->state) {
@@ -155,12 +156,14 @@ void ExploreExperiment::backprop(double target_val,
 	case EXPLORE_EXPERIMENT_STATE_REUSE_MEASURE:
 		reuse_measure_backprop(target_val,
 							   explore_experiment_history,
-							   wrapper);
+							   wrapper,
+							   is_add);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_NEW_STATE_MEASURE:
 		new_state_measure_backprop(target_val,
 								   explore_experiment_history,
-								   wrapper);
+								   wrapper,
+								   is_add);
 		break;
 	}
 }

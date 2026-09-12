@@ -482,6 +482,8 @@ void PredictExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->measure_reuse_last_scores = wrapper->solution->starting_scope->measure_reuse_last_scores;
 			new_scope->train_new_state_last_scores = wrapper->solution->starting_scope->train_new_state_last_scores;
 			new_scope->measure_new_state_last_scores = wrapper->solution->starting_scope->measure_new_state_last_scores;
+			new_scope->predict_train_last_scores = wrapper->solution->starting_scope->predict_train_last_scores;
+			new_scope->predict_measure_last_scores = wrapper->solution->starting_scope->predict_measure_last_scores;
 
 			wrapper->solution->starting_scope = new_scope;
 			wrapper->solution->starting_num_improvements = 0;
