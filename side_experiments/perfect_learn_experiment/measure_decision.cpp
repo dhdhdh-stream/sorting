@@ -51,6 +51,11 @@ int main(int argc, char* argv[]) {
 						  actions_1,
 						  actions_2);
 
+	train_decision_on_state_helper(problem_type,
+								   actions_1,
+								   actions_2,
+								   solution);
+
 	delete problem_type;
 	delete solution;
 

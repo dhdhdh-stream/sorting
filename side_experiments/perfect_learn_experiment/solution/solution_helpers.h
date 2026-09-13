@@ -27,4 +27,9 @@ void train_decision_helper(ProblemType* problem_type,
 						   std::vector<int>& actions_1,
 						   std::vector<int>& actions_2);
 
+void train_decision_on_state_helper(ProblemType* problem_type,
+									std::vector<int>& actions_1,
+									std::vector<int>& actions_2,
+									Solution* solution);
+
 #endif /* SOLUTION_HELPERS_H */
