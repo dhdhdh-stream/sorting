@@ -1,0 +1,289 @@
+#include "score_network.h"
+
+#include <iostream>
+
+#include "constants.h"
+#include "globals.h"
+
+using namespace std;
+
+ScoreNetwork::ScoreNetwork(int num_states) {
+	this->state_input = new Layer(LINEAR_LAYER);
+	this->state_input->acti_vals.resize(num_states);
+	this->state_input->errors.resize(num_states);
+	this->state_input->errors.setConstant(0.0);
+
+	this->hidden_1 = new Layer(LEAKY_LAYER);
+	this->hidden_1->acti_vals.resize(32);
+	this->hidden_1->errors.resize(32);
+	this->hidden_1->errors.setConstant(0.0);
+	this->hidden_1->input_layers.push_back(this->state_input);
+	this->hidden_1->update_structure();
+
+	this->hidden_2 = new Layer(LEAKY_LAYER);
+	this->hidden_2->acti_vals.resize(16);
+	this->hidden_2->errors.resize(16);
+	this->hidden_2->errors.setConstant(0.0);
+	this->hidden_2->input_layers.push_back(this->state_input);
+	this->hidden_2->input_layers.push_back(this->hidden_1);
+	this->hidden_2->update_structure();
+
+	this->hidden_3 = new Layer(LEAKY_LAYER);
+	this->hidden_3->acti_vals.resize(8);
+	this->hidden_3->errors.resize(8);
+	this->hidden_3->errors.setConstant(0.0);
+	this->hidden_3->input_layers.push_back(this->state_input);
+	this->hidden_3->input_layers.push_back(this->hidden_1);
+	this->hidden_3->input_layers.push_back(this->hidden_2);
+	this->hidden_3->update_structure();
+
+	this->output = new Layer(LINEAR_LAYER);
+	this->output->acti_vals.resize(1);
+	this->output->errors.resize(1);
+	this->output->errors.setConstant(0.0);
+	this->output->input_layers.push_back(this->hidden_1);
+	this->output->input_layers.push_back(this->hidden_2);
+	this->output->input_layers.push_back(this->hidden_3);
+	this->output->update_structure();
+	/**
+	 * - don't directly connect output to state
+	 *   - state might be noise for this particular spot
+	 */
+
+	this->num_instances = 0;
+	this->last_update_iter = -1;
+	this->epoch_iter = 0;
+}
+
+ScoreNetwork::ScoreNetwork(ScoreNetwork* original) {
+	this->state_input = new Layer(LINEAR_LAYER);
+	this->state_input->acti_vals.resize(original->state_input->acti_vals.size());
+	this->state_input->errors.resize(original->state_input->errors.size());
+	this->state_input->errors.setConstant(0.0);
+
+	this->hidden_1 = new Layer(LEAKY_LAYER);
+	this->hidden_1->acti_vals.resize(original->hidden_1->acti_vals.size());
+	this->hidden_1->errors.resize(original->hidden_1->errors.size());
+	this->hidden_1->errors.setConstant(0.0);
+	this->hidden_1->input_layers.push_back(this->state_input);
+	this->hidden_1->update_structure();
+	this->hidden_1->copy_weights_from(original->hidden_1);
+
+	this->hidden_2 = new Layer(LEAKY_LAYER);
+	this->hidden_2->acti_vals.resize(original->hidden_2->acti_vals.size());
+	this->hidden_2->errors.resize(original->hidden_2->errors.size());
+	this->hidden_2->errors.setConstant(0.0);
+	this->hidden_2->input_layers.push_back(this->state_input);
+	this->hidden_2->input_layers.push_back(this->hidden_1);
+	this->hidden_2->update_structure();
+	this->hidden_2->copy_weights_from(original->hidden_2);
+
+	this->hidden_3 = new Layer(LEAKY_LAYER);
+	this->hidden_3->acti_vals.resize(original->hidden_3->acti_vals.size());
+	this->hidden_3->errors.resize(original->hidden_3->errors.size());
+	this->hidden_3->errors.setConstant(0.0);
+	this->hidden_3->input_layers.push_back(this->state_input);
+	this->hidden_3->input_layers.push_back(this->hidden_1);
+	this->hidden_3->input_layers.push_back(this->hidden_2);
+	this->hidden_3->update_structure();
+	this->hidden_3->copy_weights_from(original->hidden_3);
+
+	this->output = new Layer(LINEAR_LAYER);
+	this->output->acti_vals.resize(original->output->acti_vals.size());
+	this->output->errors.resize(original->output->errors.size());
+	this->output->errors.setConstant(0.0);
+	this->output->input_layers.push_back(this->hidden_1);
+	this->output->input_layers.push_back(this->hidden_2);
+	this->output->input_layers.push_back(this->hidden_3);
+	this->output->update_structure();
+	this->output->copy_weights_from(original->output);
+
+	this->num_instances = 0;
+	this->last_update_iter = -1;
+	this->epoch_iter = 0;
+}
+
+ScoreNetwork::ScoreNetwork(ifstream& input_file) {
+	this->state_input = new Layer(LINEAR_LAYER);
+	string num_states_line;
+	getline(input_file, num_states_line);
+	int num_states = stoi(num_states_line);
+	this->state_input->acti_vals.resize(num_states);
+	this->state_input->errors.resize(num_states);
+	this->state_input->errors.setConstant(0.0);
+
+	this->hidden_1 = new Layer(LEAKY_LAYER);
+	string hidden_1_size_line;
+	getline(input_file, hidden_1_size_line);
+	int hidden_1_size = stoi(hidden_1_size_line);
+	this->hidden_1->acti_vals.resize(hidden_1_size);
+	this->hidden_1->errors.resize(hidden_1_size);
+	this->hidden_1->errors.setConstant(0.0);
+	this->hidden_1->input_layers.push_back(this->state_input);
+	this->hidden_1->update_structure();
+
+	this->hidden_2 = new Layer(LEAKY_LAYER);
+	string hidden_2_size_line;
+	getline(input_file, hidden_2_size_line);
+	int hidden_2_size = stoi(hidden_2_size_line);
+	this->hidden_2->acti_vals.resize(hidden_2_size);
+	this->hidden_2->errors.resize(hidden_2_size);
+	this->hidden_2->errors.setConstant(0.0);
+	this->hidden_2->input_layers.push_back(this->state_input);
+	this->hidden_2->input_layers.push_back(this->hidden_1);
+	this->hidden_2->update_structure();
+
+	this->hidden_3 = new Layer(LEAKY_LAYER);
+	string hidden_3_size_line;
+	getline(input_file, hidden_3_size_line);
+	int hidden_3_size = stoi(hidden_3_size_line);
+	this->hidden_3->acti_vals.resize(hidden_3_size);
+	this->hidden_3->errors.resize(hidden_3_size);
+	this->hidden_3->errors.setConstant(0.0);
+	this->hidden_3->input_layers.push_back(this->state_input);
+	this->hidden_3->input_layers.push_back(this->hidden_1);
+	this->hidden_3->input_layers.push_back(this->hidden_2);
+	this->hidden_3->update_structure();
+
+	this->output = new Layer(LINEAR_LAYER);
+	this->output->acti_vals.resize(1);
+	this->output->errors.resize(1);
+	this->output->errors.setConstant(0.0);
+	this->output->input_layers.push_back(this->hidden_1);
+	this->output->input_layers.push_back(this->hidden_2);
+	this->output->input_layers.push_back(this->hidden_3);
+	this->output->update_structure();
+
+	this->hidden_1->load_weights_from(input_file);
+	this->hidden_2->load_weights_from(input_file);
+	this->hidden_3->load_weights_from(input_file);
+	this->output->load_weights_from(input_file);
+
+	this->num_instances = 0;
+	this->last_update_iter = -1;
+	this->epoch_iter = 0;
+}
+
+ScoreNetwork::~ScoreNetwork() {
+	delete this->state_input;
+	delete this->hidden_1;
+	delete this->hidden_2;
+	delete this->hidden_3;
+	delete this->output;
+}
+
+void ScoreNetwork::activate(Eigen::VectorXf& state_vals) {
+	this->state_input->acti_vals = state_vals;
+
+	this->hidden_1->activate();
+	this->hidden_2->activate();
+	this->hidden_3->activate();
+	this->output->activate();
+}
+
+void ScoreNetwork::init_backprop(double target_val) {
+	this->output->errors(0) = target_val - this->output->acti_vals(0);
+
+	this->output->backprop();
+	this->hidden_3->backprop();
+	this->hidden_2->backprop();
+	this->hidden_1->backprop();
+}
+
+void ScoreNetwork::init_activate(Eigen::VectorXf& state_vals,
+								 std::vector<double>& new_state_vals) {
+	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
+		this->state_input->acti_vals(s_index) = state_vals(s_index);
+	}
+	for (int s_index = 0; s_index < (int)new_state_vals.size(); s_index++) {
+		this->state_input->acti_vals(state_vals.size() + s_index) = new_state_vals[s_index];
+	}
+
+	this->hidden_1->activate();
+	this->hidden_2->activate();
+	this->hidden_3->activate();
+	this->output->activate();
+}
+
+void ScoreNetwork::init_backprop(double target_val,
+								 std::vector<double>& new_state_errors) {
+	this->output->errors(0) = target_val - this->output->acti_vals(0);
+
+	this->output->backprop();
+	this->hidden_3->backprop();
+	this->hidden_2->backprop();
+	this->hidden_1->backprop();
+
+	for (int s_index = 0; s_index < (int)new_state_errors.size(); s_index++) {
+		new_state_errors[new_state_errors.size()-1 - s_index] += this->state_input->errors(this->state_input->errors.size()-1 - s_index);
+		this->state_input->errors(this->state_input->errors.size()-1 - s_index) = 0.0;
+	}
+}
+
+void ScoreNetwork::init_update() {
+	this->hidden_1->update(1, SCORE_LEARNING_RATE);
+	this->hidden_2->update(1, SCORE_LEARNING_RATE);
+	this->hidden_3->update(1, SCORE_LEARNING_RATE);
+	this->output->update(1, SCORE_LEARNING_RATE);
+}
+
+void ScoreNetwork::save(ScoreNetworkHistory* history) {
+	history->state_input_history = this->state_input->acti_vals;
+	history->hidden_1_history = this->hidden_1->acti_vals;
+	history->hidden_2_history = this->hidden_2->acti_vals;
+	history->hidden_3_history = this->hidden_3->acti_vals;
+	history->output_history = this->output->acti_vals(0);
+}
+
+void ScoreNetwork::load(ScoreNetworkHistory* history) {
+	this->state_input->acti_vals = history->state_input_history;
+	this->hidden_1->acti_vals = history->hidden_1_history;
+	this->hidden_2->acti_vals = history->hidden_2_history;
+	this->hidden_3->acti_vals = history->hidden_3_history;
+	this->output->acti_vals(0) = history->output_history;
+}
+
+void ScoreNetwork::backprop(double target_val,
+							Eigen::VectorXf& state_errors) {
+	this->output->errors(0) = target_val - this->output->acti_vals(0);
+
+	this->output->backprop();
+	this->hidden_3->backprop();
+	this->hidden_2->backprop();
+	this->hidden_1->backprop();
+
+	state_errors += this->state_input->errors;
+	this->state_input->errors.setConstant(0.0);
+
+	this->num_instances++;
+}
+
+void ScoreNetwork::update() {
+	this->epoch_iter++;
+	if (this->epoch_iter == UPDATE_EPOCH_SIZE) {
+		this->hidden_1->update(this->num_instances,
+							   SCORE_LEARNING_RATE);
+		this->hidden_2->update(this->num_instances,
+							   SCORE_LEARNING_RATE);
+		this->hidden_3->update(this->num_instances,
+							   SCORE_LEARNING_RATE);
+		this->output->update(this->num_instances,
+							 SCORE_LEARNING_RATE);
+
+		this->num_instances = 0;
+		this->epoch_iter = 0;
+	}
+}
+
+void ScoreNetwork::save(ofstream& output_file) {
+	output_file << this->state_input->acti_vals.size() << endl;
+
+	output_file << this->hidden_1->acti_vals.size() << endl;
+	output_file << this->hidden_2->acti_vals.size() << endl;
+	output_file << this->hidden_3->acti_vals.size() << endl;
+
+	this->hidden_1->save_weights(output_file);
+	this->hidden_2->save_weights(output_file);
+	this->hidden_3->save_weights(output_file);
+	this->output->save_weights(output_file);
+}
