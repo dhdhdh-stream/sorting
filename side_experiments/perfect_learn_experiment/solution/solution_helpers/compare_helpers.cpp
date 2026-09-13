@@ -2,19 +2,12 @@
 
 #include <iostream>
 
+#include "constants.h"
 #include "globals.h"
 #include "network.h"
 #include "problem.h"
 
 using namespace std;
-
-#if defined(MDEBUG) && MDEBUG
-const int NUM_TRAIN_SAMPLES = 20;
-const int TRAIN_ITERS = 30;
-#else
-const int NUM_TRAIN_SAMPLES = 4000;
-const int TRAIN_ITERS = 300000;
-#endif /* MDEBUG */
 
 void compare(ProblemType* problem_type,
 			 vector<int>& actions) {

@@ -21,4 +21,14 @@ const double STATE_LEARNING_RATE = 0.0002;
 const int INIT_EPOCH_SIZE = 10;
 const int UPDATE_EPOCH_SIZE = 100;
 
+#if defined(MDEBUG) && MDEBUG
+const int NUM_TRAIN_SAMPLES = 20;
+const int TRAIN_ITERS = 30;
+const int NUM_MEASURE_SAMPLES = 20;
+#else
+const int NUM_TRAIN_SAMPLES = 4000;
+const int TRAIN_ITERS = 300000;
+const int NUM_MEASURE_SAMPLES = 4000;
+#endif /* MDEBUG */
+
 #endif /* CONSTANTS_H */

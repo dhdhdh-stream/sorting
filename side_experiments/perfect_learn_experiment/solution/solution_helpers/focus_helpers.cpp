@@ -11,12 +11,6 @@
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int NUM_MEASURE_SAMPLES = 20;
-#else
-const int NUM_MEASURE_SAMPLES = 4000;
-#endif /* MDEBUG */
-
 void focus(ProblemType* problem_type,
 		   vector<int>& actions,
 		   Solution* solution) {

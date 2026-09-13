@@ -18,4 +18,13 @@ void focus(ProblemType* problem_type,
 void compare(ProblemType* problem_type,
 			 std::vector<int>& actions);
 
+void predict_decision_helper(ProblemType* problem_type,
+							 std::vector<int>& actions_1,
+							 std::vector<int>& actions_2,
+							 Solution* solution);
+
+void train_decision_helper(ProblemType* problem_type,
+						   std::vector<int>& actions_1,
+						   std::vector<int>& actions_2);
+
 #endif /* SOLUTION_HELPERS_H */

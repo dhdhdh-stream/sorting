@@ -12,8 +12,6 @@
 //       - but wait, you can
 //       - can train specifically for a spot to get optimal predict, then compare
 
-// TODO: measure how good decision using predict is
-
 #include <chrono>
 #include <iostream>
 #include <map>
