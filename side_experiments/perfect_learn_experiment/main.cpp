@@ -1,3 +1,19 @@
+// - accurate predictions impractical/impossible
+//   - so maybe instead try to understand when predictions can be good?
+
+// - predicted misguess can be misguess of a single sample
+//   - not as useful
+// - ...or it can be the predicted misguess of a sequence measured across many samples as a whole
+//   - potentially very useful in terms of deciding what to try
+// - so need to try to predict misguess, but across many
+//   - but how?
+//     - maybe impossible
+//       - can't know how easy a problem is to predict (without being able to predict better)?
+//       - but wait, you can
+//       - can train specifically for a spot to get optimal predict, then compare
+
+// TODO: measure how good decision using predict is
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -43,6 +59,9 @@ int main(int argc, char* argv[]) {
 								problem_type->num_possible_actions());
 	}
 
+	vector<int> test_actions{0, 0, 1, 5};
+
+	int epoch_iter = 0;
 	geometric_distribution<int> geo_distribution(0.3);
 	uniform_int_distribution<int> action_distribution(0, problem_type->num_possible_actions()-1);
 	while (true) {
@@ -75,6 +94,16 @@ int main(int argc, char* argv[]) {
 				cout << iter_index << endl;
 			}
 		}
+
+		epoch_iter++;
+		cout << "epoch_iter: " << epoch_iter << endl;
+
+		focus(problem_type,
+			  test_actions,
+			  solution);
+
+		compare(problem_type,
+				test_actions);
 
 		solution->save("saves/", filename);
 	}

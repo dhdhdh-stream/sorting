@@ -9,10 +9,14 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
  */
 const double REGRESSION_WEIGHT_LIMIT = 100000.0;
 
-const int NUM_STATES = 16;
+// const int NUM_STATES = 16;
+// const int NUM_STATES = 32;
+const int NUM_STATES = 64;
 
 const double SCORE_LEARNING_RATE = 0.001;
 const double STATE_LEARNING_RATE = 0.0002;
+// const double SCORE_LEARNING_RATE = 0.0001;
+// const double STATE_LEARNING_RATE = 0.0001;
 
 const int INIT_EPOCH_SIZE = 10;
 const int UPDATE_EPOCH_SIZE = 100;

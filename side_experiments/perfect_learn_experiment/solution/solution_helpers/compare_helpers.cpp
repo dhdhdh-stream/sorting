@@ -65,7 +65,7 @@ void compare(ProblemType* problem_type,
 			* (target_val_histories[h_index] - predicted);
 	}
 	double misguess_average = sum_misguess / (double)obs_histories.size();
-	cout << "misguess_average: " << misguess_average << endl;
+	cout << "compare: " << misguess_average << endl;
 
 	delete network;
 }

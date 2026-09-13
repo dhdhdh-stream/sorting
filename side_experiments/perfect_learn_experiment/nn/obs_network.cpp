@@ -20,16 +20,20 @@ ObsNetwork::ObsNetwork(int num_states,
 	this->obs_input->errors.setConstant(0.0);
 
 	this->hidden_1 = new Layer(LEAKY_LAYER);
-	this->hidden_1->acti_vals.resize(32);
-	this->hidden_1->errors.resize(32);
+	// this->hidden_1->acti_vals.resize(32);
+	this->hidden_1->acti_vals.resize(64);
+	// this->hidden_1->errors.resize(32);
+	this->hidden_1->errors.resize(64);
 	this->hidden_1->errors.setConstant(0.0);
 	this->hidden_1->input_layers.push_back(this->state_input);
 	this->hidden_1->input_layers.push_back(this->obs_input);
 	this->hidden_1->update_structure();
 
 	this->hidden_2 = new Layer(LEAKY_LAYER);
-	this->hidden_2->acti_vals.resize(16);
-	this->hidden_2->errors.resize(16);
+	// this->hidden_2->acti_vals.resize(16);
+	this->hidden_2->acti_vals.resize(32);
+	// this->hidden_2->errors.resize(16);
+	this->hidden_2->errors.resize(32);
 	this->hidden_2->errors.setConstant(0.0);
 	this->hidden_2->input_layers.push_back(this->state_input);
 	this->hidden_2->input_layers.push_back(this->obs_input);
@@ -37,8 +41,10 @@ ObsNetwork::ObsNetwork(int num_states,
 	this->hidden_2->update_structure();
 
 	this->hidden_3 = new Layer(LEAKY_LAYER);
-	this->hidden_3->acti_vals.resize(8);
-	this->hidden_3->errors.resize(8);
+	// this->hidden_3->acti_vals.resize(8);
+	this->hidden_3->acti_vals.resize(16);
+	// this->hidden_3->errors.resize(8);
+	this->hidden_3->errors.resize(16);
 	this->hidden_3->errors.setConstant(0.0);
 	this->hidden_3->input_layers.push_back(this->state_input);
 	this->hidden_3->input_layers.push_back(this->obs_input);

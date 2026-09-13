@@ -48,5 +48,5 @@ void focus(ProblemType* problem_type,
 		delete problem;
 	}
 	double misguess_average = sum_misguess / NUM_MEASURE_SAMPLES;
-	cout << "misguess_average: " << misguess_average << endl;
+	cout << "focus: " << misguess_average << endl;
 }

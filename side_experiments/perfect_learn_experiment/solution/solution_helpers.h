@@ -11,6 +11,10 @@ void train_helper(std::vector<double>& obs,
 				  double target_val,
 				  Solution* solution);
 
+void focus(ProblemType* problem_type,
+		   std::vector<int>& actions,
+		   Solution* solution);
+
 void compare(ProblemType* problem_type,
 			 std::vector<int>& actions);
 
