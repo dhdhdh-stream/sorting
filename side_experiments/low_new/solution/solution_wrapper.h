@@ -27,12 +27,6 @@ public:
 
 	int iters_since_update;
 
-	int experiment_iter;
-	/**
-	 * - fully reset experiments every so often
-	 *   - to enable experiments in different places
-	 */
-
 	/**
 	 * - run variables
 	 */
@@ -46,7 +40,9 @@ public:
 	std::vector<double> train_target_val_histories;
 
 	bool should_explore;
-	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_experiment_histories;
+	int diversity_index;
+
+	std::vector<std::map<AbstractExperiment*, AbstractExperimentHistory*>> experiment_histories;
 
 	Problem* problem;
 

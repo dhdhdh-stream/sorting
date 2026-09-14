@@ -34,15 +34,12 @@ public:
 
 	Network* existing_network;
 
-	double average_instances_per_hit;
 	int num_instances_until_target;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;
-
-	int start_iter;
 
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
@@ -51,7 +48,8 @@ public:
 
 	double sum_vals;
 
-	ExploreExperiment(Scope* scope_context,
+	ExploreExperiment(int diversity_index,
+					  Scope* scope_context,
 					  AbstractNode* node_context,
 					  bool is_branch,
 					  AbstractNode* exit_next_node,
@@ -69,8 +67,9 @@ public:
 					SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 	void backprop(double target_val,
-				  ExploreExperimentHistory* history,
-				  SolutionWrapper* wrapper);
+				  AbstractExperimentHistory* history,
+				  SolutionWrapper* wrapper,
+				  bool& is_add);
 
 	void train_existing_check_activate(std::vector<double>& obs,
 									   ExploreExperimentHistory* history,
@@ -116,19 +115,14 @@ public:
 	void measure_exit_step(SolutionWrapper* wrapper);
 	void measure_backprop(double target_val,
 						  ExploreExperimentHistory* history,
-						  SolutionWrapper* wrapper);
+						  SolutionWrapper* wrapper,
+						  bool& is_add);
 
 	void add(SolutionWrapper* wrapper);
-
-	bool further_than(ExploreExperiment* other);
 };
 
-class ExploreExperimentHistory {
+class ExploreExperimentHistory : public AbstractExperimentHistory {
 public:
-	ExploreExperiment* experiment;
-
-	int num_instances;
-
 	std::vector<std::vector<double>> obs_histories;
 
 	std::vector<double> existing_predicted;

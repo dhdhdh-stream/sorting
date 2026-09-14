@@ -2,10 +2,12 @@
 
 #include <iostream>
 
+#include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
+#include "noop_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -16,17 +18,34 @@ using namespace std;
 void update_helper(ScopeHistory* scope_history) {
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
-		switch (h_it->second->node->type) {
+		AbstractNode* node = h_it->second->node;
+		switch (node->type) {
+		case NODE_TYPE_NOOP:
+			{
+				NoopNode* noop_node = (NoopNode*)node;
+				noop_node->curr_num_instances++;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)node;
+				action_node->curr_num_instances++;
+			}
+			break;
 		case NODE_TYPE_SCOPE:
 			{
+				ScopeNode* scope_node = (ScopeNode*)node;
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
+
 				update_helper(scope_node_history->scope_history);
+
+				scope_node->curr_num_instances++;
 			}
 			break;
 		case NODE_TYPE_BRANCH:
 			{
+				BranchNode* branch_node = (BranchNode*)node;
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
-				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
 
 				if (branch_node_history->is_branch) {
 					branch_node->branch_curr_num_instances++;
@@ -50,6 +69,39 @@ void update_helper(SolutionWrapper* wrapper,
 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 				it != scope->nodes.end(); it++) {
 			switch (it->second->type) {
+			case NODE_TYPE_NOOP:
+				{
+					NoopNode* noop_node = (NoopNode*)it->second;
+					noop_node->average_instances_per_run = 0.999*noop_node->average_instances_per_run + 0.001*noop_node->curr_num_instances;
+					if (noop_node->curr_num_instances > 0) {
+						noop_node->average_instances_per_hit = 0.999*noop_node->average_instances_per_hit + 0.001*noop_node->curr_num_instances;
+
+						noop_node->curr_num_instances = 0;
+					}
+				}
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)it->second;
+					action_node->average_instances_per_run = 0.999*action_node->average_instances_per_run + 0.001*action_node->curr_num_instances;
+					if (action_node->curr_num_instances > 0) {
+						action_node->average_instances_per_hit = 0.999*action_node->average_instances_per_hit + 0.001*action_node->curr_num_instances;
+
+						action_node->curr_num_instances = 0;
+					}
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)it->second;
+					scope_node->average_instances_per_run = 0.999*scope_node->average_instances_per_run + 0.001*scope_node->curr_num_instances;
+					if (scope_node->curr_num_instances > 0) {
+						scope_node->average_instances_per_hit = 0.999*scope_node->average_instances_per_hit + 0.001*scope_node->curr_num_instances;
+
+						scope_node->curr_num_instances = 0;
+					}
+				}
+				break;
 			case NODE_TYPE_BRANCH:
 				{
 					BranchNode* branch_node = (BranchNode*)it->second;

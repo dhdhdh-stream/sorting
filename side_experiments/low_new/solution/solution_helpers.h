@@ -7,7 +7,6 @@
 #include <vector>
 
 class AbstractNode;
-class BranchExperiment;
 class BranchNode;
 class Network;
 class Problem;
@@ -18,6 +17,7 @@ class Solution;
 class SolutionWrapper;
 
 void create_experiment(ScopeHistory* scope_history,
+					   int diversity_index,
 					   SolutionWrapper* wrapper);
 
 void update_helper(SolutionWrapper* wrapper,

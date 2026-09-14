@@ -15,11 +15,14 @@
 
 using namespace std;
 
-ExploreExperiment::ExploreExperiment(Scope* scope_context,
+ExploreExperiment::ExploreExperiment(int diversity_index,
+									 Scope* scope_context,
 									 AbstractNode* node_context,
 									 bool is_branch,
 									 AbstractNode* exit_next_node,
 									 SolutionWrapper* wrapper) {
+	this->diversity_index = diversity_index;
+
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
@@ -27,8 +30,6 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 
 	this->existing_network = NULL;
 	this->new_network = NULL;
-
-	this->average_instances_per_hit = 1.0;
 
 	this->sum_vals = 0.0;
 
@@ -77,31 +78,8 @@ ExploreExperiment::~ExploreExperiment() {
 	}
 }
 
-bool ExploreExperiment::further_than(ExploreExperiment* other) {
-	if (this->state < other->state) {
-		return false;
-	} else if (this->state > other->state) {
-		return true;
-	} else {
-		if (this->state_iter < other->state_iter) {
-			return false;
-		} else if (this->state_iter > other->state_iter) {
-			return true;
-		} else {
-			uniform_int_distribution<int> distribution(0, 1);
-			if (distribution(generator) == 0) {
-				return false;
-			} else {
-				return true;
-			}
-		}
-	}
-}
-
 ExploreExperimentHistory::ExploreExperimentHistory(ExploreExperiment* experiment) {
 	this->experiment = experiment;
-
-	this->num_instances = 0;
 }
 
 ExploreExperimentState::ExploreExperimentState(ExploreExperiment* experiment) {

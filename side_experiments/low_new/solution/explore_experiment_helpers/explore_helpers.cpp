@@ -26,7 +26,8 @@ const int EXPLORE_ITERS = 400;
 void ExploreExperiment::explore_check_activate(vector<double>& obs,
 											   ExploreExperimentHistory* history,
 											   SolutionWrapper* wrapper) {
-	if (wrapper->should_explore) {
+	if (wrapper->should_explore
+			&& wrapper->diversity_index == this->diversity_index) {
 		this->num_instances_until_target--;
 		if (history->existing_predicted.size() == 0
 				&& this->num_instances_until_target <= 0) {
@@ -148,7 +149,7 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 									 bool& fetch_action,
 									 SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
-	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
+	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_histories[this->diversity_index][this];
 
 	if (experiment_state->step_index >= (int)history->curr_step_types.size()) {
 		wrapper->node_context.back() = this->exit_next_node;
@@ -173,7 +174,7 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 void ExploreExperiment::explore_set_action(int action,
 										   SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
-	ExploreExperimentHistory* history = wrapper->explore_experiment_histories[this];
+	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_histories[this->diversity_index][this];
 
 	history->curr_actions[experiment_state->step_index] = action;
 
@@ -195,8 +196,41 @@ void ExploreExperiment::explore_exit_step(SolutionWrapper* wrapper) {
 void ExploreExperiment::explore_backprop(double target_val,
 										 ExploreExperimentHistory* history,
 										 SolutionWrapper* wrapper) {
-	if (wrapper->should_explore) {
-		uniform_int_distribution<int> until_distribution(1, 2 * this->average_instances_per_hit);
+	if (wrapper->should_explore
+			&& wrapper->diversity_index == this->diversity_index) {
+		double average_instances_per_hit;
+		switch (this->node_context->type) {
+		case NODE_TYPE_NOOP:
+			{
+				NoopNode* noop_node = (NoopNode*)this->node_context;
+				average_instances_per_hit = noop_node->average_instances_per_hit;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->node_context;
+				average_instances_per_hit = action_node->average_instances_per_hit;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)this->node_context;
+				average_instances_per_hit = scope_node->average_instances_per_hit;
+			}
+			break;
+		default:
+		// case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)this->node_context;
+				if (this->is_branch) {
+					average_instances_per_hit = branch_node->branch_average_instances_per_hit;
+				} else {
+					average_instances_per_hit = branch_node->original_average_instances_per_hit;
+				}
+			}
+			break;
+		}
+		uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
 		this->num_instances_until_target = until_distribution(generator);
 
 		if (history->existing_predicted.size() != 0) {
@@ -220,8 +254,6 @@ void ExploreExperiment::explore_backprop(double target_val,
 				#else
 				if (this->best_surprise >= 0.0) {
 				#endif /* MDEBUG */
-					this->start_iter = wrapper->iters_since_update;
-
 					this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
 					this->state_iter = 0;
 				} else {

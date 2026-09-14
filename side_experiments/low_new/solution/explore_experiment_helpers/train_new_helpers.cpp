@@ -21,12 +21,45 @@ using namespace std;
 void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 												 ExploreExperimentHistory* history,
 												 SolutionWrapper* wrapper) {
-	if (wrapper->should_explore) {
+	if (wrapper->should_explore
+			&& wrapper->diversity_index == this->diversity_index) {
 		this->num_instances_until_target--;
 		if (this->num_instances_until_target <= 0) {
 			history->obs_histories.push_back(obs);
 
-			uniform_int_distribution<int> until_distribution(1, this->average_instances_per_hit);
+			double average_instances_per_hit;
+			switch (this->node_context->type) {
+			case NODE_TYPE_NOOP:
+				{
+					NoopNode* noop_node = (NoopNode*)this->node_context;
+					average_instances_per_hit = noop_node->average_instances_per_hit;
+				}
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)this->node_context;
+					average_instances_per_hit = action_node->average_instances_per_hit;
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)this->node_context;
+					average_instances_per_hit = scope_node->average_instances_per_hit;
+				}
+				break;
+			default:
+			// case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)this->node_context;
+					if (this->is_branch) {
+						average_instances_per_hit = branch_node->branch_average_instances_per_hit;
+					} else {
+						average_instances_per_hit = branch_node->original_average_instances_per_hit;
+					}
+				}
+				break;
+			}
+			uniform_int_distribution<int> until_distribution(1, average_instances_per_hit);
 			this->num_instances_until_target = until_distribution(generator);
 
 			ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
@@ -80,7 +113,8 @@ void ExploreExperiment::train_new_backprop(
 		double target_val,
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
-	if (wrapper->should_explore) {
+	if (wrapper->should_explore
+			&& wrapper->diversity_index == this->diversity_index) {
 		if (history->obs_histories.size() > 0) {
 			for (int i_index = 0; i_index < (int)history->obs_histories.size(); i_index++) {
 				this->new_obs_histories.push_back(history->obs_histories[i_index]);
@@ -141,12 +175,38 @@ void ExploreExperiment::train_new_backprop(
 						+ (double)this->new_obs_histories.size());
 				double local_improvement = (new_average - existing_average) * average_ratio;
 
-				int total_iters = wrapper->iters_since_update - this->start_iter;
-				if (total_iters < 0) {
-					total_iters += numeric_limits<int>::max();
+				double average_instances_per_run;
+				switch (this->node_context->type) {
+				case NODE_TYPE_NOOP:
+					{
+						NoopNode* noop_node = (NoopNode*)this->node_context;
+						average_instances_per_run = noop_node->average_instances_per_run;
+					}
+					break;
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)this->node_context;
+						average_instances_per_run = action_node->average_instances_per_run;
+					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)this->node_context;
+						average_instances_per_run = scope_node->average_instances_per_run;
+					}
+					break;
+				default:
+				// case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)this->node_context;
+						if (this->is_branch) {
+							average_instances_per_run = branch_node->branch_average_instances_per_run;
+						} else {
+							average_instances_per_run = branch_node->original_average_instances_per_run;
+						}
+					}
+					break;
 				}
-				double average_instances_per_run = (double)this->new_obs_histories.size() / (double)total_iters;
-
 				double global_improvement = average_instances_per_run * local_improvement;
 
 				// // temp
@@ -187,66 +247,10 @@ void ExploreExperiment::train_new_backprop(
 				#endif /* MDEBUG */
 					this->sum_vals = 0.0;
 
-					this->start_iter = wrapper->iters_since_update;
-
 					this->state = EXPLORE_EXPERIMENT_STATE_MEASURE;
 					this->state_iter = 0;
 				} else {
 					delete this;
-
-					wrapper->experiment_iter++;
-					if (wrapper->experiment_iter >= EXPERIMENT_REFRESH_NUM_ITERS) {
-						for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-							Scope* scope = wrapper->solution->scopes[s_index];
-							for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-									it != scope->nodes.end(); it++) {
-								switch (it->second->type) {
-								case NODE_TYPE_NOOP:
-									{
-										NoopNode* noop_node = (NoopNode*)it->second;
-										if (noop_node->experiment != NULL) {
-											delete noop_node->experiment;
-											noop_node->experiment = NULL;
-										}
-									}
-									break;
-								case NODE_TYPE_ACTION:
-									{
-										ActionNode* action_node = (ActionNode*)it->second;
-										if (action_node->experiment != NULL) {
-											delete action_node->experiment;
-											action_node->experiment = NULL;
-										}
-									}
-									break;
-								case NODE_TYPE_SCOPE:
-									{
-										ScopeNode* scope_node = (ScopeNode*)it->second;
-										if (scope_node->experiment != NULL) {
-											delete scope_node->experiment;
-											scope_node->experiment = NULL;
-										}
-									}
-									break;
-								case NODE_TYPE_BRANCH:
-									{
-										BranchNode* branch_node = (BranchNode*)it->second;
-										if (branch_node->original_experiment != NULL) {
-											delete branch_node->original_experiment;
-											branch_node->original_experiment = NULL;
-										}
-										if (branch_node->branch_experiment != NULL) {
-											delete branch_node->branch_experiment;
-											branch_node->branch_experiment = NULL;
-										}
-									}
-									break;
-								}
-							}
-						}
-
-						wrapper->experiment_iter = 0;
-					}
 				}
 			}
 		}

@@ -393,11 +393,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		}
 	}
 
-	wrapper->experiment_iter = EXPERIMENT_REFRESH_NUM_ITERS;
-	/**
-	 * - reset all other experiments
-	 */
-
 	wrapper->iters_since_update = 0;
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		Scope* scope = wrapper->solution->scopes[s_index];

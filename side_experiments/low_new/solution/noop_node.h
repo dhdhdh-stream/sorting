@@ -19,7 +19,11 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
+	double average_instances_per_hit;
+	double average_instances_per_run;
 	AbstractExperiment* experiment;
+
+	int curr_num_instances;
 
 	NoopNode();
 	~NoopNode();

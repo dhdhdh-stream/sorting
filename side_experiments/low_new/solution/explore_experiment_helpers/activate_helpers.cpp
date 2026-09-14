@@ -11,32 +11,32 @@ using namespace std;
 
 void ExploreExperiment::experiment_check_activate(vector<double>& obs,
 												  SolutionWrapper* wrapper) {
-	map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it =
-		wrapper->explore_experiment_histories.find(this);
-	if (it == wrapper->explore_experiment_histories.end()) {
-		it = wrapper->explore_experiment_histories.insert({this, new ExploreExperimentHistory(this)}).first;
+	map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it =
+		wrapper->experiment_histories[this->diversity_index].find(this);
+	if (it == wrapper->experiment_histories[this->diversity_index].end()) {
+		it = wrapper->experiment_histories[this->diversity_index].insert({this, new ExploreExperimentHistory(this)}).first;
 	}
-	it->second->num_instances++;
+	ExploreExperimentHistory* explore_experiment_history = (ExploreExperimentHistory*)it->second;
 
 	switch (this->state) {
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_check_activate(obs,
-									  it->second,
+									  explore_experiment_history,
 									  wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_check_activate(obs,
-							   it->second,
+							   explore_experiment_history,
 							   wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_check_activate(obs,
-								 it->second,
+								 explore_experiment_history,
 								 wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_MEASURE:
 		measure_check_activate(obs,
-							   it->second,
+							   explore_experiment_history,
 							   wrapper);
 		break;
 	}
@@ -91,30 +91,32 @@ void ExploreExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 }
 
 void ExploreExperiment::backprop(double target_val,
-								 ExploreExperimentHistory* history,
-								 SolutionWrapper* wrapper) {
-	this->average_instances_per_hit = 0.99*this->average_instances_per_hit + 0.01*history->num_instances;
+								 AbstractExperimentHistory* history,
+								 SolutionWrapper* wrapper,
+								 bool& is_add) {
+	ExploreExperimentHistory* explore_experiment_history = (ExploreExperimentHistory*)history;
 
 	switch (this->state) {
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_backprop(target_val,
-								history,
+								explore_experiment_history,
 								wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
-						 history,
+						 explore_experiment_history,
 						 wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
-						   history,
+						   explore_experiment_history,
 						   wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,
-						 history,
-						 wrapper);
+						 explore_experiment_history,
+						 wrapper,
+						 is_add);
 		break;
 	}
 }
