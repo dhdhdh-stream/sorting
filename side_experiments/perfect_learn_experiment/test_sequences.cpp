@@ -1,5 +1,3 @@
-// TODO: check what gets chosen on explore
-
 #include <chrono>
 #include <iostream>
 #include <map>

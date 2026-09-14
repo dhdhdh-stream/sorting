@@ -22,7 +22,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main viewer measure_decision test_sequences
+all: main viewer measure_decision test_sequences test_explore
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
@@ -36,11 +36,15 @@ measure_decision: ${OBJECTS} measure_decision.o
 test_sequences: ${OBJECTS} test_sequences.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} test_sequences.o -o test_sequences ${LIBS}
 
--include ${DEPENDS} main.d viewer.d measure_decision.d test_sequences.d
+test_explore: ${OBJECTS} test_explore.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} test_explore.o -o test_explore ${LIBS}
+
+-include ${DEPENDS} main.d viewer.d measure_decision.d test_sequences.d test_explore.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
 	main.o main.d main \
 	viewer.o viewer.d viewer \
 	measure_decision.o measure_decision.d measure_decision \
-	test_sequences.o test_sequences.d test_sequences
+	test_sequences.o test_sequences.d test_sequences \
+	test_explore.o test_explore.d test_explore
