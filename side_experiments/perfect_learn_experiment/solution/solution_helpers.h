@@ -32,4 +32,12 @@ void train_decision_on_state_helper(ProblemType* problem_type,
 									std::vector<int>& actions_2,
 									Solution* solution);
 
+void low_samples(ProblemType* problem_type,
+				 std::vector<int>& actions);
+void low_samples_w_average(ProblemType* problem_type,
+						   std::vector<int>& actions);
+void low_samples_w_predict(ProblemType* problem_type,
+						   std::vector<int>& actions,
+						   Solution* solution);
+
 #endif /* SOLUTION_HELPERS_H */

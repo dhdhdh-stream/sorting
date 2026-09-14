@@ -14,6 +14,10 @@ const int EXPERIMENT_TRAIN_NUM_DATAPOINTS = 20;
 const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 10;
 #else
 const int EXPERIMENT_TRAIN_NUM_DATAPOINTS = 4000;
+/**
+ * - needs to be high
+ *   - update doesn't save bad initial networks
+ */
 const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
