@@ -18,9 +18,11 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int EXPLORE_ITERS = 10;
+const int MIN_NUM_SAMPLES = 2;
+const double BETTER_THAN_RATIO = 0.5;
 #else
-const int EXPLORE_ITERS = 400;
+const int MIN_NUM_SAMPLES = 5;
+const double BETTER_THAN_RATIO = 0.8;
 #endif /* MDEBUG */
 
 void ExploreExperiment::explore_check_activate(vector<double>& obs,
@@ -236,29 +238,23 @@ void ExploreExperiment::explore_backprop(double target_val,
 		if (history->existing_predicted.size() != 0) {
 			double curr_surprise = target_val - history->existing_predicted[0];
 
-			#if defined(MDEBUG) && MDEBUG
-			if (curr_surprise > this->best_surprise || true) {
-			#else
-			if (curr_surprise > this->best_surprise) {
-			#endif /* MDEBUG */
-				this->best_surprise = curr_surprise;
+			bool is_success = false;
+			if (curr_surprise >= 0.0) {
+				if ((int)this->surprises.size() >= MIN_NUM_SAMPLES) {
+					int index = BETTER_THAN_RATIO * (double)this->surprises.size();
+					if (curr_surprise >= this->surprises[index]) {
+						is_success = true;
+					}
+				}
+			}
+
+			if (is_success) {
 				this->best_step_types = history->curr_step_types;
 				this->best_actions = history->curr_actions;
 				this->best_scopes = history->curr_scopes;
-			}
 
-			this->state_iter++;
-			if (this->state_iter >= EXPLORE_ITERS) {
-				#if defined(MDEBUG) && MDEBUG
-				if (rand()%2 == 0) {
-				#else
-				if (this->best_surprise >= 0.0) {
-				#endif /* MDEBUG */
-					this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
-					this->state_iter = 0;
-				} else {
-					delete this;
-				}
+				this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
+				this->state_iter = 0;
 			}
 		}
 	}

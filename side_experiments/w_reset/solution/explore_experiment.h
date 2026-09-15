@@ -21,6 +21,12 @@ const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
 const int EXPLORE_EXPERIMENT_STATE_MEASURE = 3;
 
+#if defined(MDEBUG) && MDEBUG
+const int EXPERIMENT_MAX_TRIES = 2;
+#else
+const int EXPERIMENT_MAX_TRIES = 10;
+#endif /* MDEBUG */
+
 class ExploreExperimentHistory;
 class ExploreExperiment : public AbstractExperiment {
 public:
@@ -36,7 +42,9 @@ public:
 
 	int num_instances_until_target;
 
-	double best_surprise;
+	std::vector<double> surprises;
+	int try_iter;
+
 	std::vector<int> best_step_types;
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;
