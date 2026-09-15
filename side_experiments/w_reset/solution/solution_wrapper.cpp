@@ -13,6 +13,7 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->prev_solution = new Solution(this->solution);
 
 	this->iters_since_update = 0;
+	this->new_since_update = 0;
 
 	this->experiment_iter = 0;
 
@@ -33,6 +34,7 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->prev_solution->load(input_file);
 
 	this->iters_since_update = 0;
+	this->new_since_update = 0;
 
 	this->experiment_iter = 0;
 

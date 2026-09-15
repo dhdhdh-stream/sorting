@@ -26,6 +26,7 @@ public:
 	Solution* prev_solution;
 
 	int iters_since_update;
+	int new_since_update;
 
 	int experiment_iter;
 	/**

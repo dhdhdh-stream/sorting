@@ -28,8 +28,6 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 	this->existing_network = NULL;
 	this->new_network = NULL;
 
-	this->average_instances_per_hit = 1.0;
-
 	this->sum_vals = 0.0;
 
 	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
@@ -100,8 +98,6 @@ bool ExploreExperiment::further_than(ExploreExperiment* other) {
 
 ExploreExperimentHistory::ExploreExperimentHistory(ExploreExperiment* experiment) {
 	this->experiment = experiment;
-
-	this->num_instances = 0;
 }
 
 ExploreExperimentState::ExploreExperimentState(ExploreExperiment* experiment) {

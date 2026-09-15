@@ -34,15 +34,12 @@ public:
 
 	Network* existing_network;
 
-	double average_instances_per_hit;
 	int num_instances_until_target;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;
-
-	int start_iter;
 
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
@@ -106,6 +103,8 @@ public:
 							ExploreExperimentHistory* history,
 							SolutionWrapper* wrapper);
 
+	bool train_new_helper(int l_index);
+
 	void measure_check_activate(std::vector<double>& obs,
 								ExploreExperimentHistory* history,
 								SolutionWrapper* wrapper);
@@ -126,8 +125,6 @@ public:
 class ExploreExperimentHistory {
 public:
 	ExploreExperiment* experiment;
-
-	int num_instances;
 
 	std::vector<std::vector<double>> obs_histories;
 

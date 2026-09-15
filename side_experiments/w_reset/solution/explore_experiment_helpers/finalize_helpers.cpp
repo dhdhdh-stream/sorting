@@ -27,6 +27,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
 	ss << "curr_num_resets: " << wrapper->solution->curr_num_resets << "; ";
+	ss << "iters_since_update: " << wrapper->iters_since_update << "; ";
+	ss << "new_since_update: " << wrapper->new_since_update << "; ";
 	ss << "Experiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
@@ -352,7 +354,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
 			new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
 
-			new_scope->train_new_last_scores = wrapper->solution->starting_scope->train_new_last_scores;
+			new_scope->last_scores = wrapper->solution->starting_scope->last_scores;
 
 			NoopNode* start_node = new NoopNode();
 			start_node->parent = new_scope;
@@ -398,6 +400,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	 */
 
 	wrapper->iters_since_update = 0;
+	wrapper->new_since_update = 0;
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		Scope* scope = wrapper->solution->scopes[s_index];
 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();

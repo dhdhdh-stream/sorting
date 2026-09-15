@@ -1,6 +1,8 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#include <vector>
+
 const double MIN_WEIGHT = 0.00001;
 const double MIN_STANDARD_DEVIATION = 0.00001;
 
@@ -10,21 +12,25 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 const double REGRESSION_WEIGHT_LIMIT = 100000.0;
 
 #if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_TRAIN_NUM_DATAPOINTS = 20;
-const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 10;
+const int TRAIN_EXISTING_NUM_DATAPOINTS = 20;
+const std::vector<int> TRAIN_NEW_NUM_DATAPOINTS{10, 20, 40};
+const int MEASURE_NUM_DATAPOINTS = 10;
 #else
-const int EXPERIMENT_TRAIN_NUM_DATAPOINTS = 4000;
+const int TRAIN_EXISTING_NUM_DATAPOINTS = 4000;
+const std::vector<int> TRAIN_NEW_NUM_DATAPOINTS{100, 500, 4000};
 /**
  * - needs to be high
  *   - update doesn't save bad initial networks
  */
-const int EXPERIMENT_MEASURE_NUM_DATAPOINTS = 1000;
+const int MEASURE_NUM_DATAPOINTS = 200;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int TRAIN_ITERS = 30;
+const int TRAIN_EXISTING_ITERS = 30;
+const std::vector<int> TRAIN_NEW_ITERS{30, 30, 30};
 #else
-const int TRAIN_ITERS = 100000;
+const int TRAIN_EXISTING_ITERS = 300000;
+const std::vector<int> TRAIN_NEW_ITERS{100000, 300000, 300000};
 #endif /* MDEBUG */
 
 /**
@@ -43,8 +49,8 @@ const int MIN_NUM_LAST_TRACK = 2;
 const double LAST_BETTER_THAN_RATIO = 0.5;
 #else
 const int NUM_LAST_TRACK = 10;
-const int MIN_NUM_LAST_TRACK = 3;
-const double LAST_BETTER_THAN_RATIO = 0.6;
+const int MIN_NUM_LAST_TRACK = 4;
+const double LAST_BETTER_THAN_RATIO = 0.5;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

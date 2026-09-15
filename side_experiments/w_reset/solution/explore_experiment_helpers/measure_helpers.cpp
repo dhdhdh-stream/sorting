@@ -88,50 +88,16 @@ void ExploreExperiment::measure_backprop(double target_val,
 										 SolutionWrapper* wrapper) {
 	this->sum_vals += target_val;
 
+	wrapper->new_since_update++;
+
 	this->state_iter++;
-	if (this->state_iter >= EXPERIMENT_MEASURE_NUM_DATAPOINTS) {
+	if (this->state_iter >= MEASURE_NUM_DATAPOINTS) {
 		double new_val_average = this->sum_vals / this->state_iter;
 
-		double local_improvement = new_val_average - this->existing_val_average;
-
-		int total_iters = wrapper->iters_since_update - this->start_iter;
-		if (total_iters < 0) {
-			total_iters += numeric_limits<int>::max();
-		}
-		double average_hits_per_run = (double)this->state_iter / (double)total_iters;
-
-		double global_improvement = average_hits_per_run * local_improvement;
-
-		bool is_success = false;
-		if (local_improvement > 0.0) {
-			if (this->scope_context->measure_last_scores.size() >= MIN_NUM_LAST_TRACK) {
-				int num_better_than = 0;
-				for (list<double>::iterator it = this->scope_context->measure_last_scores.begin();
-						it != this->scope_context->measure_last_scores.end(); it++) {
-					if (global_improvement >= *it) {
-						num_better_than++;
-					}
-				}
-
-				double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->measure_last_scores.size();
-
-				if (num_better_than >= target_better_than) {
-					is_success = true;
-				}
-
-				if (this->scope_context->measure_last_scores.size() >= NUM_LAST_TRACK) {
-					this->scope_context->measure_last_scores.pop_front();
-				}
-				this->scope_context->measure_last_scores.push_back(global_improvement);
-			} else {
-				this->scope_context->measure_last_scores.push_back(global_improvement);
-			}
-		}
-
 		#if defined(MDEBUG) && MDEBUG
-		if (is_success || rand()%3 != 0) {
+		if (new_val_average > this->existing_val_average || rand()%3 != 0) {
 		#else
-		if (is_success) {
+		if (new_val_average > this->existing_val_average) {
 		#endif /* MDEBUG */
 			add(wrapper);
 		}
