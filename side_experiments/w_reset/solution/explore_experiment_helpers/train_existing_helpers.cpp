@@ -96,5 +96,6 @@ void ExploreExperiment::train_existing_backprop(
 		this->num_instances_until_target = until_distribution(generator);
 
 		this->state = EXPLORE_EXPERIMENT_STATE_EXPLORE;
+		this->state_iter = 0;
 	}
 }

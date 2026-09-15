@@ -236,6 +236,8 @@ void ExploreExperiment::explore_backprop(double target_val,
 		wrapper->new_since_update++;
 
 		if (history->existing_predicted.size() != 0) {
+			this->state_iter++;
+
 			double curr_surprise = target_val - history->existing_predicted[0];
 
 			bool is_success = false;
@@ -246,9 +248,27 @@ void ExploreExperiment::explore_backprop(double target_val,
 						is_success = true;
 					}
 				}
+
+				int index = 0;
+				while (true) {
+					if (index >= (int)this->surprises.size()) {
+						break;
+					}
+
+					if (curr_surprise <= this->surprises[index]) {
+						break;
+					}
+
+					index++;
+				}
+
+				this->surprises.insert(this->surprises.begin() + index, curr_surprise);
 			}
 
 			if (is_success) {
+				// // temp
+				// cout << "this->state_iter: " << this->state_iter << endl;
+
 				this->best_step_types = history->curr_step_types;
 				this->best_actions = history->curr_actions;
 				this->best_scopes = history->curr_scopes;

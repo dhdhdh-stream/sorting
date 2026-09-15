@@ -358,6 +358,7 @@ void ExploreExperiment::train_new_backprop(
 					this->num_instances_until_target = until_distribution(generator);
 
 					this->state = EXPLORE_EXPERIMENT_STATE_EXPLORE;
+					this->state_iter = 0;
 				}
 			} else if (this->state_iter == TRAIN_NEW_NUM_DATAPOINTS.back()) {
 				this->sum_vals = 0.0;

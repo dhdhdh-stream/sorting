@@ -104,6 +104,8 @@ void Solution::init(ProblemType* problem_type) {
 	end_node->next_node_id = -1;
 	end_node->next_node = NULL;
 
+	new_scope->last_scores = vector<list<double>>(TRAIN_NEW_NUM_DATAPOINTS.size());
+
 	this->starting_scope = new_scope;
 	this->starting_num_improvements = 0;
 }
