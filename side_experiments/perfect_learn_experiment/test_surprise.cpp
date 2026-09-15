@@ -1,4 +1,10 @@
-// - good at finding places to improve for pure predict
+// - if can predict sequence in a spot to be good, then predict should handle it
+// - if look specifically for spots where predict bad, then could be lottery
+//   - can't distinguish between not understanding and luck without focusing
+
+// - so chase something that's potentially lucky?
+//   - or chase something that's potentially lucky plus potentially don't understand
+//     - probably better to chase after both
 
 #include <chrono>
 #include <iostream>
@@ -64,14 +70,13 @@ int main(int argc, char* argv[]) {
 		solution->obs_network->activate(state,
 										obs);
 
-		solution->score_network->activate(state);
-		double existing_predicted = solution->score_network->output->acti_vals(0);
-
 		int num_steps = geo_distribution(generator);
 
 		vector<int> actions;
 		for (int s_index = 0; s_index < num_steps; s_index++) {
 			int action = action_distribution(generator);
+
+			problem->perform_action(action);
 
 			solution->action_networks[action]->activate(state);
 
@@ -79,9 +84,11 @@ int main(int argc, char* argv[]) {
 		}
 
 		solution->score_network->activate(state);
-		double new_predicted = solution->score_network->output->acti_vals(0);
+		double predicted = solution->score_network->output->acti_vals(0);
 
-		double surprise = new_predicted - existing_predicted;
+		double target_val = problem->score_result();
+
+		double surprise = target_val - predicted;
 		if (surprise > best_surprise) {
 			best_surprise = surprise;
 			best_actions = actions;

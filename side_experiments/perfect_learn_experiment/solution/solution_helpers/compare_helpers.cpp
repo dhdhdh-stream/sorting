@@ -63,12 +63,12 @@ void compare(ProblemType* problem_type,
 	}
 
 	double sum_misguess = 0.0;
-	for (int h_index = 0; h_index < (int)obs_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < NUM_MEASURE_SAMPLES; h_index++) {
 		Problem* problem = problem_type->get_problem();
 
 		vector<double> obs = problem->get_observations();
 
-		network->activate(obs_histories[h_index]);
+		network->activate(obs);
 		double predicted = network->output->acti_vals(0);
 
 		for (int a_index = 0; a_index < (int)actions.size(); a_index++) {
@@ -80,7 +80,7 @@ void compare(ProblemType* problem_type,
 
 		delete problem;
 	}
-	double misguess_average = sum_misguess / (double)obs_histories.size();
+	double misguess_average = sum_misguess / NUM_MEASURE_SAMPLES;
 	cout << "compare: " << misguess_average << endl;
 
 	delete network;
@@ -128,12 +128,12 @@ void low_samples(ProblemType* problem_type,
 	}
 
 	double sum_misguess = 0.0;
-	for (int h_index = 0; h_index < (int)obs_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < NUM_MEASURE_SAMPLES; h_index++) {
 		Problem* problem = problem_type->get_problem();
 
 		vector<double> obs = problem->get_observations();
 
-		network->activate(obs_histories[h_index]);
+		network->activate(obs);
 		double predicted = network->output->acti_vals(0);
 
 		for (int a_index = 0; a_index < (int)actions.size(); a_index++) {
@@ -145,7 +145,7 @@ void low_samples(ProblemType* problem_type,
 
 		delete problem;
 	}
-	double misguess_average = sum_misguess / (double)obs_histories.size();
+	double misguess_average = sum_misguess / NUM_MEASURE_SAMPLES;
 	cout << "Low: " << misguess_average << endl;
 
 	delete network;
@@ -228,12 +228,12 @@ void low_samples_w_average(ProblemType* problem_type,
 	}
 
 	double sum_misguess = 0.0;
-	for (int h_index = 0; h_index < (int)obs_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < NUM_MEASURE_SAMPLES; h_index++) {
 		Problem* problem = problem_type->get_problem();
 
 		vector<double> obs = problem->get_observations();
 
-		network->activate(obs_histories[h_index]);
+		network->activate(obs);
 		double predicted = network->output->acti_vals(0);
 
 		for (int a_index = 0; a_index < (int)actions.size(); a_index++) {
@@ -245,7 +245,7 @@ void low_samples_w_average(ProblemType* problem_type,
 
 		delete problem;
 	}
-	double misguess_average = sum_misguess / (double)obs_histories.size();
+	double misguess_average = sum_misguess / NUM_MEASURE_SAMPLES;
 	cout << "Low w/ average: " << misguess_average << endl;
 
 	delete network;
@@ -337,12 +337,12 @@ void low_samples_w_predict(ProblemType* problem_type,
 	}
 
 	double sum_misguess = 0.0;
-	for (int h_index = 0; h_index < (int)obs_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < NUM_MEASURE_SAMPLES; h_index++) {
 		Problem* problem = problem_type->get_problem();
 
 		vector<double> obs = problem->get_observations();
 
-		network->activate(obs_histories[h_index]);
+		network->activate(obs);
 		double predicted = network->output->acti_vals(0);
 
 		for (int a_index = 0; a_index < (int)actions.size(); a_index++) {
@@ -354,7 +354,7 @@ void low_samples_w_predict(ProblemType* problem_type,
 
 		delete problem;
 	}
-	double misguess_average = sum_misguess / (double)obs_histories.size();
+	double misguess_average = sum_misguess / NUM_MEASURE_SAMPLES;
 	cout << "Low w/ predict: " << misguess_average << endl;
 
 	delete network;
