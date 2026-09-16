@@ -125,6 +125,10 @@ void SolutionWrapper::experiment_end(double result) {
 			train_helper(this);
 		}
 	} else {
+		/**
+		 * - training on explore significantly hurts results
+		 *   - even if, e.g., training only post explore
+		 */
 		delete this->scope_histories[0];
 	}
 
