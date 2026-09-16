@@ -8,6 +8,8 @@
 
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"

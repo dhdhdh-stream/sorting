@@ -135,6 +135,16 @@ void SolutionWrapper::experiment_end(double result) {
 	if (this->train_scope_histories.size() >= BATCH_SIZE) {
 		train_helper(this);
 	}
+	// if (!this->should_explore) {
+	// 	this->train_scope_histories.push_back(this->scope_histories[0]);
+	// 	this->train_target_val_histories.push_back(result);
+	// 	this->train_is_explore_histories.push_back(this->should_explore);
+	// 	if (this->train_scope_histories.size() >= BATCH_SIZE) {
+	// 		train_helper(this);
+	// 	}
+	// } else {
+	// 	delete this->scope_histories[0];
+	// }
 
 	this->scope_histories.clear();
 	this->node_context.clear();
