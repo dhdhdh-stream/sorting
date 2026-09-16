@@ -18,8 +18,6 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->train_iter_index = 0;
 
-	this->experiment_histories = vector<map<AbstractExperiment*, AbstractExperimentHistory*>>(DIVERSITY_RANGE);
-
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
@@ -39,8 +37,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->iters_since_update = 0;
 
 	this->train_iter_index = 0;
-
-	this->experiment_histories = vector<map<AbstractExperiment*, AbstractExperimentHistory*>>(DIVERSITY_RANGE);
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;

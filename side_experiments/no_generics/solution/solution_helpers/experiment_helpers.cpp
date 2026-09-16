@@ -148,7 +148,6 @@ void compare_index(vector<int>& left, vector<int>& right, bool& right_later) {
 }
 
 void create_experiment(ScopeHistory* scope_history,
-					   int diversity_index,
 					   SolutionWrapper* wrapper) {
 	map<Scope*, ExploreContext> explore_contexts;
 	gather_helper(scope_history,
@@ -223,7 +222,6 @@ void create_experiment(ScopeHistory* scope_history,
 		}
 
 		ExploreExperiment* new_experiment = new ExploreExperiment(
-			diversity_index,
 			context_it->second.explore_node->parent,
 			context_it->second.explore_node,
 			context_it->second.explore_is_branch,

@@ -28,15 +28,11 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	uniform_int_distribution<int> explore_distribution(0, 1);
-	if (explore_distribution(generator) == 0) {
-		this->run_type = RUN_TYPE_EXPLORE;
-	} else {
+	if (this->iters_since_update < UPDATE_NUM_ITERS) {
 		this->run_type = RUN_TYPE_EXISTING;
+	} else {
+		this->run_type = RUN_TYPE_EXPLORE;
 	}
-
-	uniform_int_distribution<int> diversity_distribution(0, DIVERSITY_RANGE-1);
-	this->diversity_index = diversity_distribution(generator);
 
 	this->run_num_actions = 0;
 
@@ -119,27 +115,22 @@ void SolutionWrapper::experiment_end(double result) {
 					  this);
 	}
 
-	for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
-		if (this->experiment_histories[d_index].size() == 0) {
-			if (this->run_type == RUN_TYPE_EXISTING) {
-				create_experiment(this->scope_histories[0],
-								  d_index,
-								  this);
-			}
-		} else if (this->experiment_histories[d_index].size() >= 2) {
-			AbstractExperiment* keep_experiment = NULL;
-			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[d_index].begin();
-					it != this->experiment_histories[d_index].end(); it++) {
-				if (keep_experiment == NULL) {
+	if (this->experiment_histories.size() == 0) {
+		create_experiment(this->scope_histories[0],
+						  this);
+	} else if (this->experiment_histories.size() >= 2) {
+		AbstractExperiment* keep_experiment = NULL;
+		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
+				it != this->experiment_histories.end(); it++) {
+			if (keep_experiment == NULL) {
+				keep_experiment = it->first;
+			} else {
+				if (it->first->further_than(keep_experiment)) {
+					delete keep_experiment;
+
 					keep_experiment = it->first;
 				} else {
-					if (it->first->further_than(keep_experiment)) {
-						delete keep_experiment;
-
-						keep_experiment = it->first;
-					} else {
-						delete it->first;
-					}
+					delete it->first;
 				}
 			}
 		}
@@ -161,29 +152,20 @@ void SolutionWrapper::experiment_end(double result) {
 
 	this->states.clear();
 
-	for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
-		bool is_add = false;
-		if (this->experiment_histories[d_index].size() == 1) {
-			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[d_index].begin();
-					it != this->experiment_histories[d_index].end(); it++) {
-				it->first->backprop(result,
-									it->second,
-									this,
-									is_add);
-			}
-		}
-		if (is_add) {
-			break;
+	if (this->experiment_histories.size() == 1) {
+		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
+				it != this->experiment_histories.end(); it++) {
+			it->first->backprop(result,
+								it->second,
+								this);
 		}
 	}
 
-	for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
-		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[d_index].begin();
-				it != this->experiment_histories[d_index].end(); it++) {
-			delete it->second;
-		}
-		this->experiment_histories[d_index].clear();
+	for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
+			it != this->experiment_histories.end(); it++) {
+		delete it->second;
 	}
+	this->experiment_histories.clear();
 
 	this->iters_since_update++;
 }

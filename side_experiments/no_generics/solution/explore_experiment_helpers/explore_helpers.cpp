@@ -22,114 +22,111 @@ using namespace std;
 void ExploreExperiment::explore_check_activate(vector<double>& obs,
 											   ExploreExperimentHistory* history,
 											   SolutionWrapper* wrapper) {
-	if (wrapper->run_type == RUN_TYPE_EXPLORE
-			&& wrapper->diversity_index == this->diversity_index) {
-		this->num_instances_until_target--;
-		if (history->existing_predicted.size() == 0
-				&& this->num_instances_until_target <= 0) {
-			this->existing_network->activate(wrapper->states.back());
-			history->existing_predicted.push_back(this->existing_network->output->acti_vals(0));
+	this->num_instances_until_target--;
+	if (history->existing_predicted.size() == 0
+			&& this->num_instances_until_target <= 0) {
+		this->existing_network->activate(wrapper->states.back());
+		history->existing_predicted.push_back(this->existing_network->output->acti_vals(0));
 
-			bool exit_is_next;
-			switch (this->node_context->type) {
-			case NODE_TYPE_NOOP:
-				{
-					NoopNode* noop_node = (NoopNode*)this->node_context;
-					if (this->exit_next_node == noop_node->next_node) {
-						exit_is_next = true;
-					} else {
-						exit_is_next = false;
-					}
-				}
-				break;
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)this->node_context;
-					if (this->exit_next_node == action_node->next_node) {
-						exit_is_next = true;
-					} else {
-						exit_is_next = false;
-					}
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)this->node_context;
-					if (this->exit_next_node == scope_node->next_node) {
-						exit_is_next = true;
-					} else {
-						exit_is_next = false;
-					}
-				}
-				break;
-			default:
-			// case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)this->node_context;
-					if (this->is_branch) {
-						if (this->exit_next_node == branch_node->branch_next_node) {
-							exit_is_next = true;
-						} else {
-							exit_is_next = false;
-						}
-					} else {
-						if (this->exit_next_node == branch_node->original_next_node) {
-							exit_is_next = true;
-						} else {
-							exit_is_next = false;
-						}
-					}
-				}
-				break;
-			}
-
-			int new_num_steps;
-			geometric_distribution<int> geo_distribution(0.3);
-			/**
-			 * - num_steps less than exit length on average to reduce solution size
-			 */
-			if (exit_is_next) {
-				new_num_steps = 1 + geo_distribution(generator);
-			} else {
-				new_num_steps = geo_distribution(generator);
-			}
-
-			vector<int> possible_child_indexes;
-			for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
-				if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
-					possible_child_indexes.push_back(c_index);
-				}
-			}
-			uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
-			for (int s_index = 0; s_index < new_num_steps; s_index++) {
-				bool is_scope = false;
-				if (possible_child_indexes.size() > 0) {
-					if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
-						uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
-						if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
-							is_scope = true;
-						}
-					} else {
-						uniform_int_distribution<int> scope_distribution(0, 1);
-						if (scope_distribution(generator) == 0) {
-							is_scope = true;
-						}
-					}
-				}
-				if (is_scope) {
-					history->curr_step_types.push_back(STEP_TYPE_SCOPE);
-					int child_index = possible_child_indexes[child_index_distribution(generator)];
-					history->curr_indexes.push_back(child_index);
+		bool exit_is_next;
+		switch (this->node_context->type) {
+		case NODE_TYPE_NOOP:
+			{
+				NoopNode* noop_node = (NoopNode*)this->node_context;
+				if (this->exit_next_node == noop_node->next_node) {
+					exit_is_next = true;
 				} else {
-					history->curr_step_types.push_back(STEP_TYPE_ACTION);
-					history->curr_indexes.push_back(-1);
+					exit_is_next = false;
 				}
 			}
-
-			ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
-			new_experiment_state->step_index = 0;
-			wrapper->experiment_context.back() = new_experiment_state;
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->node_context;
+				if (this->exit_next_node == action_node->next_node) {
+					exit_is_next = true;
+				} else {
+					exit_is_next = false;
+				}
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)this->node_context;
+				if (this->exit_next_node == scope_node->next_node) {
+					exit_is_next = true;
+				} else {
+					exit_is_next = false;
+				}
+			}
+			break;
+		default:
+		// case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)this->node_context;
+				if (this->is_branch) {
+					if (this->exit_next_node == branch_node->branch_next_node) {
+						exit_is_next = true;
+					} else {
+						exit_is_next = false;
+					}
+				} else {
+					if (this->exit_next_node == branch_node->original_next_node) {
+						exit_is_next = true;
+					} else {
+						exit_is_next = false;
+					}
+				}
+			}
+			break;
 		}
+
+		int new_num_steps;
+		geometric_distribution<int> geo_distribution(0.3);
+		/**
+		 * - num_steps less than exit length on average to reduce solution size
+		 */
+		if (exit_is_next) {
+			new_num_steps = 1 + geo_distribution(generator);
+		} else {
+			new_num_steps = geo_distribution(generator);
+		}
+
+		vector<int> possible_child_indexes;
+		for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
+			if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
+				possible_child_indexes.push_back(c_index);
+			}
+		}
+		uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
+		for (int s_index = 0; s_index < new_num_steps; s_index++) {
+			bool is_scope = false;
+			if (possible_child_indexes.size() > 0) {
+				if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
+					uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
+					if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
+						is_scope = true;
+					}
+				} else {
+					uniform_int_distribution<int> scope_distribution(0, 1);
+					if (scope_distribution(generator) == 0) {
+						is_scope = true;
+					}
+				}
+			}
+			if (is_scope) {
+				history->curr_step_types.push_back(STEP_TYPE_SCOPE);
+				int child_index = possible_child_indexes[child_index_distribution(generator)];
+				history->curr_indexes.push_back(child_index);
+			} else {
+				history->curr_step_types.push_back(STEP_TYPE_ACTION);
+				history->curr_indexes.push_back(-1);
+			}
+		}
+
+		ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
+		new_experiment_state->step_index = 0;
+		wrapper->experiment_context.back() = new_experiment_state;
 	}
 }
 
@@ -139,7 +136,7 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 									 bool& fetch_action,
 									 SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
-	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_histories[this->diversity_index][this];
+	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_histories[this];
 
 	if (experiment_state->step_index >= (int)history->curr_step_types.size()) {
 		wrapper->node_context.back() = this->exit_next_node;
@@ -169,7 +166,7 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 void ExploreExperiment::explore_set_action(int action,
 										   SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
-	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_histories[this->diversity_index][this];
+	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_histories[this];
 
 	history->curr_indexes[experiment_state->step_index] = action;
 }
@@ -199,68 +196,65 @@ void ExploreExperiment::explore_exit_step(vector<double>& obs,
 void ExploreExperiment::explore_backprop(double target_val,
 										 ExploreExperimentHistory* history,
 										 SolutionWrapper* wrapper) {
-	if (wrapper->run_type == RUN_TYPE_EXPLORE
-			&& wrapper->diversity_index == this->diversity_index) {
-		double average_instances_per_hit;
-		switch (this->node_context->type) {
-		case NODE_TYPE_NOOP:
-			{
-				NoopNode* noop_node = (NoopNode*)this->node_context;
-				average_instances_per_hit = noop_node->average_instances_per_hit;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				average_instances_per_hit = action_node->average_instances_per_hit;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				average_instances_per_hit = scope_node->average_instances_per_hit;
-			}
-			break;
-		default:
-		// case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					average_instances_per_hit = branch_node->branch_average_instances_per_hit;
-				} else {
-					average_instances_per_hit = branch_node->original_average_instances_per_hit;
-				}
-			}
-			break;
+	double average_instances_per_hit;
+	switch (this->node_context->type) {
+	case NODE_TYPE_NOOP:
+		{
+			NoopNode* noop_node = (NoopNode*)this->node_context;
+			average_instances_per_hit = noop_node->average_instances_per_hit;
 		}
-		uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
-		this->num_instances_until_target = until_distribution(generator);
-
-		if (history->existing_predicted.size() != 0) {
-			double curr_surprise = target_val - history->existing_predicted[0];
-
-			#if defined(MDEBUG) && MDEBUG
-			if (curr_surprise > this->best_surprise || true) {
-			#else
-			if (curr_surprise > this->best_surprise) {
-			#endif /* MDEBUG */
-				this->best_surprise = curr_surprise;
-				this->best_step_types = history->curr_step_types;
-				this->best_indexes = history->curr_indexes;
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+			average_instances_per_hit = action_node->average_instances_per_hit;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)this->node_context;
+			average_instances_per_hit = scope_node->average_instances_per_hit;
+		}
+		break;
+	default:
+	// case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)this->node_context;
+			if (this->is_branch) {
+				average_instances_per_hit = branch_node->branch_average_instances_per_hit;
+			} else {
+				average_instances_per_hit = branch_node->original_average_instances_per_hit;
 			}
+		}
+		break;
+	}
+	uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
+	this->num_instances_until_target = until_distribution(generator);
 
-			this->state_iter++;
-			if (this->state_iter >= EXPERIMENT_EXPLORE_NUM_DATAPOINTS) {
-				#if defined(MDEBUG) && MDEBUG
-				if (rand()%2 == 0) {
-				#else
-				if (this->best_surprise >= 0.0) {
-				#endif /* MDEBUG */
-					this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
-					this->state_iter = 0;
-				} else {
-					delete this;
-				}
+	if (history->existing_predicted.size() != 0) {
+		double curr_surprise = target_val - history->existing_predicted[0];
+
+		#if defined(MDEBUG) && MDEBUG
+		if (curr_surprise > this->best_surprise || true) {
+		#else
+		if (curr_surprise > this->best_surprise) {
+		#endif /* MDEBUG */
+			this->best_surprise = curr_surprise;
+			this->best_step_types = history->curr_step_types;
+			this->best_indexes = history->curr_indexes;
+		}
+
+		this->state_iter++;
+		if (this->state_iter >= EXPERIMENT_EXPLORE_NUM_DATAPOINTS) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
+			if (this->best_surprise >= 0.0) {
+			#endif /* MDEBUG */
+				this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
+				this->state_iter = 0;
+			} else {
+				delete this;
 			}
 		}
 	}

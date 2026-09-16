@@ -12,9 +12,9 @@ using namespace std;
 void ExploreExperiment::experiment_check_activate(vector<double>& obs,
 												  SolutionWrapper* wrapper) {
 	map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it =
-		wrapper->experiment_histories[this->diversity_index].find(this);
-	if (it == wrapper->experiment_histories[this->diversity_index].end()) {
-		it = wrapper->experiment_histories[this->diversity_index].insert({this, new ExploreExperimentHistory(this)}).first;
+		wrapper->experiment_histories.find(this);
+	if (it == wrapper->experiment_histories.end()) {
+		it = wrapper->experiment_histories.insert({this, new ExploreExperimentHistory(this)}).first;
 	}
 	ExploreExperimentHistory* explore_experiment_history = (ExploreExperimentHistory*)it->second;
 
@@ -133,8 +133,7 @@ void ExploreExperiment::experiment_step_callback(vector<double>& obs,
 
 void ExploreExperiment::backprop(double target_val,
 								 AbstractExperimentHistory* history,
-								 SolutionWrapper* wrapper,
-								 bool& is_add) {
+								 SolutionWrapper* wrapper) {
 	ExploreExperimentHistory* explore_experiment_history = (ExploreExperimentHistory*)history;
 
 	switch (this->state) {
@@ -156,14 +155,12 @@ void ExploreExperiment::backprop(double target_val,
 	case EXPLORE_EXPERIMENT_STATE_REUSE_MEASURE:
 		reuse_measure_backprop(target_val,
 							   explore_experiment_history,
-							   wrapper,
-							   is_add);
+							   wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_NEW_STATE_MEASURE:
 		new_state_measure_backprop(target_val,
 								   explore_experiment_history,
-								   wrapper,
-								   is_add);
+								   wrapper);
 		break;
 	}
 }

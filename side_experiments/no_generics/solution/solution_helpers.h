@@ -22,7 +22,6 @@ class Solution;
 class SolutionWrapper;
 
 void create_experiment(ScopeHistory* scope_history,
-					   int diversity_index,
 					   SolutionWrapper* wrapper);
 
 void gather_dependencies_top_helper(ScopeHistory* scope_history,

@@ -47,12 +47,6 @@ const int RAW_ACTION_WEIGHT = 8;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
-#if defined(MDEBUG) && MDEBUG
-const int DIVERSITY_RANGE = 2;
-#else
-const int DIVERSITY_RANGE = 10;
-#endif /* MDEBUG */
-
 const int NEW_STATE_NUM_ADD = 2;
 
 #if defined(MDEBUG) && MDEBUG
@@ -66,9 +60,11 @@ const double LAST_BETTER_THAN_RATIO = 0.6;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
+const int UPDATE_NUM_ITERS = 40;
 const int BATCH_SIZE = 10;
 const int ITERS_PER_BATCH = 10;
 #else
+const int UPDATE_NUM_ITERS = 40000;
 const int BATCH_SIZE = 1000;
 const int ITERS_PER_BATCH = 10000;
 #endif /* MDEBUG */

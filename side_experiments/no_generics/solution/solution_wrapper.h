@@ -41,13 +41,12 @@ public:
 	int run_num_actions;
 
 	int run_type;
-	int diversity_index;
 
 	std::vector<ScopeHistory*> train_scope_histories;
 	std::vector<double> train_target_val_histories;
 	int train_iter_index;
 
-	std::vector<std::map<AbstractExperiment*, AbstractExperimentHistory*>> experiment_histories;
+	std::map<AbstractExperiment*, AbstractExperimentHistory*> experiment_histories;
 
 	Problem* problem;
 
