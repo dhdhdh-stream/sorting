@@ -130,6 +130,7 @@ void ExploreExperiment::train_existing_backprop(
 				for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 					potential_init_networks[d_index]->init_update();
 				}
+				potential_init_network->init_update();
 				potential_new_network->init_update();
 			}
 		}

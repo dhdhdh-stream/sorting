@@ -93,7 +93,7 @@ void backprop_helper(TrainScopeHistory* scope_history,
 															state_error);
 
 					branch_node->original_init_network->load(branch_node_history->init_network_history);
-					branch_node->branch_init_network->backprop(state_error);
+					branch_node->original_init_network->backprop(state_error);
 				}
 			}
 			break;
@@ -189,6 +189,12 @@ void update_helper(TrainScopeHistory* scope_history,
 }
 
 void train_helper(SolutionWrapper* wrapper) {
+	// // temp
+	// {
+	// 	double val_average = measure_helper(wrapper);
+	// 	cout << "train pre val_average: " << val_average << endl;
+	// }
+
 	uniform_int_distribution<int> sample_distribution(0, wrapper->train_scope_histories.size()-1);
 	uniform_int_distribution<int> allow_drop_distribution(0, 1);
 	for (int iter_index = 0; iter_index < ITERS_PER_BATCH; iter_index++) {
@@ -224,4 +230,10 @@ void train_helper(SolutionWrapper* wrapper) {
 	}
 	wrapper->train_scope_histories.clear();
 	wrapper->train_target_val_histories.clear();
+
+	// // temp
+	// {
+	// 	double val_average = measure_helper(wrapper);
+	// 	cout << "train post val_average: " << val_average << endl;
+	// }
 }

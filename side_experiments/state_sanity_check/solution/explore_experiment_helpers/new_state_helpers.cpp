@@ -89,6 +89,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 				potential_init_networks[d_index]->init_update();
 			}
+			potential_init_network->init_update();
 			potential_new_network->init_update();
 		}
 	}
@@ -218,8 +219,6 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	double global_improvement = average_instances_per_run * local_improvement;
 
 	// // temp
-	// cout << "new_state" << endl;
-	// cout << "this->scope_context->id: " << this->scope_context->id << endl;
 	// cout << "local_improvement: " << local_improvement << endl;
 	// cout << "global_improvement: " << global_improvement << endl;
 

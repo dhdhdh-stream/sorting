@@ -180,46 +180,46 @@ void create_experiment(ScopeHistory* scope_history,
 		}
 
 		vector<vector<int>> dependencies;
-		vector<vector<int>> indexes;
-		for (int try_index = 0; try_index < GATHER_DEPENDENCIES_NUM_TRIES; try_index++) {
-			vector<int> curr_context;
-			vector<int> curr_index;
-			int count = 0;
-			vector<int> dependency;
-			vector<int> index;
-			gather_dependencies_top_helper(explore_scope_history,
-										   context_it->second.explore_index,
-										   curr_context,
-										   curr_index,
-										   count,
-										   dependency,
-										   index);
-			bool matches_existing = false;
-			for (int d_index = 0; d_index < (int)dependencies.size(); d_index++) {
-				if (dependency == dependencies[d_index]) {
-					matches_existing = true;
-					break;
-				}
-			}
-			if (!matches_existing) {
-				int insert_index = 0;
-				for (int i_index = 0; i_index < (int)indexes.size(); i_index++) {
-					bool existing_later;
-					compare_index(index, indexes[i_index], existing_later);
-					if (existing_later) {
-						break;
-					} else {
-						insert_index++;
-					}
-				}
-				indexes.insert(indexes.begin() + insert_index, index);
-				dependencies.insert(dependencies.begin() + insert_index, dependency);
+		// vector<vector<int>> indexes;
+		// for (int try_index = 0; try_index < GATHER_DEPENDENCIES_NUM_TRIES; try_index++) {
+		// 	vector<int> curr_context;
+		// 	vector<int> curr_index;
+		// 	int count = 0;
+		// 	vector<int> dependency;
+		// 	vector<int> index;
+		// 	gather_dependencies_top_helper(explore_scope_history,
+		// 								   context_it->second.explore_index,
+		// 								   curr_context,
+		// 								   curr_index,
+		// 								   count,
+		// 								   dependency,
+		// 								   index);
+		// 	bool matches_existing = false;
+		// 	for (int d_index = 0; d_index < (int)dependencies.size(); d_index++) {
+		// 		if (dependency == dependencies[d_index]) {
+		// 			matches_existing = true;
+		// 			break;
+		// 		}
+		// 	}
+		// 	if (!matches_existing) {
+		// 		int insert_index = 0;
+		// 		for (int i_index = 0; i_index < (int)indexes.size(); i_index++) {
+		// 			bool existing_later;
+		// 			compare_index(index, indexes[i_index], existing_later);
+		// 			if (existing_later) {
+		// 				break;
+		// 			} else {
+		// 				insert_index++;
+		// 			}
+		// 		}
+		// 		indexes.insert(indexes.begin() + insert_index, index);
+		// 		dependencies.insert(dependencies.begin() + insert_index, dependency);
 
-				if (dependencies.size() >= MAX_NUM_DEPENDENCIES) {
-					break;
-				}
-			}
-		}
+		// 		if (dependencies.size() >= MAX_NUM_DEPENDENCIES) {
+		// 			break;
+		// 		}
+		// 	}
+		// }
 
 		ExploreExperiment* new_experiment = new ExploreExperiment(
 			context_it->second.explore_node->parent,
