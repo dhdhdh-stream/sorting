@@ -1,5 +1,7 @@
 #include "explore_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -177,6 +179,10 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 		}
 		double global_improvement = average_hits_per_run * local_improvement;
 
+		// // temp
+		// cout << "local_improvement: " << local_improvement << endl;
+		// cout << "global_improvement: " << global_improvement << endl;
+
 		bool is_success = false;
 		if (local_improvement > 0.0) {
 			if (this->scope_context->measure_new_state_last_scores.size() >= MIN_NUM_LAST_TRACK) {
@@ -208,6 +214,12 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 		#else
 		if (is_success) {
 		#endif /* MDEBUG */
+			// temp
+			cout << "this->existing_val_average: " << this->existing_val_average << endl;
+			cout << "new_val_average: " << new_val_average << endl;
+			cout << "local_improvement: " << local_improvement << endl;
+			cout << "global_improvement: " << global_improvement << endl;
+
 			set<Scope*> scopes_needed;
 			set<ScopeNode*> transitions_needed;
 			scopes_needed.insert(this->scope_context);
@@ -235,6 +247,11 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 						out_num_states + s_index);
 					scope_node->out_pass_through_networks.push_back(new_out_pass_through_network);
 				}
+
+				cout << "scope_node->parent->id: " << scope_node->parent->id << endl;
+				cout << "scope_node->id: " << scope_node->id << endl;
+				cout << "out_num_states: " << out_num_states << endl;
+				cout << "in_num_states: " << in_num_states << endl;
 			}
 
 			for (set<Scope*>::iterator it = scopes_needed.begin();
@@ -242,6 +259,9 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 				Scope* scope = *it;
 
 				scope->num_states += NEW_STATE_NUM_ADD;
+
+				cout << "scope->id: " << scope->id << endl;
+				cout << "scope->num_states: " << scope->num_states << endl;
 			}
 
 			for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
@@ -251,6 +271,18 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 									  this->dependencies[d_index],
 									  0,
 									  this->existing_init_networks[d_index]);
+
+				// temp
+				cout << "this->dependencies[d_index]:";
+				for (int l_index = 0; l_index < (int)this->dependencies[d_index].size(); l_index++) {
+					cout << " " << this->dependencies[d_index][l_index];
+				}
+				cout << endl;
+				cout << "this->existing_init_networks[d_index]->init_states:";
+				for (int s_index = 0; s_index < (int)this->existing_init_networks[d_index]->init_states.size(); s_index++) {
+					cout << " " << this->existing_init_networks[d_index]->init_states[s_index];
+				}
+				cout << endl;
 			}
 			this->existing_init_networks.clear();
 
@@ -270,6 +302,11 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 						out_num_states + s_index);
 					scope_node->out_pass_through_networks.push_back(new_out_pass_through_network);
 				}
+
+				cout << "scope_node->parent->id: " << scope_node->parent->id << endl;
+				cout << "scope_node->id: " << scope_node->id << endl;
+				cout << "out_num_states: " << out_num_states << endl;
+				cout << "in_num_states: " << in_num_states << endl;
 			}
 
 			for (set<Scope*>::iterator it = scopes_needed.begin();
@@ -277,6 +314,9 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 				Scope* scope = *it;
 
 				scope->num_states += NEW_STATE_NUM_ADD;
+
+				cout << "scope->id: " << scope->id << endl;
+				cout << "scope->num_states: " << scope->num_states << endl;
 			}
 
 			for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
@@ -286,6 +326,17 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 									  this->dependencies[d_index],
 									  0,
 									  this->new_init_networks[d_index]);
+				// temp
+				cout << "this->dependencies[d_index]:";
+				for (int l_index = 0; l_index < (int)this->dependencies[d_index].size(); l_index++) {
+					cout << " " << this->dependencies[d_index][l_index];
+				}
+				cout << endl;
+				cout << "this->new_init_networks[d_index]->init_states:";
+				for (int s_index = 0; s_index < (int)this->new_init_networks[d_index]->init_states.size(); s_index++) {
+					cout << " " << this->new_init_networks[d_index]->init_states[s_index];
+				}
+				cout << endl;
 			}
 			this->new_init_networks.clear();
 

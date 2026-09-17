@@ -113,22 +113,24 @@ void SolutionWrapper::experiment_end(double result) {
 					  this);
 	}
 
-	if (this->experiment_histories.size() == 0) {
-		create_experiment(this->scope_histories[0],
-						  this);
-	} else if (this->experiment_histories.size() >= 2) {
-		AbstractExperiment* keep_experiment = NULL;
-		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
-				it != this->experiment_histories.end(); it++) {
-			if (keep_experiment == NULL) {
-				keep_experiment = it->first;
-			} else {
-				if (it->first->further_than(keep_experiment)) {
-					delete keep_experiment;
-
+	if (this->run_type == RUN_TYPE_EXPLORE) {
+		if (this->experiment_histories.size() == 0) {
+			create_experiment(this->scope_histories[0],
+							  this);
+		} else if (this->experiment_histories.size() >= 2) {
+			AbstractExperiment* keep_experiment = NULL;
+			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
+					it != this->experiment_histories.end(); it++) {
+				if (keep_experiment == NULL) {
 					keep_experiment = it->first;
 				} else {
-					delete it->first;
+					if (it->first->further_than(keep_experiment)) {
+						delete keep_experiment;
+
+						keep_experiment = it->first;
+					} else {
+						delete it->first;
+					}
 				}
 			}
 		}
@@ -137,9 +139,6 @@ void SolutionWrapper::experiment_end(double result) {
 	if (this->run_type == RUN_TYPE_EXISTING) {
 		this->train_scope_histories.push_back(this->scope_histories[0]);
 		this->train_target_val_histories.push_back(result);
-		if (this->train_scope_histories.size() >= BATCH_SIZE) {
-			train_helper(this);
-		}
 	} else {
 		delete this->scope_histories[0];
 	}
@@ -150,20 +149,26 @@ void SolutionWrapper::experiment_end(double result) {
 
 	this->states.clear();
 
-	if (this->experiment_histories.size() == 1) {
-		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
-				it != this->experiment_histories.end(); it++) {
-			it->first->backprop(result,
-								it->second,
-								this);
-		}
+	if (this->train_scope_histories.size() >= BATCH_SIZE) {
+		train_helper(this);
 	}
 
-	for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
-			it != this->experiment_histories.end(); it++) {
-		delete it->second;
+	if (this->run_type == RUN_TYPE_EXPLORE) {
+		if (this->experiment_histories.size() == 1) {
+			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
+					it != this->experiment_histories.end(); it++) {
+				it->first->backprop(result,
+									it->second,
+									this);
+			}
+		}
+
+		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
+				it != this->experiment_histories.end(); it++) {
+			delete it->second;
+		}
+		this->experiment_histories.clear();
 	}
-	this->experiment_histories.clear();
 
 	this->iters_since_update++;
 }

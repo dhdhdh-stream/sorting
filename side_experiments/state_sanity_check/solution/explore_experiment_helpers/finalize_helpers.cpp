@@ -28,6 +28,12 @@ void ExploreExperiment::add(bool is_new_state,
 		wrapper->best_solution = new Solution(wrapper->solution);
 	}
 
+	// temp
+	{
+		double val_average = measure_helper(wrapper);
+		cout << "pre val_average: " << val_average << endl;
+	}
+
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
@@ -350,7 +356,7 @@ void ExploreExperiment::add(bool is_new_state,
 			new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
 			new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
 
-			new_scope->num_states = wrapper->solution->starting_scope->num_states;
+			new_scope->num_states = 0;
 
 			NoopNode* start_node = new NoopNode();
 			start_node->parent = new_scope;
@@ -365,18 +371,6 @@ void ExploreExperiment::add(bool is_new_state,
 			new_scope->nodes[scope_node->id] = scope_node;
 
 			scope_node->scope = wrapper->solution->starting_scope;
-
-			for (int s_index = 0; s_index < new_scope->num_states; s_index++) {
-				PassThroughNetwork* new_in_pass_through_network = new PassThroughNetwork(
-					s_index,
-					s_index);
-				scope_node->in_pass_through_networks.push_back(new_in_pass_through_network);
-
-				PassThroughNetwork* new_out_pass_through_network = new PassThroughNetwork(
-					s_index,
-					s_index);
-				scope_node->out_pass_through_networks.push_back(new_out_pass_through_network);
-			}
 
 			NoopNode* end_node = new NoopNode();
 			end_node->parent = new_scope;
@@ -444,12 +438,12 @@ void ExploreExperiment::add(bool is_new_state,
 	wrapper->solution->improvement_history.push_back(wrapper->solution->curr_score);
 	cout << "previous_val_average: " << wrapper->solution->curr_score << endl;
 
-	// // temp
-	// {
-	// 	double val_average = measure_helper(wrapper);
-	// 	cout << "post val_average: " << val_average << endl;
-	// 	ss << "post val_average: " << val_average << "; ";
-	// }
+	// temp
+	{
+		double val_average = measure_helper(wrapper);
+		cout << "post val_average: " << val_average << endl;
+		ss << "post val_average: " << val_average << "; ";
+	}
 
 	wrapper->solution->change_history.push_back(ss.str());
 
