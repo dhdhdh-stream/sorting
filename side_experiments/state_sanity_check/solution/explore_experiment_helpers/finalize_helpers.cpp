@@ -304,8 +304,12 @@ void ExploreExperiment::add(bool is_new_state,
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
+	new_branch_node->original_init_network = this->existing_init_network;
+	this->existing_init_network = NULL;
 	new_branch_node->original_network = this->existing_network;
 	this->existing_network = NULL;
+	new_branch_node->branch_init_network = this->new_init_network;
+	this->new_init_network = NULL;
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
 

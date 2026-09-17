@@ -19,7 +19,8 @@ using namespace std;
 
 const double MAX_DIFF = 0.0000001;
 
-void BranchNode::verify_step(SolutionWrapper* wrapper) {
+void BranchNode::verify_step(vector<double>& obs,
+							 SolutionWrapper* wrapper) {
 	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->original_next_node;
 	} else if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {
@@ -29,6 +30,9 @@ void BranchNode::verify_step(SolutionWrapper* wrapper) {
 
 		BranchNodeHistory* history = new BranchNodeHistory(this);
 		scope_history->node_histories.push_back(history);
+
+		this->original_init_network->activate(wrapper->states.back(),
+											  obs);
 
 		if (this->verify_original_state_vals.size() > 0) {
 			bool mismatch = false;
@@ -59,6 +63,9 @@ void BranchNode::verify_step(SolutionWrapper* wrapper) {
 
 			this->verify_original_state_vals.erase(this->verify_original_state_vals.begin());
 		}
+
+		this->branch_init_network->activate(wrapper->states.back(),
+											obs);
 
 		if (this->verify_branch_state_vals.size() > 0) {
 			bool mismatch = false;

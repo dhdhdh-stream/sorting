@@ -46,6 +46,9 @@ void ExploreExperiment::new_state_measure_check_activate(
 				curr_dependencies_obs[d_index]);
 		}
 	}
+	this->existing_init_network->init_activate(
+		existing_state,
+		obs);
 	this->existing_network->init_activate(existing_state);
 
 	vector<double> new_state(NEW_STATE_NUM_ADD, 0.0);
@@ -56,6 +59,9 @@ void ExploreExperiment::new_state_measure_check_activate(
 				curr_dependencies_obs[d_index]);
 		}
 	}
+	this->new_init_network->init_activate(
+		new_state,
+		obs);
 	this->new_network->init_activate(new_state);
 
 	bool is_branch;

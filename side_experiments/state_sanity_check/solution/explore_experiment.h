@@ -39,6 +39,7 @@ public:
 	double existing_val_average;
 
 	std::vector<InitNetwork*> existing_init_networks;
+	InitNetwork* existing_init_network;
 	ScoreNetwork* existing_network;
 
 	int num_instances_until_target;
@@ -49,13 +50,16 @@ public:
 
 	std::vector<std::vector<bool>> existing_dependencies_is_hit_histories;
 	std::vector<std::vector<std::vector<double>>> existing_dependencies_obs_histories;
+	std::vector<std::vector<double>> existing_obs_histories;
 	std::vector<double> existing_target_val_histories;
 
 	std::vector<std::vector<bool>> new_dependencies_is_hit_histories;
 	std::vector<std::vector<std::vector<double>>> new_dependencies_obs_histories;
+	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
 
 	std::vector<InitNetwork*> new_init_networks;
+	InitNetwork* new_init_network;
 	ScoreNetwork* new_network;
 
 	double sum_vals;
@@ -179,6 +183,7 @@ public:
 
 	std::vector<std::vector<bool>> dependencies_is_hit_histories;
 	std::vector<std::vector<std::vector<double>>> dependencies_obs_histories;
+	std::vector<std::vector<double>> obs_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<std::vector<double>> verify_original_state_vals;

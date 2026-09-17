@@ -59,7 +59,8 @@ pair<bool,int> SolutionWrapper::verify_step(vector<double> obs) {
 		} else {
 			if (this->node_context.back()->type == NODE_TYPE_BRANCH) {
 				BranchNode* branch_node = (BranchNode*)this->node_context.back();
-				branch_node->verify_step(this);
+				branch_node->verify_step(obs,
+										 this);
 			} else {
 				this->node_context.back()->step(obs,
 												action,

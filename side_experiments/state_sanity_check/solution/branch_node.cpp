@@ -27,7 +27,9 @@ BranchNode::BranchNode() {
 }
 
 BranchNode::~BranchNode() {
+	delete this->original_init_network;
 	delete this->original_network;
+	delete this->branch_init_network;
 	delete this->branch_network;
 
 	if (this->original_experiment != NULL) {
@@ -40,7 +42,9 @@ BranchNode::~BranchNode() {
 
 void BranchNode::copy_from(BranchNode* original,
 						   Solution* parent_solution) {
+	this->original_init_network = new InitNetwork(original->original_init_network);
 	this->original_network = new ScoreNetwork(original->original_network);
+	this->branch_init_network = new InitNetwork(original->branch_init_network);
 	this->branch_network = new ScoreNetwork(original->branch_network);
 
 	this->original_next_node_id = original->original_next_node_id;
@@ -58,7 +62,9 @@ void BranchNode::copy_from(BranchNode* original,
 }
 
 void BranchNode::save(ofstream& output_file) {
+	this->original_init_network->save(output_file);
 	this->original_network->save(output_file);
+	this->branch_init_network->save(output_file);
 	this->branch_network->save(output_file);
 
 	output_file << this->original_next_node_id << endl;
@@ -80,7 +86,9 @@ void BranchNode::save(ofstream& output_file) {
 
 void BranchNode::load(ifstream& input_file,
 					  Solution* parent_solution) {
+	this->original_init_network = new InitNetwork(input_file);
 	this->original_network = new ScoreNetwork(input_file);
+	this->branch_init_network = new InitNetwork(input_file);
 	this->branch_network = new ScoreNetwork(input_file);
 
 	string original_next_node_id_line;
@@ -161,10 +169,15 @@ BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
 TrainBranchNodeHistory::TrainBranchNodeHistory(BranchNode* node) {
 	this->node = node;
 
+	this->init_network_history = NULL;
 	this->score_network_history = NULL;
 }
 
 TrainBranchNodeHistory::~TrainBranchNodeHistory() {
+	if (this->init_network_history != NULL) {
+		delete this->init_network_history;
+	}
+
 	if (this->score_network_history != NULL) {
 		delete this->score_network_history;
 	}

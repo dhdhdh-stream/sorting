@@ -19,8 +19,9 @@ const int MEASURE_NUM_DATAPOINTS = 10;
 const int TRAIN_EXISTING_NUM_DATAPOINTS = 4000;
 const std::vector<int> TRAIN_NEW_NUM_DATAPOINTS{100, 500, 4000};
 /**
- * - needs to be high
- *   - update doesn't save bad initial networks
+ * - good to have large amount of samples
+ *   - update can save bad initial networks but requires many samples
+ *     - 4000/40000 better than 100/400000
  */
 const int MEASURE_NUM_DATAPOINTS = 200;
 #endif /* MDEBUG */

@@ -20,6 +20,7 @@ using namespace std;
 
 void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	vector<InitNetwork*> potential_init_networks(this->dependencies.size());
+	InitNetwork* potential_init_network;
 	ScoreNetwork* potential_new_network;
 	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 		Scope* scope = get_dependency_scope(this->scope_context,
@@ -38,6 +39,9 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
 			init_states.push_back(this->scope_context->num_states + NEW_STATE_NUM_ADD + s_index);
 		}
+		potential_init_network = new InitNetwork(
+			init_states,
+			wrapper->solution->num_obs);
 		potential_new_network = new ScoreNetwork(init_states);
 	}
 
@@ -62,12 +66,18 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			}
 		}
 
+		potential_init_network->init_activate(
+			new_state,
+			this->new_obs_histories[rand_index]);
+
 		potential_new_network->init_activate(new_state);
 
 		vector<double> new_state_errors(NEW_STATE_NUM_ADD, 0.0);
 
 		potential_new_network->init_backprop(this->new_target_val_histories[rand_index],
 											 new_state_errors);
+
+		potential_init_network->init_backprop(new_state_errors);
 
 		for (int d_index = (int)this->dependencies.size()-1; d_index >= 0; d_index--) {
 			if (is_activate[d_index]) {
@@ -87,6 +97,9 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			potential_init_networks[d_index]->state_input->errors(i_index) = 0.0;
 		}
 	}
+	for (int i_index = 0; i_index < (int)potential_init_network->state_input->errors.size(); i_index++) {
+		potential_init_network->state_input->errors(i_index) = 0.0;
+	}
 	for (int i_index = 0; i_index < (int)potential_new_network->state_input->errors.size(); i_index++) {
 		potential_new_network->state_input->errors(i_index) = 0.0;
 	}
@@ -102,6 +115,9 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 					this->existing_dependencies_obs_histories[h_index][d_index]);
 			}
 		}
+		this->existing_init_network->init_activate(
+			existing_state,
+			this->existing_obs_histories[h_index]);
 		this->existing_network->init_activate(existing_state);
 		double existing_predicted = this->existing_network->output->acti_vals[0];
 
@@ -113,6 +129,9 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 					this->existing_dependencies_obs_histories[h_index][d_index]);
 			}
 		}
+		potential_init_network->init_activate(
+			new_state,
+			this->existing_obs_histories[h_index]);
 		potential_new_network->init_activate(new_state);
 		double new_predicted = potential_new_network->output->acti_vals[0];
 
@@ -133,6 +152,9 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 					this->new_dependencies_obs_histories[h_index][d_index]);
 			}
 		}
+		this->existing_init_network->init_activate(
+			existing_state,
+			this->new_obs_histories[h_index]);
 		this->existing_network->init_activate(existing_state);
 		double existing_predicted = this->existing_network->output->acti_vals[0];
 
@@ -144,6 +166,9 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 					this->new_dependencies_obs_histories[h_index][d_index]);
 			}
 		}
+		potential_init_network->init_activate(
+			new_state,
+			this->new_obs_histories[h_index]);
 		potential_new_network->init_activate(new_state);
 		double new_predicted = potential_new_network->output->acti_vals[0];
 
@@ -230,6 +255,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	if (is_success) {
 	#endif /* MDEBUG */
 		this->new_init_networks = potential_init_networks;
+		this->new_init_network = potential_init_network;
 		this->new_network = potential_new_network;
 
 		this->sum_vals = 0.0;
@@ -240,6 +266,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		for (int n_index = 0; n_index < (int)potential_init_networks.size(); n_index++) {
 			delete potential_init_networks[n_index];
 		}
+		delete potential_init_network;
 		delete potential_new_network;
 
 		delete this;

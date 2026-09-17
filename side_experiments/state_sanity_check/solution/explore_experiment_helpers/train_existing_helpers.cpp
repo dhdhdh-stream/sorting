@@ -40,6 +40,7 @@ void ExploreExperiment::train_existing_check_activate(
 	}
 	history->dependencies_is_hit_histories.push_back(curr_dependencies_is_hit);
 	history->dependencies_obs_histories.push_back(curr_dependencies_obs);
+	history->obs_histories.push_back(obs);
 }
 
 void ExploreExperiment::train_existing_backprop(
@@ -49,6 +50,7 @@ void ExploreExperiment::train_existing_backprop(
 	for (int i_index = 0; i_index < (int)history->dependencies_is_hit_histories.size(); i_index++) {
 		this->existing_dependencies_is_hit_histories.push_back(history->dependencies_is_hit_histories[i_index]);
 		this->existing_dependencies_obs_histories.push_back(history->dependencies_obs_histories[i_index]);
+		this->existing_obs_histories.push_back(history->obs_histories[i_index]);
 		this->existing_target_val_histories.push_back(target_val);
 	}
 
@@ -59,6 +61,7 @@ void ExploreExperiment::train_existing_backprop(
 		this->existing_val_average = this->sum_vals / this->state_iter;
 
 		vector<InitNetwork*> potential_init_networks(this->dependencies.size());
+		InitNetwork* potential_init_network;
 		ScoreNetwork* potential_new_network;
 		for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
 			Scope* scope = get_dependency_scope(this->scope_context,
@@ -77,6 +80,9 @@ void ExploreExperiment::train_existing_backprop(
 			for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
 				init_states.push_back(this->scope_context->num_states + s_index);
 			}
+			potential_init_network = new InitNetwork(
+				init_states,
+				wrapper->solution->num_obs);
 			potential_new_network = new ScoreNetwork(init_states);
 		}
 
@@ -101,12 +107,18 @@ void ExploreExperiment::train_existing_backprop(
 				}
 			}
 
+			potential_init_network->init_activate(
+				new_state,
+				this->existing_obs_histories[rand_index]);
+
 			potential_new_network->init_activate(new_state);
 
 			vector<double> new_state_errors(NEW_STATE_NUM_ADD, 0.0);
 
 			potential_new_network->init_backprop(this->existing_target_val_histories[rand_index],
 												 new_state_errors);
+
+			potential_init_network->init_backprop(new_state_errors);
 
 			for (int d_index = (int)this->dependencies.size()-1; d_index >= 0; d_index--) {
 				if (is_activate[d_index]) {
@@ -126,11 +138,15 @@ void ExploreExperiment::train_existing_backprop(
 				potential_init_networks[d_index]->state_input->errors(i_index) = 0.0;
 			}
 		}
+		for (int i_index = 0; i_index < (int)potential_init_network->state_input->errors.size(); i_index++) {
+			potential_init_network->state_input->errors(i_index) = 0.0;
+		}
 		for (int i_index = 0; i_index < (int)potential_new_network->state_input->errors.size(); i_index++) {
 			potential_new_network->state_input->errors(i_index) = 0.0;
 		}
 
 		this->existing_init_networks = potential_init_networks;
+		this->existing_init_network = potential_init_network;
 		this->existing_network = potential_new_network;
 
 		this->best_surprise = numeric_limits<double>::lowest();

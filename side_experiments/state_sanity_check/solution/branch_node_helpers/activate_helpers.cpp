@@ -29,6 +29,11 @@ void BranchNode::step(vector<double>& obs,
 		BranchNodeHistory* history = new BranchNodeHistory(this);
 		scope_history->node_histories.push_back(history);
 
+		this->original_init_network->activate(wrapper->states.back(),
+											  obs);
+		this->branch_init_network->activate(wrapper->states.back(),
+											obs);
+
 		bool is_branch;
 		this->original_network->activate(wrapper->states.back());
 		this->branch_network->activate(wrapper->states.back());

@@ -48,6 +48,9 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 					curr_dependencies_obs[d_index]);
 			}
 		}
+		this->existing_init_network->init_activate(
+			existing_state,
+			obs);
 		this->existing_network->init_activate(existing_state);
 		history->existing_predicted.push_back(this->existing_network->output->acti_vals(0));
 

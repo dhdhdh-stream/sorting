@@ -84,10 +84,16 @@ void backprop_helper(TrainScopeHistory* scope_history,
 					branch_node->branch_network->load(branch_node_history->score_network_history);
 					branch_node->branch_network->backprop(target_val,
 														  state_error);
+
+					branch_node->branch_init_network->load(branch_node_history->init_network_history);
+					branch_node->branch_init_network->backprop(state_error);
 				} else {
 					branch_node->original_network->load(branch_node_history->score_network_history);
 					branch_node->original_network->backprop(target_val,
 															state_error);
+
+					branch_node->original_init_network->load(branch_node_history->init_network_history);
+					branch_node->branch_init_network->backprop(state_error);
 				}
 			}
 			break;
@@ -152,12 +158,24 @@ void update_helper(TrainScopeHistory* scope_history,
 				TrainBranchNodeHistory* branch_node_history = (TrainBranchNodeHistory*)scope_history->node_histories[h_index];
 				BranchNode* branch_node = (BranchNode*)node;
 				if (branch_node_history->is_branch) {
+					if (branch_node->branch_init_network->last_update_iter != iter_index) {
+						branch_node->branch_init_network->update();
+
+						branch_node->branch_init_network->last_update_iter = iter_index;
+					}
+
 					if (branch_node->branch_network->last_update_iter != iter_index) {
 						branch_node->branch_network->update();
 
 						branch_node->branch_network->last_update_iter = iter_index;
 					}
 				} else {
+					if (branch_node->original_init_network->last_update_iter != iter_index) {
+						branch_node->original_init_network->update();
+
+						branch_node->original_init_network->last_update_iter = iter_index;
+					}
+
 					if (branch_node->original_network->last_update_iter != iter_index) {
 						branch_node->original_network->update();
 

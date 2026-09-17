@@ -28,7 +28,9 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 	this->is_branch = is_branch;
 	this->exit_next_node = exit_next_node;
 
+	this->existing_init_network = NULL;
 	this->existing_network = NULL;
+	this->new_init_network = NULL;
 	this->new_network = NULL;
 
 	this->dependencies = dependencies;
@@ -75,12 +77,20 @@ ExploreExperiment::~ExploreExperiment() {
 		delete this->existing_init_networks[n_index];
 	}
 
+	if (this->existing_init_network != NULL) {
+		delete this->existing_init_network;
+	}
+
 	if (this->existing_network != NULL) {
 		delete this->existing_network;
 	}
 
 	for (int n_index = 0; n_index < (int)this->new_init_networks.size(); n_index++) {
 		delete this->new_init_networks[n_index];
+	}
+
+	if (this->new_init_network != NULL) {
+		delete this->new_init_network;
 	}
 
 	if (this->new_network != NULL) {
