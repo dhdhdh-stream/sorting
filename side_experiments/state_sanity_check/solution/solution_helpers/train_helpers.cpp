@@ -58,6 +58,11 @@ void backprop_helper(TrainScopeHistory* scope_history,
 					PassThroughNetwork* pass_through_network = scope_node->out_pass_through_networks[n_index];
 					double error = state_error(pass_through_network->back_state_index);
 					inner_state_error(pass_through_network->front_state_index) += error;
+
+					/**
+					 * - PassThroughNetworks are paired and set rather than add
+					 */
+					state_error(pass_through_network->back_state_index) = 0.0;
 				}
 
 				backprop_helper(scope_node_history->scope_history,

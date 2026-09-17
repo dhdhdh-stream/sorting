@@ -31,7 +31,7 @@ void ScopeNode::experiment_step(vector<double>& obs,
 	for (int n_index = 0; n_index < (int)this->in_pass_through_networks.size(); n_index++) {
 		PassThroughNetwork* pass_through_network = this->in_pass_through_networks[n_index];
 		double val = wrapper->states[wrapper->states.size()-2](pass_through_network->front_state_index);
-		wrapper->states.back()(pass_through_network->back_state_index) += val;
+		wrapper->states.back()(pass_through_network->back_state_index) = val;
 	}
 
 	this->scope->experiment_start_activate(obs,
@@ -50,7 +50,7 @@ void ScopeNode::experiment_exit_step(vector<double>& obs,
 	for (int n_index = 0; n_index < (int)this->out_pass_through_networks.size(); n_index++) {
 		PassThroughNetwork* pass_through_network = this->out_pass_through_networks[n_index];
 		double val = wrapper->states.back()[pass_through_network->front_state_index];
-		wrapper->states[wrapper->states.size()-2][pass_through_network->back_state_index] += val;
+		wrapper->states[wrapper->states.size()-2][pass_through_network->back_state_index] = val;
 	}
 
 	wrapper->scope_histories.pop_back();

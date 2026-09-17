@@ -17,6 +17,8 @@
 
 using namespace std;
 
+const double MAX_DIFF = 0.0000001;
+
 void BranchNode::verify_step(SolutionWrapper* wrapper) {
 	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->original_next_node;
@@ -29,11 +31,28 @@ void BranchNode::verify_step(SolutionWrapper* wrapper) {
 		scope_history->node_histories.push_back(history);
 
 		if (this->verify_original_state_vals.size() > 0) {
+			bool mismatch = false;
 			vector<double> original_states;
 			for (int s_index = 0; s_index < (int)this->original_network->init_states.size(); s_index++) {
 				original_states.push_back(wrapper->states.back()(this->original_network->init_states[s_index]));
+
+				if (abs(original_states[s_index] - this->verify_original_state_vals[0][s_index]) > MAX_DIFF) {
+					mismatch = true;
+				}
 			}
-			if (original_states != this->verify_original_state_vals[0]) {
+			if (mismatch) {
+				cout << "this->parent->id: " << this->parent->id << endl;
+				cout << "this->id: " << this->id << endl;
+				cout << "original_states:";
+				for (int s_index = 0; s_index < (int)original_states.size(); s_index++) {
+					cout << " " << original_states[s_index];
+				}
+				cout << endl;
+				cout << "this->verify_original_state_vals[0]:";
+				for (int s_index = 0; s_index < (int)this->verify_original_state_vals[0].size(); s_index++) {
+					cout << " " << this->verify_original_state_vals[0][s_index];
+				}
+				cout << endl;
 				cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
 				throw invalid_argument("original_states != this->verify_original_state_vals[0]");
 			}
@@ -42,11 +61,28 @@ void BranchNode::verify_step(SolutionWrapper* wrapper) {
 		}
 
 		if (this->verify_branch_state_vals.size() > 0) {
+			bool mismatch = false;
 			vector<double> branch_states;
 			for (int s_index = 0; s_index < (int)this->branch_network->init_states.size(); s_index++) {
 				branch_states.push_back(wrapper->states.back()(this->branch_network->init_states[s_index]));
+
+				if (abs(branch_states[s_index] - this->verify_branch_state_vals[0][s_index]) > MAX_DIFF) {
+					mismatch = true;
+				}
 			}
-			if (branch_states != this->verify_branch_state_vals[0]) {
+			if (mismatch) {
+				cout << "this->parent->id: " << this->parent->id << endl;
+				cout << "this->id: " << this->id << endl;
+				cout << "branch_states:";
+				for (int s_index = 0; s_index < (int)branch_states.size(); s_index++) {
+					cout << " " << branch_states[s_index];
+				}
+				cout << endl;
+				cout << "this->verify_branch_state_vals[0]:";
+				for (int s_index = 0; s_index < (int)this->verify_branch_state_vals[0].size(); s_index++) {
+					cout << " " << this->verify_branch_state_vals[0][s_index];
+				}
+				cout << endl;
 				cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
 				throw invalid_argument("branch_states != this->verify_branch_state_vals[0]");
 			}
