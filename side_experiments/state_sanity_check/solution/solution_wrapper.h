@@ -54,6 +54,9 @@ public:
 	int run_index;
 	unsigned long starting_run_seed;
 	unsigned long curr_run_seed;
+
+	std::vector<Problem*> verify_problems;
+	std::vector<unsigned long> verify_run_seeds;
 	#endif /* MDEBUG */
 
 	SolutionWrapper(ProblemType* problem_type);
@@ -69,6 +72,12 @@ public:
 	std::tuple<bool,bool,int> experiment_step(std::vector<double> obs);
 	void set_action(int action);
 	void experiment_end(double result);
+
+	#if defined(MDEBUG) && MDEBUG
+	void verify_init(std::vector<double> obs);
+	std::pair<bool,int> verify_step(std::vector<double> obs);
+	void verify_end();
+	#endif /* MDEBUG */
 
 	bool is_done();
 

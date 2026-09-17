@@ -312,6 +312,15 @@ void ExploreExperiment::add(bool is_new_state,
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;
 
+	#if defined(MDEBUG) && MDEBUG
+	wrapper->verify_problems = this->verify_problems;
+	this->verify_problems.clear();
+	wrapper->verify_run_seeds = this->verify_run_seeds;
+
+	new_branch_node->verify_original_state_vals = this->verify_original_state_vals;
+	new_branch_node->verify_branch_state_vals = this->verify_branch_state_vals;
+	#endif /* MDEBUG */
+
 	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
 		int next_node_id;
 		AbstractNode* next_node;

@@ -1,13 +1,3 @@
-// - maybe state not trained for prediction?
-//   - e.g., maybe captures how many squares are open
-//     - but not exactly which specific ones are
-//       - so can never make exact predictions off of existing state
-
-// - not important to predict everything, as not everything important...
-//   - ...but if something is important for predicting changes to existing state, then important to track?
-
-// - maybe have state specific to making predictions
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -101,6 +91,33 @@ int main(int argc, char* argv[]) {
 				break;
 			}
 		}
+
+		#if defined(MDEBUG) && MDEBUG
+		while (solution_wrapper->verify_problems.size() > 0) {
+			Problem* problem = solution_wrapper->verify_problems[0];
+			solution_wrapper->verify_problems.erase(solution_wrapper->verify_problems.begin());
+			solution_wrapper->problem = problem;
+
+			vector<double> obs = problem->get_observations();
+
+			solution_wrapper->verify_init(obs);
+
+			while (true) {
+				pair<bool,int> next = solution_wrapper->verify_step(obs);
+				if (next.first) {
+					break;
+				} else {
+					problem->perform_action(next.second);
+				}
+
+				obs = problem->get_observations();
+			}
+
+			solution_wrapper->verify_end();
+
+			delete problem;
+		}
+		#endif /* MDEBUG */
 
 		solution_wrapper->save("saves/", filename);
 

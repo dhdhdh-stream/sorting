@@ -27,6 +27,9 @@ const int EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
 const int EXPLORE_EXPERIMENT_STATE_NEW_STATE_MEASURE = 3;
+#if defined(MDEBUG) && MDEBUG
+const int EXPLORE_EXPERIMENT_STATE_VERIFY = 4;
+#endif /* MDEBUG */
 
 class ExploreExperimentHistory;
 class ExploreExperiment : public AbstractExperiment {
@@ -56,6 +59,13 @@ public:
 	ScoreNetwork* new_network;
 
 	double sum_vals;
+
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<Problem*> verify_problems;
+	std::vector<unsigned long> verify_run_seeds;
+	std::vector<std::vector<double>> verify_original_state_vals;
+	std::vector<std::vector<double>> verify_branch_state_vals;
+	#endif /* MDEBUG */
 
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,
@@ -139,6 +149,23 @@ public:
 									ExploreExperimentHistory* history,
 									SolutionWrapper* wrapper);
 
+	#if defined(MDEBUG) && MDEBUG
+	void verify_check_activate(std::vector<double>& obs,
+							   ExploreExperimentHistory* history,
+							   SolutionWrapper* wrapper);
+	void verify_step(std::vector<double>& obs,
+					 int& action,
+					 bool& is_next,
+					 SolutionWrapper* wrapper);
+	void verify_callback(std::vector<double>& obs,
+						 SolutionWrapper* wrapper);
+	void verify_exit_step(std::vector<double>& obs,
+						  SolutionWrapper* wrapper);
+	void verify_backprop(double target_val,
+						 ExploreExperimentHistory* history,
+						 SolutionWrapper* wrapper);
+	#endif /* MDEBUG */
+
 	void add(bool is_new_state,
 			 SolutionWrapper* wrapper);
 };
@@ -152,6 +179,11 @@ public:
 
 	std::vector<std::vector<bool>> dependencies_is_hit_histories;
 	std::vector<std::vector<std::vector<double>>> dependencies_obs_histories;
+
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<std::vector<double>> verify_original_state_vals;
+	std::vector<std::vector<double>> verify_branch_state_vals;
+	#endif /* MDEBUG */
 
 	ExploreExperimentHistory(ExploreExperiment* experiment);
 };

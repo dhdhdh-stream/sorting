@@ -220,6 +220,10 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 			cout << "local_improvement: " << local_improvement << endl;
 			cout << "global_improvement: " << global_improvement << endl;
 
+			#if defined(MDEBUG) && MDEBUG
+			this->state = EXPLORE_EXPERIMENT_STATE_VERIFY;
+			this->state_iter = 0;
+			#else
 			set<Scope*> scopes_needed;
 			set<ScopeNode*> transitions_needed;
 			scopes_needed.insert(this->scope_context);
@@ -342,6 +346,7 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 
 			add(true,
 				wrapper);
+			#endif /* MDEBUG */
 		} else {
 			delete this;
 		}
