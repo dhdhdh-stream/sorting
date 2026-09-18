@@ -30,6 +30,7 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 
 	this->existing_network = NULL;
 	this->new_network = NULL;
+	this->init_network = NULL;
 
 	this->dependencies = dependencies;
 	for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
@@ -94,6 +95,10 @@ ExploreExperiment::~ExploreExperiment() {
 
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
 		delete this->init_networks[n_index];
+	}
+
+	if (this->init_network != NULL) {
+		delete this->init_network;
 	}
 }
 

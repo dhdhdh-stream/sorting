@@ -313,6 +313,8 @@ void ExploreExperiment::add(bool is_new_state,
 
 	new_branch_node->original_network = this->existing_network;
 	this->existing_network = NULL;
+	new_branch_node->branch_init_network = this->init_network;
+	this->init_network = NULL;
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
 

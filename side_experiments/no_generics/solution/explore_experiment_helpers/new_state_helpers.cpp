@@ -44,6 +44,17 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			scope->num_states + NEW_STATE_NUM_ADD,
 			wrapper->solution->num_obs);
 	}
+	InitNetwork* potential_init_network;
+	{
+		vector<int> init_states;
+		for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
+			init_states.push_back(this->scope_context->num_states + NEW_STATE_NUM_ADD + s_index);
+		}
+		potential_init_network = new InitNetwork(
+			init_states,
+			this->scope_context->num_states + NEW_STATE_NUM_ADD,
+			wrapper->solution->num_obs);
+	}
 	ScoreNetwork* potential_new_network = new ScoreNetwork(this->scope_context->num_states + NEW_STATE_NUM_ADD);
 
 	uniform_int_distribution<int> new_train_distribution(0, this->new_dependencies_is_hit_histories.size()-1);
@@ -68,6 +79,11 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 			}
 		}
 
+		potential_init_network->init_activate(
+			this->new_state_histories[rand_index],
+			new_state,
+			this->new_obs_histories[rand_index]);
+
 		potential_new_network->init_activate(this->new_state_histories[rand_index],
 											 new_state);
 
@@ -75,6 +91,8 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 
 		potential_new_network->init_backprop(this->new_target_val_histories[rand_index],
 											 new_state_errors);
+
+		potential_init_network->init_backprop(new_state_errors);
 
 		for (int d_index = (int)this->dependencies.size()-1; d_index >= 0; d_index--) {
 			if (is_activate[d_index]) {
@@ -93,6 +111,9 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		for (int i_index = 0; i_index < (int)potential_init_networks[d_index]->state_input->errors.size(); i_index++) {
 			potential_init_networks[d_index]->state_input->errors(i_index) = 0.0;
 		}
+	}
+	for (int i_index = 0; i_index < (int)potential_init_network->state_input->errors.size(); i_index++) {
+		potential_init_network->state_input->errors(i_index) = 0.0;
 	}
 	for (int i_index = 0; i_index < (int)potential_new_network->state_input->errors.size(); i_index++) {
 		potential_new_network->state_input->errors(i_index) = 0.0;
@@ -113,6 +134,10 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 					this->existing_dependencies_obs_histories[h_index][d_index]);
 			}
 		}
+		potential_init_network->init_activate(
+			this->existing_state_histories[h_index],
+			new_state,
+			this->existing_obs_histories[h_index]);
 		potential_new_network->init_activate(this->existing_state_histories[h_index],
 											 new_state);
 		double new_predicted = potential_new_network->output->acti_vals[0];
@@ -138,6 +163,10 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 					this->new_dependencies_obs_histories[h_index][d_index]);
 			}
 		}
+		potential_init_network->init_activate(
+			this->new_state_histories[h_index],
+			new_state,
+			this->new_obs_histories[h_index]);
 		potential_new_network->init_activate(this->new_state_histories[h_index],
 											 new_state);
 		double new_predicted = potential_new_network->output->acti_vals[0];
@@ -225,6 +254,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	if (is_success) {
 	#endif /* MDEBUG */
 		this->new_network = potential_new_network;
+		this->init_network = potential_init_network;
 		this->init_networks = potential_init_networks;
 
 		this->sum_vals = 0.0;
@@ -235,6 +265,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 		for (int n_index = 0; n_index < (int)potential_init_networks.size(); n_index++) {
 			delete potential_init_networks[n_index];
 		}
+		delete potential_init_network;
 		delete potential_new_network;
 
 		delete this;

@@ -35,7 +35,7 @@ void ScopeNode::train_step(AbstractNodeHistory* history,
 		for (int n_index = 0; n_index < (int)this->in_pass_through_networks.size(); n_index++) {
 			PassThroughNetwork* pass_through_network = this->in_pass_through_networks[n_index];
 			double val = state(pass_through_network->front_state_index);
-			inner_state(pass_through_network->back_state_index) += val;
+			inner_state(pass_through_network->back_state_index) = val;
 		}
 
 		this->in_network->activate(state,
@@ -60,7 +60,7 @@ void ScopeNode::train_step(AbstractNodeHistory* history,
 		for (int n_index = 0; n_index < (int)this->out_pass_through_networks.size(); n_index++) {
 			PassThroughNetwork* pass_through_network = this->out_pass_through_networks[n_index];
 			double val = inner_state(pass_through_network->front_state_index);
-			state(pass_through_network->back_state_index) += val;
+			state(pass_through_network->back_state_index) = val;
 		}
 
 		this->out_network->activate(inner_state,

@@ -248,7 +248,7 @@ void InitNetwork::load(InitNetworkHistory* history) {
 
 void InitNetwork::backprop(Eigen::VectorXf& state_errors) {
 	for (int i_index = 0; i_index < (int)this->init_states.size(); i_index++) {
-		this->output->errors(i_index) = state_errors[this->init_states[i_index]];
+		this->output->errors(i_index) = state_errors(this->init_states[i_index]);
 	}
 
 	this->output->backprop();

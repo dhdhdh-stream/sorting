@@ -44,6 +44,7 @@ void ExploreExperiment::train_existing_check_activate(
 	history->dependencies_state_histories.push_back(curr_dependencies_state);
 	history->dependencies_obs_histories.push_back(curr_dependencies_obs);
 	history->state_histories.push_back(wrapper->states.back());
+	history->obs_histories.push_back(obs);
 }
 
 void ExploreExperiment::train_existing_backprop(
@@ -55,6 +56,7 @@ void ExploreExperiment::train_existing_backprop(
 		this->existing_dependencies_state_histories.push_back(history->dependencies_state_histories[i_index]);
 		this->existing_dependencies_obs_histories.push_back(history->dependencies_obs_histories[i_index]);
 		this->existing_state_histories.push_back(history->state_histories[i_index]);
+		this->existing_obs_histories.push_back(history->obs_histories[i_index]);
 		this->existing_target_val_histories.push_back(target_val);
 	}
 

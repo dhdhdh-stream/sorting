@@ -67,6 +67,11 @@ void backprop_helper(TrainScopeHistory* scope_history,
 						PassThroughNetwork* pass_through_network = scope_node->out_pass_through_networks[n_index];
 						double error = state_error(pass_through_network->back_state_index);
 						inner_state_error(pass_through_network->front_state_index) += error;
+
+						/**
+						 * - PassThroughNetworks are paired and set rather than add
+						 */
+						state_error(pass_through_network->back_state_index) = 0.0;
 					}
 				}
 
@@ -94,6 +99,11 @@ void backprop_helper(TrainScopeHistory* scope_history,
 					branch_node->branch_network->load(branch_node_history->score_network_history);
 					branch_node->branch_network->backprop(target_val,
 														  state_error);
+
+					if (branch_node->branch_init_network != NULL) {
+						branch_node->branch_init_network->load(branch_node_history->init_network_history);
+						branch_node->branch_init_network->backprop(state_error);
+					}
 				} else {
 					branch_node->original_network->load(branch_node_history->score_network_history);
 					branch_node->original_network->backprop(target_val,
@@ -200,6 +210,12 @@ void update_helper(TrainScopeHistory* scope_history,
 				TrainBranchNodeHistory* branch_node_history = (TrainBranchNodeHistory*)scope_history->node_histories[h_index];
 				BranchNode* branch_node = (BranchNode*)node;
 				if (branch_node_history->is_branch) {
+					if (branch_node->branch_init_network->last_update_iter != iter_index) {
+						branch_node->branch_init_network->update();
+
+						branch_node->branch_init_network->last_update_iter = iter_index;
+					}
+
 					if (branch_node->branch_network->last_update_iter != iter_index) {
 						branch_node->branch_network->update();
 

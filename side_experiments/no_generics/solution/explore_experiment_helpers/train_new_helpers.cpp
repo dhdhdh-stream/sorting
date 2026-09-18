@@ -48,6 +48,7 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 		history->dependencies_state_histories.push_back(curr_dependencies_state);
 		history->dependencies_obs_histories.push_back(curr_dependencies_obs);
 		history->state_histories.push_back(wrapper->states.back());
+		history->obs_histories.push_back(obs);
 
 		double average_instances_per_hit;
 		switch (this->node_context->type) {
@@ -152,6 +153,7 @@ void ExploreExperiment::train_new_backprop(double target_val,
 			this->new_dependencies_state_histories.push_back(history->dependencies_state_histories[i_index]);
 			this->new_dependencies_obs_histories.push_back(history->dependencies_obs_histories[i_index]);
 			this->new_state_histories.push_back(history->state_histories[i_index]);
+			this->new_obs_histories.push_back(history->obs_histories[i_index]);
 			this->new_target_val_histories.push_back(target_val);
 		}
 

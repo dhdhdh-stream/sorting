@@ -48,16 +48,23 @@ public:
 	std::vector<std::vector<Eigen::VectorXf>> existing_dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> existing_dependencies_obs_histories;
 	std::vector<Eigen::VectorXf> existing_state_histories;
+	std::vector<std::vector<double>> existing_obs_histories;
 	std::vector<double> existing_target_val_histories;
 
 	std::vector<std::vector<bool>> new_dependencies_is_hit_histories;
 	std::vector<std::vector<Eigen::VectorXf>> new_dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> new_dependencies_obs_histories;
 	std::vector<Eigen::VectorXf> new_state_histories;
+	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
 
 	ScoreNetwork* new_network;
 	std::vector<InitNetwork*> init_networks;
+	InitNetwork* init_network;
+	/**
+	 * - significantly impactful to have access to nearby obs
+	 *   - older obs too likely to be meaningless?
+	 */
 
 	double sum_vals;
 
@@ -173,6 +180,7 @@ public:
 	std::vector<std::vector<Eigen::VectorXf>> dependencies_state_histories;
 	std::vector<std::vector<std::vector<double>>> dependencies_obs_histories;
 	std::vector<Eigen::VectorXf> state_histories;
+	std::vector<std::vector<double>> obs_histories;
 
 	ExploreExperimentHistory(ExploreExperiment* experiment);
 };

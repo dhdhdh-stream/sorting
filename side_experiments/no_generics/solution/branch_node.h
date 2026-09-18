@@ -13,6 +13,7 @@
 #include "abstract_node.h"
 
 class InitNetwork;
+class InitNetworkHistory;
 class Problem;
 class ScopeHistory;
 class ScoreNetwork;
@@ -26,6 +27,7 @@ class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
 	ScoreNetwork* original_network;
+	InitNetwork* branch_init_network;
 	ScoreNetwork* branch_network;
 
 	int original_next_node_id;
@@ -77,6 +79,8 @@ public:
 
 class BranchNodeHistory : public AbstractNodeHistory {
 public:
+	std::vector<double> obs;
+
 	bool is_branch;
 
 	BranchNodeHistory(BranchNode* node);
@@ -86,6 +90,7 @@ class TrainBranchNodeHistory : public TrainAbstractNodeHistory {
 public:
 	bool is_branch;
 
+	InitNetworkHistory* init_network_history;
 	ScoreNetworkHistory* score_network_history;
 
 	TrainBranchNodeHistory(BranchNode* node);

@@ -54,6 +54,10 @@ void ExploreExperiment::new_state_measure_check_activate(
 				curr_dependencies_obs[d_index]);
 		}
 	}
+	this->init_network->init_activate(
+		wrapper->states.back(),
+		new_state,
+		obs);
 	this->new_network->init_activate(wrapper->states.back(),
 									 new_state);
 
