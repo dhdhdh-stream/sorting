@@ -48,7 +48,7 @@ void ExploreExperiment::new_state_helper(SolutionWrapper* wrapper) {
 	{
 		vector<int> init_states;
 		for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
-			init_states.push_back(this->scope_context->num_states + NEW_STATE_NUM_ADD + s_index);
+			init_states.push_back(this->scope_context->num_states + s_index);
 		}
 		potential_init_network = new InitNetwork(
 			init_states,

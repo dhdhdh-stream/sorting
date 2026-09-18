@@ -280,6 +280,9 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 							BranchNode* branch_node = (BranchNode*)it->second;
 
 							branch_node->original_network->add_states(scope->num_states);
+							if (branch_node->branch_init_network != NULL) {
+								branch_node->branch_init_network->add_states(scope->num_states);
+							}
 							branch_node->branch_network->add_states(scope->num_states);
 						}
 						break;

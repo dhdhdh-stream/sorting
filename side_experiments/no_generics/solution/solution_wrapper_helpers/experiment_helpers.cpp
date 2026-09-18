@@ -141,9 +141,6 @@ void SolutionWrapper::experiment_end(double result) {
 	if (this->run_type == RUN_TYPE_EXISTING) {
 		this->train_scope_histories.push_back(this->scope_histories[0]);
 		this->train_target_val_histories.push_back(result);
-		if (this->train_scope_histories.size() >= BATCH_SIZE) {
-			train_helper(this);
-		}
 	} else {
 		delete this->scope_histories[0];
 	}
@@ -153,6 +150,10 @@ void SolutionWrapper::experiment_end(double result) {
 	this->experiment_context.clear();
 
 	this->states.clear();
+
+	if (this->train_scope_histories.size() >= BATCH_SIZE) {
+		train_helper(this);
+	}
 
 	if (this->run_type == RUN_TYPE_EXPLORE) {
 		if (this->experiment_histories.size() == 1) {

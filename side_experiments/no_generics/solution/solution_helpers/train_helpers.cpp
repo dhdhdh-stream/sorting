@@ -8,6 +8,8 @@
 
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
@@ -210,10 +212,12 @@ void update_helper(TrainScopeHistory* scope_history,
 				TrainBranchNodeHistory* branch_node_history = (TrainBranchNodeHistory*)scope_history->node_histories[h_index];
 				BranchNode* branch_node = (BranchNode*)node;
 				if (branch_node_history->is_branch) {
-					if (branch_node->branch_init_network->last_update_iter != iter_index) {
-						branch_node->branch_init_network->update();
+					if (branch_node->branch_init_network != NULL) {
+						if (branch_node->branch_init_network->last_update_iter != iter_index) {
+							branch_node->branch_init_network->update();
 
-						branch_node->branch_init_network->last_update_iter = iter_index;
+							branch_node->branch_init_network->last_update_iter = iter_index;
+						}
 					}
 
 					if (branch_node->branch_network->last_update_iter != iter_index) {
@@ -235,6 +239,12 @@ void update_helper(TrainScopeHistory* scope_history,
 }
 
 void train_helper(SolutionWrapper* wrapper) {
+	// temp
+	{
+		double val_average = measure_helper(wrapper);
+		cout << "train pre val_average: " << val_average << endl;
+	}
+
 	uniform_int_distribution<int> sample_distribution(0, wrapper->train_scope_histories.size()-1);
 	uniform_int_distribution<int> allow_drop_distribution(0, 1);
 	for (int iter_index = 0; iter_index < ITERS_PER_BATCH; iter_index++) {
@@ -270,4 +280,10 @@ void train_helper(SolutionWrapper* wrapper) {
 	}
 	wrapper->train_scope_histories.clear();
 	wrapper->train_target_val_histories.clear();
+
+	// temp
+	{
+		double val_average = measure_helper(wrapper);
+		cout << "train post val_average: " << val_average << endl;
+	}
 }

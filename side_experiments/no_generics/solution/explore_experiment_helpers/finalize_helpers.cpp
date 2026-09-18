@@ -31,6 +31,12 @@ void ExploreExperiment::add(bool is_new_state,
 		wrapper->best_solution = new Solution(wrapper->solution);
 	}
 
+	// temp
+	{
+		double val_average = measure_helper(wrapper);
+		cout << "pre val_average: " << val_average << endl;
+	}
+
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
@@ -463,6 +469,9 @@ void ExploreExperiment::add(bool is_new_state,
 				{
 					BranchNode* branch_node = (BranchNode*)it->second;
 					branch_node->original_network->clear_momentum();
+					if (branch_node->branch_init_network != NULL) {
+						branch_node->branch_init_network->clear_momentum();
+					}
 					branch_node->branch_network->clear_momentum();
 				}
 				break;
@@ -478,12 +487,12 @@ void ExploreExperiment::add(bool is_new_state,
 	wrapper->solution->improvement_history.push_back(wrapper->solution->curr_score);
 	cout << "previous_val_average: " << wrapper->solution->curr_score << endl;
 
-	// // temp
-	// {
-	// 	double val_average = measure_helper(wrapper);
-	// 	cout << "post val_average: " << val_average << endl;
-	// 	ss << "post val_average: " << val_average << "; ";
-	// }
+	// temp
+	{
+		double val_average = measure_helper(wrapper);
+		cout << "post val_average: " << val_average << endl;
+		ss << "post val_average: " << val_average << "; ";
+	}
 
 	wrapper->solution->change_history.push_back(ss.str());
 
