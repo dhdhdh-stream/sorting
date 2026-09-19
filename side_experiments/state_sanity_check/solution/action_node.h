@@ -24,6 +24,8 @@ public:
 	std::vector<std::vector<int>> init_network_node_contexts;
 	std::vector<InitNetwork*> init_networks;
 
+	std::vector<InitNetwork*> obs_networks;
+
 	int next_node_id;
 	AbstractNode* next_node;
 
@@ -79,6 +81,7 @@ public:
 class TrainActionNodeHistory : public TrainAbstractNodeHistory {
 public:
 	std::vector<InitNetworkHistory*> init_network_histories;
+	std::vector<InitNetworkHistory*> obs_network_histories;
 
 	TrainActionNodeHistory(ActionNode* node);
 	~TrainActionNodeHistory();

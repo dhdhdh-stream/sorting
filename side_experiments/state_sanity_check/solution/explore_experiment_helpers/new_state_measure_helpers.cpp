@@ -263,7 +263,27 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 					it != scopes_needed.end(); it++) {
 				Scope* scope = *it;
 
+				vector<int> init_states;
+				for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
+					init_states.push_back(scope->num_states + s_index);
+				}
+
 				scope->num_states += NEW_STATE_NUM_ADD;
+
+				InitNetwork* init_network = new InitNetwork(init_states,
+															wrapper->solution->num_obs);
+				scope->obs_networks.push_back(init_network);
+
+				for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+						it != scope->nodes.end(); it++) {
+					if (it->second->type == NODE_TYPE_ACTION) {
+						ActionNode* action_node = (ActionNode*)it->second;
+
+						InitNetwork* init_network = new InitNetwork(init_states,
+																	wrapper->solution->num_obs);
+						action_node->obs_networks.push_back(init_network);
+					}
+				}
 			}
 
 			for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {
@@ -298,7 +318,27 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 					it != scopes_needed.end(); it++) {
 				Scope* scope = *it;
 
+				vector<int> init_states;
+				for (int s_index = 0; s_index < NEW_STATE_NUM_ADD; s_index++) {
+					init_states.push_back(scope->num_states + s_index);
+				}
+
 				scope->num_states += NEW_STATE_NUM_ADD;
+
+				InitNetwork* init_network = new InitNetwork(init_states,
+															wrapper->solution->num_obs);
+				scope->obs_networks.push_back(init_network);
+
+				for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+						it != scope->nodes.end(); it++) {
+					if (it->second->type == NODE_TYPE_ACTION) {
+						ActionNode* action_node = (ActionNode*)it->second;
+
+						InitNetwork* init_network = new InitNetwork(init_states,
+																	wrapper->solution->num_obs);
+						action_node->obs_networks.push_back(init_network);
+					}
+				}
 			}
 
 			for (int d_index = 0; d_index < (int)this->dependencies.size(); d_index++) {

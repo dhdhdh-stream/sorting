@@ -37,5 +37,10 @@ void ActionNode::step_callback(vector<double>& obs,
 		}
 	}
 
+	for (int n_index = 0; n_index < (int)this->obs_networks.size(); n_index++) {
+		this->obs_networks[n_index]->activate(wrapper->states.back(),
+											  obs);
+	}
+
 	wrapper->node_context.back() = this->next_node;
 }

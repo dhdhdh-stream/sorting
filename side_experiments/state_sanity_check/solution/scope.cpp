@@ -28,6 +28,10 @@ Scope::~Scope() {
 	for (int n_index = 0; n_index < (int)this->start_init_networks.size(); n_index++) {
 		delete this->start_init_networks[n_index];
 	}
+
+	for (int n_index = 0; n_index < (int)this->obs_networks.size(); n_index++) {
+		delete this->obs_networks[n_index];
+	}
 }
 
 void Scope::copy_from(Scope* original,
@@ -98,6 +102,10 @@ void Scope::copy_from(Scope* original,
 		this->start_init_networks.push_back(new InitNetwork(original->start_init_networks[n_index]));
 	}
 
+	for (int n_index = 0; n_index < (int)original->obs_networks.size(); n_index++) {
+		this->obs_networks.push_back(new InitNetwork(original->obs_networks[n_index]));
+	}
+
 	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
 		this->child_scopes.push_back(parent_solution->scopes[original->child_scopes[c_index]->id]);
 	}
@@ -130,6 +138,11 @@ void Scope::save(ofstream& output_file) {
 		}
 
 		this->start_init_networks[n_index]->save(output_file);
+	}
+
+	output_file << this->obs_networks.size() << endl;
+	for (int n_index = 0; n_index < (int)this->obs_networks.size(); n_index++) {
+		this->obs_networks[n_index]->save(output_file);
 	}
 
 	output_file << this->child_scopes.size() << endl;
@@ -249,6 +262,13 @@ void Scope::load(ifstream& input_file,
 		this->start_init_networks.push_back(new InitNetwork(input_file));
 	}
 
+	string num_obs_networks_line;
+	getline(input_file, num_obs_networks_line);
+	int num_obs_networks = stoi(num_obs_networks_line);
+	for (int n_index = 0; n_index < num_obs_networks; n_index++) {
+		this->obs_networks.push_back(new InitNetwork(input_file));
+	}
+
 	string num_child_scopes_line;
 	getline(input_file, num_child_scopes_line);
 	int num_child_scopes = stoi(num_child_scopes_line);
@@ -331,6 +351,10 @@ TrainScopeHistory::~TrainScopeHistory() {
 		if (this->start_init_network_histories[n_index] != NULL) {
 			delete this->start_init_network_histories[n_index];
 		}
+	}
+
+	for (int n_index = 0; n_index < (int)this->obs_network_histories.size(); n_index++) {
+		delete this->obs_network_histories[n_index];
 	}
 
 	for (int h_index = 0; h_index < (int)this->node_histories.size(); h_index++) {

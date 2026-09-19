@@ -29,6 +29,14 @@ void Scope::train_activate(ScopeHistory* history,
 				this->start_init_networks[n_index]->save(train_scope_history->start_init_network_histories[n_index]);
 			}
 		}
+
+		train_scope_history->obs_network_histories = vector<InitNetworkHistory*>(this->obs_networks.size());
+		for (int n_index = 0; n_index < (int)this->obs_networks.size(); n_index++) {
+			this->obs_networks[n_index]->activate(state,
+												  history->obs);
+			train_scope_history->obs_network_histories[n_index] = new InitNetworkHistory();
+			this->obs_networks[n_index]->save(train_scope_history->obs_network_histories[n_index]);
+		}
 	}
 
 	for (int h_index = 0; h_index < (int)history->node_histories.size(); h_index++) {

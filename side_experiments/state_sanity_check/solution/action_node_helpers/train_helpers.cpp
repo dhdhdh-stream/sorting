@@ -34,5 +34,13 @@ void ActionNode::train_step(AbstractNodeHistory* history,
 				this->init_networks[n_index]->save(train_history->init_network_histories[n_index]);
 			}
 		}
+
+		train_history->obs_network_histories = vector<InitNetworkHistory*>(this->obs_networks.size());
+		for (int n_index = 0; n_index < (int)this->obs_networks.size(); n_index++) {
+			this->obs_networks[n_index]->activate(state,
+												  action_node_history->obs);
+			train_history->obs_network_histories[n_index] = new InitNetworkHistory();
+			this->obs_networks[n_index]->save(train_history->obs_network_histories[n_index]);
+		}
 	}
 }

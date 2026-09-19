@@ -37,6 +37,12 @@ void backprop_helper(TrainScopeHistory* scope_history,
 			{
 				TrainActionNodeHistory* action_node_history = (TrainActionNodeHistory*)scope_history->node_histories[h_index];
 				ActionNode* action_node = (ActionNode*)node;
+
+				for (int h_index = (int)action_node_history->obs_network_histories.size()-1; h_index >= 0; h_index--) {
+					action_node->obs_networks[h_index]->load(action_node_history->obs_network_histories[h_index]);
+					action_node->obs_networks[h_index]->backprop(state_error);
+				}
+
 				for (int h_index = (int)action_node_history->init_network_histories.size()-1; h_index >= 0; h_index--) {
 					if (action_node_history->init_network_histories[h_index] != NULL) {
 						action_node->init_networks[h_index]->load(action_node_history->init_network_histories[h_index]);
@@ -101,6 +107,11 @@ void backprop_helper(TrainScopeHistory* scope_history,
 	}
 
 	if (!scope_history->is_drop) {
+		for (int h_index = (int)scope_history->obs_network_histories.size()-1; h_index >= 0; h_index--) {
+			scope->obs_networks[h_index]->load(scope_history->obs_network_histories[h_index]);
+			scope->obs_networks[h_index]->backprop(state_error);
+		}
+
 		for (int h_index = (int)scope_history->start_init_network_histories.size()-1; h_index >= 0; h_index--) {
 			if (scope_history->start_init_network_histories[h_index] != NULL) {
 				scope->start_init_networks[h_index]->load(scope_history->start_init_network_histories[h_index]);
@@ -124,6 +135,14 @@ void update_helper(TrainScopeHistory* scope_history,
 				}
 			}
 		}
+
+		for (int n_index = 0; n_index < (int)scope->obs_networks.size(); n_index++) {
+			if (scope->obs_networks[n_index]->last_update_iter != iter_index) {
+				scope->obs_networks[n_index]->update();
+
+				scope->obs_networks[n_index]->last_update_iter = iter_index;
+			}
+		}
 	}
 
 	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
@@ -141,6 +160,14 @@ void update_helper(TrainScopeHistory* scope_history,
 
 							action_node->init_networks[n_index]->last_update_iter = iter_index;
 						}
+					}
+				}
+
+				for (int n_index = 0; n_index < (int)action_node->obs_networks.size(); n_index++) {
+					if (action_node->obs_networks[n_index]->last_update_iter != iter_index) {
+						action_node->obs_networks[n_index]->update();
+
+						action_node->obs_networks[n_index]->last_update_iter = iter_index;
 					}
 				}
 			}

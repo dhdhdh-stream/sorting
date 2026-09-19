@@ -29,4 +29,9 @@ void Scope::experiment_start_activate(vector<double>& obs,
 			scope_history->init_is_match[n_index] = false;
 		}
 	}
+
+	for (int n_index = 0; n_index < (int)this->obs_networks.size(); n_index++) {
+		this->obs_networks[n_index]->activate(wrapper->states.back(),
+											  obs);
+	}
 }

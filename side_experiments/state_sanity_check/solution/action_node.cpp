@@ -26,6 +26,10 @@ ActionNode::~ActionNode() {
 		delete this->init_networks[n_index];
 	}
 
+	for (int n_index = 0; n_index < (int)this->obs_networks.size(); n_index++) {
+		delete this->obs_networks[n_index];
+	}
+
 	if (this->experiment != NULL) {
 		delete this->experiment;
 	}
@@ -45,6 +49,10 @@ void ActionNode::copy_from(ActionNode* original,
 	this->init_network_node_contexts = original->init_network_node_contexts;
 	for (int n_index = 0; n_index < (int)original->init_networks.size(); n_index++) {
 		this->init_networks.push_back(new InitNetwork(original->init_networks[n_index]));
+	}
+
+	for (int n_index = 0; n_index < (int)original->obs_networks.size(); n_index++) {
+		this->obs_networks.push_back(new InitNetwork(original->obs_networks[n_index]));
 	}
 
 	this->next_node_id = original->next_node_id;
@@ -67,6 +75,11 @@ void ActionNode::save(ofstream& output_file) {
 		}
 
 		this->init_networks[n_index]->save(output_file);
+	}
+
+	output_file << this->obs_networks.size() << endl;
+	for (int n_index = 0; n_index < (int)this->obs_networks.size(); n_index++) {
+		this->obs_networks[n_index]->save(output_file);
 	}
 
 	output_file << this->next_node_id << endl;
@@ -106,6 +119,13 @@ void ActionNode::load(ifstream& input_file,
 		}
 
 		this->init_networks.push_back(new InitNetwork(input_file));
+	}
+
+	string num_obs_networks_line;
+	getline(input_file, num_obs_networks_line);
+	int num_obs_networks = stoi(num_obs_networks_line);
+	for (int n_index = 0; n_index < num_obs_networks; n_index++) {
+		this->obs_networks.push_back(new InitNetwork(input_file));
 	}
 
 	string next_node_id_line;
@@ -156,5 +176,9 @@ TrainActionNodeHistory::~TrainActionNodeHistory() {
 		if (this->init_network_histories[n_index] != NULL) {
 			delete this->init_network_histories[n_index];
 		}
+	}
+
+	for (int n_index = 0; n_index < (int)this->obs_network_histories.size(); n_index++) {
+		delete this->obs_network_histories[n_index];
 	}
 }

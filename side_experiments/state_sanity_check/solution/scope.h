@@ -42,6 +42,8 @@ public:
 	std::vector<std::vector<int>> start_init_network_node_contexts;
 	std::vector<InitNetwork*> start_init_networks;
 
+	std::vector<InitNetwork*> obs_networks;
+
 	std::vector<Scope*> child_scopes;
 
 	std::list<double> train_reuse_last_scores;
@@ -94,6 +96,7 @@ public:
 
 	bool is_drop;
 	std::vector<InitNetworkHistory*> start_init_network_histories;
+	std::vector<InitNetworkHistory*> obs_network_histories;
 
 	std::vector<TrainAbstractNodeHistory*> node_histories;
 
