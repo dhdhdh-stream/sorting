@@ -269,7 +269,7 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 						{
 							ScopeNode* scope_node = (ScopeNode*)it->second;
 
-							// scope_node->in_network->add_front_states(scope->num_states);
+							scope_node->in_network->add_front_states(scope->num_states);
 							scope_node->out_network->add_back_states(scope->num_states);
 						}
 						break;
@@ -294,7 +294,7 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 						if (it->second->type == NODE_TYPE_SCOPE) {
 							ScopeNode* scope_node = (ScopeNode*)it->second;
 							if (scope_node->scope == scope) {
-								// scope_node->in_network->add_back_states(scope->num_states);
+								scope_node->in_network->add_back_states(scope->num_states);
 								scope_node->out_network->add_front_states(scope->num_states);
 							}
 						}

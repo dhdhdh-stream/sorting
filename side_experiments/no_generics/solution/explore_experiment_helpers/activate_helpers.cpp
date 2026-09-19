@@ -44,6 +44,13 @@ void ExploreExperiment::experiment_check_activate(vector<double>& obs,
 										 explore_experiment_history,
 										 wrapper);
 		break;
+	#if defined(MDEBUG) && MDEBUG
+	case EXPLORE_EXPERIMENT_STATE_REUSE_VERIFY:
+		reuse_verify_check_activate(obs,
+									explore_experiment_history,
+									wrapper);
+		break;
+	#endif /* MDEBUG */
 	}
 }
 
@@ -78,6 +85,14 @@ void ExploreExperiment::experiment_step(vector<double>& obs,
 							   is_next,
 							   wrapper);
 		break;
+	#if defined(MDEBUG) && MDEBUG
+	case EXPLORE_EXPERIMENT_STATE_REUSE_VERIFY:
+		reuse_verify_step(obs,
+						  action,
+						  is_next,
+						  wrapper);
+		break;
+	#endif /* MDEBUG */
 	}
 }
 
@@ -106,6 +121,12 @@ void ExploreExperiment::experiment_exit_step(vector<double>& obs,
 		new_state_measure_exit_step(obs,
 									wrapper);
 		break;
+	#if defined(MDEBUG) && MDEBUG
+	case EXPLORE_EXPERIMENT_STATE_REUSE_VERIFY:
+		reuse_verify_exit_step(obs,
+							   wrapper);
+		break;
+	#endif /* MDEBUG */
 	}
 }
 
@@ -128,6 +149,12 @@ void ExploreExperiment::experiment_step_callback(vector<double>& obs,
 		new_state_measure_callback(obs,
 								   wrapper);
 		break;
+	#if defined(MDEBUG) && MDEBUG
+	case EXPLORE_EXPERIMENT_STATE_REUSE_VERIFY:
+		reuse_verify_callback(obs,
+							  wrapper);
+		break;
+	#endif /* MDEBUG */
 	}
 }
 
@@ -162,5 +189,12 @@ void ExploreExperiment::backprop(double target_val,
 								   explore_experiment_history,
 								   wrapper);
 		break;
+	#if defined(MDEBUG) && MDEBUG
+	case EXPLORE_EXPERIMENT_STATE_REUSE_VERIFY:
+		reuse_verify_backprop(target_val,
+							  explore_experiment_history,
+							  wrapper);
+		break;
+	#endif /* MDEBUG */
 	}
 }

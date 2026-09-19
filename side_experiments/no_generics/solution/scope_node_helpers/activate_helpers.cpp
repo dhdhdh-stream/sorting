@@ -33,8 +33,8 @@ void ScopeNode::step(vector<double>& obs,
 		wrapper->states.back()(pass_through_network->back_state_index) = val;
 	}
 
-	// this->in_network->activate(wrapper->states[wrapper->states.size()-2],
-	// 						   wrapper->states.back());
+	this->in_network->activate(wrapper->states[wrapper->states.size()-2],
+							   wrapper->states.back());
 
 	this->scope->start_activate(obs,
 								wrapper);

@@ -28,7 +28,7 @@ ScopeNode::~ScopeNode() {
 	for (int n_index = 0; n_index < (int)this->in_pass_through_networks.size(); n_index++) {
 		delete this->in_pass_through_networks[n_index];
 	}
-	// delete this->in_network;
+	delete this->in_network;
 
 	for (int n_index = 0; n_index < (int)this->out_pass_through_networks.size(); n_index++) {
 		delete this->out_pass_through_networks[n_index];
@@ -45,7 +45,7 @@ void ScopeNode::copy_from(ScopeNode* original,
 	for (int n_index = 0; n_index < (int)original->in_pass_through_networks.size(); n_index++) {
 		this->in_pass_through_networks.push_back(new PassThroughNetwork(original->in_pass_through_networks[n_index]));
 	}
-	// this->in_network = new TransitionNetwork(original->in_network);
+	this->in_network = new TransitionNetwork(original->in_network);
 
 	this->scope = parent_solution->scopes[original->scope->id];
 
@@ -67,7 +67,7 @@ void ScopeNode::save(ofstream& output_file) {
 	for (int n_index = 0; n_index < (int)this->in_pass_through_networks.size(); n_index++) {
 		this->in_pass_through_networks[n_index]->save(output_file);
 	}
-	// this->in_network->save(output_file);
+	this->in_network->save(output_file);
 
 	output_file << this->scope->id << endl;
 
@@ -97,7 +97,7 @@ void ScopeNode::load(ifstream& input_file,
 		this->in_pass_through_networks.push_back(new PassThroughNetwork(input_file));
 	}
 
-	// this->in_network = new TransitionNetwork(input_file);
+	this->in_network = new TransitionNetwork(input_file);
 
 	string scope_id_line;
 	getline(input_file, scope_id_line);
@@ -159,15 +159,15 @@ ScopeNodeHistory::~ScopeNodeHistory() {
 TrainScopeNodeHistory::TrainScopeNodeHistory(ScopeNode* node) {
 	this->node = node;
 
-	// this->in_network_history = NULL;
+	this->in_network_history = NULL;
 
 	this->out_network_history = NULL;
 }
 
 TrainScopeNodeHistory::~TrainScopeNodeHistory() {
-	// if (this->in_network_history != NULL) {
-	// 	delete this->in_network_history;
-	// }
+	if (this->in_network_history != NULL) {
+		delete this->in_network_history;
+	}
 
 	delete this->scope_history;
 

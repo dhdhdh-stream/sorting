@@ -83,8 +83,8 @@ void ExploreExperiment::add(bool is_new_state,
 			scope_context->node_counter++;
 			scope_context->nodes[new_scope_node->id] = new_scope_node;
 
-			// new_scope_node->in_network = new TransitionNetwork(this->scope_context->num_states,
-			// 												   this->scope_context->child_scopes[this->best_indexes[s_index]]->num_states);
+			new_scope_node->in_network = new TransitionNetwork(this->scope_context->num_states,
+															   this->scope_context->child_scopes[this->best_indexes[s_index]]->num_states);
 
 			new_scope_node->scope = this->scope_context->child_scopes[this->best_indexes[s_index]];
 
@@ -325,6 +325,14 @@ void ExploreExperiment::add(bool is_new_state,
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;
 
+	#if defined(MDEBUG) && MDEBUG
+	wrapper->verify_problems = this->verify_problems;
+	this->verify_problems.clear();
+	wrapper->verify_run_seeds = this->verify_run_seeds;
+
+	new_branch_node->verify_state_vals = this->verify_state_vals;
+	#endif /* MDEBUG */
+
 	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
 		int next_node_id;
 		AbstractNode* next_node;
@@ -397,8 +405,8 @@ void ExploreExperiment::add(bool is_new_state,
 				scope_node->out_pass_through_networks.push_back(new_out_pass_through_network);
 			}
 
-			// scope_node->in_network = new TransitionNetwork(new_scope->num_states,
-			// 											   new_scope->num_states);
+			scope_node->in_network = new TransitionNetwork(new_scope->num_states,
+														   new_scope->num_states);
 
 			scope_node->out_network = new TransitionNetwork(new_scope->num_states,
 															new_scope->num_states);
@@ -458,7 +466,7 @@ void ExploreExperiment::add(bool is_new_state,
 			case NODE_TYPE_SCOPE:
 				{
 					ScopeNode* scope_node = (ScopeNode*)it->second;
-					// scope_node->in_network->clear_momentum();
+					scope_node->in_network->clear_momentum();
 					scope_node->out_network->clear_momentum();
 				}
 				break;

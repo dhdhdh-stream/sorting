@@ -38,10 +38,10 @@ void ScopeNode::train_step(AbstractNodeHistory* history,
 			inner_state(pass_through_network->back_state_index) = val;
 		}
 
-		// this->in_network->activate(state,
-		// 						   inner_state);
-		// train_history->in_network_history = new TransitionNetworkHistory();
-		// this->in_network->save(train_history->in_network_history);
+		this->in_network->activate(state,
+								   inner_state);
+		train_history->in_network_history = new TransitionNetworkHistory();
+		this->in_network->save(train_history->in_network_history);
 	}
 
 	this->scope->train_activate(scope_node_history->scope_history,

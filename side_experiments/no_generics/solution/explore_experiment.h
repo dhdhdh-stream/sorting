@@ -28,6 +28,9 @@ const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
 const int EXPLORE_EXPERIMENT_STATE_REUSE_MEASURE = 3;
 const int EXPLORE_EXPERIMENT_STATE_NEW_STATE_MEASURE = 4;
+#if defined(MDEBUG) && MDEBUG
+const int EXPLORE_EXPERIMENT_STATE_REUSE_VERIFY = 5;
+#endif /* MDEBUG */
 
 class ExploreExperimentHistory;
 class ExploreExperiment : public AbstractExperiment {
@@ -67,6 +70,12 @@ public:
 	 */
 
 	double sum_vals;
+
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<Problem*> verify_problems;
+	std::vector<unsigned long> verify_run_seeds;
+	std::vector<Eigen::VectorXf> verify_state_vals;
+	#endif /* MDEBUG */
 
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,
@@ -165,6 +174,23 @@ public:
 									ExploreExperimentHistory* history,
 									SolutionWrapper* wrapper);
 
+	#if defined(MDEBUG) && MDEBUG
+	void reuse_verify_check_activate(std::vector<double>& obs,
+									 ExploreExperimentHistory* history,
+									 SolutionWrapper* wrapper);
+	void reuse_verify_step(std::vector<double>& obs,
+						   int& action,
+						   bool& is_next,
+						   SolutionWrapper* wrapper);
+	void reuse_verify_callback(std::vector<double>& obs,
+							   SolutionWrapper* wrapper);
+	void reuse_verify_exit_step(std::vector<double>& obs,
+								SolutionWrapper* wrapper);
+	void reuse_verify_backprop(double target_val,
+							   ExploreExperimentHistory* history,
+							   SolutionWrapper* wrapper);
+	#endif /* MDEBUG */
+
 	void add(bool is_new_state,
 			 SolutionWrapper* wrapper);
 };
@@ -181,6 +207,10 @@ public:
 	std::vector<std::vector<std::vector<double>>> dependencies_obs_histories;
 	std::vector<Eigen::VectorXf> state_histories;
 	std::vector<std::vector<double>> obs_histories;
+
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<Eigen::VectorXf> verify_state_vals;
+	#endif /* MDEBUG */
 
 	ExploreExperimentHistory(ExploreExperiment* experiment);
 };

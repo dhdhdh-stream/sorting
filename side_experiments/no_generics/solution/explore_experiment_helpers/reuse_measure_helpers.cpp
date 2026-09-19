@@ -180,8 +180,13 @@ void ExploreExperiment::reuse_measure_backprop(double target_val,
 		#else
 		if (is_success) {
 		#endif /* MDEBUG */
+			#if defined(MDEBUG) && MDEBUG
+			this->state = EXPLORE_EXPERIMENT_STATE_REUSE_VERIFY;
+			this->state_iter = 0;
+			#else
 			add(false,
 				wrapper);
+			#endif /* MDEBUG */
 		} else {
 			delete this;
 		}

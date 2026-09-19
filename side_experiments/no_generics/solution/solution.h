@@ -25,7 +25,6 @@
 class AbstractExperiment;
 class AbstractNode;
 class AbstractNodeHistory;
-class ActionNetwork;
 class ObsNetwork;
 class Problem;
 class ProblemType;

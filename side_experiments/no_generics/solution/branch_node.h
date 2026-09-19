@@ -48,6 +48,10 @@ public:
 	int original_curr_num_instances;
 	int branch_curr_num_instances;
 
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<Eigen::VectorXf> verify_state_vals;
+	#endif /* MDEBUG */
+
 	BranchNode();
 	~BranchNode();
 
@@ -65,6 +69,11 @@ public:
 					bool allow_drop,
 					Eigen::VectorXf& state,
 					TrainScopeHistory* train_scope_history);
+
+	#if defined(MDEBUG) && MDEBUG
+	void verify_step(std::vector<double>& obs,
+					 SolutionWrapper* wrapper);
+	#endif /* MDEBUG */
 
 	void copy_from(BranchNode* original,
 				   Solution* parent_solution);
