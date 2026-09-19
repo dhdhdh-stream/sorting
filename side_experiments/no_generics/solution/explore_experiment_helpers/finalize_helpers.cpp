@@ -4,7 +4,6 @@
 #include <iostream>
 #include <sstream>
 
-#include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -73,7 +72,6 @@ void ExploreExperiment::add(bool is_new_state,
 
 			new_action_node->action = this->best_indexes[s_index];
 
-			new_action_node->action_network = new ActionNetwork(this->scope_context->num_states);
 			new_action_node->obs_network = new ObsNetwork(this->scope_context->num_states,
 														  wrapper->solution->num_obs);
 
@@ -85,8 +83,8 @@ void ExploreExperiment::add(bool is_new_state,
 			scope_context->node_counter++;
 			scope_context->nodes[new_scope_node->id] = new_scope_node;
 
-			new_scope_node->in_network = new TransitionNetwork(this->scope_context->num_states,
-															   this->scope_context->child_scopes[this->best_indexes[s_index]]->num_states);
+			// new_scope_node->in_network = new TransitionNetwork(this->scope_context->num_states,
+			// 												   this->scope_context->child_scopes[this->best_indexes[s_index]]->num_states);
 
 			new_scope_node->scope = this->scope_context->child_scopes[this->best_indexes[s_index]];
 
@@ -399,8 +397,8 @@ void ExploreExperiment::add(bool is_new_state,
 				scope_node->out_pass_through_networks.push_back(new_out_pass_through_network);
 			}
 
-			scope_node->in_network = new TransitionNetwork(new_scope->num_states,
-														   new_scope->num_states);
+			// scope_node->in_network = new TransitionNetwork(new_scope->num_states,
+			// 											   new_scope->num_states);
 
 			scope_node->out_network = new TransitionNetwork(new_scope->num_states,
 															new_scope->num_states);
@@ -451,7 +449,6 @@ void ExploreExperiment::add(bool is_new_state,
 			case NODE_TYPE_ACTION:
 				{
 					ActionNode* action_node = (ActionNode*)it->second;
-					action_node->action_network->clear_momentum();
 					action_node->obs_network->clear_momentum();
 					for (int n_index = 0; n_index < (int)action_node->init_networks.size(); n_index++) {
 						action_node->init_networks[n_index]->clear_momentum();
@@ -461,7 +458,7 @@ void ExploreExperiment::add(bool is_new_state,
 			case NODE_TYPE_SCOPE:
 				{
 					ScopeNode* scope_node = (ScopeNode*)it->second;
-					scope_node->in_network->clear_momentum();
+					// scope_node->in_network->clear_momentum();
 					scope_node->out_network->clear_momentum();
 				}
 				break;

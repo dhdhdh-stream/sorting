@@ -7,8 +7,6 @@
 
 #include "abstract_node.h"
 
-class ActionNetwork;
-class ActionNetworkHistory;
 class InitNetwork;
 class InitNetworkHistory;
 class ObsNetwork;
@@ -23,8 +21,6 @@ class ActionNodeHistory;
 class ActionNode : public AbstractNode {
 public:
 	int action;
-
-	ActionNetwork* action_network;
 
 	ObsNetwork* obs_network;
 
@@ -90,7 +86,6 @@ public:
 
 class TrainActionNodeHistory : public TrainAbstractNodeHistory {
 public:
-	ActionNetworkHistory* action_network_history;
 	ObsNetworkHistory* obs_network_history;
 	std::vector<InitNetworkHistory*> init_network_histories;
 

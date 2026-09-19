@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
-#include "action_network.h"
 #include "constants.h"
 #include "init_network.h"
 #include "obs_network.h"
@@ -24,8 +23,6 @@ ActionNode::ActionNode() {
 }
 
 ActionNode::~ActionNode() {
-	delete this->action_network;
-
 	delete this->obs_network;
 
 	for (int n_index = 0; n_index < (int)this->init_networks.size(); n_index++) {
@@ -40,8 +37,6 @@ ActionNode::~ActionNode() {
 void ActionNode::copy_from(ActionNode* original,
 						   Solution* parent_solution) {
 	this->action = original->action;
-
-	this->action_network = new ActionNetwork(original->action_network);
 
 	this->obs_network = new ObsNetwork(original->obs_network);
 
@@ -67,8 +62,6 @@ void ActionNode::copy_from(ActionNode* original,
 
 void ActionNode::save(ofstream& output_file) {
 	output_file << this->action << endl;
-
-	this->action_network->save(output_file);
 
 	this->obs_network->save(output_file);
 
@@ -99,8 +92,6 @@ void ActionNode::load(ifstream& input_file,
 	string action_line;
 	getline(input_file, action_line);
 	this->action = stoi(action_line);
-
-	this->action_network = new ActionNetwork(input_file);
 
 	this->obs_network = new ObsNetwork(input_file);
 
@@ -168,15 +159,10 @@ ActionNodeHistory::ActionNodeHistory(ActionNode* node) {
 TrainActionNodeHistory::TrainActionNodeHistory(ActionNode* node) {
 	this->node = node;
 
-	this->action_network_history = NULL;
 	this->obs_network_history = NULL;
 }
 
 TrainActionNodeHistory::~TrainActionNodeHistory() {
-	if (this->action_network_history != NULL) {
-		delete this->action_network_history;
-	}
-
 	if (this->obs_network_history != NULL) {
 		delete this->obs_network_history;
 	}

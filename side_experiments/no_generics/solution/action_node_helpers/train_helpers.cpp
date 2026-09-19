@@ -1,6 +1,5 @@
 #include "action_node.h"
 
-#include "action_network.h"
 #include "globals.h"
 #include "init_network.h"
 #include "obs_network.h"
@@ -26,10 +25,6 @@ void ActionNode::train_step(AbstractNodeHistory* history,
 	if (!is_drop) {
 		TrainActionNodeHistory* train_history = new TrainActionNodeHistory(this);
 		train_scope_history->node_histories.push_back(train_history);
-
-		this->action_network->activate(state);
-		train_history->action_network_history = new ActionNetworkHistory();
-		this->action_network->save(train_history->action_network_history);
 
 		this->obs_network->activate(state,
 									action_node_history->obs);

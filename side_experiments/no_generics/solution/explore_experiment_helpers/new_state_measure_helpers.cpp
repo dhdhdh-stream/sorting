@@ -1,6 +1,5 @@
 #include "explore_experiment.h"
 
-#include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -260,7 +259,6 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 						{
 							ActionNode* action_node = (ActionNode*)it->second;
 
-							action_node->action_network->add_states(scope->num_states);
 							action_node->obs_network->add_states(scope->num_states);
 							for (int n_index = 0; n_index < (int)action_node->init_networks.size(); n_index++) {
 								action_node->init_networks[n_index]->add_states(scope->num_states);
@@ -271,7 +269,7 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 						{
 							ScopeNode* scope_node = (ScopeNode*)it->second;
 
-							scope_node->in_network->add_front_states(scope->num_states);
+							// scope_node->in_network->add_front_states(scope->num_states);
 							scope_node->out_network->add_back_states(scope->num_states);
 						}
 						break;
@@ -296,7 +294,7 @@ void ExploreExperiment::new_state_measure_backprop(double target_val,
 						if (it->second->type == NODE_TYPE_SCOPE) {
 							ScopeNode* scope_node = (ScopeNode*)it->second;
 							if (scope_node->scope == scope) {
-								scope_node->in_network->add_back_states(scope->num_states);
+								// scope_node->in_network->add_back_states(scope->num_states);
 								scope_node->out_network->add_front_states(scope->num_states);
 							}
 						}

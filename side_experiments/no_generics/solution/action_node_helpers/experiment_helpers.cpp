@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
-#include "action_network.h"
 #include "globals.h"
 #include "init_network.h"
 #include "obs_network.h"
@@ -34,8 +33,6 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 	scope_history->node_histories.push_back(history);
 
 	history->obs = obs;
-
-	this->action_network->activate(wrapper->states.back());
 
 	this->obs_network->activate(wrapper->states.back(),
 								obs);

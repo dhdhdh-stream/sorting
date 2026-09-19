@@ -34,7 +34,10 @@ class ScopeNodeHistory;
 class ScopeNode : public AbstractNode {
 public:
 	std::vector<PassThroughNetwork*> in_pass_through_networks;
-	TransitionNetwork* in_network;
+	// TransitionNetwork* in_network;
+	/**
+	 * TODO: allow in_network for inner_states
+	 */
 
 	Scope* scope;
 
@@ -95,7 +98,7 @@ public:
 class TrainScopeNodeHistory : public TrainAbstractNodeHistory {
 public:
 	bool in_is_drop;
-	TransitionNetworkHistory* in_network_history;
+	// TransitionNetworkHistory* in_network_history;
 
 	TrainScopeHistory* scope_history;
 

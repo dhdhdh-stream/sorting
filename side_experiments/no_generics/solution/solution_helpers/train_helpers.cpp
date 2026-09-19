@@ -10,7 +10,6 @@
 
 #include <iostream>
 
-#include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -48,8 +47,6 @@ void backprop_helper(TrainScopeHistory* scope_history,
 				}
 				action_node->obs_network->load(action_node_history->obs_network_history);
 				action_node->obs_network->backprop(state_error);
-				action_node->action_network->load(action_node_history->action_network_history);
-				action_node->action_network->backprop(state_error);
 			}
 			break;
 		case NODE_TYPE_SCOPE:
@@ -82,9 +79,9 @@ void backprop_helper(TrainScopeHistory* scope_history,
 								target_val);
 
 				if (!scope_node_history->in_is_drop) {
-					scope_node->in_network->load(scope_node_history->in_network_history);
-					scope_node->in_network->backprop(inner_state_error,
-													 state_error);
+					// scope_node->in_network->load(scope_node_history->in_network_history);
+					// scope_node->in_network->backprop(inner_state_error,
+					// 								 state_error);
 					for (int n_index = scope_node->in_pass_through_networks.size()-1; n_index >= 0; n_index--) {
 						PassThroughNetwork* pass_through_network = scope_node->in_pass_through_networks[n_index];
 						double error = inner_state_error(pass_through_network->back_state_index);
@@ -159,12 +156,6 @@ void update_helper(TrainScopeHistory* scope_history,
 				TrainActionNodeHistory* action_node_history = (TrainActionNodeHistory*)scope_history->node_histories[h_index];
 				ActionNode* action_node = (ActionNode*)node;
 
-				if (action_node->action_network->last_update_iter != iter_index) {
-					action_node->action_network->update();
-
-					action_node->action_network->last_update_iter = iter_index;
-				}
-
 				if (action_node->obs_network->last_update_iter != iter_index) {
 					action_node->obs_network->update();
 
@@ -187,13 +178,13 @@ void update_helper(TrainScopeHistory* scope_history,
 				TrainScopeNodeHistory* scope_node_history = (TrainScopeNodeHistory*)scope_history->node_histories[h_index];
 				ScopeNode* scope_node = (ScopeNode*)node;
 
-				if (!scope_node_history->in_is_drop) {
-					if (scope_node->in_network->last_update_iter != iter_index) {
-						scope_node->in_network->update();
+				// if (!scope_node_history->in_is_drop) {
+				// 	if (scope_node->in_network->last_update_iter != iter_index) {
+				// 		scope_node->in_network->update();
 
-						scope_node->in_network->last_update_iter = iter_index;
-					}
-				}
+				// 		scope_node->in_network->last_update_iter = iter_index;
+				// 	}
+				// }
 
 				update_helper(scope_node_history->scope_history,
 							  iter_index);

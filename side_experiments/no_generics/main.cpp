@@ -1,13 +1,3 @@
-// - maybe state not trained for prediction?
-//   - e.g., maybe captures how many squares are open
-//     - but not exactly which specific ones are
-//       - so can never make exact predictions off of existing state
-
-// - not important to predict everything, as not everything important...
-//   - ...but if something is important for predicting changes to existing state, then important to track?
-
-// - maybe have state specific to making predictions
-
 #include <chrono>
 #include <iostream>
 #include <map>

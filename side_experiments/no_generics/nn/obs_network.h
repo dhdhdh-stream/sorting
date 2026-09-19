@@ -15,7 +15,7 @@
 class ObsNetworkHistory;
 class ObsNetwork {
 public:
-	Layer* state_input;
+	// Layer* state_input;
 
 	Layer* obs_input;
 
@@ -52,7 +52,7 @@ public:
 
 class ObsNetworkHistory {
 public:
-	Eigen::VectorXf state_input_history;
+	// Eigen::VectorXf state_input_history;
 	Eigen::VectorXf obs_input_history;
 	Eigen::VectorXf hidden_1_history;
 	Eigen::VectorXf hidden_2_history;

@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <iostream>
 
-#include "action_network.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"

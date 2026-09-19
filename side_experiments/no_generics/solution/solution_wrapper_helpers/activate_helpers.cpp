@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "action_network.h"
 #include "action_node.h"
 #include "globals.h"
 #include "obs_network.h"
