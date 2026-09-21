@@ -22,7 +22,7 @@ const int MIN_NUM_SAMPLES = 2;
 const double BETTER_THAN_RATIO = 0.5;
 #else
 const int MIN_NUM_SAMPLES = 5;
-const double BETTER_THAN_RATIO = 0.8;
+const double BETTER_THAN_RATIO = 0.9;
 #endif /* MDEBUG */
 
 void ExploreExperiment::explore_check_activate(vector<double>& obs,

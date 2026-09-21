@@ -32,9 +32,6 @@ void SolutionWrapper::experiment_init() {
 		uniform_int_distribution<int> should_explore_distribution(0, 1);
 		if (should_explore_distribution(generator)) {
 			this->should_explore = true;
-
-			uniform_int_distribution<int> diversity_distribution(0, DIVERSITY_RANGE-1);
-			this->diversity_index = diversity_distribution(generator);
 		} else {
 			this->should_explore = false;
 		}
@@ -45,6 +42,9 @@ void SolutionWrapper::experiment_init() {
 	 *   - good to update anyways
 	 *     - effectively a slow train new, but across all decisions at once
 	 */
+
+	uniform_int_distribution<int> diversity_distribution(0, DIVERSITY_RANGE-1);
+	this->diversity_index = diversity_distribution(generator);
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->starting_scope);
 	this->scope_histories.push_back(scope_history);
