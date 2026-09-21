@@ -201,12 +201,14 @@ bool ExploreExperiment::train_new_helper(int l_index) {
 	double global_improvement = average_instances_per_run * local_improvement;
 
 	// // temp
-	// cout << "local_improvement: " << local_improvement << endl;
-	// cout << "global_improvement: " << global_improvement << endl;
+	// if (l_index == (int)TRAIN_NEW_NUM_DATAPOINTS.size()-1) {
+	// 	cout << "local_improvement: " << local_improvement << endl;
+	// 	cout << "global_improvement: " << global_improvement << endl;
+	// }
 
 	bool is_success = false;
 	if (local_improvement > 0.0) {
-		if (this->scope_context->last_scores[l_index].size() >= MIN_NUM_LAST_TRACK) {
+		if ((int)this->scope_context->last_scores[l_index].size() >= MIN_NUM_LAST_TRACK[l_index]) {
 			int num_better_than = 0;
 			for (list<double>::iterator it = this->scope_context->last_scores[l_index].begin();
 					it != this->scope_context->last_scores[l_index].end(); it++) {
@@ -215,13 +217,13 @@ bool ExploreExperiment::train_new_helper(int l_index) {
 				}
 			}
 
-			double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->last_scores[l_index].size();
+			double target_better_than = LAST_BETTER_THAN_RATIO[l_index] * (double)this->scope_context->last_scores[l_index].size();
 
 			if (num_better_than >= target_better_than) {
 				is_success = true;
 			}
 
-			if (this->scope_context->last_scores[l_index].size() >= NUM_LAST_TRACK) {
+			if ((int)this->scope_context->last_scores[l_index].size() >= NUM_LAST_TRACK[l_index]) {
 				this->scope_context->last_scores[l_index].pop_front();
 			}
 			this->scope_context->last_scores[l_index].push_back(global_improvement);

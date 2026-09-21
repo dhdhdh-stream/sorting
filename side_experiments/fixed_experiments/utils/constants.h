@@ -51,13 +51,13 @@ const int DIVERSITY_RANGE = 10;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int NUM_LAST_TRACK = 4;
-const int MIN_NUM_LAST_TRACK = 2;
-const double LAST_BETTER_THAN_RATIO = 0.5;
+const std::vector<int> NUM_LAST_TRACK{4, 4, 4};
+const std::vector<int> MIN_NUM_LAST_TRACK{2, 2, 2};
+const std::vector<double> LAST_BETTER_THAN_RATIO{0.5, 0.5, 0.5};
 #else
-const int NUM_LAST_TRACK = 10;
-const int MIN_NUM_LAST_TRACK = 4;
-const double LAST_BETTER_THAN_RATIO = 0.5;
+const std::vector<int> NUM_LAST_TRACK{10, 10, 10};
+const std::vector<int> MIN_NUM_LAST_TRACK{5, 5, 5};
+const std::vector<double> LAST_BETTER_THAN_RATIO{0.4, 0.6, 0.8};
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
