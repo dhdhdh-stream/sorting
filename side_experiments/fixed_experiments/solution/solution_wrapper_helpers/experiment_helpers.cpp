@@ -92,7 +92,9 @@ void SolutionWrapper::experiment_end(double result) {
 	if (this->iters_since_update < UPDATE_NUM_ITERS) {
 		update_helper(this,
 					  result);
+	}
 
+	if (this->iters_since_update < CREATE_EXPERIMENT_NUM_ITERS) {
 		for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
 			if (this->explore_experiment_histories[d_index].size() == 0) {
 				create_experiment(this->scope_histories[0],
@@ -101,6 +103,11 @@ void SolutionWrapper::experiment_end(double result) {
 			}
 		}
 	}
+	/**
+	 * - simply don't bother trying to add new experiments after a certain point
+	 *   - can infinitely add conflicts due to experiment spots being taken by other diversity_indexes
+	 */
+	// TODO: allow infinite experiments per node
 
 	for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
 		if (this->explore_experiment_histories[d_index].size() >= 2) {

@@ -61,10 +61,12 @@ const double LAST_BETTER_THAN_RATIO = 0.5;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
+const int CREATE_EXPERIMENT_NUM_ITERS = 10;
 const int UPDATE_NUM_ITERS = 40;
 const int BATCH_SIZE = 10;
 const int ITERS_PER_BATCH = 10;
 #else
+const int CREATE_EXPERIMENT_NUM_ITERS = 1000;
 const int UPDATE_NUM_ITERS = 40000;
 const int BATCH_SIZE = 1000;
 const int ITERS_PER_BATCH = 10000;

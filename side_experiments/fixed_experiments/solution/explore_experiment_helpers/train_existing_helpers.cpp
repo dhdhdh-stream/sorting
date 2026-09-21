@@ -39,6 +39,8 @@ void ExploreExperiment::train_existing_backprop(
 	if (this->existing_index >= TRAIN_EXISTING_NUM_DATAPOINTS) {
 		this->existing_index = 0;
 	}
+
+	this->state_iter++;
 }
 
 void ExploreExperiment::train_existing_helper() {
@@ -48,7 +50,7 @@ void ExploreExperiment::train_existing_helper() {
 	}
 	this->existing_val_average = sum_vals / (double)this->existing_target_val_histories.size();
 
-	this->existing_network = new Network(this->existing_obs_histories[0].size());
+	this->existing_network = new Network(this->existing_obs_histories[0][0].size());
 	double hidden_1_average_max_update = 0.0;
 	double hidden_2_average_max_update = 0.0;
 	double hidden_3_average_max_update = 0.0;

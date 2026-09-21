@@ -34,6 +34,7 @@ ExploreExperiment::ExploreExperiment(int diversity_index,
 	this->existing_index = 0;
 
 	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
+	this->state_iter = 0;
 }
 
 ExploreExperiment::~ExploreExperiment() {
