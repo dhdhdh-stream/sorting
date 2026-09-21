@@ -15,14 +15,13 @@ ScopeNode::ScopeNode() {
 
 	this->average_instances_per_hit = 1.0;
 	this->average_instances_per_run = 0.0;
-	this->experiment = NULL;
 
 	this->curr_num_instances = 0;
 }
 
 ScopeNode::~ScopeNode() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		delete this->experiments[e_index];
 	}
 }
 

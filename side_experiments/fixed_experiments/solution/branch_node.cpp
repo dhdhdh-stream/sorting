@@ -16,10 +16,8 @@ BranchNode::BranchNode() {
 
 	this->original_average_instances_per_hit = 1.0;
 	this->original_average_instances_per_run = 0.0;
-	this->original_experiment = NULL;
 	this->branch_average_instances_per_hit = 1.0;
 	this->branch_average_instances_per_run = 0.0;
-	this->branch_experiment = NULL;
 
 	this->original_curr_num_instances = 0;
 	this->branch_curr_num_instances = 0;
@@ -29,11 +27,11 @@ BranchNode::~BranchNode() {
 	delete this->original_network;
 	delete this->branch_network;
 
-	if (this->original_experiment != NULL) {
-		delete this->original_experiment;
+	for (int e_index = 0; e_index < (int)this->original_experiments.size(); e_index++) {
+		delete this->original_experiments[e_index];
 	}
-	if (this->branch_experiment != NULL) {
-		delete this->branch_experiment;
+	for (int e_index = 0; e_index < (int)this->branch_experiments.size(); e_index++) {
+		delete this->branch_experiments[e_index];
 	}
 }
 

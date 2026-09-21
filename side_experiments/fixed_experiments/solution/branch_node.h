@@ -36,10 +36,10 @@ public:
 
 	double original_average_instances_per_hit;
 	double original_average_instances_per_run;
-	AbstractExperiment* original_experiment;
+	std::vector<AbstractExperiment*> original_experiments;
 	double branch_average_instances_per_hit;
 	double branch_average_instances_per_run;
-	AbstractExperiment* branch_experiment;
+	std::vector<AbstractExperiment*> branch_experiments;
 
 	int original_curr_num_instances;
 	int branch_curr_num_instances;

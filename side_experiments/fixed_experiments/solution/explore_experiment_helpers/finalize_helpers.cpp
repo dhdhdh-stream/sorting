@@ -424,36 +424,41 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			case NODE_TYPE_NOOP:
 				{
 					NoopNode* noop_node = (NoopNode*)it->second;
-					if (noop_node->experiment != NULL) {
-						delete noop_node->experiment;
+					for (int e_index = 0; e_index < (int)noop_node->experiments.size(); e_index++) {
+						delete noop_node->experiments[e_index];
 					}
+					noop_node->experiments.clear();
 				}
 				break;
 			case NODE_TYPE_ACTION:
 				{
 					ActionNode* action_node = (ActionNode*)it->second;
-					if (action_node->experiment != NULL) {
-						delete action_node->experiment;
+					for (int e_index = 0; e_index < (int)action_node->experiments.size(); e_index++) {
+						delete action_node->experiments[e_index];
 					}
+					action_node->experiments.clear();
 				}
 				break;
 			case NODE_TYPE_SCOPE:
 				{
 					ScopeNode* scope_node = (ScopeNode*)it->second;
-					if (scope_node->experiment != NULL) {
-						delete scope_node->experiment;
+					for (int e_index = 0; e_index < (int)scope_node->experiments.size(); e_index++) {
+						delete scope_node->experiments[e_index];
 					}
+					scope_node->experiments.clear();
 				}
 				break;
 			case NODE_TYPE_BRANCH:
 				{
 					BranchNode* branch_node = (BranchNode*)it->second;
-					if (branch_node->original_experiment != NULL) {
-						delete branch_node->original_experiment;
+					for (int e_index = 0; e_index < (int)branch_node->original_experiments.size(); e_index++) {
+						delete branch_node->original_experiments[e_index];
 					}
-					if (branch_node->branch_experiment != NULL) {
-						delete branch_node->branch_experiment;
+					branch_node->original_experiments.clear();
+					for (int e_index = 0; e_index < (int)branch_node->branch_experiments.size(); e_index++) {
+						delete branch_node->branch_experiments[e_index];
 					}
+					branch_node->branch_experiments.clear();
 				}
 				break;
 			}

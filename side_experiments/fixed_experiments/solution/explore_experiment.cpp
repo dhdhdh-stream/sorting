@@ -42,28 +42,53 @@ ExploreExperiment::~ExploreExperiment() {
 	case NODE_TYPE_NOOP:
 		{
 			NoopNode* noop_node = (NoopNode*)this->node_context;
-			noop_node->experiment = NULL;
+			for (int e_index = 0; e_index < (int)noop_node->experiments.size(); e_index++) {
+				if (noop_node->experiments[e_index] == this) {
+					noop_node->experiments.erase(noop_node->experiments.begin() + e_index);
+					break;
+				}
+			}
 		}
 		break;
 	case NODE_TYPE_ACTION:
 		{
 			ActionNode* action_node = (ActionNode*)this->node_context;
-			action_node->experiment = NULL;
+			for (int e_index = 0; e_index < (int)action_node->experiments.size(); e_index++) {
+				if (action_node->experiments[e_index] == this) {
+					action_node->experiments.erase(action_node->experiments.begin() + e_index);
+					break;
+				}
+			}
 		}
 		break;
 	case NODE_TYPE_SCOPE:
 		{
 			ScopeNode* scope_node = (ScopeNode*)this->node_context;
-			scope_node->experiment = NULL;
+			for (int e_index = 0; e_index < (int)scope_node->experiments.size(); e_index++) {
+				if (scope_node->experiments[e_index] == this) {
+					scope_node->experiments.erase(scope_node->experiments.begin() + e_index);
+					break;
+				}
+			}
 		}
 		break;
 	case NODE_TYPE_BRANCH:
 		{
 			BranchNode* branch_node = (BranchNode*)this->node_context;
 			if (this->is_branch) {
-				branch_node->branch_experiment = NULL;
+				for (int e_index = 0; e_index < (int)branch_node->branch_experiments.size(); e_index++) {
+					if (branch_node->branch_experiments[e_index] == this) {
+						branch_node->branch_experiments.erase(branch_node->branch_experiments.begin() + e_index);
+						break;
+					}
+				}
 			} else {
-				branch_node->original_experiment = NULL;
+				for (int e_index = 0; e_index < (int)branch_node->original_experiments.size(); e_index++) {
+					if (branch_node->original_experiments[e_index] == this) {
+						branch_node->original_experiments.erase(branch_node->original_experiments.begin() + e_index);
+						break;
+					}
+				}
 			}
 		}
 		break;

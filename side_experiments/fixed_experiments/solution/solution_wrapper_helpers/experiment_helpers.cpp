@@ -103,11 +103,6 @@ void SolutionWrapper::experiment_end(double result) {
 			}
 		}
 	}
-	/**
-	 * - simply don't bother trying to add new experiments after a certain point
-	 *   - can infinitely add conflicts due to experiment spots being taken by other diversity_indexes
-	 */
-	// TODO: allow infinite experiments per node
 
 	for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
 		if (this->explore_experiment_histories[d_index].size() >= 2) {
@@ -181,8 +176,8 @@ void SolutionWrapper::experiment_end(double result) {
 				case NODE_TYPE_NOOP:
 					{
 						NoopNode* noop_node = (NoopNode*)it->second;
-						if (noop_node->experiment != NULL) {
-							ExploreExperiment* explore_experiment = (ExploreExperiment*)noop_node->experiment;
+						for (int e_index = 0; e_index < (int)noop_node->experiments.size(); e_index++) {
+							ExploreExperiment* explore_experiment = (ExploreExperiment*)noop_node->experiments[e_index];
 							explore_experiment->train_existing_helper();
 						}
 					}
@@ -190,8 +185,8 @@ void SolutionWrapper::experiment_end(double result) {
 				case NODE_TYPE_ACTION:
 					{
 						ActionNode* action_node = (ActionNode*)it->second;
-						if (action_node->experiment != NULL) {
-							ExploreExperiment* explore_experiment = (ExploreExperiment*)action_node->experiment;
+						for (int e_index = 0; e_index < (int)action_node->experiments.size(); e_index++) {
+							ExploreExperiment* explore_experiment = (ExploreExperiment*)action_node->experiments[e_index];
 							explore_experiment->train_existing_helper();
 						}
 					}
@@ -199,8 +194,8 @@ void SolutionWrapper::experiment_end(double result) {
 				case NODE_TYPE_SCOPE:
 					{
 						ScopeNode* scope_node = (ScopeNode*)it->second;
-						if (scope_node->experiment != NULL) {
-							ExploreExperiment* explore_experiment = (ExploreExperiment*)scope_node->experiment;
+						for (int e_index = 0; e_index < (int)scope_node->experiments.size(); e_index++) {
+							ExploreExperiment* explore_experiment = (ExploreExperiment*)scope_node->experiments[e_index];
 							explore_experiment->train_existing_helper();
 						}
 					}
@@ -208,12 +203,12 @@ void SolutionWrapper::experiment_end(double result) {
 				case NODE_TYPE_BRANCH:
 					{
 						BranchNode* branch_node = (BranchNode*)it->second;
-						if (branch_node->original_experiment != NULL) {
-							ExploreExperiment* explore_experiment = (ExploreExperiment*)branch_node->original_experiment;
+						for (int e_index = 0; e_index < (int)branch_node->original_experiments.size(); e_index++) {
+							ExploreExperiment* explore_experiment = (ExploreExperiment*)branch_node->original_experiments[e_index];
 							explore_experiment->train_existing_helper();
 						}
-						if (branch_node->branch_experiment != NULL) {
-							ExploreExperiment* explore_experiment = (ExploreExperiment*)branch_node->branch_experiment;
+						for (int e_index = 0; e_index < (int)branch_node->branch_experiments.size(); e_index++) {
+							ExploreExperiment* explore_experiment = (ExploreExperiment*)branch_node->branch_experiments[e_index];
 							explore_experiment->train_existing_helper();
 						}
 					}

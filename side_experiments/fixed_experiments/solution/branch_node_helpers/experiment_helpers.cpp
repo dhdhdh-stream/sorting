@@ -59,16 +59,16 @@ void BranchNode::experiment_step(vector<double>& obs,
 	if (is_branch) {
 		wrapper->node_context.back() = this->branch_next_node;
 
-		if (this->branch_experiment != NULL) {
-			this->branch_experiment->experiment_check_activate(
+		for (int e_index = 0; e_index < (int)this->branch_experiments.size(); e_index++) {
+			this->branch_experiments[e_index]->experiment_check_activate(
 				obs,
 				wrapper);
 		}
 	} else {
 		wrapper->node_context.back() = this->original_next_node;
 
-		if (this->original_experiment != NULL) {
-			this->original_experiment->experiment_check_activate(
+		for (int e_index = 0; e_index < (int)this->original_experiments.size(); e_index++) {
+			this->original_experiments[e_index]->experiment_check_activate(
 				obs,
 				wrapper);
 		}

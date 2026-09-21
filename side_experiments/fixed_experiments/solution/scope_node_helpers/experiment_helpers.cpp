@@ -37,8 +37,8 @@ void ScopeNode::experiment_exit_step(vector<double>& obs,
 
 	wrapper->node_context.back() = this->next_node;
 
-	if (this->experiment != NULL) {
-		this->experiment->experiment_check_activate(
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		this->experiments[e_index]->experiment_check_activate(
 			obs,
 			wrapper);
 	}
