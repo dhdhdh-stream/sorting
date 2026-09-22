@@ -29,8 +29,6 @@ Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
 	this->curr_score = original->curr_score;
 
-	this->curr_num_resets = original->curr_num_resets;
-
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
 		scope->id = s_index;
@@ -47,7 +45,8 @@ Solution::Solution(Solution* original) {
 	}
 
 	this->starting_scope = this->scopes[original->starting_scope->id];
-	this->starting_num_improvements = original->starting_num_improvements;
+	this->cycle_index = original->cycle_index;
+	this->iter_index = original->iter_index;
 
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
@@ -69,8 +68,6 @@ void Solution::init(ProblemType* problem_type) {
 
 	this->timestamp = 0;
 	this->curr_score = sum_score / INIT_MEASURE_ITERS;
-
-	this->curr_num_resets = 0;
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -107,7 +104,8 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->last_scores = vector<list<double>>(TRAIN_NEW_NUM_DATAPOINTS.size());
 
 	this->starting_scope = new_scope;
-	this->starting_num_improvements = 0;
+	this->cycle_index = 0;
+	this->iter_index = 0;
 }
 
 void Solution::load(ifstream& input_file) {
@@ -118,10 +116,6 @@ void Solution::load(ifstream& input_file) {
 	string curr_score_line;
 	getline(input_file, curr_score_line);
 	this->curr_score = stod(curr_score_line);
-
-	string curr_num_resets_line;
-	getline(input_file, curr_num_resets_line);
-	this->curr_num_resets = stoi(curr_num_resets_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -146,9 +140,13 @@ void Solution::load(ifstream& input_file) {
 	getline(input_file, starting_scope_id_line);
 	this->starting_scope = this->scopes[stoi(starting_scope_id_line)];
 
-	string starting_num_improvements_line;
-	getline(input_file, starting_num_improvements_line);
-	this->starting_num_improvements = stoi(starting_num_improvements_line);
+	string cycle_index_line;
+	getline(input_file, cycle_index_line);
+	this->cycle_index = stoi(cycle_index_line);
+
+	string iter_index_line;
+	getline(input_file, iter_index_line);
+	this->iter_index = stoi(iter_index_line);
 
 	string history_size_line;
 	getline(input_file, history_size_line);
@@ -225,8 +223,6 @@ void Solution::save(ofstream& output_file) {
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
 
-	output_file << this->curr_num_resets << endl;
-
 	output_file << this->scopes.size() << endl;
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
@@ -234,7 +230,8 @@ void Solution::save(ofstream& output_file) {
 	}
 
 	output_file << this->starting_scope->id << endl;
-	output_file << this->starting_num_improvements << endl;
+	output_file << this->cycle_index << endl;
+	output_file << this->iter_index << endl;
 
 	output_file << this->improvement_history.size() << endl;
 	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {

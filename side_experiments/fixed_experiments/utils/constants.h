@@ -76,7 +76,8 @@ const int ITERS_PER_BATCH = 10000;
  */
 #endif /* MDEBUG */
 
-const int GENERALIZE_ITER = 3;
+const int NEW_SCOPE_NUM_INIT = 2;
+const int GENERALIZE_NUM_CYCLES = 2;
 
 const int EXPERIMENT_REFRESH_NUM_ITERS = 10;
 

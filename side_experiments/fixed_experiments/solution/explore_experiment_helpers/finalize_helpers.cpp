@@ -20,13 +20,14 @@
 using namespace std;
 
 void ExploreExperiment::add(SolutionWrapper* wrapper) {
-	delete wrapper->prev_solution;
-	wrapper->prev_solution = new Solution(wrapper->solution);
+	if (wrapper->solution->curr_score > wrapper->best_solution->curr_score) {
+		delete wrapper->best_solution;
+		wrapper->best_solution = new Solution(wrapper->solution);
+	}
 
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
-	ss << "curr_num_resets: " << wrapper->solution->curr_num_resets << "; ";
 	ss << "iters_since_update: " << wrapper->iters_since_update << "; ";
 	ss << "new_since_update: " << wrapper->new_since_update << "; ";
 	ss << "Experiment" << "; ";
@@ -341,56 +342,68 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	}
 
 	wrapper->solution->timestamp++;
-	wrapper->solution->curr_num_resets = 0;
 
-	if (this->scope_context == wrapper->solution->starting_scope) {
-		wrapper->solution->starting_num_improvements++;
-		if (wrapper->solution->starting_num_improvements >= GENERALIZE_ITER) {
-			Scope* new_scope = new Scope();
-			new_scope->id = wrapper->solution->scopes.size();
-			new_scope->node_counter = 0;
-			wrapper->solution->scopes.push_back(new_scope);
+	if (wrapper->solution->cycle_index == -1) {
+		wrapper->solution->iter_index++;
+		if (wrapper->solution->iter_index >= NEW_SCOPE_NUM_INIT) {
+			wrapper->solution->cycle_index = 0;
+			wrapper->solution->iter_index = 0;
+		}
+	} else {
+		wrapper->solution->iter_index++;
+		if (wrapper->solution->iter_index >= (int)wrapper->solution->scopes.size()) {
+			wrapper->solution->cycle_index++;
+			if (wrapper->solution->cycle_index >= GENERALIZE_NUM_CYCLES) {
+				Scope* new_scope = new Scope();
+				new_scope->id = wrapper->solution->scopes.size();
+				new_scope->node_counter = 0;
+				wrapper->solution->scopes.push_back(new_scope);
 
-			new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
-			new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
+				new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
+				new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
 
-			new_scope->last_scores = wrapper->solution->starting_scope->last_scores;
+				new_scope->last_scores = wrapper->solution->starting_scope->last_scores;
 
-			NoopNode* start_node = new NoopNode();
-			start_node->parent = new_scope;
-			start_node->id = new_scope->node_counter;
-			new_scope->node_counter++;
-			new_scope->nodes[start_node->id] = start_node;
+				NoopNode* start_node = new NoopNode();
+				start_node->parent = new_scope;
+				start_node->id = new_scope->node_counter;
+				new_scope->node_counter++;
+				new_scope->nodes[start_node->id] = start_node;
 
-			ScopeNode* scope_node = new ScopeNode();
-			scope_node->parent = new_scope;
-			scope_node->id = new_scope->node_counter;
-			new_scope->node_counter++;
-			new_scope->nodes[scope_node->id] = scope_node;
+				ScopeNode* scope_node = new ScopeNode();
+				scope_node->parent = new_scope;
+				scope_node->id = new_scope->node_counter;
+				new_scope->node_counter++;
+				new_scope->nodes[scope_node->id] = scope_node;
 
-			scope_node->scope = wrapper->solution->starting_scope;
+				scope_node->scope = wrapper->solution->starting_scope;
 
-			NoopNode* end_node = new NoopNode();
-			end_node->parent = new_scope;
-			end_node->id = new_scope->node_counter;
-			new_scope->node_counter++;
-			new_scope->nodes[end_node->id] = end_node;
+				NoopNode* end_node = new NoopNode();
+				end_node->parent = new_scope;
+				end_node->id = new_scope->node_counter;
+				new_scope->node_counter++;
+				new_scope->nodes[end_node->id] = end_node;
 
-			start_node->next_node_id = scope_node->id;
-			start_node->next_node = scope_node;
+				start_node->next_node_id = scope_node->id;
+				start_node->next_node = scope_node;
 
-			scope_node->ancestor_ids.push_back(start_node->id);
+				scope_node->ancestor_ids.push_back(start_node->id);
 
-			scope_node->next_node_id = end_node->id;
-			scope_node->next_node = end_node;
+				scope_node->next_node_id = end_node->id;
+				scope_node->next_node = end_node;
 
-			end_node->ancestor_ids.push_back(scope_node->id);
+				end_node->ancestor_ids.push_back(scope_node->id);
 
-			end_node->next_node_id = -1;
-			end_node->next_node = NULL;
+				end_node->next_node_id = -1;
+				end_node->next_node = NULL;
 
-			wrapper->solution->starting_scope = new_scope;
-			wrapper->solution->starting_num_improvements = 0;
+				wrapper->solution->starting_scope = new_scope;
+
+				wrapper->solution->cycle_index = -1;
+				wrapper->solution->iter_index = 0;
+			} else {
+				wrapper->solution->iter_index = 0;
+			}
 		}
 	}
 
