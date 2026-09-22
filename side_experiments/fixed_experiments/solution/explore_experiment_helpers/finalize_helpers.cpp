@@ -424,41 +424,36 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			case NODE_TYPE_NOOP:
 				{
 					NoopNode* noop_node = (NoopNode*)it->second;
-					for (int e_index = 0; e_index < (int)noop_node->experiments.size(); e_index++) {
-						delete noop_node->experiments[e_index];
+					while (noop_node->experiments.size() > 0) {
+						delete noop_node->experiments[0];
 					}
-					noop_node->experiments.clear();
 				}
 				break;
 			case NODE_TYPE_ACTION:
 				{
 					ActionNode* action_node = (ActionNode*)it->second;
-					for (int e_index = 0; e_index < (int)action_node->experiments.size(); e_index++) {
-						delete action_node->experiments[e_index];
+					while (action_node->experiments.size() > 0) {
+						delete action_node->experiments[0];
 					}
-					action_node->experiments.clear();
 				}
 				break;
 			case NODE_TYPE_SCOPE:
 				{
 					ScopeNode* scope_node = (ScopeNode*)it->second;
-					for (int e_index = 0; e_index < (int)scope_node->experiments.size(); e_index++) {
-						delete scope_node->experiments[e_index];
+					while (scope_node->experiments.size() > 0) {
+						delete scope_node->experiments[0];
 					}
-					scope_node->experiments.clear();
 				}
 				break;
 			case NODE_TYPE_BRANCH:
 				{
 					BranchNode* branch_node = (BranchNode*)it->second;
-					for (int e_index = 0; e_index < (int)branch_node->original_experiments.size(); e_index++) {
-						delete branch_node->original_experiments[e_index];
+					while (branch_node->original_experiments.size() > 0) {
+						delete branch_node->original_experiments[0];
 					}
-					branch_node->original_experiments.clear();
-					for (int e_index = 0; e_index < (int)branch_node->branch_experiments.size(); e_index++) {
-						delete branch_node->branch_experiments[e_index];
+					while (branch_node->branch_experiments.size() > 0) {
+						delete branch_node->branch_experiments[0];
 					}
-					branch_node->branch_experiments.clear();
 				}
 				break;
 			}
