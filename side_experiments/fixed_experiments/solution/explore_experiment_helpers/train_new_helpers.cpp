@@ -23,43 +23,11 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 												 SolutionWrapper* wrapper) {
 	if (wrapper->diversity_index == this->diversity_index) {
 		this->num_instances_until_target--;
-		if (this->num_instances_until_target <= 0) {
-			history->obs_histories.push_back(obs);
+		if (!history->has_explore
+				&& this->num_instances_until_target <= 0) {
+			history->has_explore = true;
 
-			double average_instances_per_hit;
-			switch (this->node_context->type) {
-			case NODE_TYPE_NOOP:
-				{
-					NoopNode* noop_node = (NoopNode*)this->node_context;
-					average_instances_per_hit = noop_node->average_instances_per_hit;
-				}
-				break;
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)this->node_context;
-					average_instances_per_hit = action_node->average_instances_per_hit;
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)this->node_context;
-					average_instances_per_hit = scope_node->average_instances_per_hit;
-				}
-				break;
-			default:
-			// case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)this->node_context;
-					if (this->is_branch) {
-						average_instances_per_hit = branch_node->branch_average_instances_per_hit;
-					} else {
-						average_instances_per_hit = branch_node->original_average_instances_per_hit;
-					}
-				}
-				break;
-			}
-			uniform_int_distribution<int> until_distribution(1, average_instances_per_hit);
-			this->num_instances_until_target = until_distribution(generator);
+			history->obs_histories.push_back(obs);
 
 			ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
 			new_experiment_state->step_index = 0;
@@ -244,7 +212,42 @@ void ExploreExperiment::train_new_backprop(
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
 	if (wrapper->diversity_index == this->diversity_index) {
-		if (history->obs_histories.size() > 0) {
+		double average_instances_per_hit;
+		switch (this->node_context->type) {
+		case NODE_TYPE_NOOP:
+			{
+				NoopNode* noop_node = (NoopNode*)this->node_context;
+				average_instances_per_hit = noop_node->average_instances_per_hit;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->node_context;
+				average_instances_per_hit = action_node->average_instances_per_hit;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)this->node_context;
+				average_instances_per_hit = scope_node->average_instances_per_hit;
+			}
+			break;
+		default:
+		// case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)this->node_context;
+				if (this->is_branch) {
+					average_instances_per_hit = branch_node->branch_average_instances_per_hit;
+				} else {
+					average_instances_per_hit = branch_node->original_average_instances_per_hit;
+				}
+			}
+			break;
+		}
+		uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
+		this->num_instances_until_target = until_distribution(generator);
+
+		if (history->has_explore) {
 			for (int i_index = 0; i_index < (int)history->obs_histories.size(); i_index++) {
 				this->new_obs_histories.push_back(history->obs_histories[i_index]);
 				this->new_target_val_histories.push_back(target_val);

@@ -126,6 +126,8 @@ bool ExploreExperiment::further_than(ExploreExperiment* other) {
 
 ExploreExperimentHistory::ExploreExperimentHistory(ExploreExperiment* experiment) {
 	this->experiment = experiment;
+
+	this->has_explore = false;
 }
 
 ExploreExperimentState::ExploreExperimentState(ExploreExperiment* experiment) {

@@ -30,11 +30,12 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 											   SolutionWrapper* wrapper) {
 	if (wrapper->diversity_index == this->diversity_index) {
 		this->num_instances_until_target--;
-		if (history->existing_predicted.size() == 0
+		if (!history->has_explore
 				&& this->num_instances_until_target <= 0) {
+			history->has_explore = true;
+
 			this->existing_network->activate(obs);
-			history->existing_predicted.push_back(
-				this->existing_network->output->acti_vals[0]);
+			history->existing_predicted = this->existing_network->output->acti_vals[0];
 
 			bool exit_is_next;
 			switch (this->node_context->type) {
@@ -233,12 +234,12 @@ void ExploreExperiment::explore_backprop(double target_val,
 		uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
 		this->num_instances_until_target = until_distribution(generator);
 
-		wrapper->new_since_update++;
+		if (history->has_explore) {
+			wrapper->new_since_update++;
 
-		if (history->existing_predicted.size() != 0) {
 			this->state_iter++;
 
-			double curr_surprise = target_val - history->existing_predicted[0];
+			double curr_surprise = target_val - history->existing_predicted;
 
 			bool is_success = false;
 			if (curr_surprise >= 0.0) {

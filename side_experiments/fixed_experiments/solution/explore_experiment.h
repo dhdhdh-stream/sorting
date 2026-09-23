@@ -135,7 +135,9 @@ public:
 
 	std::vector<std::vector<double>> obs_histories;
 
-	std::vector<double> existing_predicted;
+	bool has_explore;
+
+	double existing_predicted;
 
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
