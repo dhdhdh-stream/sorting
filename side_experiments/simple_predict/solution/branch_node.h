@@ -106,6 +106,7 @@ public:
 
 	void backprop(double target_val,
 				  Eigen::VectorXf& state_error);
+	void update(int iter_index);
 };
 
 #endif /* BRANCH_NODE_H */

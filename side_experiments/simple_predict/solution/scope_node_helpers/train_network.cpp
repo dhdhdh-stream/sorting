@@ -84,3 +84,32 @@ void TrainPredictScopeNodeHistory::backprop(double target_val,
 	scope_node->predict_network->load(this->predict_network_history);
 	scope_node->predict_network->backprop(state_error);
 }
+
+void TrainScopeNodeHistory::update(int iter_index) {
+	ScopeNode* scope_node = (ScopeNode*)this->node;
+
+	if (!this->early_exit) {
+		if (scope_node->out_network->last_update_iter != iter_index) {
+			scope_node->out_network->update();
+
+			scope_node->out_network->last_update_iter = iter_index;
+		}
+	}
+
+	this->scope_history->update(iter_index);
+
+	if (scope_node->in_network->last_update_iter != iter_index) {
+		scope_node->in_network->update();
+
+		scope_node->in_network->last_update_iter = iter_index;
+	}
+}
+
+void TrainPredictScopeNodeHistory::update(int iter_index) {
+	ScopeNode* scope_node = (ScopeNode*)this->node;
+	if (scope_node->predict_network->last_update_iter != iter_index) {
+		scope_node->predict_network->update();
+
+		scope_node->predict_network->last_update_iter = iter_index;
+	}
+}

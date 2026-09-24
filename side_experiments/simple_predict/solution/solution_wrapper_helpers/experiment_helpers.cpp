@@ -17,7 +17,7 @@
 
 using namespace std;
 
-void SolutionWrapper::experiment_init() {
+void SolutionWrapper::experiment_init(vector<double> obs) {
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
 	this->starting_run_seed = this->run_index;
@@ -35,6 +35,10 @@ void SolutionWrapper::experiment_init() {
 	this->scope_histories.push_back(scope_history);
 	this->node_context.push_back(this->solution->starting_scope->nodes[0]);
 	this->experiment_context.push_back(NULL);
+
+	this->solution->starting_scope->experiment_start_activate(
+		obs,
+		this);
 }
 
 pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {

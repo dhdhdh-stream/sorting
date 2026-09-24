@@ -12,7 +12,7 @@
 
 using namespace std;
 
-void SolutionWrapper::init() {
+void SolutionWrapper::init(vector<double> obs) {
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
 	this->starting_run_seed = this->run_index;
@@ -28,6 +28,9 @@ void SolutionWrapper::init() {
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->starting_scope);
 	this->scope_histories.push_back(scope_history);
 	this->node_context.push_back(this->solution->starting_scope->nodes[0]);
+
+	this->solution->starting_scope->start_activate(obs,
+												   this);
 }
 
 pair<bool,int> SolutionWrapper::step(vector<double> obs) {

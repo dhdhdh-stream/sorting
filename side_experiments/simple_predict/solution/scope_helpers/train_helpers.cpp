@@ -69,3 +69,23 @@ void TrainScopeHistory::backprop(double target_val,
 	this->scope->obs_network->load(this->obs_network_history);
 	this->scope->obs_network->backprop(state_error);
 }
+
+void TrainScopeHistory::update(int iter_index) {
+	if (this->is_explore) {
+		if (this->scope->score_network->last_update_iter != iter_index) {
+			this->scope->score_network->update();
+
+			this->scope->score_network->last_update_iter = iter_index;
+		}
+	}
+
+	for (int h_index = (int)this->node_histories.size()-1; h_index >= 0; h_index--) {
+		this->node_histories[h_index]->update(iter_index);
+	}
+
+	if (this->scope->obs_network->last_update_iter != iter_index) {
+		this->scope->obs_network->update();
+
+		this->scope->obs_network->last_update_iter = iter_index;
+	}
+}

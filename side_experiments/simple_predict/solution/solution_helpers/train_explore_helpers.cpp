@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include <Eigen/Dense>
 
 #include "action_node.h"
@@ -26,7 +28,7 @@ void train_explore_helper(SolutionWrapper* wrapper) {
 		bool is_done = false;
 		TrainScopeHistory* train_scope_history = new TrainScopeHistory(wrapper->solution->starting_scope);
 		wrapper->solution->starting_scope->train_activate(
-			wrapper->existing_scope_histories[index],
+			wrapper->explore_scope_histories[index],
 			state,
 			is_done,
 			train_scope_history);
@@ -34,8 +36,11 @@ void train_explore_helper(SolutionWrapper* wrapper) {
 		Eigen::VectorXf state_error;
 		state_error.resize(NUM_STATES);
 		state_error.setConstant(0.0);
-		train_scope_history->backprop(wrapper->existing_target_val_histories[index],
+		train_scope_history->backprop(wrapper->explore_target_val_histories[index],
 									  state_error);
+
+		train_scope_history->update(wrapper->train_iter_index);
+		wrapper->train_iter_index++;
 
 		delete train_scope_history;
 	}

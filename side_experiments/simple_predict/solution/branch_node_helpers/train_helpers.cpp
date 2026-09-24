@@ -33,3 +33,12 @@ void TrainPredictBranchNodeHistory::backprop(double target_val,
 	branch_node->branch_predict_network->backprop(this->is_branch,
 												  state_error);
 }
+
+void TrainPredictBranchNodeHistory::update(int iter_index) {
+	BranchNode* branch_node = (BranchNode*)this->node;
+	if (branch_node->branch_predict_network->last_update_iter != iter_index) {
+		branch_node->branch_predict_network->update();
+
+		branch_node->branch_predict_network->last_update_iter = iter_index;
+	}
+}

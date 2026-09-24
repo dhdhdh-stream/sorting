@@ -45,17 +45,19 @@ int main(int argc, char* argv[]) {
 		Problem* problem = problem_type->get_problem();
 		solution_wrapper->problem = problem;
 
-		solution_wrapper->init();
+		vector<double> obs = problem->get_observations();
+
+		solution_wrapper->init(obs);
 
 		while (true) {
-			vector<double> obs = problem->get_observations();
-
 			pair<bool,int> next = solution_wrapper->step(obs);
 			if (next.first) {
 				break;
 			} else {
 				problem->perform_action(next.second);
 			}
+
+			obs = problem->get_observations();
 		}
 
 		double target_val = problem->score_result();

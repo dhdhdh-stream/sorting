@@ -15,6 +15,8 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->iters_since_update = 0;
 	this->new_since_update = 0;
 
+	this->train_iter_index = 0;
+
 	this->experiment_histories = vector<map<AbstractExperiment*, AbstractExperimentHistory*>>(DIVERSITY_RANGE);
 
 	#if defined(MDEBUG) && MDEBUG
@@ -36,6 +38,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->iters_since_update = 0;
 	this->new_since_update = 0;
 
+	this->train_iter_index = 0;
+
 	this->experiment_histories = vector<map<AbstractExperiment*, AbstractExperimentHistory*>>(DIVERSITY_RANGE);
 
 	#if defined(MDEBUG) && MDEBUG
@@ -51,6 +55,9 @@ SolutionWrapper::~SolutionWrapper() {
 
 	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
 		delete this->existing_scope_histories[h_index];
+	}
+	for (int h_index = 0; h_index < (int)this->explore_scope_histories.size(); h_index++) {
+		delete this->explore_scope_histories[h_index];
 	}
 }
 

@@ -155,7 +155,7 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 				}
 			}
 			AbstractNode* curr_node = this->exit_next_node;
-			while (node_context != NULL) {
+			while (curr_node != NULL) {
 				curr_node->predict_step(state,
 										curr_node);
 			}
@@ -266,6 +266,14 @@ void ExploreExperiment::explore_backprop(double target_val,
 		wrapper->new_since_update++;
 
 		if (history->has_explore) {
+			// temp
+			if (this->state_iter == 0) {
+				cout << "history->predicted: " << history->predicted << endl;
+				cout << "target_val: " << target_val << endl;
+				cout << "wrapper->iters_since_update: " << wrapper->iters_since_update << endl;
+				cout << endl;
+			}
+
 			this->state_iter++;
 
 			double curr_surprise = target_val - history->existing_predicted;

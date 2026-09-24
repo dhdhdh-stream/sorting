@@ -74,6 +74,7 @@ public:
 
 	virtual void backprop(double target_val,
 						  Eigen::VectorXf& state_error) = 0;
+	virtual void update(int iter_index) = 0;
 };
 
 #endif /* ABSTRACT_NODE_H */

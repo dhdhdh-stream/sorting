@@ -46,3 +46,21 @@ void TrainPredictActionNodeHistory::backprop(double target_val,
 	action_node->predict_network->load(this->predict_network_history);
 	action_node->predict_network->backprop(state_error);
 }
+
+void TrainActionNodeHistory::update(int iter_index) {
+	ActionNode* action_node = (ActionNode*)this->node;
+	if (action_node->obs_network->last_update_iter != iter_index) {
+		action_node->obs_network->update();
+
+		action_node->obs_network->last_update_iter = iter_index;
+	}
+}
+
+void TrainPredictActionNodeHistory::update(int iter_index) {
+	ActionNode* action_node = (ActionNode*)this->node;
+	if (action_node->predict_network->last_update_iter != iter_index) {
+		action_node->predict_network->update();
+
+		action_node->predict_network->last_update_iter = iter_index;
+	}
+}

@@ -48,6 +48,7 @@ public:
 	 */
 	std::vector<ScopeHistory*> explore_scope_histories;
 	std::vector<double> explore_target_val_histories;
+	int train_iter_index;
 
 	int diversity_index;
 	bool has_explore;
@@ -67,11 +68,11 @@ public:
 					std::string name);
 	~SolutionWrapper();
 
-	void init();
+	void init(std::vector<double> obs);
 	std::pair<bool,int> step(std::vector<double> obs);
 	void end();
 
-	void experiment_init();
+	void experiment_init(std::vector<double> obs);
 	std::pair<bool,int> experiment_step(std::vector<double> obs);
 	void experiment_end(double result);
 
