@@ -38,6 +38,11 @@ void ExploreExperiment::experiment_check_activate(vector<double>& obs,
 							   it->second,
 							   wrapper);
 		break;
+	case EXPLORE_EXPERIMENT_STATE_SINGLE_MEASURE:
+		single_measure_check_activate(obs,
+									  it->second,
+									  wrapper);
+		break;
 	}
 }
 
@@ -66,6 +71,12 @@ void ExploreExperiment::experiment_step(vector<double>& obs,
 					 is_next,
 					 wrapper);
 		break;
+	case EXPLORE_EXPERIMENT_STATE_SINGLE_MEASURE:
+		single_measure_step(obs,
+							action,
+							is_next,
+							wrapper);
+		break;
 	}
 }
 
@@ -85,6 +96,9 @@ void ExploreExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 		break;
 	case EXPLORE_EXPERIMENT_STATE_MEASURE:
 		measure_exit_step(wrapper);
+		break;
+	case EXPLORE_EXPERIMENT_STATE_SINGLE_MEASURE:
+		single_measure_exit_step(wrapper);
 		break;
 	}
 }
@@ -114,6 +128,12 @@ void ExploreExperiment::backprop(double target_val,
 						 history,
 						 wrapper,
 						 is_add);
+		break;
+	case EXPLORE_EXPERIMENT_STATE_SINGLE_MEASURE:
+		single_measure_backprop(target_val,
+								history,
+								wrapper,
+								is_add);
 		break;
 	}
 }

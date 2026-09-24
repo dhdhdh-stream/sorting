@@ -20,6 +20,7 @@ const int EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
 const int EXPLORE_EXPERIMENT_STATE_MEASURE = 3;
+const int EXPLORE_EXPERIMENT_STATE_SINGLE_MEASURE = 4;
 
 class ExploreExperimentHistory;
 class ExploreExperiment : public AbstractExperiment {
@@ -123,6 +124,19 @@ public:
 						  ExploreExperimentHistory* history,
 						  SolutionWrapper* wrapper,
 						  bool& is_add);
+
+	void single_measure_check_activate(std::vector<double>& obs,
+									   ExploreExperimentHistory* history,
+									   SolutionWrapper* wrapper);
+	void single_measure_step(std::vector<double>& obs,
+							 int& action,
+							 bool& is_next,
+							 SolutionWrapper* wrapper);
+	void single_measure_exit_step(SolutionWrapper* wrapper);
+	void single_measure_backprop(double target_val,
+								 ExploreExperimentHistory* history,
+								 SolutionWrapper* wrapper,
+								 bool& is_add);
 
 	void add(SolutionWrapper* wrapper);
 

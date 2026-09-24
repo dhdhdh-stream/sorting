@@ -87,19 +87,8 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->node_counter++;
 	new_scope->nodes[start_node->id] = start_node;
 
-	NoopNode* end_node = new NoopNode();
-	end_node->parent = new_scope;
-	end_node->id = new_scope->node_counter;
-	new_scope->node_counter++;
-	new_scope->nodes[end_node->id] = end_node;
-
-	start_node->next_node_id = end_node->id;
-	start_node->next_node = end_node;
-
-	end_node->ancestor_ids.push_back(start_node->id);
-
-	end_node->next_node_id = -1;
-	end_node->next_node = NULL;
+	start_node->next_node_id = -1;
+	start_node->next_node = NULL;
 
 	new_scope->last_scores = vector<list<double>>(TRAIN_NEW_NUM_DATAPOINTS.size());
 
