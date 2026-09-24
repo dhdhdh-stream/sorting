@@ -41,7 +41,7 @@ public:
 						  SolutionWrapper* wrapper,
 						  bool& is_add) = 0;
 
-	virtual void train_existing_helper() = 0;
+	virtual void train_existing_helper(SolutionWrapper* wrapper) = 0;
 
 	bool further_than(AbstractExperiment* other);
 };

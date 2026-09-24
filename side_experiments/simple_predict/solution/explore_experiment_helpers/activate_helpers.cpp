@@ -24,6 +24,11 @@ void ExploreExperiment::experiment_check_activate(vector<double>& obs,
 									  explore_experiment_history,
 									  wrapper);
 		break;
+	case EXPLORE_EXPERIMENT_STATE_PREDICT_MEASURE:
+		predict_measure_check_activate(obs,
+									   explore_experiment_history,
+									   wrapper);
+		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_check_activate(obs,
 							   explore_experiment_history,
@@ -34,11 +39,6 @@ void ExploreExperiment::experiment_check_activate(vector<double>& obs,
 								 explore_experiment_history,
 								 wrapper);
 		break;
-	case EXPLORE_EXPERIMENT_STATE_MEASURE:
-		measure_check_activate(obs,
-							   explore_experiment_history,
-							   wrapper);
-		break;
 	}
 }
 
@@ -47,6 +47,12 @@ void ExploreExperiment::experiment_step(vector<double>& obs,
 										bool& is_next,
 										SolutionWrapper* wrapper) {
 	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_PREDICT_MEASURE:
+		predict_measure_step(obs,
+							 action,
+							 is_next,
+							 wrapper);
+		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_step(obs,
 					 action,
@@ -59,18 +65,16 @@ void ExploreExperiment::experiment_step(vector<double>& obs,
 					   is_next,
 					   wrapper);
 		break;
-	case EXPLORE_EXPERIMENT_STATE_MEASURE:
-		measure_step(obs,
-					 action,
-					 is_next,
-					 wrapper);
-		break;
 	}
 }
 
 void ExploreExperiment::experiment_step_callback(vector<double>& obs,
 												 SolutionWrapper* wrapper) {
 	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_PREDICT_MEASURE:
+		predict_measure_callback(obs,
+								 wrapper);
+		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_callback(obs,
 						 wrapper);
@@ -79,16 +83,16 @@ void ExploreExperiment::experiment_step_callback(vector<double>& obs,
 		train_new_callback(obs,
 						   wrapper);
 		break;
-	case EXPLORE_EXPERIMENT_STATE_MEASURE:
-		measure_callback(obs,
-						 wrapper);
-		break;
 	}
 }
 
 void ExploreExperiment::experiment_exit_step(vector<double>& obs,
 											 SolutionWrapper* wrapper) {
 	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_PREDICT_MEASURE:
+		predict_measure_exit_step(obs,
+								  wrapper);
+		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_exit_step(obs,
 						  wrapper);
@@ -96,10 +100,6 @@ void ExploreExperiment::experiment_exit_step(vector<double>& obs,
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_exit_step(obs,
 							wrapper);
-		break;
-	case EXPLORE_EXPERIMENT_STATE_MEASURE:
-		measure_exit_step(obs,
-						  wrapper);
 		break;
 	}
 }
@@ -115,6 +115,12 @@ void ExploreExperiment::backprop(double target_val,
 								explore_experiment_history,
 								wrapper);
 		break;
+	case EXPLORE_EXPERIMENT_STATE_PREDICT_MEASURE:
+		predict_measure_backprop(target_val,
+								 explore_experiment_history,
+								 wrapper,
+								 is_add);
+		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 explore_experiment_history,
@@ -123,13 +129,8 @@ void ExploreExperiment::backprop(double target_val,
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
 						   explore_experiment_history,
-						   wrapper);
-		break;
-	case EXPLORE_EXPERIMENT_STATE_MEASURE:
-		measure_backprop(target_val,
-						 explore_experiment_history,
-						 wrapper,
-						 is_add);
+						   wrapper,
+						   is_add);
 		break;
 	}
 }

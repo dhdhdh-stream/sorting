@@ -17,11 +17,18 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int PREDICT_CYCLE_NUM_TRIES = 2;
+#else
+const int PREDICT_CYCLE_NUM_TRIES = 10;
+#endif /* MDEBUG */
+
 void ExploreExperiment::train_existing_check_activate(
 		vector<double>& obs,
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
 	history->obs_histories.push_back(obs);
+	history->state_histories.push_back(wrapper->states.back());
 }
 
 void ExploreExperiment::train_existing_backprop(
@@ -30,9 +37,11 @@ void ExploreExperiment::train_existing_backprop(
 		SolutionWrapper* wrapper) {
 	if ((int)this->existing_obs_histories.size() < TRAIN_EXISTING_NUM_DATAPOINTS) {
 		this->existing_obs_histories.push_back(history->obs_histories);
+		this->existing_state_histories.push_back(history->state_histories);
 		this->existing_target_val_histories.push_back(target_val);
 	} else {
 		this->existing_obs_histories[this->existing_index] = history->obs_histories;
+		this->existing_state_histories[this->existing_index] = history->state_histories;
 		this->existing_target_val_histories[this->existing_index] = target_val;
 	}
 	this->existing_index++;
@@ -43,13 +52,7 @@ void ExploreExperiment::train_existing_backprop(
 	this->state_iter++;
 }
 
-void ExploreExperiment::train_existing_helper() {
-	double sum_vals = 0.0;
-	for (int h_index = 0; h_index < (int)this->existing_target_val_histories.size(); h_index++) {
-		sum_vals += this->existing_target_val_histories[h_index];
-	}
-	this->existing_val_average = sum_vals / (double)this->existing_target_val_histories.size();
-
+void ExploreExperiment::train_existing_helper(SolutionWrapper* wrapper) {
 	this->existing_network = new Network(this->existing_obs_histories[0][0].size());
 	double hidden_1_average_max_update = 0.0;
 	double hidden_2_average_max_update = 0.0;
@@ -72,6 +75,17 @@ void ExploreExperiment::train_existing_helper() {
 											  hidden_2_average_max_update,
 											  hidden_3_average_max_update,
 											  output_average_max_update);
+	}
+
+	bool predict_success = false;
+	if (wrapper->solution->cycle_index != -1) {
+		for (int i_index = 0; i_index < PREDICT_CYCLE_NUM_TRIES; i_index++) {
+			bool is_success = predict_cycle();
+			if (is_success) {
+				predict_success = true;
+				break;
+			}
+		}
 	}
 
 	double average_instances_per_hit;
@@ -109,6 +123,13 @@ void ExploreExperiment::train_existing_helper() {
 	uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
 	this->num_instances_until_target = until_distribution(generator);
 
-	this->state = EXPLORE_EXPERIMENT_STATE_EXPLORE;
-	this->state_iter = 0;
+	if (predict_success) {
+		this->sum_improvement = 0.0;
+
+		this->state = EXPLORE_EXPERIMENT_STATE_PREDICT_MEASURE;
+		this->state_iter = 0;
+	} else {
+		this->state = EXPLORE_EXPERIMENT_STATE_EXPLORE;
+		this->state_iter = 0;
+	}
 }

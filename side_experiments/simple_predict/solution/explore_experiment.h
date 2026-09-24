@@ -4,6 +4,8 @@
 #include <set>
 #include <vector>
 
+#include <Eigen/Dense>
+
 #include "abstract_experiment.h"
 
 class AbstractNode;
@@ -17,20 +19,25 @@ const int EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
  *   - also much easier to make mistakes
  *     - in case branches not properly taken into account
  */
-const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
-const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
-const int EXPLORE_EXPERIMENT_STATE_MEASURE = 3;
+const int EXPLORE_EXPERIMENT_STATE_PREDICT_MEASURE = 1;
+const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 2;
+const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 3;
 
 class ExploreExperimentHistory;
 class ExploreExperiment : public AbstractExperiment {
 public:
 	std::vector<std::vector<std::vector<double>>> existing_obs_histories;
+	std::vector<std::vector<Eigen::VectorXf>> existing_state_histories;
+	/**
+	 * - invalidated once predict updated
+	 *   - so round of predict after existing, before explore
+	 */
 	std::vector<double> existing_target_val_histories;
 	int existing_index;
 
-	double existing_val_average;
-
 	Network* existing_network;
+
+	double sum_improvement;
 
 	int num_instances_until_target;
 
@@ -43,8 +50,6 @@ public:
 	std::vector<double> new_target_val_histories;
 
 	Network* new_network;
-
-	double sum_vals;
 
 	ExploreExperiment(int diversity_index,
 					  Scope* scope_context,
@@ -76,7 +81,24 @@ public:
 								 ExploreExperimentHistory* history,
 								 SolutionWrapper* wrapper);
 
-	void train_existing_helper();
+	void train_existing_helper(SolutionWrapper* wrapper);
+	bool predict_cycle();
+
+	void predict_measure_check_activate(std::vector<double>& obs,
+										ExploreExperimentHistory* history,
+										SolutionWrapper* wrapper);
+	void predict_measure_step(std::vector<double>& obs,
+							  int& action,
+							  bool& is_next,
+							  SolutionWrapper* wrapper);
+	void predict_measure_callback(std::vector<double>& obs,
+								  SolutionWrapper* wrapper);
+	void predict_measure_exit_step(std::vector<double>& obs,
+								   SolutionWrapper* wrapper);
+	void predict_measure_backprop(double target_val,
+								  ExploreExperimentHistory* history,
+								  SolutionWrapper* wrapper,
+								  bool& is_add);
 
 	void explore_check_activate(std::vector<double>& obs,
 								ExploreExperimentHistory* history,
@@ -106,34 +128,24 @@ public:
 							 SolutionWrapper* wrapper);
 	void train_new_backprop(double target_val,
 							ExploreExperimentHistory* history,
-							SolutionWrapper* wrapper);
+							SolutionWrapper* wrapper,
+							bool& is_add);
 
 	bool train_new_helper(int l_index);
 
-	void measure_check_activate(std::vector<double>& obs,
-								ExploreExperimentHistory* history,
-								SolutionWrapper* wrapper);
-	void measure_step(std::vector<double>& obs,
-					  int& action,
-					  bool& is_next,
-					  SolutionWrapper* wrapper);
-	void measure_callback(std::vector<double>& obs,
-						  SolutionWrapper* wrapper);
-	void measure_exit_step(std::vector<double>& obs,
-						   SolutionWrapper* wrapper);
-	void measure_backprop(double target_val,
-						  ExploreExperimentHistory* history,
-						  SolutionWrapper* wrapper,
-						  bool& is_add);
-
-	void add(SolutionWrapper* wrapper);
+	void add(bool is_predict,
+			 SolutionWrapper* wrapper);
 };
 
 class ExploreExperimentHistory : public AbstractExperimentHistory {
 public:
 	std::vector<std::vector<double>> obs_histories;
+	std::vector<Eigen::VectorXf> state_histories;
 
 	bool has_explore;
+
+	bool has_predict;
+
 	double existing_predicted;
 	double predicted;
 

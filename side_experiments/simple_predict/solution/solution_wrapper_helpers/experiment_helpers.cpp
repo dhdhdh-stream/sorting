@@ -29,6 +29,12 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 
 	this->has_explore = false;
 
+	if (this->iters_since_update < UPDATE_NUM_ITERS) {
+		this->states.push_back(Eigen::VectorXf());
+		this->states.back().resize(NUM_STATES);
+		this->states.back().setConstant(0.0);
+	}
+
 	this->num_actions = 1;
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->starting_scope);
@@ -143,6 +149,10 @@ void SolutionWrapper::experiment_end(double result) {
 	this->node_context.clear();
 	this->experiment_context.clear();
 
+	if (this->iters_since_update < UPDATE_NUM_ITERS) {
+		this->states.clear();
+	}
+
 	if (this->existing_scope_histories.size() >= BATCH_SIZE) {
 		train_existing_helper(this);
 	}
@@ -185,7 +195,7 @@ void SolutionWrapper::experiment_end(double result) {
 					{
 						NoopNode* noop_node = (NoopNode*)it->second;
 						for (int e_index = 0; e_index < (int)noop_node->experiments.size(); e_index++) {
-							noop_node->experiments[e_index]->train_existing_helper();
+							noop_node->experiments[e_index]->train_existing_helper(this);
 						}
 					}
 					break;
@@ -193,7 +203,7 @@ void SolutionWrapper::experiment_end(double result) {
 					{
 						ActionNode* action_node = (ActionNode*)it->second;
 						for (int e_index = 0; e_index < (int)action_node->experiments.size(); e_index++) {
-							action_node->experiments[e_index]->train_existing_helper();
+							action_node->experiments[e_index]->train_existing_helper(this);
 						}
 					}
 					break;
@@ -201,7 +211,7 @@ void SolutionWrapper::experiment_end(double result) {
 					{
 						ScopeNode* scope_node = (ScopeNode*)it->second;
 						for (int e_index = 0; e_index < (int)scope_node->experiments.size(); e_index++) {
-							scope_node->experiments[e_index]->train_existing_helper();
+							scope_node->experiments[e_index]->train_existing_helper(this);
 						}
 					}
 					break;
@@ -209,10 +219,10 @@ void SolutionWrapper::experiment_end(double result) {
 					{
 						BranchNode* branch_node = (BranchNode*)it->second;
 						for (int e_index = 0; e_index < (int)branch_node->original_experiments.size(); e_index++) {
-							branch_node->original_experiments[e_index]->train_existing_helper();
+							branch_node->original_experiments[e_index]->train_existing_helper(this);
 						}
 						for (int e_index = 0; e_index < (int)branch_node->branch_experiments.size(); e_index++) {
-							branch_node->branch_experiments[e_index]->train_existing_helper();
+							branch_node->branch_experiments[e_index]->train_existing_helper(this);
 						}
 					}
 					break;

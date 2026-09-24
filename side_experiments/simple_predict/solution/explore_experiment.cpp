@@ -107,6 +107,7 @@ ExploreExperimentHistory::ExploreExperimentHistory(ExploreExperiment* experiment
 	this->experiment = experiment;
 
 	this->has_explore = false;
+	this->has_predict = false;
 }
 
 ExploreExperimentState::ExploreExperimentState(ExploreExperiment* experiment) {

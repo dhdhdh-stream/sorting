@@ -19,7 +19,6 @@ const int NUM_STATES = 16;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_EXISTING_NUM_DATAPOINTS = 20;
 const std::vector<int> TRAIN_NEW_NUM_DATAPOINTS{10, 20, 40};
-const int MEASURE_NUM_DATAPOINTS = 10;
 #else
 const int TRAIN_EXISTING_NUM_DATAPOINTS = 4000;
 const std::vector<int> TRAIN_NEW_NUM_DATAPOINTS{100, 500, 4000};
@@ -28,7 +27,6 @@ const std::vector<int> TRAIN_NEW_NUM_DATAPOINTS{100, 500, 4000};
  *   - update can save bad initial networks but requires many samples
  *     - 4000/40000 better than 100/400000
  */
-const int MEASURE_NUM_DATAPOINTS = 200;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
@@ -56,13 +54,13 @@ const int DIVERSITY_RANGE = 10;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const std::vector<int> NUM_LAST_TRACK{4, 4, 4};
-const std::vector<int> MIN_NUM_LAST_TRACK{2, 2, 2};
-const std::vector<double> LAST_BETTER_THAN_RATIO{0.5, 0.5, 0.5};
+const int NUM_LAST_TRACK = 4;
+const int MIN_NUM_LAST_TRACK = 2;
+const double LAST_BETTER_THAN_RATIO = 0.5;
 #else
-const std::vector<int> NUM_LAST_TRACK{10, 10, 10};
-const std::vector<int> MIN_NUM_LAST_TRACK{4, 4, 4};
-const std::vector<double> LAST_BETTER_THAN_RATIO{0.75, 0.75, 0.75};
+const int NUM_LAST_TRACK = 10;
+const int MIN_NUM_LAST_TRACK = 4;
+const double LAST_BETTER_THAN_RATIO = 0.75;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

@@ -23,7 +23,8 @@
 
 using namespace std;
 
-void ExploreExperiment::add(SolutionWrapper* wrapper) {
+void ExploreExperiment::add(bool is_predict,
+							SolutionWrapper* wrapper) {
 	if (wrapper->solution->curr_score > wrapper->best_solution->curr_score) {
 		delete wrapper->best_solution;
 		wrapper->best_solution = new Solution(wrapper->solution);
@@ -35,6 +36,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	ss << "iters_since_update: " << wrapper->iters_since_update << "; ";
 	ss << "new_since_update: " << wrapper->new_since_update << "; ";
 	ss << "Experiment" << "; ";
+	ss << "is_predict: " << is_predict << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "this->is_branch: " << this->is_branch << "; ";
@@ -477,6 +479,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 				}
 
 				new_scope->last_scores = wrapper->solution->starting_scope->last_scores;
+				new_scope->predict_last_scores = wrapper->solution->starting_scope->predict_last_scores;
 
 				wrapper->solution->starting_scope = new_scope;
 

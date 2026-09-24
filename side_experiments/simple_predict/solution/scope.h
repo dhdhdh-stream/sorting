@@ -44,6 +44,7 @@ public:
 	std::vector<ScopeNode*> generic_scope_nodes;
 
 	std::vector<std::list<double>> last_scores;
+	std::list<double> predict_last_scores;
 
 	Scope();
 	~Scope();
