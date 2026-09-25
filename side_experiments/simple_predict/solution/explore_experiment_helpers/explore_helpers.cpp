@@ -266,13 +266,13 @@ void ExploreExperiment::explore_backprop(double target_val,
 		wrapper->new_since_update++;
 
 		if (history->has_explore) {
-			// temp
-			if (this->state_iter == 0) {
-				cout << "history->predicted: " << history->predicted << endl;
-				cout << "target_val: " << target_val << endl;
-				cout << "wrapper->iters_since_update: " << wrapper->iters_since_update << endl;
-				cout << endl;
-			}
+			// // temp
+			// if (this->state_iter == 0) {
+			// 	cout << "history->predicted: " << history->predicted << endl;
+			// 	cout << "target_val: " << target_val << endl;
+			// 	cout << "wrapper->iters_since_update: " << wrapper->iters_since_update << endl;
+			// 	cout << endl;
+			// }
 
 			this->state_iter++;
 

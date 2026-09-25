@@ -1,5 +1,7 @@
 #include "explore_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -52,6 +54,10 @@ void ExploreExperiment::predict_measure_check_activate(vector<double>& obs,
 			if (is_branch) {
 				history->has_predict = true;
 				history->existing_predicted = existing_predicted;
+
+				wrapper->has_explore = true;
+				ScopeHistory* scope_history = wrapper->scope_histories.back();
+				scope_history->explore_index = (int)scope_history->node_histories.size()-1;
 
 				ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
 				new_experiment_state->step_index = 0;
@@ -160,6 +166,19 @@ void ExploreExperiment::predict_measure_backprop(double target_val,
 
 			this->state_iter++;
 			if (this->state_iter >= MEASURE_NUM_DATAPOINTS) {
+				// temp
+				cout << "predict measure" << endl;
+				cout << "new explore path:";
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						cout << " " << this->best_indexes[s_index];
+					} else {
+						cout << " E" << this->scope_context->child_scopes[this->best_indexes[s_index]]->id;
+					}
+				}
+				cout << endl;
+				cout << "this->sum_improvement: " << this->sum_improvement << endl;
+
 				#if defined(MDEBUG) && MDEBUG
 				if (this->sum_improvement > 0.0 || rand()%2 == 0) {
 				#else

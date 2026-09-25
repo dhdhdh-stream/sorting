@@ -1,5 +1,7 @@
 #include "explore_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -300,6 +302,21 @@ bool ExploreExperiment::predict_cycle() {
 			} else {
 				this->scope_context->predict_last_scores.push_back(global_improvement);
 			}
+		}
+
+		// temp
+		if (is_success) {
+			cout << "predict" << endl;
+			cout << "new explore path:";
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					cout << " " << this->best_indexes[s_index];
+				} else {
+					cout << " E" << this->scope_context->child_scopes[this->best_indexes[s_index]]->id;
+				}
+			}
+			cout << endl;
+			cout << "local_improvement: " << local_improvement << endl;
 		}
 
 		#if defined(MDEBUG) && MDEBUG
