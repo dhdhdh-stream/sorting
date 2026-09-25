@@ -78,7 +78,8 @@ void ExploreExperiment::train_existing_helper(SolutionWrapper* wrapper) {
 	}
 
 	bool predict_success = false;
-	if (wrapper->solution->cycle_index != -1) {
+	if (wrapper->solution->cycle_index != -1
+			&& wrapper->solution->iter_index != 0) {
 		for (int i_index = 0; i_index < PREDICT_CYCLE_NUM_TRIES; i_index++) {
 			bool is_success = predict_cycle();
 			if (is_success) {

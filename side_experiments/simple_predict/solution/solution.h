@@ -43,6 +43,7 @@ public:
 	std::vector<Scope*> scopes;
 	Scope* starting_scope;
 	int cycle_index;
+	int scope_index;
 	int iter_index;
 
 	std::vector<double> improvement_history;

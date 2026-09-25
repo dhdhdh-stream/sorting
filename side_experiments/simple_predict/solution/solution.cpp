@@ -52,6 +52,7 @@ Solution::Solution(Solution* original) {
 
 	this->starting_scope = this->scopes[original->starting_scope->id];
 	this->cycle_index = original->cycle_index;
+	this->scope_index = original->scope_index;
 	this->iter_index = original->iter_index;
 
 	this->improvement_history = original->improvement_history;
@@ -122,6 +123,7 @@ void Solution::init(ProblemType* problem_type) {
 
 	this->starting_scope = new_scope;
 	this->cycle_index = -1;
+	this->scope_index = 0;
 	this->iter_index = 0;
 }
 
@@ -168,6 +170,10 @@ void Solution::load(ifstream& input_file) {
 	string cycle_index_line;
 	getline(input_file, cycle_index_line);
 	this->cycle_index = stoi(cycle_index_line);
+
+	string scope_index_line;
+	getline(input_file, scope_index_line);
+	this->scope_index = stoi(scope_index_line);
 
 	string iter_index_line;
 	getline(input_file, iter_index_line);
@@ -259,6 +265,7 @@ void Solution::save(ofstream& output_file) {
 
 	output_file << this->starting_scope->id << endl;
 	output_file << this->cycle_index << endl;
+	output_file << this->scope_index << endl;
 	output_file << this->iter_index << endl;
 
 	output_file << this->improvement_history.size() << endl;

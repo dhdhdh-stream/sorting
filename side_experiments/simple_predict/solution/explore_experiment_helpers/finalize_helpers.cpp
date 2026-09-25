@@ -370,123 +370,127 @@ void ExploreExperiment::add(bool is_predict,
 		wrapper->solution->iter_index++;
 		if (wrapper->solution->iter_index >= NEW_SCOPE_NUM_INIT) {
 			wrapper->solution->cycle_index = 0;
+			wrapper->solution->scope_index = 0;
 			wrapper->solution->iter_index = 0;
 		}
 	} else {
 		wrapper->solution->iter_index++;
-		if (wrapper->solution->iter_index >= (int)wrapper->solution->scopes.size()) {
-			wrapper->solution->cycle_index++;
-			if (wrapper->solution->cycle_index >= GENERALIZE_NUM_CYCLES) {
-				Scope* new_scope = new Scope();
-				new_scope->id = wrapper->solution->scopes.size();
-				new_scope->node_counter = 0;
-				wrapper->solution->scopes.push_back(new_scope);
+		if (wrapper->solution->iter_index >= ITERS_PER_SCOPE) {
+			wrapper->solution->scope_index++;
+			if (wrapper->solution->scope_index >= (int)wrapper->solution->scopes.size()) {
+				wrapper->solution->cycle_index++;
+				if (wrapper->solution->cycle_index >= GENERALIZE_NUM_CYCLES) {
+					Scope* new_scope = new Scope();
+					new_scope->id = wrapper->solution->scopes.size();
+					new_scope->node_counter = 0;
+					wrapper->solution->scopes.push_back(new_scope);
 
-				new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
-				new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
+					new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
+					new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
 
-				NoopNode* start_node = new NoopNode();
-				start_node->parent = new_scope;
-				start_node->id = new_scope->node_counter;
-				new_scope->node_counter++;
-				new_scope->nodes[start_node->id] = start_node;
-
-				ScopeNode* scope_node = new ScopeNode();
-				scope_node->parent = new_scope;
-				scope_node->id = new_scope->node_counter;
-				new_scope->node_counter++;
-				new_scope->nodes[scope_node->id] = scope_node;
-
-				scope_node->is_generic = false;
-				scope_node->scope = wrapper->solution->starting_scope;
-
-				scope_node->in_network = new TransitionNetwork(NUM_STATES,
-															   NUM_STATES);
-
-				scope_node->out_network = new TransitionNetwork(NUM_STATES,
-																NUM_STATES);
-
-				scope_node->predict_network = new PredictNetwork(NUM_STATES);
-
-				NoopNode* end_node = new NoopNode();
-				end_node->parent = new_scope;
-				end_node->id = new_scope->node_counter;
-				new_scope->node_counter++;
-				new_scope->nodes[end_node->id] = end_node;
-
-				start_node->next_node_id = scope_node->id;
-				start_node->next_node = scope_node;
-
-				scope_node->ancestor_ids.push_back(start_node->id);
-
-				scope_node->next_node_id = end_node->id;
-				scope_node->next_node = end_node;
-
-				end_node->ancestor_ids.push_back(scope_node->id);
-
-				end_node->next_node_id = -1;
-				end_node->next_node = NULL;
-
-				new_scope->obs_network = new ObsNetwork(NUM_STATES,
-														wrapper->solution->num_obs);
-
-				new_scope->score_network = new ScoreNetwork(NUM_STATES);
-
-				for (int a_index = 0; a_index < wrapper->solution->num_actions; a_index++) {
-					ActionNode* new_action_node = new ActionNode();
-					new_action_node->parent = new_scope;
-					new_action_node->id = new_scope->node_counter;
+					NoopNode* start_node = new NoopNode();
+					start_node->parent = new_scope;
+					start_node->id = new_scope->node_counter;
 					new_scope->node_counter++;
-					new_scope->nodes[new_action_node->id] = new_action_node;
+					new_scope->nodes[start_node->id] = start_node;
 
-					new_action_node->is_generic = true;
-					new_action_node->action = a_index;
-
-					new_action_node->obs_network = new ObsNetwork(NUM_STATES,
-																  wrapper->solution->num_obs);
-
-					new_action_node->predict_network = new PredictNetwork(NUM_STATES);
-
-					new_action_node->next_node_id = -1;
-					new_action_node->next_node = NULL;
-
-					new_scope->generic_action_nodes.push_back(new_action_node);
-				}
-
-				for (int c_index = 0; c_index < (int)new_scope->child_scopes.size(); c_index++) {
-					ScopeNode* new_scope_node = new ScopeNode();
-					new_scope_node->parent = new_scope;
-					new_scope_node->id = new_scope->node_counter;
+					ScopeNode* scope_node = new ScopeNode();
+					scope_node->parent = new_scope;
+					scope_node->id = new_scope->node_counter;
 					new_scope->node_counter++;
-					new_scope->nodes[new_scope_node->id] = new_scope_node;
+					new_scope->nodes[scope_node->id] = scope_node;
 
-					new_scope_node->is_generic = true;
+					scope_node->is_generic = false;
+					scope_node->scope = wrapper->solution->starting_scope;
 
-					new_scope_node->in_network = new TransitionNetwork(NUM_STATES,
-																	   NUM_STATES);
+					scope_node->in_network = new TransitionNetwork(NUM_STATES,
+																   NUM_STATES);
 
-					new_scope_node->scope = new_scope->child_scopes[c_index];
+					scope_node->out_network = new TransitionNetwork(NUM_STATES,
+																	NUM_STATES);
 
-					new_scope_node->out_network = new TransitionNetwork(NUM_STATES,
-																		NUM_STATES);
+					scope_node->predict_network = new PredictNetwork(NUM_STATES);
 
-					new_scope_node->predict_network = new PredictNetwork(NUM_STATES);
+					NoopNode* end_node = new NoopNode();
+					end_node->parent = new_scope;
+					end_node->id = new_scope->node_counter;
+					new_scope->node_counter++;
+					new_scope->nodes[end_node->id] = end_node;
 
-					new_scope_node->next_node_id = -1;
-					new_scope_node->next_node = NULL;
+					start_node->next_node_id = scope_node->id;
+					start_node->next_node = scope_node;
 
-					new_scope->generic_scope_nodes.push_back(new_scope_node);
+					scope_node->ancestor_ids.push_back(start_node->id);
+
+					scope_node->next_node_id = end_node->id;
+					scope_node->next_node = end_node;
+
+					end_node->ancestor_ids.push_back(scope_node->id);
+
+					end_node->next_node_id = -1;
+					end_node->next_node = NULL;
+
+					new_scope->obs_network = new ObsNetwork(NUM_STATES,
+															wrapper->solution->num_obs);
+
+					new_scope->score_network = new ScoreNetwork(NUM_STATES);
+
+					for (int a_index = 0; a_index < wrapper->solution->num_actions; a_index++) {
+						ActionNode* new_action_node = new ActionNode();
+						new_action_node->parent = new_scope;
+						new_action_node->id = new_scope->node_counter;
+						new_scope->node_counter++;
+						new_scope->nodes[new_action_node->id] = new_action_node;
+
+						new_action_node->is_generic = true;
+						new_action_node->action = a_index;
+
+						new_action_node->obs_network = new ObsNetwork(NUM_STATES,
+																	  wrapper->solution->num_obs);
+
+						new_action_node->predict_network = new PredictNetwork(NUM_STATES);
+
+						new_action_node->next_node_id = -1;
+						new_action_node->next_node = NULL;
+
+						new_scope->generic_action_nodes.push_back(new_action_node);
+					}
+
+					for (int c_index = 0; c_index < (int)new_scope->child_scopes.size(); c_index++) {
+						ScopeNode* new_scope_node = new ScopeNode();
+						new_scope_node->parent = new_scope;
+						new_scope_node->id = new_scope->node_counter;
+						new_scope->node_counter++;
+						new_scope->nodes[new_scope_node->id] = new_scope_node;
+
+						new_scope_node->is_generic = true;
+
+						new_scope_node->in_network = new TransitionNetwork(NUM_STATES,
+																		   NUM_STATES);
+
+						new_scope_node->scope = new_scope->child_scopes[c_index];
+
+						new_scope_node->out_network = new TransitionNetwork(NUM_STATES,
+																			NUM_STATES);
+
+						new_scope_node->predict_network = new PredictNetwork(NUM_STATES);
+
+						new_scope_node->next_node_id = -1;
+						new_scope_node->next_node = NULL;
+
+						new_scope->generic_scope_nodes.push_back(new_scope_node);
+					}
+
+					new_scope->last_scores = wrapper->solution->starting_scope->last_scores;
+					new_scope->predict_last_scores = wrapper->solution->starting_scope->predict_last_scores;
+
+					wrapper->solution->starting_scope = new_scope;
+
+					wrapper->solution->cycle_index = -1;
+					wrapper->solution->iter_index = 0;
+				} else {
+					wrapper->solution->iter_index = 0;
 				}
-
-				new_scope->last_scores = wrapper->solution->starting_scope->last_scores;
-				new_scope->predict_last_scores = wrapper->solution->starting_scope->predict_last_scores;
-
-				wrapper->solution->starting_scope = new_scope;
-
-				wrapper->solution->cycle_index = -1;
-				wrapper->solution->iter_index = 0;
-			} else {
-				wrapper->solution->iter_index = 0;
 			}
 		}
 	}

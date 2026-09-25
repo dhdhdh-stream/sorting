@@ -36,11 +36,14 @@ void gather_helper(ScopeHistory* scope_history,
 				   int& explore_index,
 				   SolutionWrapper* wrapper) {
 	bool match_scope = false;
-	if (wrapper->solution->cycle_index == -1
-			&& scope_history->scope == wrapper->solution->starting_scope) {
-		match_scope = true;
-	} else if (scope_history->scope->id == wrapper->solution->iter_index) {
-		match_scope = true;
+	if (wrapper->solution->cycle_index == -1) {
+		if (scope_history->scope == wrapper->solution->starting_scope) {
+			match_scope = true;
+		}
+	} else {
+		if (scope_history->scope->id == wrapper->solution->scope_index) {
+			match_scope = true;
+		}
 	}
 
 	if (match_scope) {
