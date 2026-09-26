@@ -40,7 +40,8 @@ public:
 
 	void activate();
 	void backprop();
-	void update(int num_instances);
+	void update(int num_instances,
+				double learning_rate);
 
 	void clear_momentum();
 

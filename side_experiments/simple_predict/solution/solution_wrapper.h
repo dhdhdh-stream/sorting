@@ -57,6 +57,10 @@ public:
 
 	Problem* problem;
 
+	// temp
+	double error_sum;
+	int error_count;
+
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;
 	unsigned long starting_run_seed;

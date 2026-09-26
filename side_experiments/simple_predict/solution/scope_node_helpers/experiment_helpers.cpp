@@ -28,14 +28,12 @@ void ScopeNode::experiment_step(vector<double>& obs,
 	wrapper->node_context.push_back(this->scope->nodes[0]);
 	wrapper->experiment_context.push_back(NULL);
 
-	if (wrapper->iters_since_update < UPDATE_NUM_ITERS) {
-		wrapper->states.push_back(Eigen::VectorXf());
-		wrapper->states.back().resize(NUM_STATES);
-		wrapper->states.back().setConstant(0.0);
+	wrapper->states.push_back(Eigen::VectorXf());
+	wrapper->states.back().resize(NUM_STATES);
+	wrapper->states.back().setConstant(0.0);
 
-		this->in_network->activate(wrapper->states[wrapper->states.size()-2],
-								   wrapper->states.back());
-	}
+	this->in_network->activate(wrapper->states[wrapper->states.size()-2],
+							   wrapper->states.back());
 
 	this->scope->experiment_start_activate(obs,
 										   wrapper);
@@ -43,18 +41,14 @@ void ScopeNode::experiment_step(vector<double>& obs,
 
 void ScopeNode::experiment_exit_step(vector<double>& obs,
 									 SolutionWrapper* wrapper) {
-	if (wrapper->iters_since_update < UPDATE_NUM_ITERS) {
-		this->out_network->activate(wrapper->states.back(),
-									wrapper->states[wrapper->states.size()-2]);
-	}
+	this->out_network->activate(wrapper->states.back(),
+								wrapper->states[wrapper->states.size()-2]);
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
 
-	if (wrapper->iters_since_update < UPDATE_NUM_ITERS) {
-		wrapper->states.pop_back();
-	}
+	wrapper->states.pop_back();
 
 	if (!this->is_generic) {
 		wrapper->node_context.back() = this->next_node;

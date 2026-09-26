@@ -34,14 +34,16 @@ void ActionNode::train_predict_step(AbstractNodeHistory* history,
 }
 
 void TrainActionNodeHistory::backprop(double target_val,
-									  Eigen::VectorXf& state_error) {
+									  Eigen::VectorXf& state_error,
+									  SolutionWrapper* wrapper) {
 	ActionNode* action_node = (ActionNode*)this->node;
 	action_node->obs_network->load(this->obs_network_history);
 	action_node->obs_network->backprop(state_error);
 }
 
 void TrainPredictActionNodeHistory::backprop(double target_val,
-											 Eigen::VectorXf& state_error) {
+											 Eigen::VectorXf& state_error,
+											 SolutionWrapper* wrapper) {
 	ActionNode* action_node = (ActionNode*)this->node;
 	action_node->predict_network->load(this->predict_network_history);
 	action_node->predict_network->backprop(state_error);

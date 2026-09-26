@@ -36,9 +36,15 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 				&& this->num_instances_until_target <= 0) {
 			history->has_explore = true;
 
-			wrapper->has_explore = true;
-			ScopeHistory* scope_history = wrapper->scope_histories.back();
-			scope_history->explore_index = (int)scope_history->node_histories.size()-1;
+			// wrapper->has_explore = true;
+			// ScopeHistory* scope_history = wrapper->scope_histories.back();
+			// scope_history->explore_index = (int)scope_history->node_histories.size()-1;
+			// temp
+			if (this->scope_context->id == 0) {
+				wrapper->has_explore = true;
+				ScopeHistory* scope_history = wrapper->scope_histories.back();
+				scope_history->explore_index = (int)scope_history->node_histories.size()-1;
+			}
 
 			this->existing_network->activate(obs);
 			history->existing_predicted = this->existing_network->output->acti_vals[0];
@@ -140,11 +146,7 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 				}
 			}
 
-			Eigen::VectorXf state;
-			state.resize(NUM_STATES);
-			state.setConstant(0.0);
-			calc_curr_state_helper(wrapper->scope_histories[0],
-								   state);
+			Eigen::VectorXf state = wrapper->states.back();
 			for (int s_index = 0; s_index < (int)history->curr_step_types.size(); s_index++) {
 				if (history->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 					ActionNode* generic_action_node = this->scope_context->generic_action_nodes[history->curr_indexes[s_index]];

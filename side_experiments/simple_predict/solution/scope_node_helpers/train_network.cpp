@@ -57,7 +57,8 @@ void ScopeNode::train_predict_step(AbstractNodeHistory* history,
 }
 
 void TrainScopeNodeHistory::backprop(double target_val,
-									 Eigen::VectorXf& state_error) {
+									 Eigen::VectorXf& state_error,
+									 SolutionWrapper* wrapper) {
 	ScopeNode* scope_node = (ScopeNode*)this->node;
 
 	Eigen::VectorXf inner_state_error;
@@ -71,7 +72,8 @@ void TrainScopeNodeHistory::backprop(double target_val,
 	}
 
 	this->scope_history->backprop(target_val,
-								  state_error);
+								  state_error,
+								  wrapper);
 
 	scope_node->in_network->load(this->in_network_history);
 	scope_node->in_network->backprop(inner_state_error,
@@ -79,7 +81,8 @@ void TrainScopeNodeHistory::backprop(double target_val,
 }
 
 void TrainPredictScopeNodeHistory::backprop(double target_val,
-											Eigen::VectorXf& state_error) {
+											Eigen::VectorXf& state_error,
+											SolutionWrapper* wrapper) {
 	ScopeNode* scope_node = (ScopeNode*)this->node;
 	scope_node->predict_network->load(this->predict_network_history);
 	scope_node->predict_network->backprop(state_error);

@@ -29,11 +29,9 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 
 	this->has_explore = false;
 
-	if (this->iters_since_update < UPDATE_NUM_ITERS) {
-		this->states.push_back(Eigen::VectorXf());
-		this->states.back().resize(NUM_STATES);
-		this->states.back().setConstant(0.0);
-	}
+	this->states.push_back(Eigen::VectorXf());
+	this->states.back().resize(NUM_STATES);
+	this->states.back().setConstant(0.0);
 
 	this->num_actions = 1;
 
@@ -98,6 +96,16 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
+	if (result > this->solution->max_val) {
+		this->solution->max_val = result;
+		this->solution->score_network_max_val = this->solution->max_val + (this->solution->max_val - this->solution->min_val)/2.0;
+		this->solution->score_network_min_val = this->solution->min_val - (this->solution->max_val - this->solution->min_val)/2.0;
+	} else if (result < this->solution->min_val) {
+		this->solution->min_val = result;
+		this->solution->score_network_max_val = this->solution->max_val + (this->solution->max_val - this->solution->min_val)/2.0;
+		this->solution->score_network_min_val = this->solution->min_val - (this->solution->max_val - this->solution->min_val)/2.0;
+	}
+
 	if (this->iters_since_update < UPDATE_NUM_ITERS) {
 		update_helper(this,
 					  result);
@@ -149,14 +157,12 @@ void SolutionWrapper::experiment_end(double result) {
 	this->node_context.clear();
 	this->experiment_context.clear();
 
-	if (this->iters_since_update < UPDATE_NUM_ITERS) {
-		this->states.clear();
-	}
+	this->states.clear();
 
-	if (this->existing_scope_histories.size() >= BATCH_SIZE) {
+	if (this->existing_scope_histories.size() >= EXISTING_BATCH_SIZE) {
 		train_existing_helper(this);
 	}
-	if (this->explore_scope_histories.size() >= BATCH_SIZE) {
+	if (this->explore_scope_histories.size() >= EXPLORE_BATCH_SIZE) {
 		train_explore_helper(this);
 	}
 

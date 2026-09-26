@@ -138,11 +138,14 @@ ScopeNodeHistory::~ScopeNodeHistory() {
 TrainScopeNodeHistory::TrainScopeNodeHistory(ScopeNode* node) {
 	this->node = node;
 
+	this->in_network_history = NULL;
 	this->out_network_history = NULL;
 }
 
 TrainScopeNodeHistory::~TrainScopeNodeHistory() {
-	delete this->in_network_history;
+	if (this->in_network_history != NULL) {
+		delete this->in_network_history;
+	}
 
 	delete this->scope_history;
 

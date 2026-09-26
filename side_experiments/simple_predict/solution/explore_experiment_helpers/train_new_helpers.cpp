@@ -27,9 +27,15 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 				&& this->num_instances_until_target <= 0) {
 			history->has_explore = true;
 
-			wrapper->has_explore = true;
-			ScopeHistory* scope_history = wrapper->scope_histories.back();
-			scope_history->explore_index = (int)scope_history->node_histories.size()-1;
+			// wrapper->has_explore = true;
+			// ScopeHistory* scope_history = wrapper->scope_histories.back();
+			// scope_history->explore_index = (int)scope_history->node_histories.size()-1;
+			// temp
+			if (this->scope_context->id == 0) {
+				wrapper->has_explore = true;
+				ScopeHistory* scope_history = wrapper->scope_histories.back();
+				scope_history->explore_index = (int)scope_history->node_histories.size()-1;
+			}
 
 			history->obs_histories.push_back(obs);
 

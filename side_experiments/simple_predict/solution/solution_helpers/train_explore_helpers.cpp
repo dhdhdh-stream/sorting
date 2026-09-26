@@ -18,8 +18,12 @@
 using namespace std;
 
 void train_explore_helper(SolutionWrapper* wrapper) {
+	// temp
+	wrapper->error_sum = 0.0;
+	wrapper->error_count = 0;
+
 	uniform_int_distribution<int> sample_distribution(0, wrapper->explore_scope_histories.size()-1);
-	for (int iter_index = 0; iter_index < ITERS_PER_BATCH; iter_index++) {
+	for (int iter_index = 0; iter_index < EXPLORE_ITERS_PER_BATCH; iter_index++) {
 		int index = sample_distribution(generator);
 
 		Eigen::VectorXf state;
@@ -37,13 +41,18 @@ void train_explore_helper(SolutionWrapper* wrapper) {
 		state_error.resize(NUM_STATES);
 		state_error.setConstant(0.0);
 		train_scope_history->backprop(wrapper->explore_target_val_histories[index],
-									  state_error);
+									  state_error,
+									  wrapper);
 
 		train_scope_history->update(wrapper->train_iter_index);
 		wrapper->train_iter_index++;
 
 		delete train_scope_history;
 	}
+
+	// temp
+	cout << "wrapper->error_sum: " << wrapper->error_sum << endl;
+	cout << "wrapper->error_count: " << wrapper->error_count << endl;
 
 	for (int h_index = 0; h_index < (int)wrapper->explore_scope_histories.size(); h_index++) {
 		delete wrapper->explore_scope_histories[h_index];

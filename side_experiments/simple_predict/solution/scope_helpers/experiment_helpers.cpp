@@ -14,10 +14,10 @@ void Scope::experiment_start_activate(vector<double>& obs,
 									  SolutionWrapper* wrapper) {
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
-	if (wrapper->iters_since_update < UPDATE_NUM_ITERS) {
-		this->obs_network->activate(wrapper->states.back(),
-									obs);
-	} else {
+	this->obs_network->activate(wrapper->states.back(),
+								obs);
+
+	if (wrapper->iters_since_update >= UPDATE_NUM_ITERS) {
 		scope_history->obs = obs;
 	}
 }

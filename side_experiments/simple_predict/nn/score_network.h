@@ -32,10 +32,10 @@ public:
 
 	void backprop(double target_val,
 				  Eigen::VectorXf& state_errors);
-	void backprop(bool is_branch,
-				  Eigen::VectorXf& state_errors);
 
 	void update();
+
+	void clear_momentum();
 
 	void save(std::ofstream& output_file);
 };

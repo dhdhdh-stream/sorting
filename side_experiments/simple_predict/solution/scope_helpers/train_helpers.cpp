@@ -1,10 +1,14 @@
 #include "scope.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "score_network.h"
 #include "obs_network.h"
+#include "score_network.h"
+#include "solution.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
@@ -50,20 +54,33 @@ void Scope::train_activate(ScopeHistory* history,
 		this->score_network->activate(state);
 		train_scope_history->score_network_history = new ScoreNetworkHistory();
 		this->score_network->save(train_scope_history->score_network_history);
+
+		is_done = true;
 	}
 }
 
 void TrainScopeHistory::backprop(double target_val,
-								 Eigen::VectorXf& state_error) {
+								 Eigen::VectorXf& state_error,
+								 SolutionWrapper* wrapper) {
 	if (this->is_explore) {
 		this->scope->score_network->load(this->score_network_history);
+		// temp
+		wrapper->error_sum += abs(target_val - this->scope->score_network->output->acti_vals(0));
+		wrapper->error_count++;
+		if (this->scope->score_network->output->acti_vals(0) > wrapper->solution->score_network_max_val) {
+			this->scope->score_network->output->acti_vals(0) = wrapper->solution->score_network_max_val;
+		}
+		if (this->scope->score_network->output->acti_vals(0) < wrapper->solution->score_network_min_val) {
+			this->scope->score_network->output->acti_vals(0) = wrapper->solution->score_network_min_val;
+		}
 		this->scope->score_network->backprop(target_val,
 											 state_error);
 	}
 
 	for (int h_index = (int)this->node_histories.size()-1; h_index >= 0; h_index--) {
 		this->node_histories[h_index]->backprop(target_val,
-												state_error);
+												state_error,
+												wrapper);
 	}
 
 	this->scope->obs_network->load(this->obs_network_history);

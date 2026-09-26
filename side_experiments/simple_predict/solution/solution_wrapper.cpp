@@ -35,6 +35,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->best_solution = new Solution();
 	this->best_solution->load(input_file);
 
+	input_file.close();
+
 	this->iters_since_update = 0;
 	this->new_since_update = 0;
 
@@ -45,8 +47,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
-
-	input_file.close();
 }
 
 SolutionWrapper::~SolutionWrapper() {

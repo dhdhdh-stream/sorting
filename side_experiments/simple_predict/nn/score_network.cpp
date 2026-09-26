@@ -168,45 +168,25 @@ void ScoreNetwork::backprop(double target_val,
 	this->num_instances++;
 }
 
-void ScoreNetwork::backprop(bool is_branch,
-							Eigen::VectorXf& state_errors) {
-	if (is_branch) {
-		if (this->output->acti_vals(0) < 1.0) {
-			this->output->errors(0) = 1.0 - this->output->acti_vals(0);
-
-			this->output->backprop();
-			this->hidden_2->backprop();
-			this->hidden_1->backprop();
-
-			state_errors += this->state_input->errors;
-			this->state_input->errors.setConstant(0.0);
-		}
-	} else {
-		if (this->output->acti_vals(0) > -1.0) {
-			this->output->errors(0) = -1.0 - this->output->acti_vals(0);
-
-			this->output->backprop();
-			this->hidden_2->backprop();
-			this->hidden_1->backprop();
-
-			state_errors += this->state_input->errors;
-			this->state_input->errors.setConstant(0.0);
-		}
-	}
-
-	this->num_instances++;
-}
-
 void ScoreNetwork::update() {
 	this->epoch_iter++;
 	if (this->epoch_iter == UPDATE_EPOCH_SIZE) {
-		this->hidden_1->update(this->num_instances);
-		this->hidden_2->update(this->num_instances);
-		this->output->update(this->num_instances);
+		this->hidden_1->update(this->num_instances,
+							   SCORE_LEARNING_RATE);
+		this->hidden_2->update(this->num_instances,
+							   SCORE_LEARNING_RATE);
+		this->output->update(this->num_instances,
+							 SCORE_LEARNING_RATE);
 
 		this->num_instances = 0;
 		this->epoch_iter = 0;
 	}
+}
+
+void ScoreNetwork::clear_momentum() {
+	this->hidden_1->clear_momentum();
+	this->hidden_2->clear_momentum();
+	this->output->clear_momentum();
 }
 
 void ScoreNetwork::save(ofstream& output_file) {

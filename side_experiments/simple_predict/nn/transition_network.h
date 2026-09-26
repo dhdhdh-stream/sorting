@@ -35,6 +35,8 @@ public:
 
 	void update();
 
+	void clear_momentum();
+
 	void save(std::ofstream& output_file);
 };
 

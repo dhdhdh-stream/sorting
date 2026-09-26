@@ -30,10 +30,10 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 	ActionNodeHistory* history = new ActionNodeHistory(this);
 	scope_history->node_histories.push_back(history);
 
-	if (wrapper->iters_since_update < UPDATE_NUM_ITERS) {
-		this->obs_network->activate(wrapper->states.back(),
-									obs);
-	} else {
+	this->obs_network->activate(wrapper->states.back(),
+								obs);
+
+	if (wrapper->iters_since_update >= UPDATE_NUM_ITERS) {
 		history->obs = obs;
 	}
 

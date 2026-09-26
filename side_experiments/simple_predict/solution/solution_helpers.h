@@ -23,9 +23,6 @@ void create_experiment(ScopeHistory* scope_history,
 					   int diversity_index,
 					   SolutionWrapper* wrapper);
 
-void calc_curr_state_helper(ScopeHistory* scope_history,
-							Eigen::VectorXf& state);
-
 void update_helper(SolutionWrapper* wrapper,
 				   double target_val);
 

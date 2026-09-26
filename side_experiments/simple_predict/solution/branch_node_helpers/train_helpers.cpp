@@ -27,11 +27,23 @@ void BranchNode::train_predict_step(AbstractNodeHistory* history,
 }
 
 void TrainPredictBranchNodeHistory::backprop(double target_val,
-											 Eigen::VectorXf& state_error) {
+											 Eigen::VectorXf& state_error,
+											 SolutionWrapper* wrapper) {
 	BranchNode* branch_node = (BranchNode*)this->node;
 	branch_node->branch_predict_network->load(this->predict_branch_network_history);
-	branch_node->branch_predict_network->backprop(this->is_branch,
-												  state_error);
+	if (this->is_branch) {
+		if (branch_node->branch_predict_network->output->acti_vals(0) > 2.0) {
+			branch_node->branch_predict_network->output->acti_vals(0) = 2.0;
+		}
+		branch_node->branch_predict_network->backprop(1.0,
+													  state_error);
+	} else {
+		if (branch_node->branch_predict_network->output->acti_vals(0) < -2.0) {
+			branch_node->branch_predict_network->output->acti_vals(0) = -2.0;
+		}
+		branch_node->branch_predict_network->backprop(-1.0,
+													  state_error);
+	}
 }
 
 void TrainPredictBranchNodeHistory::update(int iter_index) {

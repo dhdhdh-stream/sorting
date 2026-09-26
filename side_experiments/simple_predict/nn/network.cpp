@@ -199,10 +199,10 @@ void Network::init_backprop(double error,
 
 	this->epoch_iter++;
 	if (this->epoch_iter == INIT_EPOCH_SIZE) {
-		this->hidden_1->update(1);
-		this->hidden_2->update(1);
-		this->hidden_3->update(1);
-		this->output->update(1);
+		this->hidden_1->update(1, SCORE_LEARNING_RATE);
+		this->hidden_2->update(1, SCORE_LEARNING_RATE);
+		this->hidden_3->update(1, SCORE_LEARNING_RATE);
+		this->output->update(1, SCORE_LEARNING_RATE);
 
 		this->epoch_iter = 0;
 	}
@@ -219,10 +219,14 @@ void Network::backprop(double error) {
 }
 
 void Network::update() {
-	this->hidden_1->update(this->num_instances);
-	this->hidden_2->update(this->num_instances);
-	this->hidden_3->update(this->num_instances);
-	this->output->update(this->num_instances);
+	this->hidden_1->update(this->num_instances,
+						   SCORE_LEARNING_RATE);
+	this->hidden_2->update(this->num_instances,
+						   SCORE_LEARNING_RATE);
+	this->hidden_3->update(this->num_instances,
+						   SCORE_LEARNING_RATE);
+	this->output->update(this->num_instances,
+						 SCORE_LEARNING_RATE);
 
 	this->num_instances = 0;
 }

@@ -91,7 +91,7 @@ void train_existing_helper(set<BranchNode*>& hit_original,
 
 void train_existing_helper(SolutionWrapper* wrapper) {
 	uniform_int_distribution<int> sample_distribution(0, wrapper->existing_scope_histories.size()-1);
-	for (int iter_index = 0; iter_index < ITERS_PER_BATCH; iter_index++) {
+	for (int iter_index = 0; iter_index < EXISTING_ITERS_PER_BATCH; iter_index++) {
 		int index = sample_distribution(generator);
 
 		set<BranchNode*> hit_original;

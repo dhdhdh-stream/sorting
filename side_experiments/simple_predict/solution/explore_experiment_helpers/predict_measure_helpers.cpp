@@ -55,9 +55,15 @@ void ExploreExperiment::predict_measure_check_activate(vector<double>& obs,
 				history->has_predict = true;
 				history->existing_predicted = existing_predicted;
 
-				wrapper->has_explore = true;
-				ScopeHistory* scope_history = wrapper->scope_histories.back();
-				scope_history->explore_index = (int)scope_history->node_histories.size()-1;
+				// wrapper->has_explore = true;
+				// ScopeHistory* scope_history = wrapper->scope_histories.back();
+				// scope_history->explore_index = (int)scope_history->node_histories.size()-1;
+				// temp
+				if (this->scope_context->id == 0) {
+					wrapper->has_explore = true;
+					ScopeHistory* scope_history = wrapper->scope_histories.back();
+					scope_history->explore_index = (int)scope_history->node_histories.size()-1;
+				}
 
 				ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
 				new_experiment_state->step_index = 0;

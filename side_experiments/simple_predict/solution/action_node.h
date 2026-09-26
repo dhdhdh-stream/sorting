@@ -87,7 +87,8 @@ public:
 	~TrainActionNodeHistory();
 
 	void backprop(double target_val,
-				  Eigen::VectorXf& state_error);
+				  Eigen::VectorXf& state_error,
+				  SolutionWrapper* wrapper);
 	void update(int iter_index);
 };
 
@@ -99,7 +100,8 @@ public:
 	~TrainPredictActionNodeHistory();
 
 	void backprop(double target_val,
-				  Eigen::VectorXf& state_error);
+				  Eigen::VectorXf& state_error,
+				  SolutionWrapper* wrapper);
 	void update(int iter_index);
 };
 
