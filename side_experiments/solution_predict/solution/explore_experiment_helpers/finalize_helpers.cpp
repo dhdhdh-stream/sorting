@@ -446,6 +446,8 @@ void ExploreExperiment::add(bool is_predict,
 					wrapper->solution->scope_index = 0;
 					wrapper->solution->iter_index = 0;
 				}
+			} else {
+				wrapper->solution->iter_index = 0;
 			}
 		}
 	}

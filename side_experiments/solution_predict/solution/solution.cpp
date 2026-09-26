@@ -55,6 +55,8 @@ Solution::Solution(Solution* original) {
 	this->scope_index = original->scope_index;
 	this->iter_index = original->iter_index;
 
+	this->obs_network = new ObsNetwork(original->obs_network);
+
 	for (int a_index = 0; a_index < (int)original->generic_action_nodes.size(); a_index++) {
 		ActionNode* action_node = new ActionNode();
 		action_node->parent = NULL;
@@ -74,6 +76,8 @@ Solution::Solution(Solution* original) {
 		this->generic_scope_nodes.push_back(scope_node);
 	}
 
+	this->score_network = new ScoreNetwork(original->score_network);
+
 	this->max_val = original->max_val;
 	this->min_val = original->min_val;
 	this->score_network_max_val = original->score_network_max_val;
@@ -87,6 +91,18 @@ Solution::~Solution() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		delete this->scopes[s_index];
 	}
+
+	delete this->obs_network;
+
+	for (int a_index = 0; a_index < (int)this->generic_action_nodes.size(); a_index++) {
+		delete this->generic_action_nodes[a_index];
+	}
+
+	for (int s_index = 0; s_index < (int)this->generic_scope_nodes.size(); s_index++) {
+		delete this->generic_scope_nodes[s_index];
+	}
+
+	delete this->score_network;
 }
 
 void Solution::init(ProblemType* problem_type) {
@@ -124,6 +140,9 @@ void Solution::init(ProblemType* problem_type) {
 	this->scope_index = 0;
 	this->iter_index = 0;
 
+	this->obs_network = new ObsNetwork(NUM_STATES,
+									   this->num_obs);
+
 	for (int a_index = 0; a_index < this->num_actions; a_index++) {
 		ActionNode* new_action_node = new ActionNode();
 		new_action_node->parent = NULL;
@@ -143,10 +162,31 @@ void Solution::init(ProblemType* problem_type) {
 		this->generic_action_nodes.push_back(new_action_node);
 	}
 
-	this->max_val = numeric_limits<double>::min();
-	this->min_val = numeric_limits<double>::max();
-	this->score_network_max_val = numeric_limits<double>::max();
-	this->score_network_min_val = numeric_limits<double>::min();
+	{
+		ScopeNode* new_scope_node = new ScopeNode();
+		new_scope_node->parent = NULL;
+		new_scope_node->id = -1;
+
+		new_scope_node->is_generic = true;
+		new_scope_node->scope = new_scope;
+
+		new_scope_node->predict_network = new PredictNetwork(NUM_STATES);
+
+		new_scope_node->next_node_id = -1;
+		new_scope_node->next_node = NULL;
+
+		this->generic_scope_nodes.push_back(new_scope_node);
+	}
+
+	this->score_network = new ScoreNetwork(NUM_STATES);
+
+	this->max_val = -100.0;
+	this->min_val = 100.0;
+	this->score_network_max_val = 100.0;
+	this->score_network_min_val = -100.0;
+	/**
+	 * - issue with saving/loading when using numeric_limits(?)
+	 */
 }
 
 void Solution::load(ifstream& input_file) {
@@ -201,6 +241,8 @@ void Solution::load(ifstream& input_file) {
 	getline(input_file, iter_index_line);
 	this->iter_index = stoi(iter_index_line);
 
+	this->obs_network = new ObsNetwork(input_file);
+
 	for (int a_index = 0; a_index < this->num_actions; a_index++) {
 		ActionNode* action_node = new ActionNode();
 		action_node->parent = NULL;
@@ -219,6 +261,8 @@ void Solution::load(ifstream& input_file) {
 		scope_node->link(this);
 		this->generic_scope_nodes.push_back(scope_node);
 	}
+
+	this->score_network = new ScoreNetwork(input_file);
 
 	string max_val_line;
 	getline(input_file, max_val_line);
@@ -320,6 +364,8 @@ void Solution::save(ofstream& output_file) {
 	output_file << this->scope_index << endl;
 	output_file << this->iter_index << endl;
 
+	this->obs_network->save(output_file);
+
 	for (int a_index = 0; a_index < (int)this->generic_action_nodes.size(); a_index++) {
 		this->generic_action_nodes[a_index]->save(output_file);
 	}
@@ -327,6 +373,8 @@ void Solution::save(ofstream& output_file) {
 	for (int s_index = 0; s_index < (int)this->generic_scope_nodes.size(); s_index++) {
 		this->generic_scope_nodes[s_index]->save(output_file);
 	}
+
+	this->score_network->save(output_file);
 
 	output_file << this->max_val << endl;
 	output_file << this->min_val << endl;
