@@ -15,6 +15,8 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->existing_since_update = 0;
 	this->new_since_update = 0;
 
+	this->experiments = vector<ExploreExperiment*>(DIVERSITY_RANGE, NULL);
+
 	this->explore_experiment_histories = vector<map<ExploreExperiment*, ExploreExperimentHistory*>>(DIVERSITY_RANGE);
 
 	#if defined(MDEBUG) && MDEBUG
@@ -35,6 +37,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 	this->existing_since_update = 0;
 	this->new_since_update = 0;
+
+	this->experiments = vector<ExploreExperiment*>(DIVERSITY_RANGE, NULL);
 
 	this->explore_experiment_histories = vector<map<ExploreExperiment*, ExploreExperimentHistory*>>(DIVERSITY_RANGE);
 
