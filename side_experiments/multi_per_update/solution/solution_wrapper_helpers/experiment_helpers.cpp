@@ -176,6 +176,7 @@ void SolutionWrapper::experiment_end(double result) {
 			this->to_add[e_index]->add(this);
 			delete this->to_add[e_index];
 		}
+		this->to_add.clear();
 
 		for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
 			Scope* scope = this->solution->scopes[s_index];
