@@ -191,27 +191,52 @@ bool ExploreExperiment::train_new_helper(int l_index) {
 
 	bool is_success = false;
 	if (local_improvement > 0.0) {
-		if ((int)this->scope_context->last_scores[l_index].size() >= MIN_NUM_LAST_TRACK) {
-			int num_better_than = 0;
-			for (list<double>::iterator it = this->scope_context->last_scores[l_index].begin();
-					it != this->scope_context->last_scores[l_index].end(); it++) {
-				if (global_improvement >= *it) {
-					num_better_than++;
+		if (l_index == (int)TRAIN_NEW_NUM_DATAPOINTS.size()-1) {
+			if ((int)this->scope_context->measure_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+				int num_better_than = 0;
+				for (list<double>::iterator it = this->scope_context->measure_last_scores.begin();
+						it != this->scope_context->measure_last_scores.end(); it++) {
+					if (global_improvement >= *it) {
+						num_better_than++;
+					}
 				}
-			}
 
-			double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->last_scores[l_index].size();
+				double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->measure_last_scores.size();
 
-			if (num_better_than >= target_better_than) {
-				is_success = true;
-			}
+				if (num_better_than >= target_better_than) {
+					is_success = true;
+				}
 
-			if ((int)this->scope_context->last_scores[l_index].size() >= NUM_LAST_TRACK) {
-				this->scope_context->last_scores[l_index].pop_front();
+				if ((int)this->scope_context->measure_last_scores.size() >= NUM_LAST_TRACK) {
+					this->scope_context->measure_last_scores.pop_front();
+				}
+				this->scope_context->measure_last_scores.push_back(global_improvement);
+			} else {
+				this->scope_context->measure_last_scores.push_back(global_improvement);
 			}
-			this->scope_context->last_scores[l_index].push_back(global_improvement);
 		} else {
-			this->scope_context->last_scores[l_index].push_back(global_improvement);
+			if ((int)this->scope_context->last_scores[l_index].size() >= MIN_NUM_LAST_TRACK) {
+				int num_better_than = 0;
+				for (list<double>::iterator it = this->scope_context->last_scores[l_index].begin();
+						it != this->scope_context->last_scores[l_index].end(); it++) {
+					if (global_improvement >= *it) {
+						num_better_than++;
+					}
+				}
+
+				double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->last_scores[l_index].size();
+
+				if (num_better_than >= target_better_than) {
+					is_success = true;
+				}
+
+				if ((int)this->scope_context->last_scores[l_index].size() >= NUM_LAST_TRACK) {
+					this->scope_context->last_scores[l_index].pop_front();
+				}
+				this->scope_context->last_scores[l_index].push_back(global_improvement);
+			} else {
+				this->scope_context->last_scores[l_index].push_back(global_improvement);
+			}
 		}
 	}
 

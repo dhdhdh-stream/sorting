@@ -411,6 +411,7 @@ void ExploreExperiment::add(bool is_predict,
 
 			new_scope->last_scores = wrapper->solution->starting_scope->last_scores;
 			new_scope->predict_last_scores = wrapper->solution->starting_scope->predict_last_scores;
+			new_scope->measure_last_scores = wrapper->solution->starting_scope->measure_last_scores;
 
 			{
 				ScopeNode* new_scope_node = new ScopeNode();

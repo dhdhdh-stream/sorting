@@ -38,6 +38,10 @@ public:
 
 	std::vector<std::list<double>> last_scores;
 	std::list<double> predict_last_scores;
+	std::list<double> measure_last_scores;
+	/**
+	 * - compare predict against explore directly to not get stuck on mediocre predicts
+	 */
 
 	Scope();
 	~Scope();

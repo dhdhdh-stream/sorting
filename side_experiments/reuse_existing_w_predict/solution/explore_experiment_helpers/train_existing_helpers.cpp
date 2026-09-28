@@ -112,6 +112,7 @@ void ExploreExperiment::train_existing_backprop(
 		this->num_instances_until_target = until_distribution(generator);
 
 		if (predict_success) {
+			this->num_evals = 0.0;
 			this->sum_improvement = 0.0;
 
 			this->state = EXPLORE_EXPERIMENT_STATE_PREDICT_MEASURE;

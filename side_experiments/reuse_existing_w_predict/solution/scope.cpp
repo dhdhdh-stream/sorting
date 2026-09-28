@@ -85,6 +85,7 @@ void Scope::copy_from(Scope* original,
 
 	this->last_scores = original->last_scores;
 	this->predict_last_scores = original->predict_last_scores;
+	this->measure_last_scores = original->measure_last_scores;
 }
 
 void Scope::save(ofstream& output_file) {
@@ -103,7 +104,7 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
 
-	for (int l_index = 0; l_index < (int)TRAIN_NEW_NUM_DATAPOINTS.size(); l_index++) {
+	for (int l_index = 0; l_index < (int)TRAIN_NEW_NUM_DATAPOINTS.size()-1; l_index++) {
 		output_file << this->last_scores[l_index].size() << endl;
 		for (list<double>::iterator it = this->last_scores[l_index].begin();
 				it != this->last_scores[l_index].end(); it++) {
@@ -114,6 +115,12 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->predict_last_scores.size() << endl;
 	for (list<double>::iterator it = this->predict_last_scores.begin();
 			it != this->predict_last_scores.end(); it++) {
+		output_file << *it << endl;
+	}
+
+	output_file << this->measure_last_scores.size() << endl;
+	for (list<double>::iterator it = this->measure_last_scores.begin();
+			it != this->measure_last_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 }
@@ -187,7 +194,7 @@ void Scope::load(ifstream& input_file,
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
 
-	for (int l_index = 0; l_index < (int)TRAIN_NEW_NUM_DATAPOINTS.size(); l_index++) {
+	for (int l_index = 0; l_index < (int)TRAIN_NEW_NUM_DATAPOINTS.size()-1; l_index++) {
 		this->last_scores.push_back(list<double>());
 
 		string num_last_scores_line;
@@ -207,6 +214,15 @@ void Scope::load(ifstream& input_file,
 		string score_line;
 		getline(input_file, score_line);
 		this->predict_last_scores.push_back(stod(score_line));
+	}
+
+	string num_measure_last_scores_line;
+	getline(input_file, num_measure_last_scores_line);
+	int num_measure_last_scores = stoi(num_measure_last_scores_line);
+	for (int e_index = 0; e_index < num_measure_last_scores; e_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->measure_last_scores.push_back(stod(score_line));
 	}
 }
 

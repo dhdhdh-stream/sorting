@@ -44,6 +44,7 @@ public:
 
 	Network* existing_network;
 
+	double num_evals;
 	double sum_improvement;
 
 	int num_instances_until_target;
