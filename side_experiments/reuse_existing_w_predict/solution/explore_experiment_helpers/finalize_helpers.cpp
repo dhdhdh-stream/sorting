@@ -319,11 +319,12 @@ void ExploreExperiment::add(bool is_predict,
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
 	new_branch_node->original_network = this->existing_network;
-	this->existing_network = NULL;
 	new_branch_node->branch_network = this->new_network;
-	this->new_network = NULL;
 
 	new_branch_node->branch_predict_network = train_branch_predict_helper();
+
+	this->existing_network = NULL;
+	this->new_network = NULL;
 
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;

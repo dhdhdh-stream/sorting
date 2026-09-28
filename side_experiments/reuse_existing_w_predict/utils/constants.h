@@ -67,15 +67,11 @@ const double LAST_BETTER_THAN_RATIO = 0.75;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int CREATE_EXPERIMENT_NUM_ITERS = 10;
-const int UPDATE_NUM_ITERS = 40;
 const int EXISTING_BATCH_SIZE = 10;
 const int EXISTING_ITERS_PER_BATCH = 10;
 const int EXPLORE_BATCH_SIZE = 10;
 const int EXPLORE_ITERS_PER_BATCH = 10;
 #else
-const int CREATE_EXPERIMENT_NUM_ITERS = 1000;
-const int UPDATE_NUM_ITERS = 40000;
 const int EXISTING_BATCH_SIZE = 1000;
 const int EXISTING_ITERS_PER_BATCH = 10000;
 /**
@@ -86,9 +82,7 @@ const int EXPLORE_BATCH_SIZE = 4000;
 const int EXPLORE_ITERS_PER_BATCH = 40000;
 #endif /* MDEBUG */
 
-const int EXPERIMENT_REFRESH_NUM_ITERS = 10;
-
-const int GENERALIZE_ITER = 3;
+const int GENERALIZE_ITER = 5;
 
 const int STUCK_NUM_ITERS = 12;
 
