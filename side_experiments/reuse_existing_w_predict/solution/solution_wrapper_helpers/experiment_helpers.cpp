@@ -18,6 +18,13 @@
 
 using namespace std;
 
+// temp
+#if defined(MDEBUG) && MDEBUG
+const int MIN_NUM_UPDATE = 40;
+#else
+const int MIN_NUM_UPDATE = 40000;
+#endif /* MDEBUG */
+
 void SolutionWrapper::experiment_init(vector<double> obs) {
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
@@ -93,6 +100,16 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
+	if (result > this->solution->max_val) {
+		this->solution->max_val = result;
+		this->solution->score_network_max_val = this->solution->max_val + (this->solution->max_val - this->solution->min_val)/2.0;
+		this->solution->score_network_min_val = this->solution->min_val - (this->solution->max_val - this->solution->min_val)/2.0;
+	} else if (result < this->solution->min_val) {
+		this->solution->min_val = result;
+		this->solution->score_network_max_val = this->solution->max_val + (this->solution->max_val - this->solution->min_val)/2.0;
+		this->solution->score_network_min_val = this->solution->min_val - (this->solution->max_val - this->solution->min_val)/2.0;
+	}
+
 	if (this->experiments[this->diversity_index] == NULL
 			|| this->experiments[this->diversity_index]->is_gather_existing()) {
 		update_helper(this,
@@ -103,10 +120,18 @@ void SolutionWrapper::experiment_end(double result) {
 		this->new_since_update++;
 	}
 
-	if (this->experiments[this->diversity_index] == NULL) {
-		create_experiment(this->scope_histories[0],
-						  this->diversity_index,
-						  this);
+	// if (this->experiments[this->diversity_index] == NULL) {
+	// 	create_experiment(this->scope_histories[0],
+	// 					  this->diversity_index,
+	// 					  this);
+	// }
+	// temp
+	if (this->existing_since_update >= MIN_NUM_UPDATE) {
+		if (this->experiments[this->diversity_index] == NULL) {
+			create_experiment(this->scope_histories[0],
+							  this->diversity_index,
+							  this);
+		}
 	}
 
 	if (this->experiments[this->diversity_index] == NULL
@@ -130,10 +155,9 @@ void SolutionWrapper::experiment_end(double result) {
 		train_explore_helper(this);
 	}
 
-	for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
-		if (this->experiments[this->diversity_index] == NULL
-				|| this->experiments[this->diversity_index]->is_gather_existing()
-				|| this->diversity_index == d_index) {
+	if (this->experiments[this->diversity_index] == NULL
+			|| this->experiments[this->diversity_index]->is_gather_existing()) {
+		for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
 			bool is_add = false;
 			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[d_index].begin();
 					it != this->experiment_histories[d_index].end(); it++) {
@@ -145,6 +169,15 @@ void SolutionWrapper::experiment_end(double result) {
 			if (is_add) {
 				break;
 			}
+		}
+	} else {
+		bool is_add = false;
+		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[this->diversity_index].begin();
+				it != this->experiment_histories[this->diversity_index].end(); it++) {
+			it->first->backprop(result,
+								it->second,
+								this,
+								is_add);
 		}
 	}
 

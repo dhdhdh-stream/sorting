@@ -55,6 +55,11 @@ public:
 
 	ScoreNetwork* score_network;
 
+	double max_val;
+	double min_val;
+	double score_network_max_val;
+	double score_network_min_val;
+
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
 

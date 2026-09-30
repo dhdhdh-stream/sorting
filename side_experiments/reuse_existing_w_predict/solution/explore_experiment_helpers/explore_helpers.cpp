@@ -309,9 +309,6 @@ void ExploreExperiment::explore_backprop(double target_val,
 			}
 
 			if (is_vs_success && is_predict_success) {
-				// // temp
-				// cout << "this->state_iter: " << this->state_iter << endl;
-
 				this->best_step_types = history->curr_step_types;
 				this->best_indexes = history->curr_indexes;
 

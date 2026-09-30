@@ -1,5 +1,3 @@
-// TODO: try multiple improvements at once
-
 #include <chrono>
 #include <iostream>
 #include <map>

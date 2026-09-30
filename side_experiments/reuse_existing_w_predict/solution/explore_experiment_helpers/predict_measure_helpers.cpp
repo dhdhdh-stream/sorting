@@ -19,7 +19,8 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_NUM_DATAPOINTS = 10;
 #else
-const int MEASURE_NUM_DATAPOINTS = 200;
+// const int MEASURE_NUM_DATAPOINTS = 200;
+const int MEASURE_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
 void ExploreExperiment::predict_measure_check_activate(vector<double>& obs,
@@ -169,7 +170,7 @@ void ExploreExperiment::predict_measure_backprop(double target_val,
 
 			this->state_iter++;
 			if (this->state_iter >= MEASURE_NUM_DATAPOINTS) {
-				double branch_ratio = (double)this->num_evals / (double)MEASURE_NUM_DATAPOINTS;
+				double branch_ratio = (double)MEASURE_NUM_DATAPOINTS / (double)this->num_evals;
 				double local_improvement = this->sum_improvement / (double)MEASURE_NUM_DATAPOINTS * branch_ratio;
 
 				double average_instances_per_run;
@@ -206,19 +207,20 @@ void ExploreExperiment::predict_measure_backprop(double target_val,
 				}
 				double global_improvement = average_instances_per_run * local_improvement;
 
-				// temp
-				cout << "predict measure" << endl;
-				cout << "new explore path:";
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						cout << " " << this->best_indexes[s_index];
-					} else {
-						cout << " E" << this->scope_context->child_scopes[this->best_indexes[s_index]]->id;
-					}
-				}
-				cout << endl;
-				cout << "local_improvement: " << local_improvement << endl;
-				cout << "global_improvement: " << global_improvement << endl;
+				// // temp
+				// cout << "predict measure" << endl;
+				// cout << "new explore path:";
+				// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				// 		cout << " " << this->best_indexes[s_index];
+				// 	} else {
+				// 		cout << " E" << this->scope_context->child_scopes[this->best_indexes[s_index]]->id;
+				// 	}
+				// }
+				// cout << endl;
+				// cout << "branch_ratio: " << branch_ratio << endl;
+				// cout << "local_improvement: " << local_improvement << endl;
+				// cout << "global_improvement: " << global_improvement << endl;
 
 				bool is_success = false;
 				if (local_improvement > 0.0) {

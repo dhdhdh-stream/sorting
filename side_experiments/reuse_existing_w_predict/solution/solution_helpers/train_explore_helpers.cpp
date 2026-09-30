@@ -51,6 +51,12 @@ void train_explore_helper(SolutionWrapper* wrapper) {
 		// temp
 		wrapper->error_sum += abs(wrapper->explore_target_val_histories[index] - wrapper->solution->score_network->output->acti_vals(0));
 		wrapper->error_count++;
+		if (wrapper->solution->score_network->output->acti_vals(0) > wrapper->solution->score_network_max_val) {
+			wrapper->solution->score_network->output->acti_vals(0) = wrapper->solution->score_network_max_val;
+		}
+		if (wrapper->solution->score_network->output->acti_vals(0) < wrapper->solution->score_network_min_val) {
+			wrapper->solution->score_network->output->acti_vals(0) = wrapper->solution->score_network_min_val;
+		}
 		wrapper->solution->score_network->backprop(wrapper->explore_target_val_histories[index],
 												   state_error);
 
@@ -68,9 +74,9 @@ void train_explore_helper(SolutionWrapper* wrapper) {
 		delete train_scope_history;
 	}
 
-	// temp
-	cout << "wrapper->error_sum: " << wrapper->error_sum << endl;
-	cout << "wrapper->error_count: " << wrapper->error_count << endl;
+	// // temp
+	// cout << "wrapper->error_sum: " << wrapper->error_sum << endl;
+	// cout << "wrapper->error_count: " << wrapper->error_count << endl;
 
 	wrapper->explore_starting_obs_histories.clear();
 	for (int h_index = 0; h_index < (int)wrapper->explore_scope_histories.size(); h_index++) {
