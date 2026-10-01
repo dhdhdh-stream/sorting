@@ -15,6 +15,8 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->existing_since_update = 0;
 	this->new_since_update = 0;
 
+	this->experiments = vector<AbstractExperiment*>(DIVERSITY_RANGE, NULL);
+
 	this->train_iter_index = 0;
 
 	this->experiment_histories = vector<map<AbstractExperiment*, AbstractExperimentHistory*>>(DIVERSITY_RANGE);
@@ -39,6 +41,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 	this->existing_since_update = 0;
 	this->new_since_update = 0;
+
+	this->experiments = vector<AbstractExperiment*>(DIVERSITY_RANGE, NULL);
 
 	this->train_iter_index = 0;
 

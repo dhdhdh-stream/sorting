@@ -66,11 +66,13 @@ void ExploreExperiment::train_existing_backprop(
 		}
 
 		bool predict_success = false;
-		for (int i_index = 0; i_index < PREDICT_CYCLE_NUM_TRIES; i_index++) {
-			bool is_success = predict_cycle();
-			if (is_success) {
-				predict_success = true;
-				break;
+		if (wrapper->solution->cycle_index != -1) {
+			for (int i_index = 0; i_index < PREDICT_CYCLE_NUM_TRIES; i_index++) {
+				bool is_success = predict_cycle();
+				if (is_success) {
+					predict_success = true;
+					break;
+				}
 			}
 		}
 

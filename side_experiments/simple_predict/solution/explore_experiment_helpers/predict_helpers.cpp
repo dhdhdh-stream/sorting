@@ -304,20 +304,20 @@ bool ExploreExperiment::predict_cycle() {
 			}
 		}
 
-		// temp
-		if (is_success) {
-			cout << "predict" << endl;
-			cout << "new explore path:";
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->best_indexes[s_index];
-				} else {
-					cout << " E" << this->scope_context->child_scopes[this->best_indexes[s_index]]->id;
-				}
-			}
-			cout << endl;
-			cout << "local_improvement: " << local_improvement << endl;
-		}
+		// // temp
+		// if (is_success) {
+		// 	cout << "predict" << endl;
+		// 	cout << "new explore path:";
+		// 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		// 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+		// 			cout << " " << this->best_indexes[s_index];
+		// 		} else {
+		// 			cout << " E" << this->scope_context->child_scopes[this->best_indexes[s_index]]->id;
+		// 		}
+		// 	}
+		// 	cout << endl;
+		// 	cout << "local_improvement: " << local_improvement << endl;
+		// }
 
 		#if defined(MDEBUG) && MDEBUG
 		return is_success || rand()%4 != 0;

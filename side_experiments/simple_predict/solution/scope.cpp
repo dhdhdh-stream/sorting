@@ -323,10 +323,17 @@ ScopeHistory* ScopeHistory::train_copy() {
 	for (int h_index = 0; h_index < (int)this->node_histories.size(); h_index++) {
 		AbstractNode* node = this->node_histories[h_index]->node;
 		switch (node->type) {
+		case NODE_TYPE_NOOP:
+			{
+				NoopNode* noop_node = (NoopNode*)node;
+				NoopNodeHistory* noop_node_history = new NoopNodeHistory(noop_node);
+				new_scope_history->node_histories.push_back(noop_node_history);
+			}
+			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)node;
-				ActionNodeHistory* original_action_node_history = (ActionNodeHistory*)node;
+				ActionNodeHistory* original_action_node_history = (ActionNodeHistory*)this->node_histories[h_index];
 				ActionNodeHistory* action_node_history = new ActionNodeHistory(action_node);
 				action_node_history->obs = original_action_node_history->obs;
 				new_scope_history->node_histories.push_back(action_node_history);
@@ -335,7 +342,7 @@ ScopeHistory* ScopeHistory::train_copy() {
 		case NODE_TYPE_SCOPE:
 			{
 				ScopeNode* scope_node = (ScopeNode*)node;
-				ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)node;
+				ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)this->node_histories[h_index];
 				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(scope_node);
 				scope_node_history->end_inner_state = original_scope_node_history->end_inner_state;
 				new_scope_history->node_histories.push_back(scope_node_history);
@@ -344,7 +351,7 @@ ScopeHistory* ScopeHistory::train_copy() {
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNode* branch_node = (BranchNode*)node;
-				BranchNodeHistory* original_branch_node_history = (BranchNodeHistory*)node;
+				BranchNodeHistory* original_branch_node_history = (BranchNodeHistory*)this->node_histories[h_index];
 				BranchNodeHistory* branch_node_history = new BranchNodeHistory(branch_node);
 				branch_node_history->is_branch = original_branch_node_history->is_branch;
 				new_scope_history->node_histories.push_back(branch_node_history);

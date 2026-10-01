@@ -85,9 +85,9 @@ void train_explore_helper(SolutionWrapper* wrapper) {
 		}
 	}
 
-	// temp
-	cout << "wrapper->error_sum: " << wrapper->error_sum << endl;
-	cout << "wrapper->error_count: " << wrapper->error_count << endl;
+	// // temp
+	// cout << "wrapper->error_sum: " << wrapper->error_sum << endl;
+	// cout << "wrapper->error_count: " << wrapper->error_count << endl;
 
 	for (int h_index = 0; h_index < (int)wrapper->explore_scope_histories.size(); h_index++) {
 		delete wrapper->explore_scope_histories[h_index];

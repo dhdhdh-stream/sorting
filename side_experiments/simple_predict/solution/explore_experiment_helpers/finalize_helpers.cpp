@@ -35,6 +35,7 @@ void ExploreExperiment::add(bool is_predict,
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
 	ss << "existing_since_update: " << wrapper->existing_since_update << "; ";
 	ss << "new_since_update: " << wrapper->new_since_update << "; ";
+	ss << "error_sum: " << wrapper->error_sum << "; ";
 	ss << "Experiment" << "; ";
 	ss << "is_predict: " << is_predict << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
