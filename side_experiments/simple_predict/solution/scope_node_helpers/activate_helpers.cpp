@@ -31,9 +31,6 @@ void ScopeNode::step(vector<double>& obs,
 	wrapper->states.back().resize(NUM_STATES);
 	wrapper->states.back().setConstant(0.0);
 
-	this->in_network->activate(wrapper->states[wrapper->states.size()-2],
-							   wrapper->states.back());
-
 	this->scope->start_activate(obs,
 								wrapper);
 }

@@ -16,7 +16,6 @@ class Network;
 class Problem;
 class ScopeHistory;
 class ScoreNetwork;
-class ScoreNetworkHistory;
 class Solution;
 class SolutionWrapper;
 
@@ -67,11 +66,10 @@ public:
 
 	void train_step(AbstractNodeHistory* history,
 					Eigen::VectorXf& state,
-					bool& is_done,
-					TrainScopeHistory* train_scope_history);
+					std::vector<TrainAbstractNodeHistory*>& train_node_histories);
 	void train_predict_step(AbstractNodeHistory* history,
 							Eigen::VectorXf& state,
-							TrainScopeHistory* train_scope_history);
+							std::vector<TrainAbstractNodeHistory*>& train_node_histories);
 
 	void predict_step(Eigen::VectorXf& state,
 					  AbstractNode*& node_context);
@@ -99,14 +97,10 @@ public:
 class TrainPredictBranchNodeHistory : public TrainAbstractNodeHistory {
 public:
 	bool is_branch;
-	ScoreNetworkHistory* predict_branch_network_history;
 
 	TrainPredictBranchNodeHistory(BranchNode* branch_node);
-	~TrainPredictBranchNodeHistory();
 
-	void backprop(double target_val,
-				  Eigen::VectorXf& state_error,
-				  SolutionWrapper* wrapper);
+	void backprop(Eigen::VectorXf& state_error);
 	void update(int iter_index);
 };
 

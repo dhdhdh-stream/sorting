@@ -23,6 +23,12 @@ const int EXPLORE_EXPERIMENT_STATE_PREDICT_MEASURE = 1;
 const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 2;
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 3;
 
+#if defined(MDEBUG) && MDEBUG
+const int EXPERIMENT_MAX_TRIES = 2;
+#else
+const int EXPERIMENT_MAX_TRIES = 10;
+#endif /* MDEBUG */
+
 class ExploreExperimentHistory;
 class ExploreExperiment : public AbstractExperiment {
 public:
@@ -33,15 +39,17 @@ public:
 	 *   - so round of predict after existing, before explore
 	 */
 	std::vector<double> existing_target_val_histories;
-	int existing_index;
 
 	Network* existing_network;
 
+	double num_evals;
 	double sum_improvement;
 
 	int num_instances_until_target;
 
-	std::vector<double> surprises;
+	std::vector<double> vs_surprises;
+	std::vector<double> predict_surprises;
+	int try_iter;
 
 	std::vector<int> best_step_types;
 	std::vector<int> best_indexes;
@@ -51,13 +59,15 @@ public:
 
 	Network* new_network;
 
-	ExploreExperiment(int diversity_index,
+	ExploreExperiment(SolutionWrapper* wrapper,
+					  int diversity_index,
 					  Scope* scope_context,
 					  AbstractNode* node_context,
 					  bool is_branch,
-					  AbstractNode* exit_next_node,
-					  SolutionWrapper* wrapper);
+					  AbstractNode* exit_next_node);
 	~ExploreExperiment();
+
+	bool is_gather_existing();
 
 	void experiment_check_activate(std::vector<double>& obs,
 								   SolutionWrapper* wrapper);
@@ -81,7 +91,6 @@ public:
 								 ExploreExperimentHistory* history,
 								 SolutionWrapper* wrapper);
 
-	void train_existing_helper(SolutionWrapper* wrapper);
 	bool predict_cycle();
 
 	void predict_measure_check_activate(std::vector<double>& obs,

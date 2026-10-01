@@ -167,7 +167,3 @@ BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
 TrainPredictBranchNodeHistory::TrainPredictBranchNodeHistory(BranchNode* node) {
 	this->node = node;
 }
-
-TrainPredictBranchNodeHistory::~TrainPredictBranchNodeHistory() {
-	delete this->predict_branch_network_history;
-}

@@ -12,7 +12,7 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->best_solution = new Solution(this->solution);
 
-	this->iters_since_update = 0;
+	this->existing_since_update = 0;
 	this->new_since_update = 0;
 
 	this->train_iter_index = 0;
@@ -37,7 +37,7 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 	input_file.close();
 
-	this->iters_since_update = 0;
+	this->existing_since_update = 0;
 	this->new_since_update = 0;
 
 	this->train_iter_index = 0;

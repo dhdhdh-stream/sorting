@@ -15,6 +15,8 @@
 #include <utility>
 #include <vector>
 
+#include <Eigen/Dense>
+
 #include "abstract_node.h"
 
 class PredictNetwork;
@@ -31,8 +33,6 @@ class ScopeNodeHistory;
 class ScopeNode : public AbstractNode {
 public:
 	bool is_generic;
-
-	TransitionNetwork* in_network;
 
 	Scope* scope;
 
@@ -67,11 +67,10 @@ public:
 
 	void train_step(AbstractNodeHistory* history,
 					Eigen::VectorXf& state,
-					bool& is_done,
-					TrainScopeHistory* train_scope_history);
+					std::vector<TrainAbstractNodeHistory*>& train_node_histories);
 	void train_predict_step(AbstractNodeHistory* history,
 							Eigen::VectorXf& state,
-							TrainScopeHistory* train_scope_history);
+							std::vector<TrainAbstractNodeHistory*>& train_node_histories);
 
 	void predict_step(Eigen::VectorXf& state,
 					  AbstractNode*& node_context);
@@ -91,25 +90,20 @@ class ScopeNodeHistory : public AbstractNodeHistory {
 public:
 	ScopeHistory* scope_history;
 
+	Eigen::VectorXf end_inner_state;
+
 	ScopeNodeHistory(ScopeNode* node);
 	~ScopeNodeHistory();
 };
 
 class TrainScopeNodeHistory : public TrainAbstractNodeHistory {
 public:
-	TransitionNetworkHistory* in_network_history;
-
-	TrainScopeHistory* scope_history;
-
-	bool early_exit;
 	TransitionNetworkHistory* out_network_history;
 
 	TrainScopeNodeHistory(ScopeNode* node);
 	~TrainScopeNodeHistory();
 
-	void backprop(double target_val,
-				  Eigen::VectorXf& state_error,
-				  SolutionWrapper* wrapper);
+	void backprop(Eigen::VectorXf& state_error);
 	void update(int iter_index);
 };
 
@@ -120,9 +114,7 @@ public:
 	TrainPredictScopeNodeHistory(ScopeNode* node);
 	~TrainPredictScopeNodeHistory();
 
-	void backprop(double target_val,
-				  Eigen::VectorXf& state_error,
-				  SolutionWrapper* wrapper);
+	void backprop(Eigen::VectorXf& state_error);
 	void update(int iter_index);
 };
 

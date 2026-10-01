@@ -15,12 +15,13 @@
 
 using namespace std;
 
-ExploreExperiment::ExploreExperiment(int diversity_index,
+ExploreExperiment::ExploreExperiment(SolutionWrapper* wrapper,
+									 int diversity_index,
 									 Scope* scope_context,
 									 AbstractNode* node_context,
 									 bool is_branch,
-									 AbstractNode* exit_next_node,
-									 SolutionWrapper* wrapper) {
+									 AbstractNode* exit_next_node) {
+	this->wrapper = wrapper;
 	this->diversity_index = diversity_index;
 
 	this->scope_context = scope_context;
@@ -31,13 +32,15 @@ ExploreExperiment::ExploreExperiment(int diversity_index,
 	this->existing_network = NULL;
 	this->new_network = NULL;
 
-	this->existing_index = 0;
+	this->try_iter = 0;
 
 	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 }
 
 ExploreExperiment::~ExploreExperiment() {
+	this->wrapper->experiments[this->diversity_index] = NULL;
+
 	switch (this->node_context->type) {
 	case NODE_TYPE_NOOP:
 		{
@@ -101,6 +104,10 @@ ExploreExperiment::~ExploreExperiment() {
 	if (this->new_network != NULL) {
 		delete this->new_network;
 	}
+}
+
+bool ExploreExperiment::is_gather_existing() {
+	return this->state == EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
 }
 
 ExploreExperimentHistory::ExploreExperimentHistory(ExploreExperiment* experiment) {

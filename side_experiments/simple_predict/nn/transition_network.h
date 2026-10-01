@@ -30,8 +30,7 @@ public:
 	void save(TransitionNetworkHistory* history);
 	void load(TransitionNetworkHistory* history);
 
-	void backprop(Eigen::VectorXf& back_state_errors,
-				  Eigen::VectorXf& front_state_errors);
+	void backprop(Eigen::VectorXf& back_state_errors);
 
 	void update();
 

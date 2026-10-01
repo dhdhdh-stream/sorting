@@ -32,15 +32,16 @@ void ScopeNode::experiment_step(vector<double>& obs,
 	wrapper->states.back().resize(NUM_STATES);
 	wrapper->states.back().setConstant(0.0);
 
-	this->in_network->activate(wrapper->states[wrapper->states.size()-2],
-							   wrapper->states.back());
-
 	this->scope->experiment_start_activate(obs,
 										   wrapper);
 }
 
 void ScopeNode::experiment_exit_step(vector<double>& obs,
 									 SolutionWrapper* wrapper) {
+	ScopeHistory* scope_history = wrapper->scope_histories[wrapper->scope_histories.size()-2];
+	ScopeNodeHistory* history = (ScopeNodeHistory*)scope_history->node_histories.back();
+	history->end_inner_state = wrapper->states.back();
+
 	this->out_network->activate(wrapper->states.back(),
 								wrapper->states[wrapper->states.size()-2]);
 

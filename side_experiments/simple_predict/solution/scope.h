@@ -23,7 +23,6 @@ class SolutionWrapper;
 class TrainAbstractNodeHistory;
 
 class ScopeHistory;
-class TrainScopeHistory;
 class Scope {
 public:
 	int id;
@@ -45,6 +44,10 @@ public:
 
 	std::vector<std::list<double>> last_scores;
 	std::list<double> predict_last_scores;
+	std::list<double> measure_last_scores;
+	/**
+	 * - compare predict against explore directly to not get stuck on mediocre predicts
+	 */
 
 	Scope();
 	~Scope();
@@ -54,11 +57,6 @@ public:
 
 	void experiment_start_activate(std::vector<double>& obs,
 								   SolutionWrapper* wrapper);
-
-	void train_activate(ScopeHistory* history,
-						Eigen::VectorXf& state,
-						bool& is_done,
-						TrainScopeHistory* train_scope_history);
 
 	void copy_from(Scope* original,
 				   Solution* parent_solution);
@@ -79,30 +77,10 @@ public:
 
 	std::vector<AbstractNodeHistory*> node_histories;
 
-	int explore_index;
-
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();
-};
 
-class TrainScopeHistory {
-public:
-	Scope* scope;
-
-	ObsNetworkHistory* obs_network_history;
-
-	std::vector<TrainAbstractNodeHistory*> node_histories;
-
-	bool is_explore;
-	ScoreNetworkHistory* score_network_history;
-
-	TrainScopeHistory(Scope* scope);
-	~TrainScopeHistory();
-
-	void backprop(double target_val,
-				  Eigen::VectorXf& state_error,
-				  SolutionWrapper* wrapper);
-	void update(int iter_index);
+	ScopeHistory* train_copy();
 };
 
 #endif /* SCOPE_H */

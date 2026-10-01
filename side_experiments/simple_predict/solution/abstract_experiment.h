@@ -14,6 +14,7 @@ class SolutionWrapper;
 class AbstractExperimentHistory;
 class AbstractExperiment {
 public:
+	SolutionWrapper* wrapper;
 	int diversity_index;
 
 	int state;
@@ -25,6 +26,8 @@ public:
 	AbstractNode* exit_next_node;
 
 	virtual ~AbstractExperiment() {};
+
+	virtual bool is_gather_existing() = 0;
 
 	virtual void experiment_check_activate(std::vector<double>& obs,
 										   SolutionWrapper* wrapper) = 0;
@@ -40,10 +43,6 @@ public:
 						  AbstractExperimentHistory* history,
 						  SolutionWrapper* wrapper,
 						  bool& is_add) = 0;
-
-	virtual void train_existing_helper(SolutionWrapper* wrapper) = 0;
-
-	bool further_than(AbstractExperiment* other);
 };
 
 class AbstractExperimentHistory {

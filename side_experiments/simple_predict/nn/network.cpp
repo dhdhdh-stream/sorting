@@ -55,7 +55,6 @@ Network::Network(int input_size) {
 
 	this->num_instances = 0;
 	this->epoch_iter = 0;
-	this->average_max_update = 0.0;
 }
 
 Network::Network(Network* original) {
@@ -103,7 +102,6 @@ Network::Network(Network* original) {
 
 	this->num_instances = 0;
 	this->epoch_iter = 0;
-	this->average_max_update = 0.0;
 }
 
 Network::Network(ifstream& input_file) {
@@ -164,7 +162,6 @@ Network::Network(ifstream& input_file) {
 
 	this->num_instances = 0;
 	this->epoch_iter = 0;
-	this->average_max_update = 0.0;
 }
 
 Network::~Network() {

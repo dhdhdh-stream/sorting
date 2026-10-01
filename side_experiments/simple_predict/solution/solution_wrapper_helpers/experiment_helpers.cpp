@@ -27,7 +27,7 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	uniform_int_distribution<int> diversity_distribution(0, DIVERSITY_RANGE-1);
 	this->diversity_index = diversity_distribution(generator);
 
-	this->has_explore = false;
+	this->explore_scope_history = NULL;
 
 	this->states.push_back(Eigen::VectorXf());
 	this->states.back().resize(NUM_STATES);
@@ -96,61 +96,35 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	if (result > this->solution->max_val) {
-		this->solution->max_val = result;
-		this->solution->score_network_max_val = this->solution->max_val + (this->solution->max_val - this->solution->min_val)/2.0;
-		this->solution->score_network_min_val = this->solution->min_val - (this->solution->max_val - this->solution->min_val)/2.0;
-	} else if (result < this->solution->min_val) {
-		this->solution->min_val = result;
-		this->solution->score_network_max_val = this->solution->max_val + (this->solution->max_val - this->solution->min_val)/2.0;
-		this->solution->score_network_min_val = this->solution->min_val - (this->solution->max_val - this->solution->min_val)/2.0;
-	}
-
-	if (this->iters_since_update < UPDATE_NUM_ITERS) {
+	if (this->experiments[this->diversity_index] == NULL
+			|| this->experiments[this->diversity_index]->is_gather_existing()) {
 		update_helper(this,
 					  result);
+
+		this->existing_since_update++;
+	} else {
+		this->new_since_update++;
 	}
 
-	if (this->iters_since_update < CREATE_EXPERIMENT_NUM_ITERS) {
-		for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
-			if (this->experiment_histories[d_index].size() == 0) {
-				create_experiment(this->scope_histories[0],
-								  d_index,
-								  this);
-			}
-		}
+	if (this->experiments[this->diversity_index] == NULL) {
+		create_experiment(this->scope_histories[0],
+						  this->diversity_index,
+						  this);
 	}
 
-	for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
-		if (this->experiment_histories[d_index].size() >= 2) {
-			AbstractExperiment* keep_experiment = NULL;
-			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[d_index].begin();
-					it != this->experiment_histories[d_index].end(); it++) {
-				if (keep_experiment == NULL) {
-					keep_experiment = it->first;
-				} else {
-					if (it->first->further_than(keep_experiment)) {
-						delete keep_experiment;
-
-						keep_experiment = it->first;
-					} else {
-						delete it->first;
-					}
-				}
-			}
-		}
-	}
-
-	if (this->iters_since_update < UPDATE_NUM_ITERS) {
+	if (this->experiments[this->diversity_index] == NULL
+			|| this->experiments[this->diversity_index]->is_gather_existing()) {
 		this->existing_scope_histories.push_back(this->scope_histories[0]);
 		this->existing_target_val_histories.push_back(result);
 	} else {
-		if (this->has_explore) {
-			this->explore_scope_histories.push_back(this->scope_histories[0]);
+		if (this->explore_scope_history != NULL) {
+			ScopeHistory* scope_history = this->explore_scope_history->train_copy();
+			this->explore_scope_histories.push_back(scope_history);
+			this->explore_index_histories.push_back(this->explore_index);
 			this->explore_target_val_histories.push_back(result);
-		} else {
-			delete this->scope_histories[0];
 		}
+
+		delete this->scope_histories[0];
 	}
 
 	this->scope_histories.clear();
@@ -159,15 +133,16 @@ void SolutionWrapper::experiment_end(double result) {
 
 	this->states.clear();
 
-	if (this->existing_scope_histories.size() >= EXISTING_BATCH_SIZE) {
+	if (this->existing_scope_histories.size() >= BATCH_SIZE) {
 		train_existing_helper(this);
 	}
-	if (this->explore_scope_histories.size() >= EXPLORE_BATCH_SIZE) {
+	if (this->explore_scope_histories.size() >= BATCH_SIZE) {
 		train_explore_helper(this);
 	}
 
-	for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
-		if (this->experiment_histories[d_index].size() == 1) {
+	if (this->experiments[this->diversity_index] == NULL
+			|| this->experiments[this->diversity_index]->is_gather_existing()) {
+		for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
 			bool is_add = false;
 			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[d_index].begin();
 					it != this->experiment_histories[d_index].end(); it++) {
@@ -180,6 +155,15 @@ void SolutionWrapper::experiment_end(double result) {
 				break;
 			}
 		}
+	} else {
+		bool is_add = false;
+		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[this->diversity_index].begin();
+				it != this->experiment_histories[this->diversity_index].end(); it++) {
+			it->first->backprop(result,
+								it->second,
+								this,
+								is_add);
+		}
 	}
 
 	for (int d_index = 0; d_index < DIVERSITY_RANGE; d_index++) {
@@ -188,52 +172,5 @@ void SolutionWrapper::experiment_end(double result) {
 			delete it->second;
 		}
 		this->experiment_histories[d_index].clear();
-	}
-
-	this->iters_since_update++;
-	if (this->iters_since_update == UPDATE_NUM_ITERS) {
-		for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
-			Scope* scope = this->solution->scopes[s_index];
-			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-					it != scope->nodes.end(); it++) {
-				switch (it->second->type) {
-				case NODE_TYPE_NOOP:
-					{
-						NoopNode* noop_node = (NoopNode*)it->second;
-						for (int e_index = 0; e_index < (int)noop_node->experiments.size(); e_index++) {
-							noop_node->experiments[e_index]->train_existing_helper(this);
-						}
-					}
-					break;
-				case NODE_TYPE_ACTION:
-					{
-						ActionNode* action_node = (ActionNode*)it->second;
-						for (int e_index = 0; e_index < (int)action_node->experiments.size(); e_index++) {
-							action_node->experiments[e_index]->train_existing_helper(this);
-						}
-					}
-					break;
-				case NODE_TYPE_SCOPE:
-					{
-						ScopeNode* scope_node = (ScopeNode*)it->second;
-						for (int e_index = 0; e_index < (int)scope_node->experiments.size(); e_index++) {
-							scope_node->experiments[e_index]->train_existing_helper(this);
-						}
-					}
-					break;
-				case NODE_TYPE_BRANCH:
-					{
-						BranchNode* branch_node = (BranchNode*)it->second;
-						for (int e_index = 0; e_index < (int)branch_node->original_experiments.size(); e_index++) {
-							branch_node->original_experiments[e_index]->train_existing_helper(this);
-						}
-						for (int e_index = 0; e_index < (int)branch_node->branch_experiments.size(); e_index++) {
-							branch_node->branch_experiments[e_index]->train_existing_helper(this);
-						}
-					}
-					break;
-				}
-			}
-		}
 	}
 }

@@ -55,15 +55,9 @@ void ExploreExperiment::predict_measure_check_activate(vector<double>& obs,
 				history->has_predict = true;
 				history->existing_predicted = existing_predicted;
 
-				// wrapper->has_explore = true;
-				// ScopeHistory* scope_history = wrapper->scope_histories.back();
-				// scope_history->explore_index = (int)scope_history->node_histories.size()-1;
-				// temp
-				if (this->scope_context->id == 0) {
-					wrapper->has_explore = true;
-					ScopeHistory* scope_history = wrapper->scope_histories.back();
-					scope_history->explore_index = (int)scope_history->node_histories.size()-1;
-				}
+				ScopeHistory* scope_history = wrapper->scope_histories.back();
+				wrapper->explore_scope_history = scope_history;
+				wrapper->explore_index = (int)scope_history->node_histories.size()-1;
 
 				ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
 				new_experiment_state->step_index = 0;
@@ -172,23 +166,88 @@ void ExploreExperiment::predict_measure_backprop(double target_val,
 
 			this->state_iter++;
 			if (this->state_iter >= MEASURE_NUM_DATAPOINTS) {
-				// temp
-				cout << "predict measure" << endl;
-				cout << "new explore path:";
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						cout << " " << this->best_indexes[s_index];
+				double branch_ratio = (double)MEASURE_NUM_DATAPOINTS / (double)this->num_evals;
+				double local_improvement = this->sum_improvement / (double)MEASURE_NUM_DATAPOINTS * branch_ratio;
+
+				double average_instances_per_run;
+				switch (this->node_context->type) {
+				case NODE_TYPE_NOOP:
+					{
+						NoopNode* noop_node = (NoopNode*)this->node_context;
+						average_instances_per_run = noop_node->average_instances_per_run;
+					}
+					break;
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)this->node_context;
+						average_instances_per_run = action_node->average_instances_per_run;
+					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)this->node_context;
+						average_instances_per_run = scope_node->average_instances_per_run;
+					}
+					break;
+				default:
+				// case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)this->node_context;
+						if (this->is_branch) {
+							average_instances_per_run = branch_node->branch_average_instances_per_run;
+						} else {
+							average_instances_per_run = branch_node->original_average_instances_per_run;
+						}
+					}
+					break;
+				}
+				double global_improvement = average_instances_per_run * local_improvement;
+
+				// // temp
+				// cout << "predict measure" << endl;
+				// cout << "new explore path:";
+				// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				// 		cout << " " << this->best_indexes[s_index];
+				// 	} else {
+				// 		cout << " E" << this->scope_context->child_scopes[this->best_indexes[s_index]]->id;
+				// 	}
+				// }
+				// cout << endl;
+				// cout << "branch_ratio: " << branch_ratio << endl;
+				// cout << "local_improvement: " << local_improvement << endl;
+				// cout << "global_improvement: " << global_improvement << endl;
+
+				bool is_success = false;
+				if (local_improvement > 0.0) {
+					if ((int)this->scope_context->measure_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+						int num_better_than = 0;
+						for (list<double>::iterator it = this->scope_context->measure_last_scores.begin();
+								it != this->scope_context->measure_last_scores.end(); it++) {
+							if (global_improvement >= *it) {
+								num_better_than++;
+							}
+						}
+
+						double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->measure_last_scores.size();
+
+						if (num_better_than >= target_better_than) {
+							is_success = true;
+						}
+
+						if ((int)this->scope_context->measure_last_scores.size() >= NUM_LAST_TRACK) {
+							this->scope_context->measure_last_scores.pop_front();
+						}
+						this->scope_context->measure_last_scores.push_back(global_improvement);
 					} else {
-						cout << " E" << this->scope_context->child_scopes[this->best_indexes[s_index]]->id;
+						this->scope_context->measure_last_scores.push_back(global_improvement);
 					}
 				}
-				cout << endl;
-				cout << "this->sum_improvement: " << this->sum_improvement << endl;
 
 				#if defined(MDEBUG) && MDEBUG
-				if (this->sum_improvement > 0.0 || rand()%2 == 0) {
+				if (is_success || rand()%2 == 0) {
 				#else
-				if (this->sum_improvement > 0.0) {
+				if (is_success) {
 				#endif /* MDEBUG */
 					is_add = true;
 

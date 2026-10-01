@@ -7,7 +7,6 @@
 
 #include "layer.h"
 
-class ScoreNetworkHistory;
 class ScoreNetwork {
 public:
 	Layer* state_input;
@@ -17,7 +16,6 @@ public:
 	Layer* output;
 
 	int num_instances;
-	int last_update_iter;
 	int epoch_iter;
 
 	ScoreNetwork(int num_states);
@@ -27,9 +25,6 @@ public:
 
 	void activate(Eigen::VectorXf& state_vals);
 
-	void save(ScoreNetworkHistory* history);
-	void load(ScoreNetworkHistory* history);
-
 	void backprop(double target_val,
 				  Eigen::VectorXf& state_errors);
 
@@ -38,14 +33,6 @@ public:
 	void clear_momentum();
 
 	void save(std::ofstream& output_file);
-};
-
-class ScoreNetworkHistory {
-public:
-	Eigen::VectorXf state_input_history;
-	Eigen::VectorXf hidden_1_history;
-	Eigen::VectorXf hidden_2_history;
-	double output_history;
 };
 
 #endif /* SCORE_NETWORK_H */

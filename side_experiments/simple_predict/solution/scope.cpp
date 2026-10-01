@@ -109,6 +109,7 @@ void Scope::copy_from(Scope* original,
 
 	this->last_scores = original->last_scores;
 	this->predict_last_scores = original->predict_last_scores;
+	this->measure_last_scores = original->measure_last_scores;
 }
 
 void Scope::save(ofstream& output_file) {
@@ -140,7 +141,7 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->generic_scope_nodes[s_index]->id << endl;
 	}
 
-	for (int l_index = 0; l_index < (int)TRAIN_NEW_NUM_DATAPOINTS.size(); l_index++) {
+	for (int l_index = 0; l_index < (int)TRAIN_NEW_NUM_DATAPOINTS.size()-1; l_index++) {
 		output_file << this->last_scores[l_index].size() << endl;
 		for (list<double>::iterator it = this->last_scores[l_index].begin();
 				it != this->last_scores[l_index].end(); it++) {
@@ -151,6 +152,12 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->predict_last_scores.size() << endl;
 	for (list<double>::iterator it = this->predict_last_scores.begin();
 			it != this->predict_last_scores.end(); it++) {
+		output_file << *it << endl;
+	}
+
+	output_file << this->measure_last_scores.size() << endl;
+	for (list<double>::iterator it = this->measure_last_scores.begin();
+			it != this->measure_last_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 }
@@ -249,7 +256,7 @@ void Scope::load(ifstream& input_file,
 		this->generic_scope_nodes.push_back(scope_node);
 	}
 
-	for (int l_index = 0; l_index < (int)TRAIN_NEW_NUM_DATAPOINTS.size(); l_index++) {
+	for (int l_index = 0; l_index < (int)TRAIN_NEW_NUM_DATAPOINTS.size()-1; l_index++) {
 		this->last_scores.push_back(list<double>());
 
 		string num_last_scores_line;
@@ -269,6 +276,15 @@ void Scope::load(ifstream& input_file,
 		string score_line;
 		getline(input_file, score_line);
 		this->predict_last_scores.push_back(stod(score_line));
+	}
+
+	string num_measure_last_scores_line;
+	getline(input_file, num_measure_last_scores_line);
+	int num_measure_last_scores = stoi(num_measure_last_scores_line);
+	for (int e_index = 0; e_index < num_measure_last_scores; e_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->measure_last_scores.push_back(stod(score_line));
 	}
 }
 
@@ -291,8 +307,6 @@ void Scope::save_for_display(ofstream& output_file) {
 
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
-
-	this->explore_index = -1;
 }
 
 ScopeHistory::~ScopeHistory() {
@@ -301,20 +315,43 @@ ScopeHistory::~ScopeHistory() {
 	}
 }
 
-TrainScopeHistory::TrainScopeHistory(Scope* scope) {
-	this->scope = scope;
+ScopeHistory* ScopeHistory::train_copy() {
+	ScopeHistory* new_scope_history = new ScopeHistory(this->scope);
 
-	this->score_network_history = NULL;
-}
-
-TrainScopeHistory::~TrainScopeHistory() {
-	delete this->obs_network_history;
+	new_scope_history->obs = this->obs;
 
 	for (int h_index = 0; h_index < (int)this->node_histories.size(); h_index++) {
-		delete this->node_histories[h_index];
+		AbstractNode* node = this->node_histories[h_index]->node;
+		switch (node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)node;
+				ActionNodeHistory* original_action_node_history = (ActionNodeHistory*)node;
+				ActionNodeHistory* action_node_history = new ActionNodeHistory(action_node);
+				action_node_history->obs = original_action_node_history->obs;
+				new_scope_history->node_histories.push_back(action_node_history);
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)node;
+				ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)node;
+				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(scope_node);
+				scope_node_history->end_inner_state = original_scope_node_history->end_inner_state;
+				new_scope_history->node_histories.push_back(scope_node_history);
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)node;
+				BranchNodeHistory* original_branch_node_history = (BranchNodeHistory*)node;
+				BranchNodeHistory* branch_node_history = new BranchNodeHistory(branch_node);
+				branch_node_history->is_branch = original_branch_node_history->is_branch;
+				new_scope_history->node_histories.push_back(branch_node_history);
+			}
+			break;
+		}
 	}
 
-	if (this->score_network_history != NULL) {
-		delete this->score_network_history;
-	}
+	return new_scope_history;
 }

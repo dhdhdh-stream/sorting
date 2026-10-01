@@ -25,8 +25,10 @@ public:
 	Solution* solution;
 	Solution* best_solution;
 
-	int iters_since_update;
+	int existing_since_update;
 	int new_since_update;
+
+	std::vector<AbstractExperiment*> experiments;
 
 	/**
 	 * - run variables
@@ -47,13 +49,16 @@ public:
 	 *     - even if, e.g., updating only post explore
 	 */
 	std::vector<ScopeHistory*> explore_scope_histories;
+	std::vector<int> explore_index_histories;
 	std::vector<double> explore_target_val_histories;
 	int train_iter_index;
 
 	int diversity_index;
-	bool has_explore;
 
 	std::vector<std::map<AbstractExperiment*, AbstractExperimentHistory*>> experiment_histories;
+
+	ScopeHistory* explore_scope_history;
+	int explore_index;
 
 	Problem* problem;
 

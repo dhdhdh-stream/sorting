@@ -156,16 +156,12 @@ void TransitionNetwork::load(TransitionNetworkHistory* history) {
 	this->hidden_2->acti_vals = history->hidden_2_history;
 }
 
-void TransitionNetwork::backprop(Eigen::VectorXf& back_state_errors,
-								 Eigen::VectorXf& front_state_errors) {
+void TransitionNetwork::backprop(Eigen::VectorXf& back_state_errors) {
 	this->output->errors = back_state_errors;
 
 	this->output->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
-
-	front_state_errors += this->state_input->errors;
-	this->state_input->errors.setConstant(0.0);
 
 	this->num_instances++;
 }

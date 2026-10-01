@@ -23,7 +23,6 @@ public:
 
 	int num_instances;
 	int epoch_iter;
-	double average_max_update;
 
 	Network(int input_size);
 	Network(Network* original);

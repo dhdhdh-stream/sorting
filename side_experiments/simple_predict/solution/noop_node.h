@@ -40,11 +40,10 @@ public:
 
 	void train_step(AbstractNodeHistory* history,
 					Eigen::VectorXf& state,
-					bool& is_done,
-					TrainScopeHistory* train_scope_history);
+					std::vector<TrainAbstractNodeHistory*>& train_node_histories);
 	void train_predict_step(AbstractNodeHistory* history,
 							Eigen::VectorXf& state,
-							TrainScopeHistory* train_scope_history);
+							std::vector<TrainAbstractNodeHistory*>& train_node_histories);
 
 	void predict_step(Eigen::VectorXf& state,
 					  AbstractNode*& node_context);

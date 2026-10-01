@@ -37,7 +37,6 @@ ScoreNetwork::ScoreNetwork(int num_states) {
 	this->output->update_structure();
 
 	this->num_instances = 0;
-	this->last_update_iter = -1;
 	this->epoch_iter = 0;
 }
 
@@ -74,7 +73,6 @@ ScoreNetwork::ScoreNetwork(ScoreNetwork* original) {
 	this->output->copy_weights_from(original->output);
 
 	this->num_instances = 0;
-	this->last_update_iter = -1;
 	this->epoch_iter = 0;
 }
 
@@ -121,7 +119,6 @@ ScoreNetwork::ScoreNetwork(ifstream& input_file) {
 	this->output->load_weights_from(input_file);
 
 	this->num_instances = 0;
-	this->last_update_iter = -1;
 	this->epoch_iter = 0;
 }
 
@@ -138,20 +135,6 @@ void ScoreNetwork::activate(Eigen::VectorXf& state_vals) {
 	this->hidden_1->activate();
 	this->hidden_2->activate();
 	this->output->activate();
-}
-
-void ScoreNetwork::save(ScoreNetworkHistory* history) {
-	history->state_input_history = this->state_input->acti_vals;
-	history->hidden_1_history = this->hidden_1->acti_vals;
-	history->hidden_2_history = this->hidden_2->acti_vals;
-	history->output_history = this->output->acti_vals(0);
-}
-
-void ScoreNetwork::load(ScoreNetworkHistory* history) {
-	this->state_input->acti_vals = history->state_input_history;
-	this->hidden_1->acti_vals = history->hidden_1_history;
-	this->hidden_2->acti_vals = history->hidden_2_history;
-	this->output->acti_vals(0) = history->output_history;
 }
 
 void ScoreNetwork::backprop(double target_val,

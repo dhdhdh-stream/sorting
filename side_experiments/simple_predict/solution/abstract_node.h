@@ -19,6 +19,7 @@ const int NODE_TYPE_SCOPE = 2;
 const int NODE_TYPE_BRANCH = 3;
 
 class AbstractNodeHistory;
+class TrainAbstractNodeHistory;
 class AbstractNode {
 public:
 	int type;
@@ -45,11 +46,10 @@ public:
 
 	virtual void train_step(AbstractNodeHistory* history,
 							Eigen::VectorXf& state,
-							bool& is_done,
-							TrainScopeHistory* train_scope_history) = 0;
+							std::vector<TrainAbstractNodeHistory*>& train_node_histories) = 0;
 	virtual void train_predict_step(AbstractNodeHistory* history,
 									Eigen::VectorXf& state,
-									TrainScopeHistory* train_scope_history) = 0;
+									std::vector<TrainAbstractNodeHistory*>& train_node_histories) = 0;
 
 	virtual void predict_step(Eigen::VectorXf& state,
 							  AbstractNode*& node_context) = 0;
@@ -72,9 +72,7 @@ public:
 
 	virtual ~TrainAbstractNodeHistory() {};
 
-	virtual void backprop(double target_val,
-						  Eigen::VectorXf& state_error,
-						  SolutionWrapper* wrapper) = 0;
+	virtual void backprop(Eigen::VectorXf& state_error) = 0;
 	virtual void update(int iter_index) = 0;
 };
 

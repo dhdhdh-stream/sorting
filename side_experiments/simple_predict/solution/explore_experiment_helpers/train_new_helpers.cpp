@@ -27,15 +27,9 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 				&& this->num_instances_until_target <= 0) {
 			history->has_explore = true;
 
-			// wrapper->has_explore = true;
-			// ScopeHistory* scope_history = wrapper->scope_histories.back();
-			// scope_history->explore_index = (int)scope_history->node_histories.size()-1;
-			// temp
-			if (this->scope_context->id == 0) {
-				wrapper->has_explore = true;
-				ScopeHistory* scope_history = wrapper->scope_histories.back();
-				scope_history->explore_index = (int)scope_history->node_histories.size()-1;
-			}
+			ScopeHistory* scope_history = wrapper->scope_histories.back();
+			wrapper->explore_scope_history = scope_history;
+			wrapper->explore_index = (int)scope_history->node_histories.size()-1;
 
 			history->obs_histories.push_back(obs);
 
@@ -198,27 +192,52 @@ bool ExploreExperiment::train_new_helper(int l_index) {
 
 	bool is_success = false;
 	if (local_improvement > 0.0) {
-		if ((int)this->scope_context->last_scores[l_index].size() >= MIN_NUM_LAST_TRACK) {
-			int num_better_than = 0;
-			for (list<double>::iterator it = this->scope_context->last_scores[l_index].begin();
-					it != this->scope_context->last_scores[l_index].end(); it++) {
-				if (global_improvement >= *it) {
-					num_better_than++;
+		if (l_index == (int)TRAIN_NEW_NUM_DATAPOINTS.size()-1) {
+			if ((int)this->scope_context->measure_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+				int num_better_than = 0;
+				for (list<double>::iterator it = this->scope_context->measure_last_scores.begin();
+						it != this->scope_context->measure_last_scores.end(); it++) {
+					if (global_improvement >= *it) {
+						num_better_than++;
+					}
 				}
-			}
 
-			double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->last_scores[l_index].size();
+				double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->measure_last_scores.size();
 
-			if (num_better_than >= target_better_than) {
-				is_success = true;
-			}
+				if (num_better_than >= target_better_than) {
+					is_success = true;
+				}
 
-			if ((int)this->scope_context->last_scores[l_index].size() >= NUM_LAST_TRACK) {
-				this->scope_context->last_scores[l_index].pop_front();
+				if ((int)this->scope_context->measure_last_scores.size() >= NUM_LAST_TRACK) {
+					this->scope_context->measure_last_scores.pop_front();
+				}
+				this->scope_context->measure_last_scores.push_back(global_improvement);
+			} else {
+				this->scope_context->measure_last_scores.push_back(global_improvement);
 			}
-			this->scope_context->last_scores[l_index].push_back(global_improvement);
 		} else {
-			this->scope_context->last_scores[l_index].push_back(global_improvement);
+			if ((int)this->scope_context->last_scores[l_index].size() >= MIN_NUM_LAST_TRACK) {
+				int num_better_than = 0;
+				for (list<double>::iterator it = this->scope_context->last_scores[l_index].begin();
+						it != this->scope_context->last_scores[l_index].end(); it++) {
+					if (global_improvement >= *it) {
+						num_better_than++;
+					}
+				}
+
+				double target_better_than = LAST_BETTER_THAN_RATIO * (double)this->scope_context->last_scores[l_index].size();
+
+				if (num_better_than >= target_better_than) {
+					is_success = true;
+				}
+
+				if ((int)this->scope_context->last_scores[l_index].size() >= NUM_LAST_TRACK) {
+					this->scope_context->last_scores[l_index].pop_front();
+				}
+				this->scope_context->last_scores[l_index].push_back(global_improvement);
+			} else {
+				this->scope_context->last_scores[l_index].push_back(global_improvement);
+			}
 		}
 	}
 
@@ -291,46 +310,51 @@ void ExploreExperiment::train_new_backprop(
 			}
 
 			if (is_fail) {
-				this->new_obs_histories.clear();
-				this->new_target_val_histories.clear();
+				this->try_iter++;
+				if (this->try_iter >= EXPERIMENT_MAX_TRIES) {
+					delete this;
+				} else {
+					this->new_obs_histories.clear();
+					this->new_target_val_histories.clear();
 
-				double average_instances_per_hit;
-				switch (this->node_context->type) {
-				case NODE_TYPE_NOOP:
-					{
-						NoopNode* noop_node = (NoopNode*)this->node_context;
-						average_instances_per_hit = noop_node->average_instances_per_hit;
-					}
-					break;
-				case NODE_TYPE_ACTION:
-					{
-						ActionNode* action_node = (ActionNode*)this->node_context;
-						average_instances_per_hit = action_node->average_instances_per_hit;
-					}
-					break;
-				case NODE_TYPE_SCOPE:
-					{
-						ScopeNode* scope_node = (ScopeNode*)this->node_context;
-						average_instances_per_hit = scope_node->average_instances_per_hit;
-					}
-					break;
-				default:
-				// case NODE_TYPE_BRANCH:
-					{
-						BranchNode* branch_node = (BranchNode*)this->node_context;
-						if (this->is_branch) {
-							average_instances_per_hit = branch_node->branch_average_instances_per_hit;
-						} else {
-							average_instances_per_hit = branch_node->original_average_instances_per_hit;
+					double average_instances_per_hit;
+					switch (this->node_context->type) {
+					case NODE_TYPE_NOOP:
+						{
+							NoopNode* noop_node = (NoopNode*)this->node_context;
+							average_instances_per_hit = noop_node->average_instances_per_hit;
 						}
+						break;
+					case NODE_TYPE_ACTION:
+						{
+							ActionNode* action_node = (ActionNode*)this->node_context;
+							average_instances_per_hit = action_node->average_instances_per_hit;
+						}
+						break;
+					case NODE_TYPE_SCOPE:
+						{
+							ScopeNode* scope_node = (ScopeNode*)this->node_context;
+							average_instances_per_hit = scope_node->average_instances_per_hit;
+						}
+						break;
+					default:
+					// case NODE_TYPE_BRANCH:
+						{
+							BranchNode* branch_node = (BranchNode*)this->node_context;
+							if (this->is_branch) {
+								average_instances_per_hit = branch_node->branch_average_instances_per_hit;
+							} else {
+								average_instances_per_hit = branch_node->original_average_instances_per_hit;
+							}
+						}
+						break;
 					}
-					break;
-				}
-				uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
-				this->num_instances_until_target = until_distribution(generator);
+					uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
+					this->num_instances_until_target = until_distribution(generator);
 
-				this->state = EXPLORE_EXPERIMENT_STATE_EXPLORE;
-				this->state_iter = 0;
+					this->state = EXPLORE_EXPERIMENT_STATE_EXPLORE;
+					this->state_iter = 0;
+				}
 			} else if (this->state_iter == TRAIN_NEW_NUM_DATAPOINTS.back()) {
 				is_add = true;
 

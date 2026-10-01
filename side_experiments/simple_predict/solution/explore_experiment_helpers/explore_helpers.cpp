@@ -24,7 +24,7 @@ const int MIN_NUM_SAMPLES = 2;
 const double BETTER_THAN_RATIO = 0.5;
 #else
 const int MIN_NUM_SAMPLES = 5;
-const double BETTER_THAN_RATIO = 0.9;
+const double BETTER_THAN_RATIO = 0.8;
 #endif /* MDEBUG */
 
 void ExploreExperiment::explore_check_activate(vector<double>& obs,
@@ -36,15 +36,9 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 				&& this->num_instances_until_target <= 0) {
 			history->has_explore = true;
 
-			// wrapper->has_explore = true;
-			// ScopeHistory* scope_history = wrapper->scope_histories.back();
-			// scope_history->explore_index = (int)scope_history->node_histories.size()-1;
-			// temp
-			if (this->scope_context->id == 0) {
-				wrapper->has_explore = true;
-				ScopeHistory* scope_history = wrapper->scope_histories.back();
-				scope_history->explore_index = (int)scope_history->node_histories.size()-1;
-			}
+			ScopeHistory* scope_history = wrapper->scope_histories.back();
+			wrapper->explore_scope_history = scope_history;
+			wrapper->explore_index = (int)scope_history->node_histories.size()-1;
 
 			this->existing_network->activate(obs);
 			history->existing_predicted = this->existing_network->output->acti_vals[0];
@@ -268,47 +262,55 @@ void ExploreExperiment::explore_backprop(double target_val,
 		wrapper->new_since_update++;
 
 		if (history->has_explore) {
-			// // temp
-			// if (this->state_iter == 0) {
-			// 	cout << "history->predicted: " << history->predicted << endl;
-			// 	cout << "target_val: " << target_val << endl;
-			// 	cout << "wrapper->iters_since_update: " << wrapper->iters_since_update << endl;
-			// 	cout << endl;
-			// }
-
 			this->state_iter++;
 
-			double curr_surprise = target_val - history->existing_predicted;
+			double curr_vs_surprise = target_val - history->existing_predicted;
+			double curr_predict_surprise = target_val - history->predicted;
 
-			bool is_success = false;
-			if (curr_surprise >= 0.0) {
-				if ((int)this->surprises.size() >= MIN_NUM_SAMPLES) {
-					int index = BETTER_THAN_RATIO * (double)this->surprises.size();
-					if (curr_surprise >= this->surprises[index]) {
-						is_success = true;
+			bool is_vs_success = false;
+			bool is_predict_success = false;
+			if (curr_vs_surprise >= 0.0 && curr_predict_surprise >= 0.0) {
+				if ((int)this->vs_surprises.size() >= MIN_NUM_SAMPLES) {
+					int index = BETTER_THAN_RATIO * (double)this->vs_surprises.size();
+					if (curr_vs_surprise >= this->vs_surprises[index]) {
+						is_vs_success = true;
+					}
+				}
+				if ((int)this->predict_surprises.size() >= MIN_NUM_SAMPLES) {
+					int index = BETTER_THAN_RATIO * (double)this->predict_surprises.size();
+					if (curr_predict_surprise >= this->predict_surprises[index]) {
+						is_predict_success = true;
 					}
 				}
 
-				int index = 0;
+				int vs_index = 0;
 				while (true) {
-					if (index >= (int)this->surprises.size()) {
+					if (vs_index >= (int)this->vs_surprises.size()) {
+						break;
+					}
+					if (curr_vs_surprise <= this->vs_surprises[vs_index]) {
 						break;
 					}
 
-					if (curr_surprise <= this->surprises[index]) {
-						break;
-					}
-
-					index++;
+					vs_index++;
 				}
+				this->vs_surprises.insert(this->vs_surprises.begin() + vs_index, curr_vs_surprise);
 
-				this->surprises.insert(this->surprises.begin() + index, curr_surprise);
+				int predict_index = 0;
+				while (true) {
+					if (predict_index >= (int)this->predict_surprises.size()) {
+						break;
+					}
+					if (curr_predict_surprise <= this->predict_surprises[predict_index]) {
+						break;
+					}
+
+					predict_index++;
+				}
+				this->predict_surprises.insert(this->predict_surprises.begin() + predict_index, curr_predict_surprise);
 			}
 
-			if (is_success) {
-				// // temp
-				// cout << "this->state_iter: " << this->state_iter << endl;
-
+			if (is_vs_success && is_predict_success) {
 				this->best_step_types = history->curr_step_types;
 				this->best_indexes = history->curr_indexes;
 

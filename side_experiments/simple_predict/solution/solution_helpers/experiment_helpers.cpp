@@ -165,12 +165,13 @@ void create_experiment(ScopeHistory* scope_history,
 		}
 
 		ExploreExperiment* new_experiment = new ExploreExperiment(
+			wrapper,
 			diversity_index,
 			explore_node->parent,
 			explore_node,
 			explore_is_branch,
-			exit_next_node,
-			wrapper);
+			exit_next_node);
+		wrapper->experiments[diversity_index] = new_experiment;
 		switch (explore_node->type) {
 		case NODE_TYPE_NOOP:
 			{
