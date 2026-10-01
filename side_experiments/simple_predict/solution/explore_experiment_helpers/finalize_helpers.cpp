@@ -329,6 +329,42 @@ void ExploreExperiment::add(bool is_predict,
 
 	new_branch_node->branch_predict_network = new ScoreNetwork(NUM_STATES);
 
+	double average_instances_per_hit;
+	switch (this->node_context->type) {
+	case NODE_TYPE_NOOP:
+		{
+			NoopNode* noop_node = (NoopNode*)this->node_context;
+			average_instances_per_hit = noop_node->average_instances_per_hit;
+		}
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+			average_instances_per_hit = action_node->average_instances_per_hit;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)this->node_context;
+			average_instances_per_hit = scope_node->average_instances_per_hit;
+		}
+		break;
+	default:
+	// case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)this->node_context;
+			if (this->is_branch) {
+				average_instances_per_hit = branch_node->branch_average_instances_per_hit;
+			} else {
+				average_instances_per_hit = branch_node->original_average_instances_per_hit;
+			}
+		}
+		break;
+	}
+	new_branch_node->curr_ramp = 0;
+	new_branch_node->max_ramp = floor(average_instances_per_hit);
+	new_branch_node->ramp_iter = 0;
+
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;
 

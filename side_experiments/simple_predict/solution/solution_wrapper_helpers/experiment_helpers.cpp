@@ -28,6 +28,8 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->diversity_index = diversity_distribution(generator);
 
 	this->explore_scope_history = NULL;
+	this->explore_index = -1;
+	this->scope_count = 0;
 
 	this->states.push_back(Eigen::VectorXf());
 	this->states.back().resize(NUM_STATES);
@@ -64,6 +66,26 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 	while (!is_next) {
 		if (this->node_context.back() == NULL
 				&& this->experiment_context.back() == NULL) {
+			if (this->explore_index == -1) {
+				bool match_scope = false;
+				if (this->solution->cycle_index == -1) {
+					if (this->scope_histories.back()->scope == this->solution->starting_scope) {
+						match_scope = true;
+					}
+				} else {
+					if (this->scope_histories.back()->scope->id == this->solution->scope_index) {
+						match_scope = true;
+					}
+				}
+				if (match_scope) {
+					uniform_int_distribution<int> select_distribution(0, this->scope_count);
+					this->scope_count++;
+					if (select_distribution(generator) == 0) {
+						this->explore_scope_history = this->scope_histories.back();
+					}
+				}
+			}
+
 			if (this->scope_histories.size() == 1) {
 				is_next = true;
 				is_done = true;

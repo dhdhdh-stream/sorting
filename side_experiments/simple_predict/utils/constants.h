@@ -53,7 +53,7 @@ const int STEP_TYPE_SCOPE = 1;
 #if defined(MDEBUG) && MDEBUG
 const int DIVERSITY_RANGE = 2;
 #else
-const int DIVERSITY_RANGE = 10;
+const int DIVERSITY_RANGE = 6;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

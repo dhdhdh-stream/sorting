@@ -39,17 +39,26 @@ void train_explore_helper(SolutionWrapper* wrapper) {
 
 		vector<TrainAbstractNodeHistory*> train_node_histories;
 		int explore_index = wrapper->explore_index_histories[index];
-		for (int h_index = 0; h_index <= explore_index; h_index++) {
-			AbstractNode* node = scope_history->node_histories[h_index]->node;
-			node->train_step(scope_history->node_histories[h_index],
-							 state,
-							 train_node_histories);
-		}
-		for (int h_index = explore_index+1; h_index < (int)scope_history->node_histories.size(); h_index++) {
-			AbstractNode* node = scope_history->node_histories[h_index]->node;
-			node->train_predict_step(scope_history->node_histories[h_index],
-									 state,
-									 train_node_histories);
+		if (explore_index == -1) {
+			for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+				AbstractNode* node = scope_history->node_histories[h_index]->node;
+				node->train_step(scope_history->node_histories[h_index],
+								 state,
+								 train_node_histories);
+			}
+		} else {
+			for (int h_index = 0; h_index <= explore_index; h_index++) {
+				AbstractNode* node = scope_history->node_histories[h_index]->node;
+				node->train_step(scope_history->node_histories[h_index],
+								 state,
+								 train_node_histories);
+			}
+			for (int h_index = explore_index+1; h_index < (int)scope_history->node_histories.size(); h_index++) {
+				AbstractNode* node = scope_history->node_histories[h_index]->node;
+				node->train_predict_step(scope_history->node_histories[h_index],
+										 state,
+										 train_node_histories);
+			}
 		}
 
 		scope->score_network->activate(state);

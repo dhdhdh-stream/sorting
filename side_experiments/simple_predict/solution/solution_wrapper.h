@@ -59,6 +59,7 @@ public:
 
 	ScopeHistory* explore_scope_history;
 	int explore_index;
+	int scope_count;
 
 	Problem* problem;
 
