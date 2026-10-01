@@ -259,8 +259,6 @@ void ExploreExperiment::explore_backprop(double target_val,
 		uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
 		this->num_instances_until_target = until_distribution(generator);
 
-		wrapper->new_since_update++;
-
 		if (history->has_explore) {
 			this->state_iter++;
 

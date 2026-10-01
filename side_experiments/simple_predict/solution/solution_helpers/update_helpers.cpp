@@ -15,12 +15,6 @@
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int ITERS_PER_RAMP = 10;
-#else
-const int ITERS_PER_RAMP = 1000;
-#endif /* MDEBUG */
-
 void update_helper(ScopeHistory* scope_history) {
 	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
 		AbstractNode* node = scope_history->node_histories[h_index]->node;
@@ -125,15 +119,6 @@ void update_helper(SolutionWrapper* wrapper,
 					branch_node->branch_average_instances_per_run = 0.999*branch_node->branch_average_instances_per_run + 0.001*branch_node->branch_curr_num_instances;
 					if (branch_node->branch_curr_num_instances > 0) {
 						branch_node->branch_average_instances_per_hit = 0.999*branch_node->branch_average_instances_per_hit + 0.001*branch_node->branch_curr_num_instances;
-
-						if (branch_node->curr_ramp < branch_node->max_ramp) {
-							branch_node->ramp_iter++;
-							if (branch_node->ramp_iter >= ITERS_PER_RAMP) {
-								branch_node->curr_ramp++;
-
-								branch_node->ramp_iter = 0;
-							}
-						}
 
 						branch_node->branch_curr_num_instances = 0;
 					}

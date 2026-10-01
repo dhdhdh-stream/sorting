@@ -190,6 +190,7 @@ bool ExploreExperiment::predict_cycle() {
 		if (this->new_network != NULL) {
 			delete this->new_network;
 		}
+		this->is_predict = true;
 		this->new_network = new Network(predict_obs_histories[0].size());
 		double hidden_1_average_max_update = 0.0;
 		double hidden_2_average_max_update = 0.0;

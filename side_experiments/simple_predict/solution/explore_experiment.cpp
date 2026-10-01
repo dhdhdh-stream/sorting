@@ -34,6 +34,8 @@ ExploreExperiment::ExploreExperiment(SolutionWrapper* wrapper,
 
 	this->try_iter = 0;
 
+	this->sum_vals = 0.0;
+
 	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 }
@@ -108,6 +110,10 @@ ExploreExperiment::~ExploreExperiment() {
 
 bool ExploreExperiment::is_gather_existing() {
 	return this->state == EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
+}
+
+bool ExploreExperiment::is_measure() {
+	return this->state == EXPLORE_EXPERIMENT_STATE_MEASURE;
 }
 
 ExploreExperimentHistory::ExploreExperimentHistory(ExploreExperiment* experiment) {

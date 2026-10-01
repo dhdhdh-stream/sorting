@@ -22,6 +22,10 @@ const int EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int EXPLORE_EXPERIMENT_STATE_PREDICT_MEASURE = 1;
 const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 2;
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 3;
+const int EXPLORE_EXPERIMENT_STATE_MEASURE = 4;
+/**
+ * - need measure as update may not adjust to damage quickly enough
+ */
 
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_MAX_TRIES = 2;
@@ -40,6 +44,8 @@ public:
 	 */
 	std::vector<double> existing_target_val_histories;
 
+	double existing_val_average;
+
 	Network* existing_network;
 
 	double num_evals;
@@ -57,7 +63,10 @@ public:
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
 
+	bool is_predict;
 	Network* new_network;
+
+	double sum_vals;
 
 	ExploreExperiment(SolutionWrapper* wrapper,
 					  int diversity_index,
@@ -68,6 +77,7 @@ public:
 	~ExploreExperiment();
 
 	bool is_gather_existing();
+	bool is_measure();
 
 	void experiment_check_activate(std::vector<double>& obs,
 								   SolutionWrapper* wrapper);
@@ -106,8 +116,7 @@ public:
 								   SolutionWrapper* wrapper);
 	void predict_measure_backprop(double target_val,
 								  ExploreExperimentHistory* history,
-								  SolutionWrapper* wrapper,
-								  bool& is_add);
+								  SolutionWrapper* wrapper);
 
 	void explore_check_activate(std::vector<double>& obs,
 								ExploreExperimentHistory* history,
@@ -137,13 +146,27 @@ public:
 							 SolutionWrapper* wrapper);
 	void train_new_backprop(double target_val,
 							ExploreExperimentHistory* history,
-							SolutionWrapper* wrapper,
-							bool& is_add);
+							SolutionWrapper* wrapper);
 
 	bool train_new_helper(int l_index);
 
-	void add(bool is_predict,
-			 SolutionWrapper* wrapper);
+	void measure_check_activate(std::vector<double>& obs,
+								ExploreExperimentHistory* history,
+								SolutionWrapper* wrapper);
+	void measure_step(std::vector<double>& obs,
+					  int& action,
+					  bool& is_next,
+					  SolutionWrapper* wrapper);
+	void measure_callback(std::vector<double>& obs,
+						  SolutionWrapper* wrapper);
+	void measure_exit_step(std::vector<double>& obs,
+						   SolutionWrapper* wrapper);
+	void measure_backprop(double target_val,
+						  ExploreExperimentHistory* history,
+						  SolutionWrapper* wrapper,
+						  bool& is_add);
+
+	void add(SolutionWrapper* wrapper);
 };
 
 class ExploreExperimentHistory : public AbstractExperimentHistory {

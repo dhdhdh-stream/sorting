@@ -96,6 +96,7 @@ bool ExploreExperiment::train_new_helper(int l_index) {
 	if (this->new_network != NULL) {
 		delete this->new_network;
 	}
+	this->is_predict = false;
 	this->new_network = new Network(this->new_obs_histories[0].size());
 	double hidden_1_average_max_update = 0.0;
 	double hidden_2_average_max_update = 0.0;
@@ -251,8 +252,7 @@ bool ExploreExperiment::train_new_helper(int l_index) {
 void ExploreExperiment::train_new_backprop(
 		double target_val,
 		ExploreExperimentHistory* history,
-		SolutionWrapper* wrapper,
-		bool& is_add) {
+		SolutionWrapper* wrapper) {
 	if (wrapper->diversity_index == this->diversity_index) {
 		double average_instances_per_hit;
 		switch (this->node_context->type) {
@@ -294,8 +294,6 @@ void ExploreExperiment::train_new_backprop(
 				this->new_obs_histories.push_back(history->obs_histories[i_index]);
 				this->new_target_val_histories.push_back(target_val);
 			}
-
-			wrapper->new_since_update++;
 
 			this->state_iter++;
 
@@ -356,10 +354,10 @@ void ExploreExperiment::train_new_backprop(
 					this->state_iter = 0;
 				}
 			} else if (this->state_iter == TRAIN_NEW_NUM_DATAPOINTS.back()) {
-				is_add = true;
+				this->sum_vals = 0.0;
 
-				add(false,
-					wrapper);
+				this->state = EXPLORE_EXPERIMENT_STATE_MEASURE;
+				this->state_iter = 0;
 			}
 		}
 	}

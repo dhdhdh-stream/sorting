@@ -28,6 +28,7 @@ public:
 	virtual ~AbstractExperiment() {};
 
 	virtual bool is_gather_existing() = 0;
+	virtual bool is_measure() = 0;
 
 	virtual void experiment_check_activate(std::vector<double>& obs,
 										   SolutionWrapper* wrapper) = 0;

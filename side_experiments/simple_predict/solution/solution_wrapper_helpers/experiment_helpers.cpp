@@ -139,7 +139,8 @@ void SolutionWrapper::experiment_end(double result) {
 		this->existing_scope_histories.push_back(this->scope_histories[0]);
 		this->existing_target_val_histories.push_back(result);
 	} else {
-		if (this->explore_scope_history != NULL) {
+		if (!this->experiments[this->diversity_index]->is_measure()
+				&& this->explore_scope_history != NULL) {
 			ScopeHistory* scope_history = this->explore_scope_history->train_copy();
 			this->explore_scope_histories.push_back(scope_history);
 			this->explore_index_histories.push_back(this->explore_index);

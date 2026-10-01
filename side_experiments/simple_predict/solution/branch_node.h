@@ -38,10 +38,6 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
-	int curr_ramp;
-	int max_ramp;
-	int ramp_iter;
-
 	int consec_original;
 	int consec_branch;
 

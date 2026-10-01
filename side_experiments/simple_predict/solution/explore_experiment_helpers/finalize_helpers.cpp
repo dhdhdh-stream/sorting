@@ -23,8 +23,7 @@
 
 using namespace std;
 
-void ExploreExperiment::add(bool is_predict,
-							SolutionWrapper* wrapper) {
+void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	if (wrapper->solution->curr_score > wrapper->best_solution->curr_score) {
 		delete wrapper->best_solution;
 		wrapper->best_solution = new Solution(wrapper->solution);
@@ -37,7 +36,7 @@ void ExploreExperiment::add(bool is_predict,
 	ss << "new_since_update: " << wrapper->new_since_update << "; ";
 	ss << "error_sum: " << wrapper->error_sum << "; ";
 	ss << "Experiment" << "; ";
-	ss << "is_predict: " << is_predict << "; ";
+	ss << "this->is_predict: " << this->is_predict << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "this->is_branch: " << this->is_branch << "; ";
@@ -328,42 +327,6 @@ void ExploreExperiment::add(bool is_predict,
 	this->new_network = NULL;
 
 	new_branch_node->branch_predict_network = new ScoreNetwork(NUM_STATES);
-
-	double average_instances_per_hit;
-	switch (this->node_context->type) {
-	case NODE_TYPE_NOOP:
-		{
-			NoopNode* noop_node = (NoopNode*)this->node_context;
-			average_instances_per_hit = noop_node->average_instances_per_hit;
-		}
-		break;
-	case NODE_TYPE_ACTION:
-		{
-			ActionNode* action_node = (ActionNode*)this->node_context;
-			average_instances_per_hit = action_node->average_instances_per_hit;
-		}
-		break;
-	case NODE_TYPE_SCOPE:
-		{
-			ScopeNode* scope_node = (ScopeNode*)this->node_context;
-			average_instances_per_hit = scope_node->average_instances_per_hit;
-		}
-		break;
-	default:
-	// case NODE_TYPE_BRANCH:
-		{
-			BranchNode* branch_node = (BranchNode*)this->node_context;
-			if (this->is_branch) {
-				average_instances_per_hit = branch_node->branch_average_instances_per_hit;
-			} else {
-				average_instances_per_hit = branch_node->original_average_instances_per_hit;
-			}
-		}
-		break;
-	}
-	new_branch_node->curr_ramp = 0;
-	new_branch_node->max_ramp = floor(average_instances_per_hit);
-	new_branch_node->ramp_iter = 0;
 
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;

@@ -121,8 +121,7 @@ void ExploreExperiment::predict_measure_exit_step(vector<double>& obs,
 
 void ExploreExperiment::predict_measure_backprop(double target_val,
 												 ExploreExperimentHistory* history,
-												 SolutionWrapper* wrapper,
-												 bool& is_add) {
+												 SolutionWrapper* wrapper) {
 	if (wrapper->diversity_index == this->diversity_index) {
 		double average_instances_per_hit;
 		switch (this->node_context->type) {
@@ -161,8 +160,6 @@ void ExploreExperiment::predict_measure_backprop(double target_val,
 
 		if (history->has_predict) {
 			this->sum_improvement += target_val - history->existing_predicted;
-
-			wrapper->new_since_update++;
 
 			this->state_iter++;
 			if (this->state_iter >= MEASURE_NUM_DATAPOINTS) {
@@ -249,10 +246,10 @@ void ExploreExperiment::predict_measure_backprop(double target_val,
 				#else
 				if (is_success) {
 				#endif /* MDEBUG */
-					is_add = true;
+					this->sum_vals = 0.0;
 
-					add(true,
-						wrapper);
+					this->state = EXPLORE_EXPERIMENT_STATE_MEASURE;
+					this->state_iter = 0;
 				} else {
 					double average_instances_per_hit;
 					switch (this->node_context->type) {

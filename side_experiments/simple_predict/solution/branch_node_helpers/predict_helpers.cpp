@@ -17,14 +17,6 @@ void BranchNode::predict_step(Eigen::VectorXf& state,
 		return;
 	}
 
-	if (this->curr_ramp < this->max_ramp) {
-		uniform_int_distribution<int> distribution(0, this->max_ramp);
-		if (distribution(generator) > this->curr_ramp) {
-			node_context = this->original_next_node;
-			return;
-		}
-	}
-
 	bool is_branch;
 	this->branch_predict_network->activate(state);
 	if (this->branch_predict_network->output->acti_vals(0) > 0.0) {
