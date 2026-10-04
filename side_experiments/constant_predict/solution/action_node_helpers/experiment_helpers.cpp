@@ -43,5 +43,9 @@ void ActionNode::experiment_step_callback(vector<double>& obs,
 				obs,
 				wrapper);
 		}
+	} else {
+		if (wrapper->remaining_predict.back().size() > 0) {
+			wrapper->remaining_predict.back().erase(wrapper->remaining_predict.back().begin());
+		}
 	}
 }

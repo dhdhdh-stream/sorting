@@ -62,5 +62,9 @@ void ScopeNode::experiment_exit_step(vector<double>& obs,
 				obs,
 				wrapper);
 		}
+	} else {
+		if (wrapper->remaining_predict.back().size() > 0) {
+			wrapper->remaining_predict.back().erase(wrapper->remaining_predict.back().begin());
+		}
 	}
 }

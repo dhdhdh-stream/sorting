@@ -1,4 +1,10 @@
+/**
+ * - simply don't predict while remaining predict
+ */
+
 #include "solution_helpers.h"
+
+#include <iostream>
 
 #include "action_node.h"
 #include "constants.h"
@@ -16,8 +22,7 @@ const int PREDICT_NUM_TRIES = 10;
 const int PREDICT_NUM_TRIES = 200;
 #endif /* MDEBUG */
 
-double existing_predict_helper(vector<AbstractNode*>& remaining_predict,
-							   AbstractNode* exit_next_node,
+double existing_predict_helper(AbstractNode* exit_next_node,
 							   vector<AbstractNode*>& possible_exits,
 							   SolutionWrapper* wrapper) {
 	Scope* scope_context = wrapper->scope_histories.back()->scope;
@@ -25,12 +30,6 @@ double existing_predict_helper(vector<AbstractNode*>& remaining_predict,
 	Eigen::VectorXf state = wrapper->states.back();
 
 	AbstractNode* curr_node = exit_next_node;
-
-	for (int n_index = 0; n_index < (int)remaining_predict.size(); n_index++) {
-		remaining_predict[n_index]->predict_step(
-			state,
-			curr_node);
-	}
 
 	possible_exits.push_back(curr_node);
 	while (curr_node != NULL) {
@@ -72,12 +71,11 @@ void predict_helper(SolutionWrapper* wrapper) {
 	 * - simply don't predict if have damage
 	 *   - not relevant to gathering samples anymore
 	 */
-	if (!wrapper->has_damage) {
+	if (wrapper->run_type != RUN_TYPE_UPDATE && !wrapper->has_damage) {
 		Scope* scope_context = wrapper->scope_histories.back()->scope;
 
 		vector<AbstractNode*> possible_exits;
 		double existing_predict_val = existing_predict_helper(
-			wrapper->remaining_predict.back(),
 			wrapper->node_context.back(),
 			possible_exits,
 			wrapper);
@@ -90,16 +88,11 @@ void predict_helper(SolutionWrapper* wrapper) {
 			int random_index;
 			while (true) {
 				random_index = exit_distribution(generator);
-				if (random_index < (int)wrapper->remaining_predict.back().size() + (int)possible_exits.size()) {
+				if (random_index < (int)possible_exits.size()) {
 					break;
 				}
 			}
-			AbstractNode* curr_exit_next_node;
-			if (random_index < (int)wrapper->remaining_predict.back().size()) {
-				curr_exit_next_node = wrapper->node_context.back();
-			} else {
-				curr_exit_next_node = possible_exits[random_index - wrapper->remaining_predict.back().size()];
-			}
+			AbstractNode* curr_exit_next_node = possible_exits[random_index];
 
 			vector<AbstractNode*> curr_predict;
 
@@ -134,9 +127,6 @@ void predict_helper(SolutionWrapper* wrapper) {
 					ActionNode* generic_action_node = scope_context->generic_action_nodes[action_distribution(generator)];
 					curr_predict.push_back(generic_action_node);
 				}
-			}
-			for (int i_index = random_index; i_index < (int)wrapper->remaining_predict.back().size(); i_index++) {
-				curr_predict.push_back(wrapper->remaining_predict.back()[i_index]);
 			}
 
 			double curr_predict_val = predict_helper(curr_predict,

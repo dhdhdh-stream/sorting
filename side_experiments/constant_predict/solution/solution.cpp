@@ -221,6 +221,8 @@ void Solution::init(ProblemType* problem_type) {
 			outer_scope->generic_scope_nodes.push_back(new_scope_node);
 		}
 
+		outer_scope->train_new_last_scores = vector<list<double>>(TRAIN_NEW_NUM_DATAPOINTS.size());
+
 		this->outer_scope = outer_scope;
 	}
 }

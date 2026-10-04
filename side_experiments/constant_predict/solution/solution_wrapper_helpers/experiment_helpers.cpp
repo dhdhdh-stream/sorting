@@ -54,11 +54,6 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 		ActionNode* action_node = (ActionNode*)this->remaining_predict.back()[0];
 		action_node->experiment_step_callback(obs,
 											  this);
-
-		uniform_int_distribution<int> predict_distribution(0, 9);
-		if (predict_distribution(generator) == 0) {
-			predict_helper(this);
-		}
 	} else if (this->experiment_context.back() != NULL) {
 		AbstractExperiment* experiment = this->experiment_context.back()->experiment;
 		experiment->experiment_step_callback(obs,
@@ -86,14 +81,17 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 				action,
 				is_next,
 				this);
-			this->remaining_predict.back().erase(this->remaining_predict.back().begin());
 		} else if (this->node_context.back() == NULL
 				&& this->experiment_context.back() == NULL) {
 			if (this->scope_histories.size() == 1) {
 				is_next = true;
 				is_done = true;
 			} else {
-				if (this->experiment_context[this->experiment_context.size() - 2] != NULL) {
+				if (this->remaining_predict[this->remaining_predict.size() - 2].size() > 0) {
+					ScopeNode* scope_node = (ScopeNode*)this->remaining_predict[this->remaining_predict.size() - 2][0];
+					scope_node->experiment_exit_step(obs,
+													 this);
+				} else if (this->experiment_context[this->experiment_context.size() - 2] != NULL) {
 					AbstractExperiment* experiment = this->experiment_context[this->experiment_context.size() - 2]->experiment;
 					experiment->experiment_exit_step(obs,
 													 this);

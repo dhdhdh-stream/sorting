@@ -466,6 +466,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			wrapper->solution->outer_scope->train_new_last_scores = wrapper->solution->top_scope->train_new_last_scores;
 			wrapper->solution->outer_scope->measure_last_scores = wrapper->solution->top_scope->measure_last_scores;
 
+			new_scope->train_new_last_scores = vector<list<double>>(TRAIN_NEW_NUM_DATAPOINTS.size());
+
 			wrapper->solution->top_scope = wrapper->solution->outer_scope;
 			wrapper->solution->outer_scope = new_scope;
 			wrapper->solution->top_scope_num_improvements = 0;

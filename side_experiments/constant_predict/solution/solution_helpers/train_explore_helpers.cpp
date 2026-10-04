@@ -94,6 +94,6 @@ void train_predict_helper(SolutionWrapper* wrapper,
 	}
 	wrapper->train_iter_index++;
 
-	wrapper->existing_scope_histories.clear();
-	wrapper->existing_target_val_histories.clear();
+	wrapper->predict_scope_histories.clear();
+	wrapper->predict_indexes.clear();
 }

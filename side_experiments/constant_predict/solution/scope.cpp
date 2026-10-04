@@ -296,12 +296,70 @@ void Scope::link(Solution* parent_solution) {
 }
 
 void Scope::save_for_display(ofstream& output_file) {
-	output_file << this->nodes.size() << endl;
+	int num_non_generic = 0;
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
-		output_file << it->first << endl;
-		output_file << it->second->type << endl;
-		it->second->save_for_display(output_file);
+		switch (it->second->type) {
+		case NODE_TYPE_NOOP:
+			num_non_generic++;
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)it->second;
+				if (!action_node->is_generic) {
+					num_non_generic++;
+				}
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)it->second;
+				if (!scope_node->is_generic) {
+					num_non_generic++;
+				}
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			num_non_generic++;
+			break;
+		}
+	}
+
+	output_file << num_non_generic << endl;
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		switch (it->second->type) {
+		case NODE_TYPE_NOOP:
+			output_file << it->first << endl;
+			output_file << it->second->type << endl;
+			it->second->save_for_display(output_file);
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)it->second;
+				if (!action_node->is_generic) {
+					output_file << it->first << endl;
+					output_file << it->second->type << endl;
+					it->second->save_for_display(output_file);
+				}
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)it->second;
+				if (!scope_node->is_generic) {
+					output_file << it->first << endl;
+					output_file << it->second->type << endl;
+					it->second->save_for_display(output_file);
+				}
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			output_file << it->first << endl;
+			output_file << it->second->type << endl;
+			it->second->save_for_display(output_file);
+			break;
+		}
 	}
 }
 
