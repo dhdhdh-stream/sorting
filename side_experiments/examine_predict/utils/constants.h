@@ -1,0 +1,99 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
+#include <vector>
+
+const double MIN_WEIGHT = 0.00001;
+const double MIN_STANDARD_DEVIATION = 0.00001;
+
+/**
+ * - when there's correlation, weights can get strange values(?)
+ */
+const double REGRESSION_WEIGHT_LIMIT = 100000.0;
+
+const double SCORE_LEARNING_RATE = 0.001;
+const double STATE_LEARNING_RATE = 0.001;
+
+const int INIT_EPOCH_SIZE = 10;
+const int UPDATE_EPOCH_SIZE = 100;
+
+const int NUM_STATES = 16;
+
+#if defined(MDEBUG) && MDEBUG
+const int TRAIN_EXISTING_NUM_DATAPOINTS = 20;
+const std::vector<int> TRAIN_NEW_NUM_DATAPOINTS{10, 20, 40};
+#else
+const int TRAIN_EXISTING_NUM_DATAPOINTS = 4000;
+const std::vector<int> TRAIN_NEW_NUM_DATAPOINTS{100, 500, 4000};
+/**
+ * - good to have large amount of samples
+ *   - update can save bad initial networks but requires many samples
+ *     - 4000/40000 better than 100/400000
+ */
+#endif /* MDEBUG */
+
+#if defined(MDEBUG) && MDEBUG
+const int TRAIN_EXISTING_ITERS = 30;
+const std::vector<int> TRAIN_NEW_ITERS{30, 30, 30};
+#else
+const int TRAIN_EXISTING_ITERS = 300000;
+const std::vector<int> TRAIN_NEW_ITERS{100000, 300000, 300000};
+#endif /* MDEBUG */
+
+/**
+ * - simply give raw actions a fixed weight
+ *   - cannot track success/count if continuous
+ *   - raw actions can also drive innovation anyways
+ */
+const int RAW_ACTION_WEIGHT = 8;
+
+const int STEP_TYPE_ACTION = 0;
+const int STEP_TYPE_SCOPE = 1;
+
+#if defined(MDEBUG) && MDEBUG
+const int PREDICT_NUM_LAST_TRACK = 4;
+const int PREDICT_MIN_NUM_LAST_TRACK = 2;
+const double PREDICT_LAST_BETTER_THAN_RATIO = 0.5;
+const int TRAIN_NEW_NUM_LAST_TRACK = 4;
+const int TRAIN_NEW_MIN_NUM_LAST_TRACK = 2;
+const std::vector<double> TRAIN_NEW_LAST_BETTER_THAN_RATIO{0.5, 0.5, 0.5};
+const int MEASURE_NUM_LAST_TRACK = 20;
+const int MEASURE_MIN_NUM_LAST_TRACK = 4;
+const double MEASURE_LAST_BETTER_THAN_RATIO = 0.75;
+#else
+const int PREDICT_NUM_LAST_TRACK = 20;
+const int PREDICT_MIN_NUM_LAST_TRACK = 5;
+const double PREDICT_LAST_BETTER_THAN_RATIO = 0.8;
+const int TRAIN_NEW_NUM_LAST_TRACK = 20;
+const int TRAIN_NEW_MIN_NUM_LAST_TRACK = 5;
+const std::vector<double> TRAIN_NEW_LAST_BETTER_THAN_RATIO{0.8, 0.8, 0.5};
+const int MEASURE_NUM_LAST_TRACK = 20;
+const int MEASURE_MIN_NUM_LAST_TRACK = 4;
+const double MEASURE_LAST_BETTER_THAN_RATIO = 0.75;
+#endif /* MDEBUG */
+
+#if defined(MDEBUG) && MDEBUG
+const int NUM_UPDATE = 200;
+const int BATCH_SIZE = 10;
+const int ITERS_PER_BATCH = 10;
+#else
+const int NUM_UPDATE = 200000;
+const int BATCH_SIZE = 1000;
+const int ITERS_PER_BATCH = 10000;
+/**
+ * - need large BATCH_SIZE and low ITERS_PER_BATCH
+ *   - adam easily overfits
+ */
+#endif /* MDEBUG */
+
+const int RUN_TYPE_UPDATE = 0;
+const int RUN_TYPE_PREDICT = 1;
+const int RUN_TYPE_EXPERIMENT = 2;
+
+const int GENERALIZE_ITER = 3;
+
+const int EXPERIMENT_REFRESH_NUM_ITERS = 10;
+
+const int STUCK_NUM_ITERS = 12;
+
+#endif /* CONSTANTS_H */
