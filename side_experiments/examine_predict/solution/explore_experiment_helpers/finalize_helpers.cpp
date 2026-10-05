@@ -368,9 +368,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->node_counter = 0;
 			wrapper->solution->scopes.push_back(new_scope);
 
-			new_scope->child_scopes = wrapper->solution->outer_scope->child_scopes;
-			new_scope->child_scopes.push_back(wrapper->solution->outer_scope);
-
 			NoopNode* start_node = new NoopNode();
 			start_node->parent = new_scope;
 			start_node->id = new_scope->node_counter;
@@ -410,10 +407,11 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			end_node->next_node_id = -1;
 			end_node->next_node = NULL;
 
-			new_scope->obs_network = new ObsNetwork(NUM_STATES,
-													wrapper->solution->num_obs);
+			new_scope->obs_network = new ObsNetwork(
+				wrapper->solution->outer_scope->obs_network);
 
-			new_scope->score_network = new ScoreNetwork(NUM_STATES);
+			new_scope->score_network = new ScoreNetwork(
+				wrapper->solution->outer_scope->score_network);
 
 			for (int a_index = 0; a_index < wrapper->solution->num_actions; a_index++) {
 				ActionNode* new_action_node = new ActionNode();
@@ -425,10 +423,11 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 				new_action_node->is_generic = true;
 				new_action_node->action = a_index;
 
-				new_action_node->obs_network = new ObsNetwork(NUM_STATES,
-															  wrapper->solution->num_obs);
+				new_action_node->obs_network = new ObsNetwork(
+					wrapper->solution->outer_scope->generic_action_nodes[a_index]->obs_network);
 
-				new_action_node->predict_network = new PredictNetwork(NUM_STATES);
+				new_action_node->predict_network = new PredictNetwork(
+					wrapper->solution->outer_scope->generic_action_nodes[a_index]->predict_network);
 
 				new_action_node->next_node_id = -1;
 				new_action_node->next_node = NULL;
@@ -436,6 +435,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 				new_scope->generic_action_nodes.push_back(new_action_node);
 			}
 
+			new_scope->child_scopes = wrapper->solution->outer_scope->child_scopes;
 			for (int c_index = 0; c_index < (int)new_scope->child_scopes.size(); c_index++) {
 				ScopeNode* new_scope_node = new ScopeNode();
 				new_scope_node->parent = new_scope;
@@ -446,6 +446,30 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 				new_scope_node->is_generic = true;
 
 				new_scope_node->scope = new_scope->child_scopes[c_index];
+
+				new_scope_node->out_network = new TransitionNetwork(
+					wrapper->solution->outer_scope->generic_scope_nodes[c_index]->out_network);
+
+				new_scope_node->predict_network = new PredictNetwork(
+					wrapper->solution->outer_scope->generic_scope_nodes[c_index]->predict_network);
+
+				new_scope_node->next_node_id = -1;
+				new_scope_node->next_node = NULL;
+
+				new_scope->generic_scope_nodes.push_back(new_scope_node);
+			}
+
+			new_scope->child_scopes.push_back(wrapper->solution->outer_scope);
+			{
+				ScopeNode* new_scope_node = new ScopeNode();
+				new_scope_node->parent = new_scope;
+				new_scope_node->id = new_scope->node_counter;
+				new_scope->node_counter++;
+				new_scope->nodes[new_scope_node->id] = new_scope_node;
+
+				new_scope_node->is_generic = true;
+
+				new_scope_node->scope = new_scope->child_scopes.back();
 
 				new_scope_node->out_network = new TransitionNetwork(NUM_STATES,
 																	NUM_STATES);
