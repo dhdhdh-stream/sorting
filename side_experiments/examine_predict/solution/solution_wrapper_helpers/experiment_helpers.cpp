@@ -145,12 +145,19 @@ void SolutionWrapper::experiment_end(double result) {
 
 		delete this->scope_histories[0];
 	}
+	// temp
+	if (this->iters_since_update < NUM_UPDATE
+			&& this->iters_since_update%10000 == 0) {
+		cout << "this->solution->predict_score: " << this->solution->predict_score << endl;
+	}
 
 	if (this->run_type == RUN_TYPE_EXPERIMENT) {
 		if (this->experiment_histories.size() == 0) {
 			create_experiment(this->scope_histories[0],
 							  this);
 		}
+
+		delete this->scope_histories[0];
 
 		if (this->experiment_histories.size() >= 2) {
 			AbstractExperiment* keep_experiment = NULL;

@@ -1,5 +1,7 @@
 #include "scope_node.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "predict_network.h"

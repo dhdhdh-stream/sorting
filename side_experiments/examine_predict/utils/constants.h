@@ -77,7 +77,7 @@ const int NUM_UPDATE = 200;
 const int BATCH_SIZE = 10;
 const int ITERS_PER_BATCH = 10;
 #else
-const int NUM_UPDATE = 200000;
+const int NUM_UPDATE = 400000;
 const int BATCH_SIZE = 1000;
 const int ITERS_PER_BATCH = 10000;
 /**
