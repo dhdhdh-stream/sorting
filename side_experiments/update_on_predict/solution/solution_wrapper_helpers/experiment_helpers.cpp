@@ -24,10 +24,11 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	if (this->iters_since_update < NUM_UPDATE) {
-		this->run_type = RUN_TYPE_UPDATE;
+	uniform_int_distribution<int> allow_predict_distribution(0, 9);
+	if (allow_predict_distribution(generator) != 0) {
+		this->allow_predict = true;
 	} else {
-		this->run_type = RUN_TYPE_EXPERIMENT;
+		this->allow_predict = false;
 	}
 
 	this->states.push_back(Eigen::VectorXf());
@@ -122,7 +123,7 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	if (this->run_type == RUN_TYPE_UPDATE) {
+	if (this->iters_since_update < NUM_UPDATE) {
 		train_predict_helper(this,
 							 result);
 
@@ -136,16 +137,18 @@ void SolutionWrapper::experiment_end(double result) {
 			delete this->scope_histories[0];
 		}
 	}
-	// temp
-	if (this->iters_since_update < NUM_UPDATE
-			&& this->iters_since_update%10000 == 0) {
-		cout << "this->solution->curr_score: " << this->solution->curr_score << endl;
-	}
+	// // temp
+	// if (this->iters_since_update < NUM_UPDATE
+	// 		&& this->iters_since_update%10000 == 0) {
+	// 	cout << "this->solution->curr_score: " << this->solution->curr_score << endl;
+	// }
 
-	if (this->run_type == RUN_TYPE_EXPERIMENT) {
+	if (this->iters_since_update >= NUM_UPDATE) {
 		if (this->experiment_histories.size() == 0) {
-			create_experiment(this->scope_histories[0],
-							  this);
+			if (!this->allow_predict) {
+				create_experiment(this->scope_histories[0],
+								  this);
+			}
 		}
 
 		delete this->scope_histories[0];
@@ -180,7 +183,7 @@ void SolutionWrapper::experiment_end(double result) {
 		train_existing_helper(this);
 	}
 
-	if (this->run_type == RUN_TYPE_EXPERIMENT) {
+	if (this->iters_since_update >= NUM_UPDATE) {
 		if (this->experiment_histories.size() == 1) {
 			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
 					it != this->experiment_histories.end(); it++) {

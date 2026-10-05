@@ -113,72 +113,10 @@ void ExploreExperiment::measure_backprop(double target_val,
 	if (this->state_iter >= MEASURE_NUM_DATAPOINTS) {
 		double new_val_average = this->sum_vals / MEASURE_NUM_DATAPOINTS;
 
-		double local_improvement = new_val_average - this->existing_val_average;
-
-		double average_instances_per_run;
-		switch (this->node_context->type) {
-		case NODE_TYPE_NOOP:
-			{
-				NoopNode* noop_node = (NoopNode*)this->node_context;
-				average_instances_per_run = noop_node->average_instances_per_run;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				average_instances_per_run = action_node->average_instances_per_run;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				average_instances_per_run = scope_node->average_instances_per_run;
-			}
-			break;
-		default:
-		// case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					average_instances_per_run = branch_node->branch_average_instances_per_run;
-				} else {
-					average_instances_per_run = branch_node->original_average_instances_per_run;
-				}
-			}
-			break;
-		}
-		double global_improvement = average_instances_per_run * local_improvement;
-
-		bool is_success = false;
-		if (local_improvement > 0.0) {
-			if ((int)this->scope_context->measure_last_scores.size() >= MEASURE_MIN_NUM_LAST_TRACK) {
-				int num_better_than = 0;
-				for (list<double>::iterator it = this->scope_context->measure_last_scores.begin();
-						it != this->scope_context->measure_last_scores.end(); it++) {
-					if (global_improvement >= *it) {
-						num_better_than++;
-					}
-				}
-
-				double target_better_than = MEASURE_LAST_BETTER_THAN_RATIO * (double)this->scope_context->measure_last_scores.size();
-
-				if (num_better_than >= target_better_than) {
-					is_success = true;
-				}
-
-				if ((int)this->scope_context->measure_last_scores.size() >= MEASURE_NUM_LAST_TRACK) {
-					this->scope_context->measure_last_scores.pop_front();
-				}
-				this->scope_context->measure_last_scores.push_back(global_improvement);
-			} else {
-				this->scope_context->measure_last_scores.push_back(global_improvement);
-			}
-		}
-
 		#if defined(MDEBUG) && MDEBUG
-		if (is_success || rand()%2 == 0) {
+		if (new_val_average > this->existing_val_average || rand()%2 == 0) {
 		#else
-		if (is_success) {
+		if (new_val_average > this->existing_val_average) {
 		#endif /* MDEBUG */
 			add(wrapper);
 		} else {

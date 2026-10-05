@@ -262,7 +262,11 @@ void ExploreExperiment::explore_backprop(double target_val,
 			this->vs_surprises.insert(this->vs_surprises.begin() + vs_index, curr_vs_surprise);
 		}
 
+		#if defined(MDEBUG) && MDEBUG
+		if (is_vs_success || rand()%2 == 0) {
+		#else
 		if (is_vs_success) {
+		#endif /* MDEBUG */
 			this->best_step_types = history->curr_step_types;
 			this->best_indexes = history->curr_indexes;
 

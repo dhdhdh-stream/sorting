@@ -42,12 +42,7 @@ public:
 	std::vector<ActionNode*> generic_action_nodes;
 	std::vector<ScopeNode*> generic_scope_nodes;
 
-	std::list<double> predict_last_scores;
 	std::vector<std::list<double>> train_new_last_scores;
-	std::list<double> measure_last_scores;
-	/**
-	 * - compare predict against explore directly to not get stuck on mediocre predicts
-	 */
 
 	Scope();
 	~Scope();

@@ -39,7 +39,7 @@ public:
 
 	int num_actions;
 
-	int run_type;
+	bool allow_predict;
 
 	std::vector<ScopeHistory*> existing_scope_histories;
 	std::vector<double> existing_target_val_histories;

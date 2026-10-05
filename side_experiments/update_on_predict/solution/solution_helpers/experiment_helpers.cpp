@@ -43,7 +43,6 @@ void gather_helper(ScopeHistory* scope_history,
 			AbstractNode* node = scope_history->node_histories[h_index]->node;
 			switch (node->type) {
 			case NODE_TYPE_NOOP:
-			case NODE_TYPE_ACTION:
 				{
 					uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
 					context_it->second.node_count++;
@@ -55,21 +54,39 @@ void gather_helper(ScopeHistory* scope_history,
 					}
 				}
 				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)node;
+					if (!action_node->is_generic) {
+						uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
+						context_it->second.node_count++;
+						if (select_distribution(generator) == 0) {
+							context_it->second.explore_node = node;
+							context_it->second.explore_is_branch = false;
+							context_it->second.scope_history = scope_history;
+							context_it->second.explore_index = h_index;
+						}
+					}
+				}
+				break;
 			case NODE_TYPE_SCOPE:
 				{
+					ScopeNode* scope_node = (ScopeNode*)node;
 					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
 
 					gather_helper(scope_node_history->scope_history,
 								  explore_contexts,
 								  wrapper);
 
-					uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
-					context_it->second.node_count++;
-					if (select_distribution(generator) == 0) {
-						context_it->second.explore_node = node;
-						context_it->second.explore_is_branch = false;
-						context_it->second.scope_history = scope_history;
-						context_it->second.explore_index = h_index;
+					if (!scope_node->is_generic) {
+						uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
+						context_it->second.node_count++;
+						if (select_distribution(generator) == 0) {
+							context_it->second.explore_node = node;
+							context_it->second.explore_is_branch = false;
+							context_it->second.scope_history = scope_history;
+							context_it->second.explore_index = h_index;
+						}
 					}
 				}
 				break;
@@ -133,18 +150,37 @@ void create_experiment(ScopeHistory* scope_history,
 	}
 	if (context_it->second.explore_node != NULL) {
 		geometric_distribution<int> exit_distribution(0.1);
-		int random_index;
-		while (true) {
-			random_index = context_it->second.explore_index + 1 + exit_distribution(generator);
-			if (random_index < (int)context_it->second.scope_history->node_histories.size() + 1) {
-				break;
-			}
-		}
 		AbstractNode* exit_next_node;
-		if (random_index >= (int)context_it->second.scope_history->node_histories.size()) {
-			exit_next_node = NULL;
-		} else {
-			exit_next_node = context_it->second.scope_history->node_histories[random_index]->node;
+		while (true) {
+			int random_index = context_it->second.explore_index + 1 + exit_distribution(generator);
+			if (random_index >= (int)context_it->second.scope_history->node_histories.size()) {
+				exit_next_node = NULL;
+				break;
+			} else {
+				exit_next_node = context_it->second.scope_history->node_histories[random_index]->node;
+				bool is_generic = false;
+				switch (exit_next_node->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)exit_next_node;
+						if (action_node->is_generic) {
+							is_generic = true;
+						}
+					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)exit_next_node;
+						if (scope_node->is_generic) {
+							is_generic = true;
+						}
+					}
+					break;
+				}
+				if (!is_generic) {
+					break;
+				}
+			}
 		}
 
 		ExploreExperiment* new_experiment = new ExploreExperiment(

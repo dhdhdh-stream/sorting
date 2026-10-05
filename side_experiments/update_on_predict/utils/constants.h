@@ -51,25 +51,13 @@ const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
 #if defined(MDEBUG) && MDEBUG
-const int PREDICT_NUM_LAST_TRACK = 4;
-const int PREDICT_MIN_NUM_LAST_TRACK = 2;
-const double PREDICT_LAST_BETTER_THAN_RATIO = 0.5;
 const int TRAIN_NEW_NUM_LAST_TRACK = 4;
 const int TRAIN_NEW_MIN_NUM_LAST_TRACK = 2;
 const std::vector<double> TRAIN_NEW_LAST_BETTER_THAN_RATIO{0.5, 0.5, 0.5};
-const int MEASURE_NUM_LAST_TRACK = 20;
-const int MEASURE_MIN_NUM_LAST_TRACK = 4;
-const double MEASURE_LAST_BETTER_THAN_RATIO = 0.75;
 #else
-const int PREDICT_NUM_LAST_TRACK = 20;
-const int PREDICT_MIN_NUM_LAST_TRACK = 5;
-const double PREDICT_LAST_BETTER_THAN_RATIO = 0.8;
 const int TRAIN_NEW_NUM_LAST_TRACK = 20;
 const int TRAIN_NEW_MIN_NUM_LAST_TRACK = 5;
 const std::vector<double> TRAIN_NEW_LAST_BETTER_THAN_RATIO{0.8, 0.8, 0.5};
-const int MEASURE_NUM_LAST_TRACK = 20;
-const int MEASURE_MIN_NUM_LAST_TRACK = 4;
-const double MEASURE_LAST_BETTER_THAN_RATIO = 0.75;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
@@ -79,7 +67,7 @@ const int BATCH_SIZE = 10;
 const int ITERS_PER_BATCH = 10;
 #else
 const int NUM_UPDATE = 400000;
-const int NUM_PREDICT_STABILIZE = 20000;
+const int NUM_PREDICT_STABILIZE = 100000;
 const int BATCH_SIZE = 1000;
 const int ITERS_PER_BATCH = 10000;
 /**
@@ -87,9 +75,6 @@ const int ITERS_PER_BATCH = 10000;
  *   - adam easily overfits
  */
 #endif /* MDEBUG */
-
-const int RUN_TYPE_UPDATE = 0;
-const int RUN_TYPE_EXPERIMENT = 1;
 
 const int GENERALIZE_ITER = 3;
 
