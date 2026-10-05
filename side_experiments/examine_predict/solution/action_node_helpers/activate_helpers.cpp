@@ -33,5 +33,9 @@ void ActionNode::step_callback(vector<double>& obs,
 
 	if (!this->is_generic) {
 		wrapper->node_context.back() = this->next_node;
+	} else {
+		if (wrapper->remaining_predict.back().size() > 0) {
+			wrapper->remaining_predict.back().erase(wrapper->remaining_predict.back().begin());
+		}
 	}
 }

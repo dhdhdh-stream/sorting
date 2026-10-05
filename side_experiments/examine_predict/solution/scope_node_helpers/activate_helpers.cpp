@@ -26,6 +26,7 @@ void ScopeNode::step(vector<double>& obs,
 	wrapper->scope_histories.push_back(inner_scope_history);
 	history->scope_history = inner_scope_history;
 	wrapper->node_context.push_back(this->scope->nodes[0]);
+	wrapper->remaining_predict.push_back(vector<AbstractNode*>());
 
 	wrapper->states.push_back(Eigen::VectorXf());
 	wrapper->states.back().resize(NUM_STATES);
@@ -41,8 +42,15 @@ void ScopeNode::exit_step(SolutionWrapper* wrapper) {
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
+	wrapper->remaining_predict.pop_back();
 
 	wrapper->states.pop_back();
 
-	wrapper->node_context.back() = this->next_node;
+	if (!this->is_generic) {
+		wrapper->node_context.back() = this->next_node;
+	} else {
+		if (wrapper->remaining_predict.back().size() > 0) {
+			wrapper->remaining_predict.back().erase(wrapper->remaining_predict.back().begin());
+		}
+	}
 }

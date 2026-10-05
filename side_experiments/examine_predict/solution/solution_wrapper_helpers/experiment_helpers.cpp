@@ -148,6 +148,7 @@ void SolutionWrapper::experiment_end(double result) {
 	// temp
 	if (this->iters_since_update < NUM_UPDATE
 			&& this->iters_since_update%10000 == 0) {
+		cout << "this->solution->curr_score: " << this->solution->curr_score << endl;
 		cout << "this->solution->predict_score: " << this->solution->predict_score << endl;
 	}
 

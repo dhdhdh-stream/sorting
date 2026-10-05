@@ -136,6 +136,10 @@ void predict_helper(SolutionWrapper* wrapper) {
 		}
 
 		if (best_predict_val > existing_predict_val) {
+			// // temp
+			// cout << "existing_predict_val: " << existing_predict_val << endl;
+			// cout << "best_predict_val: " << best_predict_val << endl;
+
 			wrapper->remaining_predict.back() = best_predict;
 
 			wrapper->predict_scope_histories.push_back(wrapper->scope_histories.back());
