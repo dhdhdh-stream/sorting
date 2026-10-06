@@ -20,9 +20,11 @@ void BranchNode::step(vector<double>& obs,
 					  SolutionWrapper* wrapper) {
 	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->original_next_node;
+		return;
 	}
 	if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->branch_next_node;
+		return;
 	}
 
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
