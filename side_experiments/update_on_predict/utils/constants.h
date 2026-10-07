@@ -62,18 +62,20 @@ const std::vector<double> TRAIN_NEW_LAST_BETTER_THAN_RATIO{0.8, 0.8, 0.5};
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_UPDATE = 200;
-const int NUM_PREDICT_STABILIZE = 20;
 const int BATCH_SIZE = 10;
 const int ITERS_PER_BATCH = 10;
+const int PREDICT_STABILIZE_ITERS_PER_EVAL = 10;
+const int PREDICT_STABILIZE_TARGET_COUNT = 2;
 #else
-const int NUM_UPDATE = 400000;
-const int NUM_PREDICT_STABILIZE = 100000;
+const int NUM_UPDATE = 40000;
 const int BATCH_SIZE = 1000;
 const int ITERS_PER_BATCH = 10000;
 /**
  * - need large BATCH_SIZE and low ITERS_PER_BATCH
  *   - adam easily overfits
  */
+const int PREDICT_STABILIZE_ITERS_PER_EVAL = 1000;
+const int PREDICT_STABILIZE_TARGET_COUNT = 3;
 #endif /* MDEBUG */
 
 const int GENERALIZE_ITER = 3;

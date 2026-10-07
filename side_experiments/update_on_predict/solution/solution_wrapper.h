@@ -27,6 +27,10 @@ public:
 
 	int iters_since_update;
 
+	int update_since_update;
+	int predict_stabilized_counter;
+	int predict_stabilized_iter;
+
 	/**
 	 * - run variables
 	 */
