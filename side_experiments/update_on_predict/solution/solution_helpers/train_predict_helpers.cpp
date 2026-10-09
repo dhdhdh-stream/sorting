@@ -97,3 +97,55 @@ void train_predict_helper(SolutionWrapper* wrapper,
 	wrapper->predict_scope_histories.clear();
 	wrapper->predict_indexes.clear();
 }
+
+void train_all_predict_helper(ScopeHistory* scope_history,
+							  double target_val) {
+	Scope* scope = scope_history->scope;
+
+	Eigen::VectorXf state;
+	state.resize(NUM_STATES);
+	state.setConstant(0.0);
+
+	scope->obs_network->activate(state,
+								 scope_history->obs);
+
+	vector<TrainAbstractNodeHistory*> train_node_histories;
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		AbstractNode* node = scope_history->node_histories[h_index]->node;
+		node->train_step(scope_history->node_histories[h_index],
+						 state,
+						 train_node_histories);
+	}
+
+	scope->score_network->activate(state);
+
+	Eigen::VectorXf state_error;
+	state_error.resize(NUM_STATES);
+	state_error.setConstant(0.0);
+
+	scope->score_network->backprop(target_val,
+								   state_error);
+
+	for (int h_index = (int)train_node_histories.size()-1; h_index >= 0; h_index--) {
+		train_node_histories[h_index]->backprop(state_error);
+	}
+
+	scope->obs_network->backprop(state_error);
+
+	for (int h_index = 0; h_index < (int)train_node_histories.size(); h_index++) {
+		delete train_node_histories[h_index];
+	}
+
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		AbstractNode* node = scope_history->node_histories[h_index]->node;
+		switch (node->type) {
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
+				train_all_predict_helper(scope_node_history->scope_history,
+										 target_val);
+			}
+			break;
+		}
+	}
+}

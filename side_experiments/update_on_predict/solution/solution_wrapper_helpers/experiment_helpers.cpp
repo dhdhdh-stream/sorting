@@ -24,54 +24,11 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	if (this->update_since_update < NUM_UPDATE) {
-		if (this->predict_stabilized_counter >= PREDICT_STABILIZE_TARGET_COUNT) {
-			this->is_update = true;
-
-			uniform_int_distribution<int> allow_predict_distribution(0, 9);
-			if (allow_predict_distribution(generator) != 0) {
-				this->allow_predict = true;
-			} else {
-				this->allow_predict = false;
-			}
-		} else {
-			uniform_int_distribution<int> is_update_distribution(0, 9);
-			if (is_update_distribution(generator) == 0) {
-				this->is_update = true;
-
-				uniform_int_distribution<int> allow_predict_distribution(0, 9);
-				if (allow_predict_distribution(generator) == 0) {
-					this->allow_predict = true;
-				} else {
-					this->allow_predict = false;
-				}
-			} else {
-				this->is_update = false;
-
-				uniform_int_distribution<int> allow_predict_distribution(0, 9);
-				if (allow_predict_distribution(generator) != 0) {
-					this->allow_predict = true;
-				} else {
-					this->allow_predict = false;
-				}
-			}
-		}
+	uniform_int_distribution<int> allow_predict_distribution(0, 9);
+	if (allow_predict_distribution(generator) != 0) {
+		this->allow_predict = true;
 	} else {
-		if (this->predict_stabilized_counter >= PREDICT_STABILIZE_TARGET_COUNT) {
-			uniform_int_distribution<int> allow_predict_distribution(0, 9);
-			if (allow_predict_distribution(generator) != 0) {
-				this->allow_predict = true;
-			} else {
-				this->allow_predict = false;
-			}
-		} else {
-			uniform_int_distribution<int> allow_predict_distribution(0, 9);
-			if (allow_predict_distribution(generator) == 0) {
-				this->allow_predict = true;
-			} else {
-				this->allow_predict = false;
-			}
-		}
+		this->allow_predict = false;
 	}
 
 	this->states.push_back(Eigen::VectorXf());
@@ -164,17 +121,16 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	if (this->update_since_update < NUM_UPDATE) {
+	if (this->iters_since_update < NUM_UPDATE) {
 		if (this->allow_predict) {
-			this->solution->predict_score = 0.999*this->solution->predict_score + 0.001*result;
-
 			train_predict_helper(this,
 								 result);
 		} else {
-			this->solution->curr_score = 0.999*this->solution->curr_score + 0.001*result;
+			train_all_predict_helper(this->scope_histories[0],
+									 result);
 		}
 
-		if (this->is_update) {
+		if (this->iters_since_update >= NUM_PREDICT_STABILIZE) {
 			update_helper(this,
 						  result);
 
@@ -223,7 +179,7 @@ void SolutionWrapper::experiment_end(double result) {
 		train_existing_helper(this);
 	}
 
-	if (this->update_since_update >= NUM_UPDATE) {
+	if (this->iters_since_update >= NUM_UPDATE) {
 		if (this->experiment_histories.size() == 1) {
 			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
 					it != this->experiment_histories.end(); it++) {

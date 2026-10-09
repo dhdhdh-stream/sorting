@@ -32,8 +32,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
-	ss << "predict_stabilized_iter: " << wrapper->predict_stabilized_iter << "; ";
-	ss << "predict_score: " << wrapper->solution->predict_score << "; ";
 	ss << "Experiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
@@ -495,9 +493,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	}
 
 	wrapper->iters_since_update = 0;
-	wrapper->update_since_update = 0;
-	wrapper->predict_stabilized_counter = 0;
-	wrapper->predict_stabilized_iter = -1;
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		Scope* scope = wrapper->solution->scopes[s_index];
 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();

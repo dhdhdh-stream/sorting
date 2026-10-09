@@ -36,7 +36,6 @@ public:
 	 */
 	int timestamp;
 	double curr_score;
-	double predict_score;
 
 	int num_obs;
 	int num_actions;

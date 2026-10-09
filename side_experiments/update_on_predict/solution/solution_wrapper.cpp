@@ -14,10 +14,6 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->iters_since_update = 0;
 
-	this->update_since_update = 0;
-	this->predict_stabilized_counter = 0;
-	this->predict_stabilized_iter = -1;
-
 	this->train_iter_index = 0;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -39,10 +35,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	input_file.close();
 
 	this->iters_since_update = 0;
-
-	this->update_since_update = 0;
-	this->predict_stabilized_counter = 0;
-	this->predict_stabilized_iter = -1;
 
 	this->train_iter_index = 0;
 

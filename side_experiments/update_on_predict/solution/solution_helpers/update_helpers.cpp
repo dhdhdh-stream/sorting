@@ -65,6 +65,8 @@ void update_helper(ScopeHistory* scope_history) {
 
 void update_helper(SolutionWrapper* wrapper,
 				   double target_val) {
+	wrapper->solution->curr_score = 0.999*wrapper->solution->curr_score + 0.001*target_val;
+
 	update_helper(wrapper->scope_histories[0]);
 
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
@@ -124,19 +126,5 @@ void update_helper(SolutionWrapper* wrapper,
 				break;
 			}
 		}
-	}
-
-	wrapper->update_since_update++;
-	if (wrapper->update_since_update % PREDICT_STABILIZE_ITERS_PER_EVAL == 0) {
-		if (wrapper->solution->predict_score >= wrapper->solution->curr_score) {
-			wrapper->predict_stabilized_counter++;
-			if (wrapper->predict_stabilized_counter == PREDICT_STABILIZE_TARGET_COUNT) {
-				wrapper->predict_stabilized_iter = wrapper->update_since_update;
-			}
-		}
-
-		// // temp
-		// cout << "wrapper->solution->curr_score: " << wrapper->solution->curr_score << endl;
-		// cout << "wrapper->solution->predict_score: " << wrapper->solution->predict_score << endl;
 	}
 }
