@@ -134,5 +134,9 @@ void update_helper(SolutionWrapper* wrapper,
 				wrapper->predict_stabilized_iter = wrapper->update_since_update;
 			}
 		}
+
+		// // temp
+		// cout << "wrapper->solution->curr_score: " << wrapper->solution->curr_score << endl;
+		// cout << "wrapper->solution->predict_score: " << wrapper->solution->predict_score << endl;
 	}
 }

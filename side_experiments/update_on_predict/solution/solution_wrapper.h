@@ -43,6 +43,7 @@ public:
 
 	int num_actions;
 
+	bool is_update;
 	bool allow_predict;
 
 	std::vector<ScopeHistory*> existing_scope_histories;

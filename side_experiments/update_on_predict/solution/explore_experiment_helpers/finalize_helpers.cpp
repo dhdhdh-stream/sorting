@@ -33,6 +33,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
 	ss << "predict_stabilized_iter: " << wrapper->predict_stabilized_iter << "; ";
+	ss << "predict_score: " << wrapper->solution->predict_score << "; ";
 	ss << "Experiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
