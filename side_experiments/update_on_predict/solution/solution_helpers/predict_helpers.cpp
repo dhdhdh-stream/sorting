@@ -142,6 +142,10 @@ void predict_helper(SolutionWrapper* wrapper) {
 				wrapper->predict_scope_histories.push_back(wrapper->scope_histories.back());
 				wrapper->predict_indexes.push_back(wrapper->scope_histories.back()->node_histories.size()-1);
 			}
+
+			wrapper->predicts_taken++;
+		} else {
+			wrapper->predicts_not_taken++;
 		}
 	}
 }
