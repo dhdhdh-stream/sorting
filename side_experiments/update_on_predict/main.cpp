@@ -1,10 +1,3 @@
-// TODO: simply train predict on explore
-// - predict is only trained in bad situations anyways
-// - ...unless also train predict on existing sometimes
-
-// - predict immediately after change damaging
-// - ...but forcing predict to be used later good
-
 #include <chrono>
 #include <iostream>
 #include <map>

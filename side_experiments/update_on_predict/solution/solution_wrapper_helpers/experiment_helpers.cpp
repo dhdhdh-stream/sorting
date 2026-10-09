@@ -121,15 +121,10 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	if (this->iters_since_update < NUM_UPDATE) {
-		if (this->allow_predict) {
-			train_predict_helper(this,
-								 result);
-		} else {
-			train_all_predict_helper(this->scope_histories[0],
-									 result);
-		}
+	train_predict_helper(this,
+						 result);
 
+	if (this->iters_since_update < NUM_UPDATE) {
 		if (this->iters_since_update >= NUM_PREDICT_STABILIZE) {
 			update_helper(this,
 						  result);

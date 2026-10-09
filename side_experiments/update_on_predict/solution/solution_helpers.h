@@ -29,8 +29,6 @@ void update_helper(SolutionWrapper* wrapper,
 
 void train_predict_helper(SolutionWrapper* wrapper,
 						  double target_val);
-void train_all_predict_helper(ScopeHistory* scope_history,
-							  double target_val);
 
 void train_existing_helper(SolutionWrapper* wrapper);
 

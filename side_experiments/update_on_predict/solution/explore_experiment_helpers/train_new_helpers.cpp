@@ -28,6 +28,9 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 
 		history->obs_histories.push_back(obs);
 
+		wrapper->predict_scope_histories.push_back(wrapper->scope_histories.back());
+		wrapper->predict_indexes.push_back(wrapper->scope_histories.back()->node_histories.size()-1);
+
 		ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
 		new_experiment_state->step_index = 0;
 		wrapper->experiment_context.back() = new_experiment_state;
