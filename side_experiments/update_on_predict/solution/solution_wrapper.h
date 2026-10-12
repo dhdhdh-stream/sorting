@@ -26,8 +26,6 @@ public:
 	Solution* best_solution;
 
 	int iters_since_update;
-	int predicts_taken;
-	int predicts_not_taken;
 
 	/**
 	 * - run variables

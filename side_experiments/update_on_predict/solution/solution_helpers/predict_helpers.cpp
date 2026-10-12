@@ -17,9 +17,9 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int PREDICT_NUM_TRIES = 10;
+const int PREDICT_MAX_NUM_TRIES = 10;
 #else
-const int PREDICT_NUM_TRIES = 200;
+const int PREDICT_MAX_NUM_TRIES = 800;
 #endif /* MDEBUG */
 
 double existing_predict_helper(AbstractNode* exit_next_node,
@@ -80,7 +80,7 @@ void predict_helper(SolutionWrapper* wrapper) {
 		double best_predict_val = numeric_limits<double>::lowest();
 
 		geometric_distribution<int> exit_distribution(0.3);
-		for (int t_index = 0; t_index < PREDICT_NUM_TRIES; t_index++) {
+		for (int t_index = 0; t_index < PREDICT_MAX_NUM_TRIES; t_index++) {
 			int random_index;
 			while (true) {
 				random_index = exit_distribution(generator);
@@ -129,23 +129,21 @@ void predict_helper(SolutionWrapper* wrapper) {
 													 curr_exit_next_node,
 													 wrapper);
 
-			if (curr_predict_val > best_predict_val) {
+			if (curr_predict_val > existing_predict_val) {
+				best_predict = curr_predict;
+				best_predict_val = curr_predict_val;
+				break;
+			} else if (curr_predict_val > best_predict_val) {
 				best_predict = curr_predict;
 				best_predict_val = curr_predict_val;
 			}
 		}
 
-		if (best_predict_val > existing_predict_val) {
-			wrapper->remaining_predict.back() = best_predict;
+		wrapper->remaining_predict.back() = best_predict;
 
-			if (wrapper->iters_since_update < NUM_UPDATE) {
-				wrapper->predict_scope_histories.push_back(wrapper->scope_histories.back());
-				wrapper->predict_indexes.push_back(wrapper->scope_histories.back()->node_histories.size()-1);
-			}
-
-			wrapper->predicts_taken++;
-		} else {
-			wrapper->predicts_not_taken++;
+		if (wrapper->iters_since_update < NUM_UPDATE) {
+			wrapper->predict_scope_histories.push_back(wrapper->scope_histories.back());
+			wrapper->predict_indexes.push_back(wrapper->scope_histories.back()->node_histories.size()-1);
 		}
 	}
 }

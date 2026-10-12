@@ -32,8 +32,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
-	ss << "predicts_taken: " << wrapper->predicts_taken << "; ";
-	ss << "predicts_not_taken: " << wrapper->predicts_not_taken << "; ";
 	ss << "Experiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
@@ -495,8 +493,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	}
 
 	wrapper->iters_since_update = 0;
-	wrapper->predicts_taken = 0;
-	wrapper->predicts_not_taken = 0;
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		Scope* scope = wrapper->solution->scopes[s_index];
 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();

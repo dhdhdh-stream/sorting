@@ -125,6 +125,11 @@ void SolutionWrapper::experiment_end(double result) {
 						 result);
 
 	if (this->iters_since_update < NUM_UPDATE) {
+		if (!this->allow_predict) {
+			train_all_predict_helper(this->scope_histories[0],
+									 result);
+		}
+
 		if (this->iters_since_update >= NUM_PREDICT_STABILIZE) {
 			update_helper(this,
 						  result);
