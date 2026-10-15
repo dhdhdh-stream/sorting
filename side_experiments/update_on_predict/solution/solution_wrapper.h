@@ -26,6 +26,10 @@ public:
 	Solution* best_solution;
 
 	int iters_since_update;
+	// temp
+	std::string update_time;
+	int num_predict_hits;
+	int num_predict_misses;
 
 	/**
 	 * - run variables

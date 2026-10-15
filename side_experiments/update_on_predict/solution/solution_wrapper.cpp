@@ -13,6 +13,8 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->best_solution = new Solution(this->solution);
 
 	this->iters_since_update = 0;
+	this->num_predict_hits = 0;
+	this->num_predict_misses = 0;
 
 	this->train_iter_index = 0;
 
@@ -35,6 +37,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	input_file.close();
 
 	this->iters_since_update = 0;
+	this->num_predict_hits = 0;
+	this->num_predict_misses = 0;
 
 	this->train_iter_index = 0;
 

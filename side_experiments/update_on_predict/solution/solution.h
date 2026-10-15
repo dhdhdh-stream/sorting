@@ -37,6 +37,10 @@ public:
 	int timestamp;
 	double curr_score;
 
+	// temp
+	double predict_score;
+	double non_predict_score;
+
 	int num_obs;
 	int num_actions;
 

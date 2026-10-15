@@ -33,6 +33,9 @@ Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
 	this->curr_score = original->curr_score;
 
+	this->predict_score = original->predict_score;
+	this->non_predict_score = original->non_predict_score;
+
 	this->num_obs = original->num_obs;
 	this->num_actions = original->num_actions;
 
@@ -75,6 +78,9 @@ void Solution::init(ProblemType* problem_type) {
 
 	this->timestamp = 0;
 	this->curr_score = sum_score / INIT_MEASURE_ITERS;
+
+	this->predict_score = this->curr_score;
+	this->non_predict_score = this->curr_score;
 
 	this->num_obs = problem_type->num_obs();
 	this->num_actions = problem_type->num_possible_actions();
@@ -236,6 +242,14 @@ void Solution::load(ifstream& input_file) {
 	getline(input_file, curr_score_line);
 	this->curr_score = stod(curr_score_line);
 
+	string predict_score_line;
+	getline(input_file, predict_score_line);
+	this->predict_score = stod(predict_score_line);
+
+	string non_predict_score_line;
+	getline(input_file, non_predict_score_line);
+	this->non_predict_score = stod(non_predict_score_line);
+
 	string num_obs_line;
 	getline(input_file, num_obs_line);
 	this->num_obs = stoi(num_obs_line);
@@ -349,6 +363,9 @@ void Solution::clean_scopes() {
 void Solution::save(ofstream& output_file) {
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
+
+	output_file << this->predict_score << endl;
+	output_file << this->non_predict_score << endl;
 
 	output_file << this->num_obs << endl;
 	output_file << this->num_actions << endl;
