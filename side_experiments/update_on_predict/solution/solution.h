@@ -45,9 +45,9 @@ public:
 	int num_actions;
 
 	std::vector<Scope*> scopes;
-	Scope* outer_scope;
-	Scope* top_scope;
-	int top_scope_num_improvements;
+	Scope* starting_scope;
+	int starting_scope_num_improvements;
+	int starting_scope_num_stabilize;
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;

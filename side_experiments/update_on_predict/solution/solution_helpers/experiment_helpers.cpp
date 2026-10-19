@@ -31,19 +31,32 @@ public:
 void gather_helper(ScopeHistory* scope_history,
 				   map<Scope*, ExploreContext>& explore_contexts,
 				   SolutionWrapper* wrapper) {
-	if (scope_history->scope != wrapper->solution->outer_scope) {
-		map<Scope*, ExploreContext>::iterator context_it = explore_contexts.find(scope_history->scope);
-		if (context_it == explore_contexts.end()) {
-			context_it = explore_contexts.insert({scope_history->scope, ExploreContext()}).first;
-			context_it->second.node_count = 0;
-			context_it->second.explore_node = NULL;
-		}
+	map<Scope*, ExploreContext>::iterator context_it = explore_contexts.find(scope_history->scope);
+	if (context_it == explore_contexts.end()) {
+		context_it = explore_contexts.insert({scope_history->scope, ExploreContext()}).first;
+		context_it->second.node_count = 0;
+		context_it->second.explore_node = NULL;
+	}
 
-		for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
-			AbstractNode* node = scope_history->node_histories[h_index]->node;
-			switch (node->type) {
-			case NODE_TYPE_NOOP:
-				{
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		AbstractNode* node = scope_history->node_histories[h_index]->node;
+		switch (node->type) {
+		case NODE_TYPE_NOOP:
+			{
+				uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
+				context_it->second.node_count++;
+				if (select_distribution(generator) == 0) {
+					context_it->second.explore_node = node;
+					context_it->second.explore_is_branch = false;
+					context_it->second.scope_history = scope_history;
+					context_it->second.explore_index = h_index;
+				}
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)node;
+				if (!action_node->is_generic) {
 					uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
 					context_it->second.node_count++;
 					if (select_distribution(generator) == 0) {
@@ -53,82 +66,53 @@ void gather_helper(ScopeHistory* scope_history,
 						context_it->second.explore_index = h_index;
 					}
 				}
-				break;
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)node;
-					if (!action_node->is_generic) {
-						uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
-						context_it->second.node_count++;
-						if (select_distribution(generator) == 0) {
-							context_it->second.explore_node = node;
-							context_it->second.explore_is_branch = false;
-							context_it->second.scope_history = scope_history;
-							context_it->second.explore_index = h_index;
-						}
-					}
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)node;
-					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
-
-					gather_helper(scope_node_history->scope_history,
-								  explore_contexts,
-								  wrapper);
-
-					if (!scope_node->is_generic) {
-						uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
-						context_it->second.node_count++;
-						if (select_distribution(generator) == 0) {
-							context_it->second.explore_node = node;
-							context_it->second.explore_is_branch = false;
-							context_it->second.scope_history = scope_history;
-							context_it->second.explore_index = h_index;
-						}
-					}
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)scope_history->node_histories[h_index];
-					if (branch_node_history->is_branch) {
-						uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
-						context_it->second.node_count++;
-						if (select_distribution(generator) == 0) {
-							context_it->second.explore_node = node;
-							context_it->second.explore_is_branch = true;
-							context_it->second.scope_history = scope_history;
-							context_it->second.explore_index = h_index;
-						}
-					} else {
-						uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
-						context_it->second.node_count++;
-						if (select_distribution(generator) == 0) {
-							context_it->second.explore_node = node;
-							context_it->second.explore_is_branch = false;
-							context_it->second.scope_history = scope_history;
-							context_it->second.explore_index = h_index;
-						}
-					}
-				}
-				break;
 			}
-		}
-	} else {
-		for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
-			AbstractNode* node = scope_history->node_histories[h_index]->node;
-			switch (node->type) {
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
-					gather_helper(scope_node_history->scope_history,
-								  explore_contexts,
-								  wrapper);
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)node;
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
+
+				gather_helper(scope_node_history->scope_history,
+							  explore_contexts,
+							  wrapper);
+
+				if (!scope_node->is_generic) {
+					uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
+					context_it->second.node_count++;
+					if (select_distribution(generator) == 0) {
+						context_it->second.explore_node = node;
+						context_it->second.explore_is_branch = false;
+						context_it->second.scope_history = scope_history;
+						context_it->second.explore_index = h_index;
+					}
 				}
-				break;
 			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)scope_history->node_histories[h_index];
+				if (branch_node_history->is_branch) {
+					uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
+					context_it->second.node_count++;
+					if (select_distribution(generator) == 0) {
+						context_it->second.explore_node = node;
+						context_it->second.explore_is_branch = true;
+						context_it->second.scope_history = scope_history;
+						context_it->second.explore_index = h_index;
+					}
+				} else {
+					uniform_int_distribution<int> select_distribution(0, context_it->second.node_count);
+					context_it->second.node_count++;
+					if (select_distribution(generator) == 0) {
+						context_it->second.explore_node = node;
+						context_it->second.explore_is_branch = false;
+						context_it->second.scope_history = scope_history;
+						context_it->second.explore_index = h_index;
+					}
+				}
+			}
+			break;
 		}
 	}
 }
@@ -143,7 +127,7 @@ void create_experiment(ScopeHistory* scope_history,
 	map<Scope*, ExploreContext>::iterator context_it;
 	uniform_int_distribution<int> top_distribution(0, 3);
 	if (top_distribution(generator) == 0) {
-		context_it = explore_contexts.find(wrapper->solution->top_scope);
+		context_it = explore_contexts.find(wrapper->solution->starting_scope);
 	} else {
 		uniform_int_distribution<int> scope_distribution(0, explore_contexts.size()-1);
 		context_it = next(explore_contexts.begin(), scope_distribution(generator));

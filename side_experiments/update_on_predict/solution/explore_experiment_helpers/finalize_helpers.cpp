@@ -366,9 +366,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 	wrapper->solution->timestamp++;
 
-	if (this->scope_context == wrapper->solution->top_scope) {
-		wrapper->solution->top_scope_num_improvements++;
-		if (wrapper->solution->top_scope_num_improvements >= GENERALIZE_ITER) {
+	if (this->scope_context == wrapper->solution->starting_scope) {
+		wrapper->solution->starting_scope_num_improvements++;
+		if (wrapper->solution->starting_scope_num_improvements >= GENERALIZE_ITER) {
 			Scope* new_scope = new Scope();
 			new_scope->id = wrapper->solution->scopes.size();
 			new_scope->node_counter = 0;
@@ -387,7 +387,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->nodes[scope_node->id] = scope_node;
 
 			scope_node->is_generic = false;
-			scope_node->scope = wrapper->solution->outer_scope;
+			scope_node->scope = wrapper->solution->starting_scope;
 
 			scope_node->out_network = new TransitionNetwork(NUM_STATES,
 															NUM_STATES);
@@ -414,10 +414,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			end_node->next_node = NULL;
 
 			new_scope->obs_network = new ObsNetwork(
-				wrapper->solution->outer_scope->obs_network);
+				wrapper->solution->starting_scope->obs_network);
 
 			new_scope->score_network = new ScoreNetwork(
-				wrapper->solution->outer_scope->score_network);
+				wrapper->solution->starting_scope->score_network);
 
 			for (int a_index = 0; a_index < wrapper->solution->num_actions; a_index++) {
 				ActionNode* new_action_node = new ActionNode();
@@ -430,10 +430,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 				new_action_node->action = a_index;
 
 				new_action_node->obs_network = new ObsNetwork(
-					wrapper->solution->outer_scope->generic_action_nodes[a_index]->obs_network);
+					wrapper->solution->starting_scope->generic_action_nodes[a_index]->obs_network);
 
 				new_action_node->predict_network = new PredictNetwork(
-					wrapper->solution->outer_scope->generic_action_nodes[a_index]->predict_network);
+					wrapper->solution->starting_scope->generic_action_nodes[a_index]->predict_network);
 
 				new_action_node->next_node_id = -1;
 				new_action_node->next_node = NULL;
@@ -441,7 +441,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 				new_scope->generic_action_nodes.push_back(new_action_node);
 			}
 
-			new_scope->child_scopes = wrapper->solution->outer_scope->child_scopes;
+			new_scope->child_scopes = wrapper->solution->starting_scope->child_scopes;
 			for (int c_index = 0; c_index < (int)new_scope->child_scopes.size(); c_index++) {
 				ScopeNode* new_scope_node = new ScopeNode();
 				new_scope_node->parent = new_scope;
@@ -454,10 +454,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 				new_scope_node->scope = new_scope->child_scopes[c_index];
 
 				new_scope_node->out_network = new TransitionNetwork(
-					wrapper->solution->outer_scope->generic_scope_nodes[c_index]->out_network);
+					wrapper->solution->starting_scope->generic_scope_nodes[c_index]->out_network);
 
 				new_scope_node->predict_network = new PredictNetwork(
-					wrapper->solution->outer_scope->generic_scope_nodes[c_index]->predict_network);
+					wrapper->solution->starting_scope->generic_scope_nodes[c_index]->predict_network);
 
 				new_scope_node->next_node_id = -1;
 				new_scope_node->next_node = NULL;
@@ -465,7 +465,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 				new_scope->generic_scope_nodes.push_back(new_scope_node);
 			}
 
-			new_scope->child_scopes.push_back(wrapper->solution->outer_scope);
+			new_scope->child_scopes.push_back(wrapper->solution->starting_scope);
 			{
 				ScopeNode* new_scope_node = new ScopeNode();
 				new_scope_node->parent = new_scope;
@@ -488,13 +488,11 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 				new_scope->generic_scope_nodes.push_back(new_scope_node);
 			}
 
-			wrapper->solution->outer_scope->train_new_last_scores = wrapper->solution->top_scope->train_new_last_scores;
+			new_scope->train_new_last_scores = wrapper->solution->starting_scope->train_new_last_scores;
 
-			new_scope->train_new_last_scores = vector<list<double>>(TRAIN_NEW_NUM_DATAPOINTS.size());
-
-			wrapper->solution->top_scope = wrapper->solution->outer_scope;
-			wrapper->solution->outer_scope = new_scope;
-			wrapper->solution->top_scope_num_improvements = 0;
+			wrapper->solution->starting_scope = new_scope;
+			wrapper->solution->starting_scope_num_improvements = 0;
+			wrapper->solution->starting_scope_num_stabilize = 0;
 		}
 	}
 

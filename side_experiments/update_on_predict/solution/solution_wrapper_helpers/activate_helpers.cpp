@@ -27,13 +27,13 @@ void SolutionWrapper::init(vector<double> obs) {
 
 	this->num_actions = 0;
 
-	ScopeHistory* scope_history = new ScopeHistory(this->solution->outer_scope);
+	ScopeHistory* scope_history = new ScopeHistory(this->solution->starting_scope);
 	this->scope_histories.push_back(scope_history);
-	this->node_context.push_back(this->solution->outer_scope->nodes[0]);
+	this->node_context.push_back(this->solution->starting_scope->nodes[0]);
 	this->remaining_predict.push_back(vector<AbstractNode*>());
 
-	this->solution->outer_scope->start_activate(obs,
-												this);
+	this->solution->starting_scope->start_activate(obs,
+												   this);
 }
 
 pair<bool,int> SolutionWrapper::step(vector<double> obs) {

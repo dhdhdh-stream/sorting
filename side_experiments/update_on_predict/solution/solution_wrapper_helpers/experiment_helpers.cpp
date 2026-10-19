@@ -37,13 +37,13 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 
 	this->num_actions = 0;
 
-	ScopeHistory* scope_history = new ScopeHistory(this->solution->outer_scope);
+	ScopeHistory* scope_history = new ScopeHistory(this->solution->starting_scope);
 	this->scope_histories.push_back(scope_history);
-	this->node_context.push_back(this->solution->outer_scope->nodes[0]);
+	this->node_context.push_back(this->solution->starting_scope->nodes[0]);
 	this->experiment_context.push_back(NULL);
 	this->remaining_predict.push_back(vector<AbstractNode*>());
 
-	this->solution->outer_scope->experiment_start_activate(
+	this->solution->starting_scope->experiment_start_activate(
 		obs,
 		this);
 }
@@ -82,10 +82,20 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 				is_next,
 				this);
 		} else {
-			uniform_int_distribution<int> predict_distribution(0, 9);
-			if (predict_distribution(generator) == 0) {
-				predict_helper(this);
-				continue;
+			if (this->solution->starting_scope_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
+				if (this->scope_histories.back()->scope == this->solution->starting_scope) {
+					uniform_int_distribution<int> predict_distribution(0, 2);
+					if (predict_distribution(generator) == 0) {
+						predict_helper(this);
+						continue;
+					}
+				}
+			} else {
+				uniform_int_distribution<int> predict_distribution(0, 9);
+				if (predict_distribution(generator) == 0) {
+					predict_helper(this);
+					continue;
+				}
 			}
 
 			if (this->node_context.back() == NULL
@@ -124,7 +134,9 @@ void SolutionWrapper::experiment_end(double result) {
 	train_predict_helper(this,
 						 result);
 
-	if (this->iters_since_update < NUM_UPDATE) {
+	if (this->solution->starting_scope_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
+		delete this->scope_histories[0];
+	} else if (this->iters_since_update < NUM_UPDATE) {
 		if (this->allow_predict) {
 			this->solution->non_predict_score = 0.999*this->solution->non_predict_score + 0.001*result;
 		} else {
@@ -197,8 +209,12 @@ void SolutionWrapper::experiment_end(double result) {
 		this->experiment_histories.clear();
 	}
 
-	this->iters_since_update++;
-	if (this->iters_since_update == NUM_UPDATE) {
-		update_time = string(get_time());
+	if (this->solution->starting_scope_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
+		this->solution->starting_scope_num_stabilize++;
+	} else {
+		this->iters_since_update++;
+		if (this->iters_since_update == NUM_UPDATE) {
+			update_time = string(get_time());
+		}
 	}
 }

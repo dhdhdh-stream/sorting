@@ -54,9 +54,9 @@ Solution::Solution(Solution* original) {
 		this->scopes[s_index]->link(this);
 	}
 
-	this->outer_scope = this->scopes[original->outer_scope->id];
-	this->top_scope = this->scopes[original->top_scope->id];
-	this->top_scope_num_improvements = original->top_scope_num_improvements;
+	this->starting_scope = this->scopes[original->starting_scope->id];
+	this->starting_scope_num_improvements = original->starting_scope_num_improvements;
+	this->starting_scope_num_stabilize = original->starting_scope_num_stabilize;
 
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
@@ -85,152 +85,51 @@ void Solution::init(ProblemType* problem_type) {
 	this->num_obs = problem_type->num_obs();
 	this->num_actions = problem_type->num_possible_actions();
 
-	{
-		Scope* top_scope = new Scope();
-		top_scope->id = this->scopes.size();
-		top_scope->node_counter = 0;
-		this->scopes.push_back(top_scope);
+	Scope* new_scope = new Scope();
+	new_scope->id = this->scopes.size();
+	new_scope->node_counter = 0;
+	this->scopes.push_back(new_scope);
 
-		NoopNode* start_node = new NoopNode();
-		start_node->parent = top_scope;
-		start_node->id = top_scope->node_counter;
-		top_scope->node_counter++;
-		top_scope->nodes[start_node->id] = start_node;
+	NoopNode* start_node = new NoopNode();
+	start_node->parent = new_scope;
+	start_node->id = new_scope->node_counter;
+	new_scope->node_counter++;
+	new_scope->nodes[start_node->id] = start_node;
 
-		start_node->next_node_id = -1;
-		start_node->next_node = NULL;
+	start_node->next_node_id = -1;
+	start_node->next_node = NULL;
 
-		top_scope->obs_network = new ObsNetwork(NUM_STATES,
-												this->num_obs);
+	new_scope->obs_network = new ObsNetwork(NUM_STATES,
+											this->num_obs);
 
-		top_scope->score_network = new ScoreNetwork(NUM_STATES);
+	new_scope->score_network = new ScoreNetwork(NUM_STATES);
 
-		for (int a_index = 0; a_index < this->num_actions; a_index++) {
-			ActionNode* new_action_node = new ActionNode();
-			new_action_node->parent = top_scope;
-			new_action_node->id = top_scope->node_counter;
-			top_scope->node_counter++;
-			top_scope->nodes[new_action_node->id] = new_action_node;
+	for (int a_index = 0; a_index < this->num_actions; a_index++) {
+		ActionNode* new_action_node = new ActionNode();
+		new_action_node->parent = new_scope;
+		new_action_node->id = new_scope->node_counter;
+		new_scope->node_counter++;
+		new_scope->nodes[new_action_node->id] = new_action_node;
 
-			new_action_node->is_generic = true;
-			new_action_node->action = a_index;
+		new_action_node->is_generic = true;
+		new_action_node->action = a_index;
 
-			new_action_node->obs_network = new ObsNetwork(NUM_STATES,
-														  this->num_obs);
+		new_action_node->obs_network = new ObsNetwork(NUM_STATES,
+													  this->num_obs);
 
-			new_action_node->predict_network = new PredictNetwork(NUM_STATES);
+		new_action_node->predict_network = new PredictNetwork(NUM_STATES);
 
-			new_action_node->next_node_id = -1;
-			new_action_node->next_node = NULL;
+		new_action_node->next_node_id = -1;
+		new_action_node->next_node = NULL;
 
-			top_scope->generic_action_nodes.push_back(new_action_node);
-		}
-
-		top_scope->train_new_last_scores = vector<list<double>>(TRAIN_NEW_NUM_DATAPOINTS.size());
-
-		this->top_scope = top_scope;
-		this->top_scope_num_improvements = 0;
+		new_scope->generic_action_nodes.push_back(new_action_node);
 	}
 
-	{
-		Scope* outer_scope = new Scope();
-		outer_scope->id = this->scopes.size();
-		outer_scope->node_counter = 0;
-		this->scopes.push_back(outer_scope);
+	new_scope->train_new_last_scores = vector<list<double>>(TRAIN_NEW_NUM_DATAPOINTS.size());
 
-		outer_scope->child_scopes.push_back(this->top_scope);
-
-		NoopNode* start_node = new NoopNode();
-		start_node->parent = outer_scope;
-		start_node->id = outer_scope->node_counter;
-		outer_scope->node_counter++;
-		outer_scope->nodes[start_node->id] = start_node;
-
-		ScopeNode* scope_node = new ScopeNode();
-		scope_node->parent = outer_scope;
-		scope_node->id = outer_scope->node_counter;
-		outer_scope->node_counter++;
-		outer_scope->nodes[scope_node->id] = scope_node;
-
-		scope_node->is_generic = false;
-		scope_node->scope = this->top_scope;
-
-		scope_node->out_network = new TransitionNetwork(NUM_STATES,
-														NUM_STATES);
-
-		scope_node->predict_network = new PredictNetwork(NUM_STATES);
-
-		NoopNode* end_node = new NoopNode();
-		end_node->parent = outer_scope;
-		end_node->id = outer_scope->node_counter;
-		outer_scope->node_counter++;
-		outer_scope->nodes[end_node->id] = end_node;
-
-		start_node->next_node_id = scope_node->id;
-		start_node->next_node = scope_node;
-
-		scope_node->ancestor_ids.push_back(start_node->id);
-
-		scope_node->next_node_id = end_node->id;
-		scope_node->next_node = end_node;
-
-		end_node->ancestor_ids.push_back(scope_node->id);
-
-		end_node->next_node_id = -1;
-		end_node->next_node = NULL;
-
-		outer_scope->obs_network = new ObsNetwork(NUM_STATES,
-												  this->num_obs);
-
-		outer_scope->score_network = new ScoreNetwork(NUM_STATES);
-
-		for (int a_index = 0; a_index < this->num_actions; a_index++) {
-			ActionNode* new_action_node = new ActionNode();
-			new_action_node->parent = outer_scope;
-			new_action_node->id = outer_scope->node_counter;
-			outer_scope->node_counter++;
-			outer_scope->nodes[new_action_node->id] = new_action_node;
-
-			new_action_node->is_generic = true;
-			new_action_node->action = a_index;
-
-			new_action_node->obs_network = new ObsNetwork(NUM_STATES,
-														  this->num_obs);
-
-			new_action_node->predict_network = new PredictNetwork(NUM_STATES);
-
-			new_action_node->next_node_id = -1;
-			new_action_node->next_node = NULL;
-
-			outer_scope->generic_action_nodes.push_back(new_action_node);
-		}
-
-		{
-			ScopeNode* new_scope_node = new ScopeNode();
-			new_scope_node->parent = outer_scope;
-			new_scope_node->id = outer_scope->node_counter;
-			outer_scope->node_counter++;
-			outer_scope->nodes[new_scope_node->id] = new_scope_node;
-
-			new_scope_node->is_generic = true;
-
-			new_scope_node->scope = this->top_scope;
-
-			new_scope_node->out_network = new TransitionNetwork(NUM_STATES,
-																NUM_STATES);
-
-			new_scope_node->predict_network = new PredictNetwork(NUM_STATES);
-
-			new_scope_node->next_node_id = -1;
-			new_scope_node->next_node = NULL;
-
-			outer_scope->generic_scope_nodes.push_back(new_scope_node);
-		}
-
-		outer_scope->train_new_last_scores = vector<list<double>>(TRAIN_NEW_NUM_DATAPOINTS.size());
-
-		this->outer_scope = outer_scope;
-	}
+	this->starting_scope = new_scope;
+	this->starting_scope_num_improvements = 0;
+	this->starting_scope_num_stabilize = 0;
 }
 
 void Solution::load(ifstream& input_file) {
@@ -277,17 +176,17 @@ void Solution::load(ifstream& input_file) {
 		this->scopes[s_index]->link(this);
 	}
 
-	string outer_scope_id_line;
-	getline(input_file, outer_scope_id_line);
-	this->outer_scope = this->scopes[stoi(outer_scope_id_line)];
+	string starting_scope_id_line;
+	getline(input_file, starting_scope_id_line);
+	this->starting_scope = this->scopes[stoi(starting_scope_id_line)];
 
-	string top_scope_id_line;
-	getline(input_file, top_scope_id_line);
-	this->top_scope = this->scopes[stoi(top_scope_id_line)];
+	string starting_scope_num_improvements_line;
+	getline(input_file, starting_scope_num_improvements_line);
+	this->starting_scope_num_improvements = stoi(starting_scope_num_improvements_line);
 
-	string top_scope_num_improvements_line;
-	getline(input_file, top_scope_num_improvements_line);
-	this->top_scope_num_improvements = stoi(top_scope_num_improvements_line);
+	string starting_scope_num_stabilize_line;
+	getline(input_file, starting_scope_num_stabilize_line);
+	this->starting_scope_num_stabilize = stoi(starting_scope_num_stabilize_line);
 
 	string history_size_line;
 	getline(input_file, history_size_line);
@@ -307,7 +206,7 @@ void Solution::clean_scopes() {
 	while (true) {
 		bool removed_scope = false;
 		for (int s_index = (int)this->scopes.size()-1; s_index >= 0; s_index--) {
-			if (s_index != this->outer_scope->id) {
+			if (s_index != this->starting_scope->id) {
 				bool still_used = false;
 				for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
 					if (s_index != is_index) {
@@ -376,9 +275,9 @@ void Solution::save(ofstream& output_file) {
 		this->scopes[s_index]->save(output_file);
 	}
 
-	output_file << this->outer_scope->id << endl;
-	output_file << this->top_scope->id << endl;
-	output_file << this->top_scope_num_improvements << endl;
+	output_file << this->starting_scope->id << endl;
+	output_file << this->starting_scope_num_improvements << endl;
+	output_file << this->starting_scope_num_stabilize << endl;
 
 	output_file << this->improvement_history.size() << endl;
 	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {
