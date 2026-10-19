@@ -79,7 +79,7 @@ void predict_helper(SolutionWrapper* wrapper) {
 		AbstractNode* best_exit_next_node;
 		vector<AbstractNode*> best_predict;
 		double best_predict_val = numeric_limits<double>::lowest();
-		int best_random_index;
+		// int best_random_index;
 
 		geometric_distribution<int> exit_distribution(0.3);
 		for (int t_index = 0; t_index < PREDICT_NUM_TRIES; t_index++) {
@@ -135,42 +135,64 @@ void predict_helper(SolutionWrapper* wrapper) {
 				best_exit_next_node = curr_exit_next_node;
 				best_predict = curr_predict;
 				best_predict_val = curr_predict_val;
-				best_random_index = random_index;
+				// best_random_index = random_index;
 			}
 		}
 
 		if (best_predict_val > existing_predict_val) {
+			if (wrapper->node_context.back() == NULL) {
+				Scope* scope = wrapper->scope_histories.back()->scope;
+				scope->predict_success_rate = 0.999*scope->predict_success_rate + 0.001;
+			} else {
+				wrapper->node_context.back()->predict_success_rate = 0.999*wrapper->node_context.back()->predict_success_rate + 0.001;
+			}
+
+			// // temp
+			// cout << "scope_context->id: " << scope_context->id << endl;
+			// cout << "wrapper->node_context.back()->id: " << wrapper->node_context.back()->id << endl;
+			// cout << "existing:";
+			// for (int i_index = 0; i_index < best_random_index; i_index++) {
+			// 	cout << " " << possible_exits[i_index]->id;
+			// }
+			// cout << endl;
+			// cout << "existing_predict_val: " << existing_predict_val << endl;
+			// cout << "predict:";
+			// for (int i_index = 0; i_index < (int)best_predict.size(); i_index++) {
+			// 	switch (best_predict[i_index]->type) {
+			// 	case NODE_TYPE_ACTION:
+			// 		{
+			// 			ActionNode* action_node = (ActionNode*)best_predict[i_index];
+			// 			cout << " " << action_node->action;
+			// 		}
+			// 		break;
+			// 	case NODE_TYPE_SCOPE:
+			// 		{
+			// 			ScopeNode* scope_node = (ScopeNode*)best_predict[i_index];
+			// 			cout << " S" << scope_node->scope->id;
+			// 		}
+			// 		break;
+			// 	}
+			// }
+			// cout << endl;
+			// cout << "best_predict_val: " << best_predict_val << endl;
+			// if (best_exit_next_node == NULL) {
+			// 	cout << "best_exit_next_node->id: -1" << endl;
+			// } else {
+			// 	cout << "best_exit_next_node->id: " << best_exit_next_node->id << endl;
+			// }
+
 			wrapper->node_context.back() = best_exit_next_node;
 			wrapper->remaining_predict.back() = best_predict;
 
-			// temp
-			cout << "scope_context->id: " << scope_context->id << endl;
-			cout << "existing:";
-			for (int i_index = 0; i_index < best_random_index; i_index++) {
-				cout << possible_exits[i_index]->id << " ";
-			}
-			cout << "endl";
-			cout << "predict:";
-			for (int i_index = 0; i_index < (int)best_predict.size(); i_index++) {
-				switch (best_predict[i_index]->type) {
-				case NODE_TYPE_ACTION:
-					{
-						ActionNode* action_node = (ActionNode*)best_predict[i_index];
-						cout << action_node->action << " ";
-					}
-					break;
-				case NODE_TYPE_SCOPE:
-					{
-						ScopeNode* scope_node = (ScopeNode*)best_predict[i_index];
-						cout << "S" << scope_node->scope->id << " ";
-					}
-					break;
-				}
-			}
-			cout << endl;
-
 			wrapper->num_predict_hits++;
 		} else {
+			if (wrapper->node_context.back() == NULL) {
+				Scope* scope = wrapper->scope_histories.back()->scope;
+				scope->predict_success_rate = 0.999*scope->predict_success_rate;
+			} else {
+				wrapper->node_context.back()->predict_success_rate = 0.999*wrapper->node_context.back()->predict_success_rate;
+			}
+
 			wrapper->num_predict_misses++;
 		}
 	}

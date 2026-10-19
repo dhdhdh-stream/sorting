@@ -138,9 +138,9 @@ void SolutionWrapper::experiment_end(double result) {
 		delete this->scope_histories[0];
 	} else if (this->iters_since_update < NUM_UPDATE) {
 		if (this->allow_predict) {
-			this->solution->non_predict_score = 0.999*this->solution->non_predict_score + 0.001*result;
-		} else {
 			this->solution->predict_score = 0.999*this->solution->predict_score + 0.001*result;
+		} else {
+			this->solution->non_predict_score = 0.999*this->solution->non_predict_score + 0.001*result;
 		}
 
 		if (this->iters_since_update >= NUM_PREDICT_STABILIZE) {

@@ -21,6 +21,9 @@ void SolutionWrapper::init(vector<double> obs) {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
+	// temp
+	this->allow_predict = true;
+
 	this->states.push_back(Eigen::VectorXf());
 	this->states.back().resize(NUM_STATES);
 	this->states.back().setConstant(0.0);

@@ -44,6 +44,9 @@ public:
 
 	std::vector<std::list<double>> train_new_last_scores;
 
+	// temp
+	double predict_success_rate;
+
 	Scope();
 	~Scope();
 

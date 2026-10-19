@@ -65,6 +65,7 @@ const int NUM_UPDATE = 200;
 const int NUM_PREDICT_STABILIZE = 20;
 const int BATCH_SIZE = 10;
 const int ITERS_PER_BATCH = 10;
+const int NEW_SCOPE_NUM_STABILIZE = 200;
 #else
 const int NUM_UPDATE = 400000;
 const int NUM_PREDICT_STABILIZE = 100000;
@@ -74,6 +75,7 @@ const int ITERS_PER_BATCH = 10000;
  * - need large BATCH_SIZE and low ITERS_PER_BATCH
  *   - adam easily overfits
  */
+const int NEW_SCOPE_NUM_STABILIZE = 400000;
 #endif /* MDEBUG */
 
 const int GENERALIZE_ITER = 3;

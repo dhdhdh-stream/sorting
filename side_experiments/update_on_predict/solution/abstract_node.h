@@ -32,6 +32,9 @@ public:
 	 * - if both paths of BranchNode point to same node, add twice
 	 */
 
+	// temp
+	double predict_success_rate;
+
 	virtual ~AbstractNode() {};
 
 	virtual void step(std::vector<double>& obs,

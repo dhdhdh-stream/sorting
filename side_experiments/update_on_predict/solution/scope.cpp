@@ -18,7 +18,7 @@
 using namespace std;
 
 Scope::Scope() {
-	// do nothing
+	this->predict_success_rate = 0.5;
 }
 
 Scope::~Scope() {
@@ -108,6 +108,8 @@ void Scope::copy_from(Scope* original,
 	}
 
 	this->train_new_last_scores = original->train_new_last_scores;
+
+	this->predict_success_rate = original->predict_success_rate;
 }
 
 void Scope::save(ofstream& output_file) {
@@ -146,6 +148,8 @@ void Scope::save(ofstream& output_file) {
 			output_file << *it << endl;
 		}
 	}
+
+	output_file << this->predict_success_rate << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -254,6 +258,14 @@ void Scope::load(ifstream& input_file,
 			this->train_new_last_scores[l_index].push_back(stod(score_line));
 		}
 	}
+
+	string predict_success_rate_line;
+	getline(input_file, predict_success_rate_line);
+	this->predict_success_rate = stod(predict_success_rate_line);
+
+	// temp
+	cout << "this->id: " << this->id << endl;
+	cout << "this->predict_success_rate: " << this->predict_success_rate << endl;
 }
 
 void Scope::link(Solution* parent_solution) {
