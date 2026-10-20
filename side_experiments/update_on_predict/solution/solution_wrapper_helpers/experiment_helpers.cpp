@@ -30,12 +30,13 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	} else {
 		this->allow_predict = false;
 	}
+	this->in_predict = false;
 
 	this->states.push_back(Eigen::VectorXf());
 	this->states.back().resize(NUM_STATES);
 	this->states.back().setConstant(0.0);
 
-	this->num_actions = 0;
+	this->num_actions = 1;
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->starting_scope);
 	this->scope_histories.push_back(scope_history);
@@ -65,6 +66,8 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 		}
 	}
 
+	uniform_real_distribution<double> distribution(0.0, 1.0);
+
 	int action;
 	bool is_next = false;
 	bool is_done = false;
@@ -82,14 +85,47 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 				is_next,
 				this);
 		} else {
-			if (this->allow_predict) {
+			if (this->allow_predict
+					&& !this->in_predict) {
 				if (this->solution->starting_scope_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
-					uniform_int_distribution<int> predict_select_distribution(0, 4);
-					if (predict_select_distribution(generator) == 0) {
-						if (this->scope_histories.back()->scope == this->solution->starting_scope) {
-							uniform_real_distribution<double> predict_distribution(0.0, 1.0);
+					if (distribution(generator) <= this->solution->predict_rate) {
+						uniform_int_distribution<int> predict_select_distribution(0, 4);
+						if (predict_select_distribution(generator) == 0) {
+							if (this->scope_histories.back()->scope == this->solution->starting_scope) {
+								if (this->node_context.back() == NULL) {
+									if (distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
+										this->predict_scope_histories.push_back(this->scope_histories.back());
+										this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
+										this->predict_node_contexts.push_back(this->node_context.back());
+
+										uniform_int_distribution<int> existing_distribution(0, 1);
+										if (existing_distribution(generator) != 0) {
+											predict_helper(this);
+											continue;
+										}
+									}
+								} else {
+									if (distribution(generator) <= this->node_context.back()->predict_rate) {
+										this->predict_scope_histories.push_back(this->scope_histories.back());
+										this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
+										this->predict_node_contexts.push_back(this->node_context.back());
+
+										uniform_int_distribution<int> existing_distribution(0, 1);
+										if (existing_distribution(generator) != 0) {
+											predict_helper(this);
+											continue;
+										}
+									}
+								}
+							}
+						}
+					}
+				} else {
+					if (distribution(generator) <= this->solution->predict_rate) {
+						uniform_int_distribution<int> predict_select_distribution(0, 4);
+						if (predict_select_distribution(generator) == 0) {
 							if (this->node_context.back() == NULL) {
-								if (predict_distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
+								if (distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
 									this->predict_scope_histories.push_back(this->scope_histories.back());
 									this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
 									this->predict_node_contexts.push_back(this->node_context.back());
@@ -101,7 +137,7 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 									}
 								}
 							} else {
-								if (predict_distribution(generator) <= this->node_context.back()->predict_rate) {
+								if (distribution(generator) <= this->node_context.back()->predict_rate) {
 									this->predict_scope_histories.push_back(this->scope_histories.back());
 									this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
 									this->predict_node_contexts.push_back(this->node_context.back());
@@ -111,36 +147,6 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 										predict_helper(this);
 										continue;
 									}
-								}
-							}
-						}
-					}
-				} else {
-					uniform_int_distribution<int> predict_select_distribution(0, 4);
-					if (predict_select_distribution(generator) == 0) {
-						uniform_real_distribution<double> predict_distribution(0.0, 1.0);
-						if (this->node_context.back() == NULL) {
-							if (predict_distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
-								this->predict_scope_histories.push_back(this->scope_histories.back());
-								this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-								this->predict_node_contexts.push_back(this->node_context.back());
-
-								uniform_int_distribution<int> existing_distribution(0, 1);
-								if (existing_distribution(generator) != 0) {
-									predict_helper(this);
-									continue;
-								}
-							}
-						} else {
-							if (predict_distribution(generator) <= this->node_context.back()->predict_rate) {
-								this->predict_scope_histories.push_back(this->scope_histories.back());
-								this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-								this->predict_node_contexts.push_back(this->node_context.back());
-
-								uniform_int_distribution<int> existing_distribution(0, 1);
-								if (existing_distribution(generator) != 0) {
-									predict_helper(this);
-									continue;
 								}
 							}
 						}
@@ -191,6 +197,9 @@ void SolutionWrapper::experiment_end(double result) {
 			this->solution->predict_score = 0.999*this->solution->predict_score + 0.001*result;
 		} else {
 			this->solution->non_predict_score = 0.999*this->solution->non_predict_score + 0.001*result;
+
+			this->solution->run_average_num_actions = 0.999*this->solution->run_average_num_actions + 0.001*this->num_actions;
+			this->solution->predict_rate = 1.0 / pow(this->solution->run_average_num_actions, 0.3);
 		}
 
 		if (this->iters_since_update >= NUM_PREDICT_STABILIZE) {

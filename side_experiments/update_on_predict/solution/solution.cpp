@@ -58,6 +58,9 @@ Solution::Solution(Solution* original) {
 	this->starting_scope_num_improvements = original->starting_scope_num_improvements;
 	this->starting_scope_num_stabilize = original->starting_scope_num_stabilize;
 
+	this->run_average_num_actions = original->run_average_num_actions;
+	this->predict_rate = original->predict_rate;
+
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
 }
@@ -96,7 +99,6 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->node_counter++;
 	new_scope->nodes[start_node->id] = start_node;
 
-	start_node->predict_start_network = new PredictNetwork(NUM_STATES);
 	start_node->predict_rate = 0.5;
 
 	start_node->next_node_id = -1;
@@ -105,7 +107,6 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->obs_network = new ObsNetwork(NUM_STATES,
 											this->num_obs);
 
-	new_scope->predict_start_network = new PredictNetwork(NUM_STATES);
 	new_scope->predict_rate = 0.5;
 
 	new_scope->score_network = new ScoreNetwork(NUM_STATES);
@@ -125,7 +126,6 @@ void Solution::init(ProblemType* problem_type) {
 
 		new_action_node->predict_network = new PredictNetwork(NUM_STATES);
 
-		new_action_node->predict_start_network = new PredictNetwork(NUM_STATES);
 		new_action_node->predict_rate = 0.5;
 
 		new_action_node->next_node_id = -1;
@@ -139,6 +139,9 @@ void Solution::init(ProblemType* problem_type) {
 	this->starting_scope = new_scope;
 	this->starting_scope_num_improvements = 0;
 	this->starting_scope_num_stabilize = 0;
+
+	this->run_average_num_actions = 1.0;
+	this->predict_rate = 1.0;
 }
 
 void Solution::load(ifstream& input_file) {
@@ -196,6 +199,12 @@ void Solution::load(ifstream& input_file) {
 	string starting_scope_num_stabilize_line;
 	getline(input_file, starting_scope_num_stabilize_line);
 	this->starting_scope_num_stabilize = stoi(starting_scope_num_stabilize_line);
+
+	string run_average_num_actions_line;
+	getline(input_file, run_average_num_actions_line);
+	this->run_average_num_actions = stod(run_average_num_actions_line);
+
+	this->predict_rate = 1.0 / pow(this->run_average_num_actions, 0.3);
 
 	string history_size_line;
 	getline(input_file, history_size_line);
@@ -287,6 +296,8 @@ void Solution::save(ofstream& output_file) {
 	output_file << this->starting_scope->id << endl;
 	output_file << this->starting_scope_num_improvements << endl;
 	output_file << this->starting_scope_num_stabilize << endl;
+
+	output_file << this->run_average_num_actions << endl;
 
 	output_file << this->improvement_history.size() << endl;
 	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {

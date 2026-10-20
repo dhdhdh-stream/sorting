@@ -49,6 +49,9 @@ public:
 	int starting_scope_num_improvements;
 	int starting_scope_num_stabilize;
 
+	double run_average_num_actions;
+	double predict_rate;
+
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
 

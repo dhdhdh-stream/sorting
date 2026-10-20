@@ -30,8 +30,6 @@ Scope::~Scope() {
 
 	delete this->obs_network;
 
-	delete this->predict_start_network;
-
 	delete this->score_network;
 
 	/**
@@ -94,7 +92,6 @@ void Scope::copy_from(Scope* original,
 
 	this->obs_network = new ObsNetwork(original->obs_network);
 
-	this->predict_start_network = new PredictNetwork(original->predict_start_network);
 	this->predict_rate = original->predict_rate;
 
 	this->score_network = new ScoreNetwork(original->score_network);
@@ -129,7 +126,6 @@ void Scope::save(ofstream& output_file) {
 
 	this->obs_network->save(output_file);
 
-	this->predict_start_network->save(output_file);
 	output_file << this->predict_rate << endl;
 
 	this->score_network->save(output_file);
@@ -218,8 +214,6 @@ void Scope::load(ifstream& input_file,
 	}
 
 	this->obs_network = new ObsNetwork(input_file);
-
-	this->predict_start_network = new PredictNetwork(input_file);
 
 	string predict_rate_line;
 	getline(input_file, predict_rate_line);

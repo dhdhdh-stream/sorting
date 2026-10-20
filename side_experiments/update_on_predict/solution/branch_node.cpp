@@ -31,8 +31,6 @@ BranchNode::~BranchNode() {
 
 	delete this->branch_predict_network;
 
-	delete this->predict_start_network;
-
 	for (int e_index = 0; e_index < (int)this->original_experiments.size(); e_index++) {
 		delete this->original_experiments[e_index];
 	}
@@ -51,7 +49,6 @@ void BranchNode::copy_from(BranchNode* original,
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
 
-	this->predict_start_network = new PredictNetwork(original->predict_start_network);
 	this->predict_rate = original->predict_rate;
 
 	this->consec_original = original->consec_original;
@@ -74,7 +71,6 @@ void BranchNode::save(ofstream& output_file) {
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
 
-	this->predict_start_network->save(output_file);
 	output_file << this->predict_rate << endl;
 
 	output_file << this->consec_original << endl;
@@ -105,8 +101,6 @@ void BranchNode::load(ifstream& input_file,
 	string branch_next_node_id_line;
 	getline(input_file, branch_next_node_id_line);
 	this->branch_next_node_id = stoi(branch_next_node_id_line);
-
-	this->predict_start_network = new PredictNetwork(input_file);
 
 	string predict_rate_line;
 	getline(input_file, predict_rate_line);

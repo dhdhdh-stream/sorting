@@ -20,8 +20,6 @@ NoopNode::NoopNode() {
 }
 
 NoopNode::~NoopNode() {
-	delete this->predict_start_network;
-
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		delete this->experiments[e_index];
 	}
@@ -31,7 +29,6 @@ void NoopNode::copy_from(NoopNode* original,
 						 Solution* parent_solution) {
 	this->next_node_id = original->next_node_id;
 
-	this->predict_start_network = new PredictNetwork(original->predict_start_network);
 	this->predict_rate = original->predict_rate;
 
 	this->average_instances_per_hit = original->average_instances_per_hit;
@@ -43,7 +40,6 @@ void NoopNode::copy_from(NoopNode* original,
 void NoopNode::save(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 
-	this->predict_start_network->save(output_file);
 	output_file << this->predict_rate << endl;
 
 	output_file << this->average_instances_per_hit << endl;
@@ -60,8 +56,6 @@ void NoopNode::load(ifstream& input_file,
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
-
-	this->predict_start_network = new PredictNetwork(input_file);
 
 	string predict_rate_line;
 	getline(input_file, predict_rate_line);

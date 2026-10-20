@@ -50,12 +50,6 @@ void train_predict_helper(SolutionWrapper* wrapper,
 							 pre_train_node_histories);
 		}
 
-		if (wrapper->predict_node_contexts[i_index] == NULL) {
-			scope->predict_start_network->activate(state);
-		} else {
-			wrapper->predict_node_contexts[i_index]->predict_start_network->activate(state);
-		}
-
 		vector<TrainAbstractNodeHistory*> post_train_node_histories;
 		for (int h_index = explore_index+1; h_index < (int)scope_history->node_histories.size(); h_index++) {
 			AbstractNode* node = scope_history->node_histories[h_index]->node;
@@ -75,12 +69,6 @@ void train_predict_helper(SolutionWrapper* wrapper,
 
 		for (int h_index = (int)post_train_node_histories.size()-1; h_index >= 0; h_index--) {
 			post_train_node_histories[h_index]->backprop(state_error);
-		}
-
-		if (wrapper->predict_node_contexts[i_index] == NULL) {
-			scope->predict_start_network->backprop(state_error);
-		} else {
-			wrapper->predict_node_contexts[i_index]->predict_start_network->backprop(state_error);
 		}
 
 		for (int h_index = (int)pre_train_node_histories.size()-1; h_index >= 0; h_index--) {
@@ -111,19 +99,6 @@ void train_predict_helper(SolutionWrapper* wrapper,
 		for (int h_index = 0; h_index <= explore_index; h_index++) {
 			AbstractNode* node = scope_history->node_histories[h_index]->node;
 			node->update_step(wrapper->train_iter_index);
-		}
-		if (wrapper->predict_node_contexts[i_index] == NULL) {
-			if (scope->predict_start_network->last_update_iter != wrapper->train_iter_index) {
-				scope->predict_start_network->update();
-
-				scope->predict_start_network->last_update_iter = wrapper->train_iter_index;
-			}
-		} else {
-			if (wrapper->predict_node_contexts[i_index]->predict_start_network->last_update_iter != wrapper->train_iter_index) {
-				wrapper->predict_node_contexts[i_index]->predict_start_network->update();
-
-				wrapper->predict_node_contexts[i_index]->predict_start_network->last_update_iter = wrapper->train_iter_index;
-			}
 		}
 		for (int h_index = explore_index+1; h_index < (int)scope_history->node_histories.size(); h_index++) {
 			AbstractNode* node = scope_history->node_histories[h_index]->node;

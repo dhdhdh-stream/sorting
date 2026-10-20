@@ -30,12 +30,6 @@ double existing_predict_helper(AbstractNode* exit_next_node,
 
 	Eigen::VectorXf state = wrapper->states.back();
 
-	if (wrapper->node_context.back() == NULL) {
-		scope_context->predict_start_network->activate(state);
-	} else {
-		wrapper->node_context.back()->predict_start_network->activate(state);
-	}
-
 	AbstractNode* curr_node = exit_next_node;
 
 	possible_exits.push_back(curr_node);
@@ -55,12 +49,6 @@ double predict_helper(vector<AbstractNode*>& remaining_predict,
 	Scope* scope_context = wrapper->scope_histories.back()->scope;
 
 	Eigen::VectorXf state = wrapper->states.back();
-
-	if (wrapper->node_context.back() == NULL) {
-		scope_context->predict_start_network->activate(state);
-	} else {
-		wrapper->node_context.back()->predict_start_network->activate(state);
-	}
 
 	AbstractNode* curr_node = exit_next_node;
 
@@ -207,4 +195,7 @@ void predict_helper(SolutionWrapper* wrapper) {
 
 	wrapper->node_context.back() = best_exit_next_node;
 	wrapper->remaining_predict.back() = best_predict;
+	if (wrapper->remaining_predict.back().size() > 0) {
+		wrapper->in_predict = true;
+	}
 }

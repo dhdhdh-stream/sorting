@@ -7,7 +7,6 @@
 #include <Eigen/Dense>
 
 class AbstractExperiment;
-class PredictNetwork;
 class Scope;
 class ScopeHistory;
 class Solution;
@@ -28,7 +27,6 @@ public:
 	Scope* parent;
 	int id;
 
-	PredictNetwork* predict_start_network;
 	double predict_rate;
 
 	std::vector<int> ancestor_ids;

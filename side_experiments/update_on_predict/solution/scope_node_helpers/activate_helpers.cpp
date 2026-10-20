@@ -51,6 +51,9 @@ void ScopeNode::exit_step(SolutionWrapper* wrapper) {
 	} else {
 		if (wrapper->remaining_predict.back().size() > 0) {
 			wrapper->remaining_predict.back().erase(wrapper->remaining_predict.back().begin());
+			if (wrapper->remaining_predict.back().size() == 0) {
+				wrapper->in_predict = false;
+			}
 		}
 	}
 }

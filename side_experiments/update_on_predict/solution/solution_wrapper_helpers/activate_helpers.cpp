@@ -28,7 +28,7 @@ void SolutionWrapper::init(vector<double> obs) {
 	this->states.back().resize(NUM_STATES);
 	this->states.back().setConstant(0.0);
 
-	this->num_actions = 0;
+	this->num_actions = 1;
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->starting_scope);
 	this->scope_histories.push_back(scope_history);

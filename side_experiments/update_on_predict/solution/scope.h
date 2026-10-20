@@ -14,7 +14,6 @@ class ActionNode;
 class Network;
 class ObsNetwork;
 class ObsNetworkHistory;
-class PredictNetwork;
 class Problem;
 class ScopeNode;
 class ScoreNetwork;
@@ -36,7 +35,6 @@ public:
 
 	ObsNetwork* obs_network;
 
-	PredictNetwork* predict_start_network;
 	double predict_rate;
 
 	ScoreNetwork* score_network;
