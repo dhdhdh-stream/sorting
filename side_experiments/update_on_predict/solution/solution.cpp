@@ -96,6 +96,9 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->node_counter++;
 	new_scope->nodes[start_node->id] = start_node;
 
+	start_node->predict_start_network = new PredictNetwork(NUM_STATES);
+	start_node->predict_rate = 0.5;
+
 	start_node->next_node_id = -1;
 	start_node->next_node = NULL;
 
@@ -103,7 +106,7 @@ void Solution::init(ProblemType* problem_type) {
 											this->num_obs);
 
 	new_scope->predict_start_network = new PredictNetwork(NUM_STATES);
-	new_scope->predict_rate = 0.1;
+	new_scope->predict_rate = 0.5;
 
 	new_scope->score_network = new ScoreNetwork(NUM_STATES);
 
@@ -123,6 +126,7 @@ void Solution::init(ProblemType* problem_type) {
 		new_action_node->predict_network = new PredictNetwork(NUM_STATES);
 
 		new_action_node->predict_start_network = new PredictNetwork(NUM_STATES);
+		new_action_node->predict_rate = 0.5;
 
 		new_action_node->next_node_id = -1;
 		new_action_node->next_node = NULL;

@@ -30,6 +30,8 @@ Scope::~Scope() {
 
 	delete this->obs_network;
 
+	delete this->predict_start_network;
+
 	delete this->score_network;
 
 	/**

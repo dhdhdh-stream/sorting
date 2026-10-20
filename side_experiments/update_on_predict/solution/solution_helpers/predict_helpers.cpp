@@ -18,7 +18,7 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int PREDICT_NUM_TRIES = 10;
+const int PREDICT_NUM_TRIES = 2;
 #else
 const int PREDICT_NUM_TRIES = 200;
 #endif /* MDEBUG */

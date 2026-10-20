@@ -20,6 +20,8 @@ NoopNode::NoopNode() {
 }
 
 NoopNode::~NoopNode() {
+	delete this->predict_start_network;
+
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		delete this->experiments[e_index];
 	}

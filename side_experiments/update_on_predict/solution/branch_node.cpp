@@ -31,6 +31,8 @@ BranchNode::~BranchNode() {
 
 	delete this->branch_predict_network;
 
+	delete this->predict_start_network;
+
 	for (int e_index = 0; e_index < (int)this->original_experiments.size(); e_index++) {
 		delete this->original_experiments[e_index];
 	}

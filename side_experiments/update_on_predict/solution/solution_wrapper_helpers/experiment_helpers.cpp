@@ -84,7 +84,40 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 		} else {
 			if (this->allow_predict) {
 				if (this->solution->starting_scope_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
-					if (this->scope_histories.back()->scope == this->solution->starting_scope) {
+					uniform_int_distribution<int> predict_select_distribution(0, 4);
+					if (predict_select_distribution(generator) == 0) {
+						if (this->scope_histories.back()->scope == this->solution->starting_scope) {
+							uniform_real_distribution<double> predict_distribution(0.0, 1.0);
+							if (this->node_context.back() == NULL) {
+								if (predict_distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
+									this->predict_scope_histories.push_back(this->scope_histories.back());
+									this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
+									this->predict_node_contexts.push_back(this->node_context.back());
+
+									uniform_int_distribution<int> existing_distribution(0, 1);
+									if (existing_distribution(generator) != 0) {
+										predict_helper(this);
+										continue;
+									}
+								}
+							} else {
+								if (predict_distribution(generator) <= this->node_context.back()->predict_rate) {
+									this->predict_scope_histories.push_back(this->scope_histories.back());
+									this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
+									this->predict_node_contexts.push_back(this->node_context.back());
+
+									uniform_int_distribution<int> existing_distribution(0, 1);
+									if (existing_distribution(generator) != 0) {
+										predict_helper(this);
+										continue;
+									}
+								}
+							}
+						}
+					}
+				} else {
+					uniform_int_distribution<int> predict_select_distribution(0, 4);
+					if (predict_select_distribution(generator) == 0) {
 						uniform_real_distribution<double> predict_distribution(0.0, 1.0);
 						if (this->node_context.back() == NULL) {
 							if (predict_distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
@@ -109,33 +142,6 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 									predict_helper(this);
 									continue;
 								}
-							}
-						}
-					}
-				} else {
-					uniform_real_distribution<double> predict_distribution(0.0, 1.0);
-					if (this->node_context.back() == NULL) {
-						if (predict_distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
-							this->predict_scope_histories.push_back(this->scope_histories.back());
-							this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-							this->predict_node_contexts.push_back(this->node_context.back());
-
-							uniform_int_distribution<int> existing_distribution(0, 1);
-							if (existing_distribution(generator) != 0) {
-								predict_helper(this);
-								continue;
-							}
-						}
-					} else {
-						if (predict_distribution(generator) <= this->node_context.back()->predict_rate) {
-							this->predict_scope_histories.push_back(this->scope_histories.back());
-							this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-							this->predict_node_contexts.push_back(this->node_context.back());
-
-							uniform_int_distribution<int> existing_distribution(0, 1);
-							if (existing_distribution(generator) != 0) {
-								predict_helper(this);
-								continue;
 							}
 						}
 					}
