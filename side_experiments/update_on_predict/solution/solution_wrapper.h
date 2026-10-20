@@ -54,6 +54,7 @@ public:
 
 	std::vector<ScopeHistory*> predict_scope_histories;
 	std::vector<int> predict_indexes;
+	std::vector<AbstractNode*> predict_node_contexts;
 
 	Problem* problem;
 

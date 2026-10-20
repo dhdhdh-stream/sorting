@@ -14,6 +14,7 @@ class ActionNode;
 class Network;
 class ObsNetwork;
 class ObsNetworkHistory;
+class PredictNetwork;
 class Problem;
 class ScopeNode;
 class ScoreNetwork;
@@ -35,6 +36,9 @@ public:
 
 	ObsNetwork* obs_network;
 
+	PredictNetwork* predict_start_network;
+	double predict_rate;
+
 	ScoreNetwork* score_network;
 
 	std::vector<Scope*> child_scopes;
@@ -43,9 +47,6 @@ public:
 	std::vector<ScopeNode*> generic_scope_nodes;
 
 	std::vector<std::list<double>> train_new_last_scores;
-
-	// temp
-	double predict_success_rate;
 
 	Scope();
 	~Scope();

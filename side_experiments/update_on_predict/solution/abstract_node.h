@@ -7,6 +7,7 @@
 #include <Eigen/Dense>
 
 class AbstractExperiment;
+class PredictNetwork;
 class Scope;
 class ScopeHistory;
 class Solution;
@@ -27,13 +28,13 @@ public:
 	Scope* parent;
 	int id;
 
+	PredictNetwork* predict_start_network;
+	double predict_rate;
+
 	std::vector<int> ancestor_ids;
 	/**
 	 * - if both paths of BranchNode point to same node, add twice
 	 */
-
-	// temp
-	double predict_success_rate;
 
 	virtual ~AbstractNode() {};
 

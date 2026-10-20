@@ -11,6 +11,7 @@
 #include "network.h"
 #include "noop_node.h"
 #include "obs_network.h"
+#include "predict_network.h"
 #include "scope_node.h"
 #include "score_network.h"
 #include "solution.h"
@@ -18,7 +19,7 @@
 using namespace std;
 
 Scope::Scope() {
-	this->predict_success_rate = 0.5;
+	// do nothing
 }
 
 Scope::~Scope() {
@@ -91,6 +92,9 @@ void Scope::copy_from(Scope* original,
 
 	this->obs_network = new ObsNetwork(original->obs_network);
 
+	this->predict_start_network = new PredictNetwork(original->predict_start_network);
+	this->predict_rate = original->predict_rate;
+
 	this->score_network = new ScoreNetwork(original->score_network);
 
 	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
@@ -108,8 +112,6 @@ void Scope::copy_from(Scope* original,
 	}
 
 	this->train_new_last_scores = original->train_new_last_scores;
-
-	this->predict_success_rate = original->predict_success_rate;
 }
 
 void Scope::save(ofstream& output_file) {
@@ -124,6 +126,9 @@ void Scope::save(ofstream& output_file) {
 	}
 
 	this->obs_network->save(output_file);
+
+	this->predict_start_network->save(output_file);
+	output_file << this->predict_rate << endl;
 
 	this->score_network->save(output_file);
 
@@ -148,8 +153,6 @@ void Scope::save(ofstream& output_file) {
 			output_file << *it << endl;
 		}
 	}
-
-	output_file << this->predict_success_rate << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -214,6 +217,16 @@ void Scope::load(ifstream& input_file,
 
 	this->obs_network = new ObsNetwork(input_file);
 
+	this->predict_start_network = new PredictNetwork(input_file);
+
+	string predict_rate_line;
+	getline(input_file, predict_rate_line);
+	this->predict_rate = stod(predict_rate_line);
+
+	// temp
+	cout << "this->id: " << this->id << endl;
+	cout << "this->predict_rate: " << this->predict_rate << endl;
+
 	this->score_network = new ScoreNetwork(input_file);
 
 	string num_child_scopes_line;
@@ -258,14 +271,6 @@ void Scope::load(ifstream& input_file,
 			this->train_new_last_scores[l_index].push_back(stod(score_line));
 		}
 	}
-
-	string predict_success_rate_line;
-	getline(input_file, predict_success_rate_line);
-	this->predict_success_rate = stod(predict_success_rate_line);
-
-	// temp
-	cout << "this->id: " << this->id << endl;
-	cout << "this->predict_success_rate: " << this->predict_success_rate << endl;
 }
 
 void Scope::link(Solution* parent_solution) {

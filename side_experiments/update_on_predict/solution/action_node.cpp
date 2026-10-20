@@ -17,8 +17,6 @@ ActionNode::ActionNode() {
 	this->average_instances_per_run = 0.0;
 
 	this->curr_num_instances = 0;
-
-	this->predict_success_rate = 0.5;
 }
 
 ActionNode::~ActionNode() {
@@ -42,12 +40,13 @@ void ActionNode::copy_from(ActionNode* original) {
 
 	this->next_node_id = original->next_node_id;
 
+	this->predict_start_network = new PredictNetwork(original->predict_start_network);
+	this->predict_rate = original->predict_rate;
+
 	this->average_instances_per_hit = original->average_instances_per_hit;
 	this->average_instances_per_run = original->average_instances_per_run;
 
 	this->ancestor_ids = original->ancestor_ids;
-
-	this->predict_success_rate = original->predict_success_rate;
 }
 
 void ActionNode::save(ofstream& output_file) {
@@ -61,6 +60,9 @@ void ActionNode::save(ofstream& output_file) {
 
 	output_file << this->next_node_id << endl;
 
+	this->predict_start_network->save(output_file);
+	output_file << this->predict_rate << endl;
+
 	output_file << this->average_instances_per_hit << endl;
 	output_file << this->average_instances_per_run << endl;
 
@@ -68,8 +70,6 @@ void ActionNode::save(ofstream& output_file) {
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
-
-	output_file << this->predict_success_rate << endl;
 }
 
 void ActionNode::load(ifstream& input_file) {
@@ -89,6 +89,17 @@ void ActionNode::load(ifstream& input_file) {
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
 
+	this->predict_start_network = new PredictNetwork(input_file);
+
+	string predict_rate_line;
+	getline(input_file, predict_rate_line);
+	this->predict_rate = stod(predict_rate_line);
+
+	// temp
+	cout << "this->parent->id: " << this->parent->id << endl;
+	cout << "this->id: " << this->id << endl;
+	cout << "this->predict_rate: " << this->predict_rate << endl;
+
 	string average_instances_per_hit_line;
 	getline(input_file, average_instances_per_hit_line);
 	this->average_instances_per_hit = stod(average_instances_per_hit_line);
@@ -105,15 +116,6 @@ void ActionNode::load(ifstream& input_file) {
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
-
-	string predict_success_rate_line;
-	getline(input_file, predict_success_rate_line);
-	this->predict_success_rate = stod(predict_success_rate_line);
-
-	// temp
-	cout << "this->parent->id: " << this->parent->id << endl;
-	cout << "this->id: " << this->id << endl;
-	cout << "this->predict_success_rate: " << this->predict_success_rate << endl;
 }
 
 void ActionNode::link(Solution* parent_solution) {

@@ -81,6 +81,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_action_node->obs_network = new ObsNetwork(generic_action_node->obs_network);
 			new_action_node->predict_network = new PredictNetwork(generic_action_node->predict_network);
 
+			new_action_node->predict_start_network = new PredictNetwork(NUM_STATES);
+			new_action_node->predict_rate = 0.1;
+
 			new_nodes.push_back(new_action_node);
 		} else {
 			ScopeNode* new_scope_node = new ScopeNode();
@@ -98,6 +101,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope_node->out_network = new TransitionNetwork(generic_scope_node->out_network);
 
 			new_scope_node->predict_network = new PredictNetwork(generic_scope_node->predict_network);
+
+			new_scope_node->predict_start_network = new PredictNetwork(NUM_STATES);
+			new_scope_node->predict_rate = 0.1;
 
 			new_nodes.push_back(new_scope_node);
 		}
@@ -132,6 +138,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 		new_ending_node->next_node_id = -1;
 		new_ending_node->next_node = NULL;
+
+		new_ending_node->predict_start_network = new PredictNetwork(NUM_STATES);
+		new_ending_node->predict_rate = 0.1;
 
 		exit_node_id = new_ending_node->id;
 		exit_node = new_ending_node;
@@ -182,6 +191,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 					new_ending_node->next_node_id = -1;
 					new_ending_node->next_node = NULL;
+
+					new_ending_node->predict_start_network = new PredictNetwork(NUM_STATES);
+					new_ending_node->predict_rate = 0.1;
 
 					new_ending_node->ancestor_ids.push_back(new_branch_node->id);
 
@@ -330,6 +342,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 	new_branch_node->branch_predict_network = new ScoreNetwork(NUM_STATES);
 
+	new_branch_node->predict_start_network = new PredictNetwork(NUM_STATES);
+	new_branch_node->predict_rate = 0.1;
+
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;
 
@@ -380,6 +395,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->node_counter++;
 			new_scope->nodes[start_node->id] = start_node;
 
+			start_node->predict_start_network = new PredictNetwork(NUM_STATES);
+			start_node->predict_rate = 0.1;
+
 			ScopeNode* scope_node = new ScopeNode();
 			scope_node->parent = new_scope;
 			scope_node->id = new_scope->node_counter;
@@ -394,11 +412,17 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 			scope_node->predict_network = new PredictNetwork(NUM_STATES);
 
+			scope_node->predict_start_network = new PredictNetwork(NUM_STATES);
+			scope_node->predict_rate = 0.1;
+
 			NoopNode* end_node = new NoopNode();
 			end_node->parent = new_scope;
 			end_node->id = new_scope->node_counter;
 			new_scope->node_counter++;
 			new_scope->nodes[end_node->id] = end_node;
+
+			end_node->predict_start_network = new PredictNetwork(NUM_STATES);
+			end_node->predict_rate = 0.1;
 
 			start_node->next_node_id = scope_node->id;
 			start_node->next_node = scope_node;
@@ -415,6 +439,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 			new_scope->obs_network = new ObsNetwork(
 				wrapper->solution->starting_scope->obs_network);
+
+			new_scope->predict_start_network = new PredictNetwork(NUM_STATES);
+			new_scope->predict_rate = 0.1;
 
 			new_scope->score_network = new ScoreNetwork(
 				wrapper->solution->starting_scope->score_network);
@@ -434,6 +461,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 				new_action_node->predict_network = new PredictNetwork(
 					wrapper->solution->starting_scope->generic_action_nodes[a_index]->predict_network);
+
+				new_action_node->predict_start_network = new PredictNetwork(NUM_STATES);
+				new_action_node->predict_rate = 0.1;
 
 				new_action_node->next_node_id = -1;
 				new_action_node->next_node = NULL;
@@ -459,6 +489,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 				new_scope_node->predict_network = new PredictNetwork(
 					wrapper->solution->starting_scope->generic_scope_nodes[c_index]->predict_network);
 
+				new_scope_node->predict_start_network = new PredictNetwork(NUM_STATES);
+				new_scope_node->predict_rate = 0.1;
+
 				new_scope_node->next_node_id = -1;
 				new_scope_node->next_node = NULL;
 
@@ -481,6 +514,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 																	NUM_STATES);
 
 				new_scope_node->predict_network = new PredictNetwork(NUM_STATES);
+
+				new_scope_node->predict_start_network = new PredictNetwork(NUM_STATES);
+				new_scope_node->predict_rate = 0.1;
 
 				new_scope_node->next_node_id = -1;
 				new_scope_node->next_node = NULL;
@@ -514,6 +550,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		Scope* scope = wrapper->solution->scopes[s_index];
 		scope->obs_network->clear_momentum();
 		scope->score_network->clear_momentum();
+		scope->predict_start_network->clear_momentum();
+
 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 				it != scope->nodes.end(); it++) {
 			switch (it->second->type) {
@@ -538,6 +576,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 				}
 				break;
 			}
+
+			it->second->predict_start_network->clear_momentum();
 		}
 	}
 	for (int h_index = 0; h_index < (int)wrapper->existing_scope_histories.size(); h_index++) {

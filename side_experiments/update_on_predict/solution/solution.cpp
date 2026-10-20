@@ -102,6 +102,9 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->obs_network = new ObsNetwork(NUM_STATES,
 											this->num_obs);
 
+	new_scope->predict_start_network = new PredictNetwork(NUM_STATES);
+	new_scope->predict_rate = 0.1;
+
 	new_scope->score_network = new ScoreNetwork(NUM_STATES);
 
 	for (int a_index = 0; a_index < this->num_actions; a_index++) {
@@ -118,6 +121,8 @@ void Solution::init(ProblemType* problem_type) {
 													  this->num_obs);
 
 		new_action_node->predict_network = new PredictNetwork(NUM_STATES);
+
+		new_action_node->predict_start_network = new PredictNetwork(NUM_STATES);
 
 		new_action_node->next_node_id = -1;
 		new_action_node->next_node = NULL;

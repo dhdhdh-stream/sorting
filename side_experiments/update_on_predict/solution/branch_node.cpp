@@ -6,6 +6,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
+#include "predict_network.h"
 #include "scope.h"
 #include "score_network.h"
 #include "solution.h"
@@ -22,8 +23,6 @@ BranchNode::BranchNode() {
 
 	this->original_curr_num_instances = 0;
 	this->branch_curr_num_instances = 0;
-
-	this->predict_success_rate = 0.5;
 }
 
 BranchNode::~BranchNode() {
@@ -50,6 +49,9 @@ void BranchNode::copy_from(BranchNode* original,
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
 
+	this->predict_start_network = new PredictNetwork(original->predict_start_network);
+	this->predict_rate = original->predict_rate;
+
 	this->consec_original = original->consec_original;
 	this->consec_branch = original->consec_branch;
 
@@ -59,8 +61,6 @@ void BranchNode::copy_from(BranchNode* original,
 	this->branch_average_instances_per_run = original->branch_average_instances_per_run;
 
 	this->ancestor_ids = original->ancestor_ids;
-
-	this->predict_success_rate = original->predict_success_rate;
 }
 
 void BranchNode::save(ofstream& output_file) {
@@ -71,6 +71,9 @@ void BranchNode::save(ofstream& output_file) {
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
+
+	this->predict_start_network->save(output_file);
+	output_file << this->predict_rate << endl;
 
 	output_file << this->consec_original << endl;
 	output_file << this->consec_branch << endl;
@@ -84,8 +87,6 @@ void BranchNode::save(ofstream& output_file) {
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
-
-	output_file << this->predict_success_rate << endl;
 }
 
 void BranchNode::load(ifstream& input_file,
@@ -102,6 +103,17 @@ void BranchNode::load(ifstream& input_file,
 	string branch_next_node_id_line;
 	getline(input_file, branch_next_node_id_line);
 	this->branch_next_node_id = stoi(branch_next_node_id_line);
+
+	this->predict_start_network = new PredictNetwork(input_file);
+
+	string predict_rate_line;
+	getline(input_file, predict_rate_line);
+	this->predict_rate = stod(predict_rate_line);
+
+	// temp
+	cout << "this->parent->id: " << this->parent->id << endl;
+	cout << "this->id: " << this->id << endl;
+	cout << "this->predict_rate: " << this->predict_rate << endl;
 
 	string consec_original_line;
 	getline(input_file, consec_original_line);
@@ -145,15 +157,6 @@ void BranchNode::load(ifstream& input_file,
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
-
-	string predict_success_rate_line;
-	getline(input_file, predict_success_rate_line);
-	this->predict_success_rate = stod(predict_success_rate_line);
-
-	// temp
-	cout << "this->parent->id: " << this->parent->id << endl;
-	cout << "this->id: " << this->id << endl;
-	cout << "this->predict_success_rate: " << this->predict_success_rate << endl;
 }
 
 void BranchNode::link(Solution* parent_solution) {
