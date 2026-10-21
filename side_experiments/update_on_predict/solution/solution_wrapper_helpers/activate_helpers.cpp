@@ -23,6 +23,7 @@ void SolutionWrapper::init(vector<double> obs) {
 
 	// temp
 	this->allow_predict = true;
+	this->in_predict = false;
 
 	this->states.push_back(Eigen::VectorXf());
 	this->states.back().resize(NUM_STATES);
@@ -49,13 +50,10 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 			ActionNode* action_node = (ActionNode*)this->node_context.back();
 			action_node->step_callback(obs,
 									   this);
-
-			uniform_int_distribution<int> predict_distribution(0, 9);
-			if (predict_distribution(generator) == 0) {
-				predict_helper(this);
-			}
 		}
 	}
+
+	uniform_real_distribution<double> distribution(0.0, 1.0);
 
 	int action;
 	bool is_next = false;
@@ -67,29 +65,95 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 				action,
 				is_next,
 				this);
-		} else if (this->node_context.back() == NULL) {
-			if (this->scope_histories.size() == 1) {
-				is_next = true;
-				is_done = true;
-			} else {
-				if (this->remaining_predict[this->remaining_predict.size() - 2].size() > 0) {
-					ScopeNode* scope_node = (ScopeNode*)this->remaining_predict[this->remaining_predict.size() - 2][0];
-					scope_node->exit_step(this);
-				} else {
-					ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
-					scope_node->exit_step(this);
+		} else {
+			if (this->allow_predict
+					&& !this->in_predict) {
+				if (this->solution->starting_scope_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
+					if (distribution(generator) <= this->solution->predict_rate) {
+						uniform_int_distribution<int> predict_select_distribution(0, 4);
+						if (predict_select_distribution(generator) == 0) {
+							if (this->scope_histories.back()->scope == this->solution->starting_scope) {
+								if (this->node_context.back() == NULL) {
+									if (distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
+										this->predict_scope_histories.push_back(this->scope_histories.back());
+										this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
+										this->predict_node_contexts.push_back(this->node_context.back());
 
-					uniform_int_distribution<int> predict_distribution(0, 9);
-					if (predict_distribution(generator) == 0) {
-						predict_helper(this);
+										uniform_int_distribution<int> existing_distribution(0, 1);
+										if (existing_distribution(generator) != 0) {
+											predict_helper(this);
+											continue;
+										}
+									}
+								} else {
+									if (distribution(generator) <= this->node_context.back()->predict_rate) {
+										this->predict_scope_histories.push_back(this->scope_histories.back());
+										this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
+										this->predict_node_contexts.push_back(this->node_context.back());
+
+										uniform_int_distribution<int> existing_distribution(0, 1);
+										if (existing_distribution(generator) != 0) {
+											predict_helper(this);
+											continue;
+										}
+									}
+								}
+							}
+						}
+					}
+				} else {
+					if (distribution(generator) <= this->solution->predict_rate) {
+						uniform_int_distribution<int> predict_select_distribution(0, 4);
+						if (predict_select_distribution(generator) == 0) {
+							if (this->node_context.back() == NULL) {
+								if (distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
+									this->predict_scope_histories.push_back(this->scope_histories.back());
+									this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
+									this->predict_node_contexts.push_back(this->node_context.back());
+
+									uniform_int_distribution<int> existing_distribution(0, 1);
+									if (existing_distribution(generator) != 0) {
+										predict_helper(this);
+										continue;
+									}
+								}
+							} else {
+								if (distribution(generator) <= this->node_context.back()->predict_rate) {
+									this->predict_scope_histories.push_back(this->scope_histories.back());
+									this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
+									this->predict_node_contexts.push_back(this->node_context.back());
+
+									uniform_int_distribution<int> existing_distribution(0, 1);
+									if (existing_distribution(generator) != 0) {
+										predict_helper(this);
+										continue;
+									}
+								}
+							}
+						}
 					}
 				}
 			}
-		} else {
-			this->node_context.back()->step(obs,
-											action,
-											is_next,
-											this);
+
+			if (this->node_context.back() == NULL) {
+				if (this->scope_histories.size() == 1) {
+					is_next = true;
+					is_done = true;
+				} else {
+					if (this->remaining_predict[this->remaining_predict.size() - 2].size() > 0) {
+						ScopeNode* scope_node = (ScopeNode*)this->remaining_predict[this->remaining_predict.size() - 2][0];
+						scope_node->exit_step(this);
+					} else {
+						ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
+						scope_node->exit_step(this);
+					}
+				}
+			} else {
+				this->node_context.back()->step(obs,
+												action,
+												is_next,
+												this);
+			}
 		}
 	}
 

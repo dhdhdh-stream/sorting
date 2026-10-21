@@ -20,7 +20,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int PREDICT_NUM_TRIES = 2;
 #else
-const int PREDICT_NUM_TRIES = 200;
+const int PREDICT_NUM_TRIES = 400;
 #endif /* MDEBUG */
 
 double existing_predict_helper(AbstractNode* exit_next_node,
@@ -79,7 +79,7 @@ void predict_helper(SolutionWrapper* wrapper) {
 	AbstractNode* best_exit_next_node;
 	vector<AbstractNode*> best_predict;
 	double best_predict_val = numeric_limits<double>::lowest();
-	// int best_random_index;
+	int best_random_index;
 
 	geometric_distribution<int> exit_distribution(0.3);
 	for (int t_index = 0; t_index < PREDICT_NUM_TRIES; t_index++) {
@@ -135,7 +135,7 @@ void predict_helper(SolutionWrapper* wrapper) {
 			best_exit_next_node = curr_exit_next_node;
 			best_predict = curr_predict;
 			best_predict_val = curr_predict_val;
-			// best_random_index = random_index;
+			best_random_index = random_index;
 		}
 	}
 
@@ -161,7 +161,11 @@ void predict_helper(SolutionWrapper* wrapper) {
 
 	// // temp
 	// cout << "scope_context->id: " << scope_context->id << endl;
-	// cout << "wrapper->node_context.back()->id: " << wrapper->node_context.back()->id << endl;
+	// if (wrapper->node_context.back() == NULL) {
+	// 	cout << "wrapper->node_context.back()->id: -1" << endl;
+	// } else {
+	// 	cout << "wrapper->node_context.back()->id: " << wrapper->node_context.back()->id << endl;
+	// }
 	// cout << "existing:";
 	// for (int i_index = 0; i_index < best_random_index; i_index++) {
 	// 	cout << " " << possible_exits[i_index]->id;

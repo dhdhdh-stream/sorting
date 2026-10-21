@@ -38,6 +38,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	ss << "num_predict_misses: " << wrapper->num_predict_misses << "; ";
 	ss << "predict_score: " << wrapper->solution->predict_score << "; ";
 	ss << "non_predict_score: " << wrapper->solution->non_predict_score << "; ";
+	ss << "run_average_num_actions: " << wrapper->solution->run_average_num_actions << "; ";
+	ss << "predict_rate: " << wrapper->solution->predict_rate << "; ";
 	ss << "Experiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
