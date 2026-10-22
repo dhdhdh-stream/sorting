@@ -178,6 +178,13 @@ BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
 	this->node = node;
 }
 
+AbstractNodeHistory* BranchNodeHistory::copy_top() {
+	BranchNode* branch_node = (BranchNode*)this->node;
+	BranchNodeHistory* new_history = new BranchNodeHistory(branch_node);
+	new_history->is_branch = this->is_branch;
+	return new_history;
+}
+
 TrainPredictBranchNodeHistory::TrainPredictBranchNodeHistory(BranchNode* node) {
 	this->node = node;
 }

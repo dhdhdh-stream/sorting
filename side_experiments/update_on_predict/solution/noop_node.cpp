@@ -99,3 +99,9 @@ void NoopNode::save_for_display(ofstream& output_file) {
 NoopNodeHistory::NoopNodeHistory(NoopNode* node) {
 	this->node = node;
 }
+
+AbstractNodeHistory* NoopNodeHistory::copy_top() {
+	NoopNode* noop_node = (NoopNode*)this->node;
+	NoopNodeHistory* new_history = new NoopNodeHistory(noop_node);
+	return new_history;
+}

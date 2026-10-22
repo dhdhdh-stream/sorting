@@ -144,6 +144,13 @@ ScopeNodeHistory::~ScopeNodeHistory() {
 	}
 }
 
+AbstractNodeHistory* ScopeNodeHistory::copy_top() {
+	ScopeNode* scope_node = (ScopeNode*)this->node;
+	ScopeNodeHistory* new_history = new ScopeNodeHistory(scope_node);
+	new_history->end_inner_state = this->end_inner_state;
+	return new_history;
+}
+
 TrainScopeNodeHistory::TrainScopeNodeHistory(ScopeNode* node) {
 	this->node = node;
 

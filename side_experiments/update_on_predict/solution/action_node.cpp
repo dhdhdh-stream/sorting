@@ -131,6 +131,13 @@ ActionNodeHistory::ActionNodeHistory(ActionNode* node) {
 	this->node = node;
 }
 
+AbstractNodeHistory* ActionNodeHistory::copy_top() {
+	ActionNode* action_node = (ActionNode*)this->node;
+	ActionNodeHistory* new_history = new ActionNodeHistory(action_node);
+	new_history->obs = this->obs;
+	return new_history;
+}
+
 TrainActionNodeHistory::TrainActionNodeHistory(ActionNode* node) {
 	this->node = node;
 }

@@ -96,6 +96,8 @@ public:
 
 	ScopeNodeHistory(ScopeNode* node);
 	~ScopeNodeHistory();
+
+	AbstractNodeHistory* copy_top();
 };
 
 class TrainScopeNodeHistory : public TrainAbstractNodeHistory {

@@ -94,9 +94,8 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 							if (this->scope_histories.back()->scope == this->solution->starting_scope) {
 								if (this->node_context.back() == NULL) {
 									if (distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
-										this->predict_scope_histories.push_back(this->scope_histories.back());
-										this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-										this->predict_node_contexts.push_back(this->node_context.back());
+										this->run_predict_scope_histories.push_back(this->scope_histories.back());
+										this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
 
 										uniform_int_distribution<int> existing_distribution(0, 1);
 										if (existing_distribution(generator) != 0) {
@@ -106,9 +105,8 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 									}
 								} else {
 									if (distribution(generator) <= this->node_context.back()->predict_rate) {
-										this->predict_scope_histories.push_back(this->scope_histories.back());
-										this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-										this->predict_node_contexts.push_back(this->node_context.back());
+										this->run_predict_scope_histories.push_back(this->scope_histories.back());
+										this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
 
 										uniform_int_distribution<int> existing_distribution(0, 1);
 										if (existing_distribution(generator) != 0) {
@@ -126,9 +124,8 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 						if (predict_select_distribution(generator) == 0) {
 							if (this->node_context.back() == NULL) {
 								if (distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
-									this->predict_scope_histories.push_back(this->scope_histories.back());
-									this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-									this->predict_node_contexts.push_back(this->node_context.back());
+									this->run_predict_scope_histories.push_back(this->scope_histories.back());
+									this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
 
 									uniform_int_distribution<int> existing_distribution(0, 1);
 									if (existing_distribution(generator) != 0) {
@@ -138,9 +135,8 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 								}
 							} else {
 								if (distribution(generator) <= this->node_context.back()->predict_rate) {
-									this->predict_scope_histories.push_back(this->scope_histories.back());
-									this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-									this->predict_node_contexts.push_back(this->node_context.back());
+									this->run_predict_scope_histories.push_back(this->scope_histories.back());
+									this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
 
 									uniform_int_distribution<int> existing_distribution(0, 1);
 									if (existing_distribution(generator) != 0) {
@@ -187,8 +183,18 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	train_predict_helper(this,
-						 result);
+	for (int i_index = 0; i_index < (int)this->run_predict_scope_histories.size(); i_index++) {
+		Scope* scope = this->run_predict_scope_histories[i_index]->scope;
+		scope->predict_scope_histories.push_back(this->run_predict_scope_histories[i_index]->copy_top());
+		scope->predict_index_histories.push_back(this->run_predict_indexes[i_index]);
+		scope->predict_target_val_histories.push_back(result);
+		if ((int)scope->predict_scope_histories.size() >= BATCH_SIZE) {
+			train_predict_helper(scope,
+								 this);
+		}
+	}
+	this->run_predict_scope_histories.clear();
+	this->run_predict_indexes.clear();
 
 	if (this->solution->starting_scope_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
 		delete this->scope_histories[0];

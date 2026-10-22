@@ -46,6 +46,10 @@ public:
 
 	std::vector<std::list<double>> train_new_last_scores;
 
+	std::vector<ScopeHistory*> predict_scope_histories;
+	std::vector<int> predict_index_histories;
+	std::vector<double> predict_target_val_histories;
+
 	Scope();
 	~Scope();
 
@@ -76,6 +80,8 @@ public:
 
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();
+
+	ScopeHistory* copy_top();
 };
 
 #endif /* SCOPE_H */

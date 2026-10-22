@@ -27,8 +27,8 @@ void create_experiment(ScopeHistory* scope_history,
 void update_helper(SolutionWrapper* wrapper,
 				   double target_val);
 
-void train_predict_helper(SolutionWrapper* wrapper,
-						  double target_val);
+void train_predict_helper(Scope* scope,
+						  SolutionWrapper* wrapper);
 
 void train_existing_helper(SolutionWrapper* wrapper);
 

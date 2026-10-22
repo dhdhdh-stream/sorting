@@ -78,6 +78,8 @@ public:
 	std::vector<double> obs;
 
 	ActionNodeHistory(ActionNode* node);
+
+	AbstractNodeHistory* copy_top();
 };
 
 class TrainActionNodeHistory : public TrainAbstractNodeHistory {

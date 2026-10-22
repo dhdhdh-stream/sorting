@@ -68,6 +68,8 @@ public:
 	AbstractNode* node;
 
 	virtual ~AbstractNodeHistory() {};
+
+	virtual AbstractNodeHistory* copy_top() = 0;
 };
 
 class TrainAbstractNodeHistory {

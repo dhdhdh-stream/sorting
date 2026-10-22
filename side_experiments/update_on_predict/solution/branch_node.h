@@ -94,6 +94,8 @@ public:
 	std::vector<double> obs;
 
 	BranchNodeHistory(BranchNode* node);
+
+	AbstractNodeHistory* copy_top();
 };
 
 class TrainPredictBranchNodeHistory : public TrainAbstractNodeHistory {

@@ -353,3 +353,15 @@ ScopeHistory::~ScopeHistory() {
 		delete this->node_histories[h_index];
 	}
 }
+
+ScopeHistory* ScopeHistory::copy_top() {
+	ScopeHistory* new_history = new ScopeHistory(this->scope);
+
+	new_history->obs = this->obs;
+
+	for (int h_index = 0; h_index < (int)this->node_histories.size(); h_index++) {
+		new_history->node_histories.push_back(this->node_histories[h_index]->copy_top());
+	}
+
+	return new_history;
+}

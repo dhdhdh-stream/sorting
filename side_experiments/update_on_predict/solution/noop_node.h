@@ -64,6 +64,8 @@ public:
 class NoopNodeHistory : public AbstractNodeHistory {
 public:
 	NoopNodeHistory(NoopNode* node);
+
+	AbstractNodeHistory* copy_top();
 };
 
 #endif /* NOOP_NODE_H */

@@ -53,9 +53,8 @@ public:
 
 	std::map<AbstractExperiment*, AbstractExperimentHistory*> experiment_histories;
 
-	std::vector<ScopeHistory*> predict_scope_histories;
-	std::vector<int> predict_indexes;
-	std::vector<AbstractNode*> predict_node_contexts;
+	std::vector<ScopeHistory*> run_predict_scope_histories;
+	std::vector<int> run_predict_indexes;
 
 	Problem* problem;
 
