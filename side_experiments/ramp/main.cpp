@@ -1,5 +1,3 @@
-// TODO: test how damaging depending on random spots is
-
 #include <chrono>
 #include <iostream>
 #include <map>

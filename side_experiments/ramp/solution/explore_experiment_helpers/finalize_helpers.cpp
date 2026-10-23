@@ -414,12 +414,17 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		}
 	}
 
-	wrapper->solution->timestamp++;
+	/**
+	 * - simply delete all experiments
+	 *   - forces existing iters
+	 * 
+	 * - includes delete this
+	 */
 	for (int e_index = 0; e_index < DIVERSITY; e_index++) {
 		if (wrapper->experiments[e_index] != NULL) {
-			if (wrapper->solution->timestamp - wrapper->experiments[e_index]->create_timestamp > EXPERIMENT_DEPRECATE_LIMIT) {
-				delete wrapper->experiments[e_index];
-			}
+			delete wrapper->experiments[e_index];
 		}
 	}
+
+	wrapper->solution->timestamp++;
 }

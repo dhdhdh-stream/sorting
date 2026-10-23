@@ -24,8 +24,6 @@ ExploreExperiment::ExploreExperiment(SolutionWrapper* wrapper,
 	this->wrapper = wrapper;
 	this->experiment_index = experiment_index;
 
-	this->create_timestamp = wrapper->solution->timestamp;
-
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;

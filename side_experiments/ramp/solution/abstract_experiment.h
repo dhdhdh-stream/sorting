@@ -17,8 +17,6 @@ public:
 	SolutionWrapper* wrapper;
 	int experiment_index;
 
-	int create_timestamp;
-
 	Scope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;

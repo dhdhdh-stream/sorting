@@ -16,7 +16,7 @@ const int TRAIN_EXISTING_NUM_DATAPOINTS = 20;
 const std::vector<int> TRAIN_NEW_NUM_DATAPOINTS{10, 20, 40};
 const int MEASURE_NUM_DATAPOINTS = 10;
 #else
-const int TRAIN_EXISTING_NUM_DATAPOINTS = 4000;
+const int TRAIN_EXISTING_NUM_DATAPOINTS = 8000;
 const std::vector<int> TRAIN_NEW_NUM_DATAPOINTS{100, 500, 4000};
 /**
  * - good to have large amount of samples
@@ -82,9 +82,7 @@ const int ITERS_PER_BATCH = 1000;
  */
 #endif /* MDEBUG */
 
-const int GENERALIZE_ITER = 5;
-
-const int EXPERIMENT_DEPRECATE_LIMIT = 5;
+const int GENERALIZE_ITER = 6;
 
 const int STUCK_NUM_ITERS = 12;
 

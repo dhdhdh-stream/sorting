@@ -103,7 +103,9 @@ void SolutionWrapper::experiment_end(double result) {
 		this->new_since_update++;
 	}
 
-	this->ramp_tracker.clear();
+	for (int s_index = 0; s_index < (int)this->ramp_tracker.size(); s_index++) {
+		this->ramp_tracker[s_index].clear();
+	}
 
 	if (this->experiments[this->experiment_index] == NULL) {
 		create_experiment(this->scope_histories[0],
@@ -116,7 +118,7 @@ void SolutionWrapper::experiment_end(double result) {
 	this->node_context.clear();
 	this->experiment_context.clear();
 
-	if (this->experiments[this->experiment_index] == NULL
+	if (this->experiments[this->experiment_index] != NULL
 			&& !this->experiments[this->experiment_index]->is_existing()) {
 		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[this->experiment_index].begin();
 				it != this->experiment_histories[this->experiment_index].end(); it++) {

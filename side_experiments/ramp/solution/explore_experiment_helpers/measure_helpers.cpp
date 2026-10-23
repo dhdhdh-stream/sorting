@@ -1,5 +1,7 @@
 #include "explore_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -104,8 +106,6 @@ void ExploreExperiment::measure_backprop(double target_val,
 			if (new_val_average > this->existing_val_average) {
 			#endif /* MDEBUG */
 				add(wrapper);
-
-				delete this;
 			} else {
 				this->try_iter++;
 				if (this->try_iter >= EXPERIMENT_MAX_TRIES) {
