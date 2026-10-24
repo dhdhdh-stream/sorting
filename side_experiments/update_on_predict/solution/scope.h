@@ -48,6 +48,7 @@ public:
 
 	std::vector<ScopeHistory*> predict_scope_histories;
 	std::vector<int> predict_index_histories;
+	std::vector<bool> predict_is_existing_histories;
 	std::vector<double> predict_target_val_histories;
 
 	Scope();

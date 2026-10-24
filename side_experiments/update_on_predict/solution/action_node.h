@@ -58,8 +58,6 @@ public:
 	void train_predict_step(AbstractNodeHistory* history,
 							Eigen::VectorXf& state,
 							std::vector<TrainAbstractNodeHistory*>& train_node_histories);
-	void update_step(int iter_index);
-	void update_predict_step(int iter_index);
 
 	void predict_step(Eigen::VectorXf& state,
 					  AbstractNode*& node_context);

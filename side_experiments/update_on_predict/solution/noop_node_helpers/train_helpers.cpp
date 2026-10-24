@@ -13,11 +13,3 @@ void NoopNode::train_predict_step(AbstractNodeHistory* history,
 								  vector<TrainAbstractNodeHistory*>& train_node_histories) {
 	// do nothing
 }
-
-void NoopNode::update_step(int iter_index) {
-	// do nothing
-}
-
-void NoopNode::update_predict_step(int iter_index) {
-	// do nothing
-}

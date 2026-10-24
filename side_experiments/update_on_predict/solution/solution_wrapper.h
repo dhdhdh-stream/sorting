@@ -55,6 +55,7 @@ public:
 
 	std::vector<ScopeHistory*> run_predict_scope_histories;
 	std::vector<int> run_predict_indexes;
+	std::vector<bool> run_predict_is_existing;
 
 	Problem* problem;
 

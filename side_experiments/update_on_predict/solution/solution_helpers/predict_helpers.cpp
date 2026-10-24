@@ -79,7 +79,7 @@ void predict_helper(SolutionWrapper* wrapper) {
 	AbstractNode* best_exit_next_node;
 	vector<AbstractNode*> best_predict;
 	double best_predict_val = numeric_limits<double>::lowest();
-	int best_random_index;
+	// int best_random_index;
 
 	geometric_distribution<int> exit_distribution(0.3);
 	for (int t_index = 0; t_index < PREDICT_NUM_TRIES; t_index++) {
@@ -135,7 +135,7 @@ void predict_helper(SolutionWrapper* wrapper) {
 			best_exit_next_node = curr_exit_next_node;
 			best_predict = curr_predict;
 			best_predict_val = curr_predict_val;
-			best_random_index = random_index;
+			// best_random_index = random_index;
 		}
 	}
 

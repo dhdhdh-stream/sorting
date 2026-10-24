@@ -99,8 +99,12 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 
 										uniform_int_distribution<int> existing_distribution(0, 1);
 										if (existing_distribution(generator) != 0) {
+											this->run_predict_is_existing.push_back(false);
+
 											predict_helper(this);
 											continue;
+										} else {
+											this->run_predict_is_existing.push_back(true);
 										}
 									}
 								} else {
@@ -110,8 +114,12 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 
 										uniform_int_distribution<int> existing_distribution(0, 1);
 										if (existing_distribution(generator) != 0) {
+											this->run_predict_is_existing.push_back(false);
+
 											predict_helper(this);
 											continue;
+										} else {
+											this->run_predict_is_existing.push_back(true);
 										}
 									}
 								}
@@ -129,8 +137,12 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 
 									uniform_int_distribution<int> existing_distribution(0, 1);
 									if (existing_distribution(generator) != 0) {
+										this->run_predict_is_existing.push_back(false);
+
 										predict_helper(this);
 										continue;
+									} else {
+										this->run_predict_is_existing.push_back(true);
 									}
 								}
 							} else {
@@ -140,8 +152,12 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 
 									uniform_int_distribution<int> existing_distribution(0, 1);
 									if (existing_distribution(generator) != 0) {
+										this->run_predict_is_existing.push_back(false);
+
 										predict_helper(this);
 										continue;
+									} else {
+										this->run_predict_is_existing.push_back(true);
 									}
 								}
 							}
@@ -187,6 +203,7 @@ void SolutionWrapper::experiment_end(double result) {
 		Scope* scope = this->run_predict_scope_histories[i_index]->scope;
 		scope->predict_scope_histories.push_back(this->run_predict_scope_histories[i_index]->copy_top());
 		scope->predict_index_histories.push_back(this->run_predict_indexes[i_index]);
+		scope->predict_is_existing_histories.push_back(this->run_predict_is_existing[i_index]);
 		scope->predict_target_val_histories.push_back(result);
 		if ((int)scope->predict_scope_histories.size() >= BATCH_SIZE) {
 			train_predict_helper(scope,

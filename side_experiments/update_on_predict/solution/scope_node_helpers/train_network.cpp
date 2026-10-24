@@ -47,18 +47,20 @@ void TrainPredictScopeNodeHistory::backprop(Eigen::VectorXf& state_error) {
 	scope_node->predict_network->backprop(state_error);
 }
 
-void ScopeNode::update_step(int iter_index) {
-	if (this->out_network->last_update_iter != iter_index) {
-		this->out_network->update();
+void TrainScopeNodeHistory::update(int iter_index) {
+	ScopeNode* scope_node = (ScopeNode*)this->node;
+	if (scope_node->out_network->last_update_iter != iter_index) {
+		scope_node->out_network->update();
 
-		this->out_network->last_update_iter = iter_index;
+		scope_node->out_network->last_update_iter = iter_index;
 	}
 }
 
-void ScopeNode::update_predict_step(int iter_index) {
-	if (this->predict_network->last_update_iter != iter_index) {
-		this->predict_network->update();
+void TrainPredictScopeNodeHistory::update(int iter_index) {
+	ScopeNode* scope_node = (ScopeNode*)this->node;
+	if (scope_node->predict_network->last_update_iter != iter_index) {
+		scope_node->predict_network->update();
 
-		this->predict_network->last_update_iter = iter_index;
+		scope_node->predict_network->last_update_iter = iter_index;
 	}
 }

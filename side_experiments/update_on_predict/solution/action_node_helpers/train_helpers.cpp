@@ -44,18 +44,20 @@ void TrainPredictActionNodeHistory::backprop(Eigen::VectorXf& state_error) {
 	action_node->predict_network->backprop(state_error);
 }
 
-void ActionNode::update_step(int iter_index) {
-	if (this->obs_network->last_update_iter != iter_index) {
-		this->obs_network->update();
+void TrainActionNodeHistory::update(int iter_index) {
+	ActionNode* action_node = (ActionNode*)this->node;
+	if (action_node->obs_network->last_update_iter != iter_index) {
+		action_node->obs_network->update();
 
-		this->obs_network->last_update_iter = iter_index;
+		action_node->obs_network->last_update_iter = iter_index;
 	}
 }
 
-void ActionNode::update_predict_step(int iter_index) {
-	if (this->predict_network->last_update_iter != iter_index) {
-		this->predict_network->update();
+void TrainPredictActionNodeHistory::update(int iter_index) {
+	ActionNode* action_node = (ActionNode*)this->node;
+	if (action_node->predict_network->last_update_iter != iter_index) {
+		action_node->predict_network->update();
 
-		this->predict_network->last_update_iter = iter_index;
+		action_node->predict_network->last_update_iter = iter_index;
 	}
 }

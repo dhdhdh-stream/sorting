@@ -34,14 +34,11 @@ void TrainPredictBranchNodeHistory::backprop(Eigen::VectorXf& state_error) {
 	}
 }
 
-void BranchNode::update_step(int iter_index) {
-	// do nothing
-}
+void TrainPredictBranchNodeHistory::update(int iter_index) {
+	BranchNode* branch_node = (BranchNode*)this->node;
+	if (branch_node->branch_predict_network->last_update_iter != iter_index) {
+		branch_node->branch_predict_network->update();
 
-void BranchNode::update_predict_step(int iter_index) {
-	if (this->branch_predict_network->last_update_iter != iter_index) {
-		this->branch_predict_network->update();
-
-		this->branch_predict_network->last_update_iter = iter_index;
+		branch_node->branch_predict_network->last_update_iter = iter_index;
 	}
 }

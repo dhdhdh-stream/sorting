@@ -52,8 +52,6 @@ public:
 	virtual void train_predict_step(AbstractNodeHistory* history,
 									Eigen::VectorXf& state,
 									std::vector<TrainAbstractNodeHistory*>& train_node_histories) = 0;
-	virtual void update_step(int iter_index) = 0;
-	virtual void update_predict_step(int iter_index) = 0;
 
 	virtual void predict_step(Eigen::VectorXf& state,
 							  AbstractNode*& node_context) = 0;
@@ -79,6 +77,7 @@ public:
 	virtual ~TrainAbstractNodeHistory() {};
 
 	virtual void backprop(Eigen::VectorXf& state_error) = 0;
+	virtual void update(int iter_index) = 0;
 };
 
 #endif /* ABSTRACT_NODE_H */

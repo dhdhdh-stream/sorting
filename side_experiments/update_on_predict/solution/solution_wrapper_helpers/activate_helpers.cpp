@@ -75,10 +75,6 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 							if (this->scope_histories.back()->scope == this->solution->starting_scope) {
 								if (this->node_context.back() == NULL) {
 									if (distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
-										this->predict_scope_histories.push_back(this->scope_histories.back());
-										this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-										this->predict_node_contexts.push_back(this->node_context.back());
-
 										uniform_int_distribution<int> existing_distribution(0, 1);
 										if (existing_distribution(generator) != 0) {
 											predict_helper(this);
@@ -87,10 +83,6 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 									}
 								} else {
 									if (distribution(generator) <= this->node_context.back()->predict_rate) {
-										this->predict_scope_histories.push_back(this->scope_histories.back());
-										this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-										this->predict_node_contexts.push_back(this->node_context.back());
-
 										uniform_int_distribution<int> existing_distribution(0, 1);
 										if (existing_distribution(generator) != 0) {
 											predict_helper(this);
@@ -107,10 +99,6 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 						if (predict_select_distribution(generator) == 0) {
 							if (this->node_context.back() == NULL) {
 								if (distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
-									this->predict_scope_histories.push_back(this->scope_histories.back());
-									this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-									this->predict_node_contexts.push_back(this->node_context.back());
-
 									uniform_int_distribution<int> existing_distribution(0, 1);
 									if (existing_distribution(generator) != 0) {
 										predict_helper(this);
@@ -119,10 +107,6 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 								}
 							} else {
 								if (distribution(generator) <= this->node_context.back()->predict_rate) {
-									this->predict_scope_histories.push_back(this->scope_histories.back());
-									this->predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-									this->predict_node_contexts.push_back(this->node_context.back());
-
 									uniform_int_distribution<int> existing_distribution(0, 1);
 									if (existing_distribution(generator) != 0) {
 										predict_helper(this);
