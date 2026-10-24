@@ -55,7 +55,13 @@ void train_predict_helper(Scope* scope,
 		vector<TrainAbstractNodeHistory*> post_train_node_histories;
 		if (scope->predict_is_existing_histories[index]) {
 			geometric_distribution<int> exit_distribution(0.3);
-			int random_index = exit_distribution(generator);
+			int random_index;
+			while (true) {
+				random_index = exit_distribution(generator);
+				if (explore_index+1+random_index <= (int)scope_history->node_histories.size()) {
+					break;
+				}
+			}
 			for (int h_index = explore_index+1; h_index < explore_index+1+random_index; h_index++) {
 				AbstractNode* node = scope_history->node_histories[h_index]->node;
 				switch (node->type) {
@@ -147,6 +153,9 @@ void train_predict_helper(Scope* scope,
 		}
 	}
 
+	for (int h_index = 0; h_index < (int)scope->predict_scope_histories.size(); h_index++) {
+		delete scope->predict_scope_histories[h_index];
+	}
 	scope->predict_scope_histories.clear();
 	scope->predict_index_histories.clear();
 	scope->predict_target_val_histories.clear();
