@@ -211,6 +211,11 @@ void update_helper(SolutionWrapper* wrapper,
 				} else {
 					it->first->ramp--;
 				}
+
+				it->first->existing_sum_score = 0.0;
+				it->first->existing_count = 0;
+				it->first->new_sum_score = 0.0;
+				it->first->new_count = 0;
 			}
 		}
 	}
