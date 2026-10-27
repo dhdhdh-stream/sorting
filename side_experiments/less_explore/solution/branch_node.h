@@ -45,13 +45,6 @@ public:
 	int consec_original;
 	int consec_branch;
 
-	std::vector<std::vector<double>> original_obs_histories;
-	std::vector<double> original_target_val_histories;
-	int train_original_count;
-	std::vector<std::vector<double>> branch_obs_histories;
-	std::vector<double> branch_target_val_histories;
-	int train_branch_count;
-
 	double original_average_instances_per_hit;
 	double original_average_instances_per_run;
 	std::vector<AbstractExperiment*> original_experiments;

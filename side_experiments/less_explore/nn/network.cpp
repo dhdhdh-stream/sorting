@@ -55,6 +55,7 @@ Network::Network(int input_size) {
 	this->output->input_layers.push_back(this->hidden_3);
 	this->output->update_structure();
 
+	this->num_instances = 0;
 	this->epoch_iter = 0;
 }
 
@@ -101,6 +102,7 @@ Network::Network(Network* original) {
 	this->output->update_structure();
 	this->output->copy_weights_from(original->output);
 
+	this->num_instances = 0;
 	this->epoch_iter = 0;
 }
 
@@ -160,6 +162,7 @@ Network::Network(ifstream& input_file) {
 	this->hidden_3->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
 
+	this->num_instances = 0;
 	this->epoch_iter = 0;
 }
 
@@ -195,10 +198,10 @@ void Network::init_backprop(double error,
 
 	this->epoch_iter++;
 	if (this->epoch_iter == INIT_EPOCH_SIZE) {
-		this->hidden_1->update();
-		this->hidden_2->update();
-		this->hidden_3->update();
-		this->output->update();
+		this->hidden_1->update(1);
+		this->hidden_2->update(1);
+		this->hidden_3->update(1);
+		this->output->update(1);
 
 		this->epoch_iter = 0;
 	}
@@ -210,13 +213,17 @@ void Network::backprop(double error) {
 	this->hidden_3->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
+
+	this->num_instances++;
 }
 
 void Network::update() {
-	this->hidden_1->update();
-	this->hidden_2->update();
-	this->hidden_3->update();
-	this->output->update();
+	this->hidden_1->update(this->num_instances);
+	this->hidden_2->update(this->num_instances);
+	this->hidden_3->update(this->num_instances);
+	this->output->update(this->num_instances);
+
+	this->num_instances = 0;
 }
 
 void Network::clear_momentum() {

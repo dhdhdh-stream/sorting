@@ -22,4 +22,6 @@ void create_experiment(ScopeHistory* scope_history,
 void update_helper(SolutionWrapper* wrapper,
 				   double target_val);
 
+void clean_scope(Scope* scope);
+
 #endif /* SOLUTION_HELPERS_H */

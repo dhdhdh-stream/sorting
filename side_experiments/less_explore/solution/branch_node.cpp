@@ -14,9 +14,6 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->train_original_count = 0;
-	this->train_branch_count = 0;
-
 	this->original_average_instances_per_hit = 1.0;
 	this->original_average_instances_per_run = 0.0;
 	this->branch_average_instances_per_hit = 1.0;
@@ -54,13 +51,6 @@ void BranchNode::copy_from(BranchNode* original,
 
 	this->consec_original = original->consec_original;
 	this->consec_branch = original->consec_branch;
-
-	this->original_obs_histories = original->original_obs_histories;
-	this->original_target_val_histories = original->original_target_val_histories;
-	this->train_original_count = original->train_original_count;
-	this->branch_obs_histories = original->branch_obs_histories;
-	this->branch_target_val_histories = original->branch_target_val_histories;
-	this->train_branch_count = original->train_branch_count;
 
 	this->original_average_instances_per_hit = original->original_average_instances_per_hit;
 	this->original_average_instances_per_run = original->original_average_instances_per_run;

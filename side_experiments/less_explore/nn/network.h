@@ -21,6 +21,7 @@ public:
 	Layer* hidden_3;
 	Layer* output;
 
+	int num_instances;
 	int epoch_iter;
 
 	Network(int input_size);

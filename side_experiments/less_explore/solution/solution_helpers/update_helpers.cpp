@@ -4,6 +4,9 @@
  *   - since bad paths are no longer taken, score increase overall...
  *   - ...increasing score for bad paths, leading to them being taken again
  *   - ultimately, bad paths will be predicted as bad, but not accurately
+ * 
+ * - do not batch train
+ *   - adam easily overfits(?)
  */
 
 #include "solution_helpers.h"
@@ -60,15 +63,19 @@ void update_helper(ScopeHistory* scope_history,
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 
 				if (branch_node_history->is_branch) {
-					branch_node->branch_obs_histories.push_back(branch_node_history->obs);
-					branch_node->branch_target_val_histories.push_back(target_val);
+					branch_node->branch_network->activate(branch_node_history->obs);
+					double error = target_val - branch_node->branch_network->output->acti_vals(0);
+					branch_node->branch_network->backprop(error);
+
 					branch_node->branch_curr_num_instances++;
 
 					branch_node->consec_original = 0;
 					branch_node->consec_branch++;
 				} else {
-					branch_node->original_obs_histories.push_back(branch_node_history->obs);
-					branch_node->original_target_val_histories.push_back(target_val);
+					branch_node->original_network->activate(branch_node_history->obs);
+					double error = target_val - branch_node->original_network->output->acti_vals(0);
+					branch_node->original_network->backprop(error);
+
 					branch_node->original_curr_num_instances++;
 
 					branch_node->consec_original++;
@@ -132,27 +139,11 @@ void update_helper(SolutionWrapper* wrapper,
 					if (branch_node->original_curr_num_instances > 0) {
 						branch_node->original_average_instances_per_hit = 0.999*branch_node->original_average_instances_per_hit + 0.001*branch_node->original_curr_num_instances;
 
-						branch_node->train_original_count++;
-						if (branch_node->train_original_count >= BATCH_SIZE) {
-							uniform_int_distribution<int> sample_distribution(0, branch_node->original_obs_histories.size()-1);
-							for (int iter_index = 0; iter_index < ITERS_PER_BATCH; iter_index++) {
-								int index = sample_distribution(generator);
+						branch_node->original_network->epoch_iter++;
+						if (branch_node->original_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
+							branch_node->original_network->update();
 
-								branch_node->original_network->activate(branch_node->original_obs_histories[index]);
-								double error = branch_node->original_target_val_histories[index] - branch_node->original_network->output->acti_vals(0);
-								branch_node->original_network->backprop(error);
-
-								branch_node->original_network->epoch_iter++;
-								if (branch_node->original_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
-									branch_node->original_network->update();
-
-									branch_node->original_network->epoch_iter = 0;
-								}
-							}
-
-							branch_node->original_obs_histories.clear();
-							branch_node->original_target_val_histories.clear();
-							branch_node->train_original_count = 0;
+							branch_node->original_network->epoch_iter = 0;
 						}
 
 						branch_node->original_curr_num_instances = 0;
@@ -161,27 +152,11 @@ void update_helper(SolutionWrapper* wrapper,
 					if (branch_node->branch_curr_num_instances > 0) {
 						branch_node->branch_average_instances_per_hit = 0.999*branch_node->branch_average_instances_per_hit + 0.001*branch_node->branch_curr_num_instances;
 
-						branch_node->train_branch_count++;
-						if (branch_node->train_branch_count >= BATCH_SIZE) {
-							uniform_int_distribution<int> sample_distribution(0, branch_node->branch_obs_histories.size()-1);
-							for (int iter_index = 0; iter_index < ITERS_PER_BATCH; iter_index++) {
-								int index = sample_distribution(generator);
+						branch_node->branch_network->epoch_iter++;
+						if (branch_node->branch_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
+							branch_node->branch_network->update();
 
-								branch_node->branch_network->activate(branch_node->branch_obs_histories[index]);
-								double error = branch_node->branch_target_val_histories[index] - branch_node->branch_network->output->acti_vals(0);
-								branch_node->branch_network->backprop(error);
-
-								branch_node->branch_network->epoch_iter++;
-								if (branch_node->branch_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
-									branch_node->branch_network->update();
-
-									branch_node->branch_network->epoch_iter = 0;
-								}
-							}
-
-							branch_node->branch_obs_histories.clear();
-							branch_node->branch_target_val_histories.clear();
-							branch_node->train_branch_count = 0;
+							branch_node->branch_network->epoch_iter = 0;
 						}
 
 						branch_node->branch_curr_num_instances = 0;

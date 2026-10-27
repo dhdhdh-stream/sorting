@@ -59,26 +59,18 @@ const int MAX_RAMP = 5;
 const int STARTING_RAMP = 2;
 const int ITERS_PER_RAMP = 2;
 #else
-const int MAX_RAMP = 20;
+const int MAX_RAMP = 40;
 const int STARTING_RAMP = 2;
-const int ITERS_PER_RAMP = 4000;
+const int ITERS_PER_RAMP = 10000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
 const int UPDATE_NUM_ITERS = 40;
-const int BATCH_SIZE = 10;
-const int ITERS_PER_BATCH = 10;
 #else
-const int UPDATE_NUM_ITERS = 100000;
-const int BATCH_SIZE = 100;
-const int ITERS_PER_BATCH = 1000;
-/**
- * - need large BATCH_SIZE and low ITERS_PER_BATCH
- *   - adam easily overfits
- */
+const int UPDATE_NUM_ITERS = 40000;
 #endif /* MDEBUG */
 
-const int GENERALIZE_ITER = 3;
+const int GENERALIZE_ITER = 6;
 
 const int EXPERIMENT_REFRESH_NUM_ITERS = 10;
 

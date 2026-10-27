@@ -250,12 +250,14 @@ void Layer::backprop() {
 	}
 }
 
-void Layer::update() {
+void Layer::update(int num_instances) {
 	this->m_bch *= M_CONSTANT;
 	this->v_bch *= V_CONSTANT;
 
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
+			this->weight_updates[n_index][l_index] /= num_instances;
+
 			this->weight_ms[n_index][l_index] = M_CONSTANT * this->weight_ms[n_index][l_index]
 				+ (1.0 - M_CONSTANT) * this->weight_updates[n_index][l_index];
 			this->weight_vs[n_index][l_index] = V_CONSTANT * this->weight_vs[n_index][l_index]
@@ -268,6 +270,8 @@ void Layer::update() {
 
 			this->weight_updates[n_index][l_index].setConstant(0.0);
 		}
+
+		this->constant_updates[n_index] /= num_instances;
 
 		this->constant_ms[n_index] = M_CONSTANT * this->constant_ms[n_index]
 			+ (1.0 - M_CONSTANT) * this->constant_updates[n_index];

@@ -40,7 +40,7 @@ public:
 
 	void activate();
 	void backprop();
-	void update();
+	void update(int num_instances);
 
 	void clear_momentum();
 
