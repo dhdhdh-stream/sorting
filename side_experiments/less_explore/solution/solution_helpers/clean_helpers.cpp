@@ -16,7 +16,7 @@ using namespace std;
  * - to_replace removed from replacement's ancestor_ids outside
  */
 void replace_next(AbstractNode* node,
-				  BranchNode* to_replace,
+				  AbstractNode* to_replace,
 				  AbstractNode* replacement) {
 	switch (node->type) {
 	case NODE_TYPE_NOOP:
@@ -119,7 +119,7 @@ void clean_scope(Scope* scope) {
 	}
 
 	/**
-	 * - remove useless BranchNodes
+	 * - remove useless nodes
 	 */
 	#if defined(MDEBUG) && MDEBUG
 	#else
@@ -128,7 +128,32 @@ void clean_scope(Scope* scope) {
 
 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 				it != scope->nodes.end(); it++) {
-			if (it->second->type == NODE_TYPE_BRANCH
+			if (it->second->type == NODE_TYPE_NOOP
+					&& experiment_endpoints.find(it->second) == experiment_endpoints.end()) {
+				NoopNode* noop_node = (NoopNode*)it->second;
+				if (noop_node->id != 0
+						&& noop_node->next_node != NULL) {
+					for (int a_index = 0; a_index < (int)noop_node->next_node->ancestor_ids.size(); a_index++) {
+						if (noop_node->next_node->ancestor_ids[a_index] == noop_node->id) {
+							noop_node->next_node->ancestor_ids.erase(noop_node->next_node->ancestor_ids.begin() + a_index);
+							break;
+						}
+					}
+
+					for (int a_index = 0; a_index < (int)noop_node->ancestor_ids.size(); a_index++) {
+						AbstractNode* node = scope->nodes[noop_node->ancestor_ids[a_index]];
+						replace_next(node,
+									 noop_node,
+									 noop_node->next_node);
+					}
+
+					scope->nodes.erase(noop_node->id);
+					delete noop_node;
+
+					removed_node = true;
+					break;
+				}
+			} else if (it->second->type == NODE_TYPE_BRANCH
 					&& experiment_endpoints.find(it->second) == experiment_endpoints.end()) {
 				BranchNode* branch_node = (BranchNode*)it->second;
 

@@ -25,7 +25,6 @@ public:
 
 	int iters_since_update;
 
-	std::vector<AbstractExperiment*> experiments;
 	std::vector<int> experiment_iters;
 	/**
 	 * - fully reset experiments every so often
