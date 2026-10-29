@@ -118,11 +118,17 @@ void SolutionWrapper::experiment_end(double result) {
 						  this);
 	}
 
-	for (int e_index = 0; e_index < DIVERSITY; e_index++) {
-		if (this->experiment_histories[e_index].size() >= 2) {
+	delete this->scope_histories[0];
+
+	this->scope_histories.clear();
+	this->node_context.clear();
+	this->experiment_context.clear();
+
+	if (this->is_explore) {
+		if (this->experiment_histories[this->experiment_index].size() >= 2) {
 			AbstractExperiment* keep_experiment = NULL;
-			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[e_index].begin();
-					it != this->experiment_histories[e_index].end(); it++) {
+			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[this->experiment_index].begin();
+					it != this->experiment_histories[this->experiment_index].end(); it++) {
 				if (keep_experiment == NULL) {
 					keep_experiment = it->first;
 				} else {
@@ -135,17 +141,7 @@ void SolutionWrapper::experiment_end(double result) {
 					}
 				}
 			}
-		}
-	}
-
-	delete this->scope_histories[0];
-
-	this->scope_histories.clear();
-	this->node_context.clear();
-	this->experiment_context.clear();
-
-	if (this->is_explore) {
-		if (this->experiment_histories[this->experiment_index].size() == 1) {
+		} else {
 			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[this->experiment_index].begin();
 					it != this->experiment_histories[this->experiment_index].end(); it++) {
 				it->first->backprop(result,
@@ -155,7 +151,23 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	} else {
 		for (int e_index = 0; e_index < DIVERSITY; e_index++) {
-			if (this->experiment_histories[e_index].size() == 1) {
+			if (this->experiment_histories[e_index].size() >= 2) {
+				AbstractExperiment* keep_experiment = NULL;
+				for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[e_index].begin();
+						it != this->experiment_histories[e_index].end(); it++) {
+					if (keep_experiment == NULL) {
+						keep_experiment = it->first;
+					} else {
+						if (it->first->further_than(keep_experiment)) {
+							delete keep_experiment;
+
+							keep_experiment = it->first;
+						} else {
+							delete it->first;
+						}
+					}
+				}
+			} else {
 				for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[e_index].begin();
 						it != this->experiment_histories[e_index].end(); it++) {
 					it->first->backprop(result,
