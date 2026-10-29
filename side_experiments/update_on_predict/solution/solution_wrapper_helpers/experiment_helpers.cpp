@@ -24,6 +24,20 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
+	#if defined(MDEBUG) && MDEBUG
+	uniform_int_distribution<int> is_explore_distribution(0, 1);
+	#else
+	uniform_int_distribution<int> is_explore_distribution(0, 4);
+	#endif /* MDEBUG */
+	if (is_explore_distribution(generator) == 0) {
+		this->is_explore = true;
+	} else {
+		this->is_explore = false;
+	}
+
+	uniform_int_distribution<int> experiment_distribution(0, DIVERSITY-1);
+	this->experiment_index = experiment_distribution(generator);
+
 	uniform_int_distribution<int> allow_predict_distribution(0, 9);
 	if (allow_predict_distribution(generator) != 0) {
 		this->allow_predict = true;
@@ -87,46 +101,7 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 		} else {
 			if (this->allow_predict
 					&& !this->in_predict) {
-				if (this->solution->starting_scope_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
-					if (distribution(generator) <= this->solution->predict_rate) {
-						uniform_int_distribution<int> predict_select_distribution(0, 4);
-						if (predict_select_distribution(generator) == 0) {
-							if (this->scope_histories.back()->scope == this->solution->starting_scope) {
-								if (this->node_context.back() == NULL) {
-									if (distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
-										this->run_predict_scope_histories.push_back(this->scope_histories.back());
-										this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-
-										uniform_int_distribution<int> existing_distribution(0, 1);
-										if (existing_distribution(generator) != 0) {
-											this->run_predict_is_existing.push_back(false);
-
-											predict_helper(this);
-											continue;
-										} else {
-											this->run_predict_is_existing.push_back(true);
-										}
-									}
-								} else {
-									if (distribution(generator) <= this->node_context.back()->predict_rate) {
-										this->run_predict_scope_histories.push_back(this->scope_histories.back());
-										this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-
-										uniform_int_distribution<int> existing_distribution(0, 1);
-										if (existing_distribution(generator) != 0) {
-											this->run_predict_is_existing.push_back(false);
-
-											predict_helper(this);
-											continue;
-										} else {
-											this->run_predict_is_existing.push_back(true);
-										}
-									}
-								}
-							}
-						}
-					}
-				} else {
+				if (this->scope_histories.back()->scope->predict_num_stabilize >= NEW_SCOPE_NUM_STABILIZE) {
 					if (distribution(generator) <= this->solution->predict_rate) {
 						uniform_int_distribution<int> predict_select_distribution(0, 4);
 						if (predict_select_distribution(generator) == 0) {
@@ -199,23 +174,10 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	for (int i_index = 0; i_index < (int)this->run_predict_scope_histories.size(); i_index++) {
-		Scope* scope = this->run_predict_scope_histories[i_index]->scope;
-		scope->predict_scope_histories.push_back(this->run_predict_scope_histories[i_index]->copy_top());
-		scope->predict_index_histories.push_back(this->run_predict_indexes[i_index]);
-		scope->predict_is_existing_histories.push_back(this->run_predict_is_existing[i_index]);
-		scope->predict_target_val_histories.push_back(result);
-		if ((int)scope->predict_scope_histories.size() >= BATCH_SIZE) {
-			train_predict_helper(scope,
-								 this);
-		}
-	}
-	this->run_predict_scope_histories.clear();
-	this->run_predict_indexes.clear();
+	train_predict_helper(this,
+						 result);
 
-	if (this->solution->starting_scope_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
-		delete this->scope_histories[0];
-	} else if (this->iters_since_update < NUM_UPDATE) {
+	if (!this->is_explore) {
 		if (this->allow_predict) {
 			this->solution->predict_score = 0.999*this->solution->predict_score + 0.001*result;
 		} else {
@@ -225,29 +187,39 @@ void SolutionWrapper::experiment_end(double result) {
 			this->solution->predict_rate = 1.0 / pow(this->solution->run_average_num_actions, 0.3);
 		}
 
-		if (this->iters_since_update >= NUM_PREDICT_STABILIZE) {
-			update_helper(this,
-						  result);
+		/**
+		 * - training on explore significantly hurts results
+		 *   - even if, e.g., training only post explore
+		 */
+		update_helper(this,
+					  result);
+	}
 
-			this->existing_scope_histories.push_back(this->scope_histories[0]);
-			this->existing_target_val_histories.push_back(result);
-		} else {
-			delete this->scope_histories[0];
+	for (int s_index = 0; s_index < (int)this->ramp_tracker.size(); s_index++) {
+		this->ramp_tracker[s_index].clear();
+	}
+
+	if (this->experiment_histories[this->experiment_index].size() == 0) {
+		if (!this->allow_predict) {
+			create_experiment(this->scope_histories[0],
+							  this);
 		}
-	} else {
-		if (this->experiment_histories.size() == 0) {
-			if (!this->allow_predict) {
-				create_experiment(this->scope_histories[0],
-								  this);
-			}
-		}
+	}
 
-		delete this->scope_histories[0];
+	delete this->scope_histories[0];
 
-		if (this->experiment_histories.size() >= 2) {
+	this->scope_histories.clear();
+	this->node_context.clear();
+	this->experiment_context.clear();
+	this->remaining_predict.clear();
+
+	this->states.clear();
+
+	if (this->is_explore) {
+		if (this->experiment_histories[this->experiment_index].size() >= 2) {
 			AbstractExperiment* keep_experiment = NULL;
-			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
-					it != this->experiment_histories.end(); it++) {
+			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[this->experiment_index].begin();
+					it != this->experiment_histories[this->experiment_index].end(); it++) {
 				if (keep_experiment == NULL) {
 					keep_experiment = it->first;
 				} else {
@@ -260,43 +232,50 @@ void SolutionWrapper::experiment_end(double result) {
 					}
 				}
 			}
-		}
-	}
-
-	this->scope_histories.clear();
-	this->node_context.clear();
-	this->experiment_context.clear();
-	this->remaining_predict.clear();
-
-	this->states.clear();
-
-	if (this->existing_scope_histories.size() >= BATCH_SIZE) {
-		train_existing_helper(this);
-	}
-
-	if (this->iters_since_update >= NUM_UPDATE) {
-		if (this->experiment_histories.size() == 1) {
-			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
-					it != this->experiment_histories.end(); it++) {
+		} else {
+			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[this->experiment_index].begin();
+					it != this->experiment_histories[this->experiment_index].end(); it++) {
 				it->first->backprop(result,
 									it->second,
 									this);
 			}
 		}
+	} else {
+		for (int e_index = 0; e_index < DIVERSITY; e_index++) {
+			if (this->experiment_histories[e_index].size() >= 2) {
+				AbstractExperiment* keep_experiment = NULL;
+				for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[e_index].begin();
+						it != this->experiment_histories[e_index].end(); it++) {
+					if (keep_experiment == NULL) {
+						keep_experiment = it->first;
+					} else {
+						if (it->first->further_than(keep_experiment)) {
+							delete keep_experiment;
 
-		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
-				it != this->experiment_histories.end(); it++) {
+							keep_experiment = it->first;
+						} else {
+							delete it->first;
+						}
+					}
+				}
+			} else {
+				for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[e_index].begin();
+						it != this->experiment_histories[e_index].end(); it++) {
+					it->first->backprop(result,
+										it->second,
+										this);
+				}
+			}
+		}
+	}
+
+	for (int e_index = 0; e_index < DIVERSITY; e_index++) {
+		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[e_index].begin();
+				it != this->experiment_histories[e_index].end(); it++) {
 			delete it->second;
 		}
-		this->experiment_histories.clear();
+		this->experiment_histories[e_index].clear();
 	}
 
-	if (this->solution->starting_scope_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
-		this->solution->starting_scope_num_stabilize++;
-	} else {
-		this->iters_since_update++;
-		if (this->iters_since_update == NUM_UPDATE) {
-			update_time = string(get_time());
-		}
-	}
+	this->iters_since_update++;
 }

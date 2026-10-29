@@ -16,11 +16,6 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->original_average_instances_per_hit = 1.0;
-	this->original_average_instances_per_run = 0.0;
-	this->branch_average_instances_per_hit = 1.0;
-	this->branch_average_instances_per_run = 0.0;
-
 	this->original_curr_num_instances = 0;
 	this->branch_curr_num_instances = 0;
 }
@@ -49,15 +44,23 @@ void BranchNode::copy_from(BranchNode* original,
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
 
-	this->predict_rate = original->predict_rate;
+	this->ramp = original->ramp;
+	this->existing_sum_score = original->existing_sum_score;
+	this->existing_count = original->existing_count;
+	this->new_sum_score = original->new_sum_score;
+	this->new_count = original->new_count;
 
 	this->consec_original = original->consec_original;
 	this->consec_branch = original->consec_branch;
 
 	this->original_average_instances_per_hit = original->original_average_instances_per_hit;
 	this->original_average_instances_per_run = original->original_average_instances_per_run;
+	this->original_val_average = original->original_val_average;
 	this->branch_average_instances_per_hit = original->branch_average_instances_per_hit;
 	this->branch_average_instances_per_run = original->branch_average_instances_per_run;
+	this->branch_val_average = original->branch_val_average;
+
+	this->predict_rate = original->predict_rate;
 
 	this->ancestor_ids = original->ancestor_ids;
 }
@@ -71,15 +74,23 @@ void BranchNode::save(ofstream& output_file) {
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
 
-	output_file << this->predict_rate << endl;
+	output_file << this->ramp << endl;
+	output_file << this->existing_sum_score << endl;
+	output_file << this->existing_count << endl;
+	output_file << this->new_sum_score << endl;
+	output_file << this->new_count << endl;
 
 	output_file << this->consec_original << endl;
 	output_file << this->consec_branch << endl;
 
 	output_file << this->original_average_instances_per_hit << endl;
 	output_file << this->original_average_instances_per_run << endl;
+	output_file << this->original_val_average << endl;
 	output_file << this->branch_average_instances_per_hit << endl;
 	output_file << this->branch_average_instances_per_run << endl;
+	output_file << this->branch_val_average << endl;
+
+	output_file << this->predict_rate << endl;
 
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
@@ -102,14 +113,25 @@ void BranchNode::load(ifstream& input_file,
 	getline(input_file, branch_next_node_id_line);
 	this->branch_next_node_id = stoi(branch_next_node_id_line);
 
-	string predict_rate_line;
-	getline(input_file, predict_rate_line);
-	this->predict_rate = stod(predict_rate_line);
+	string ramp_line;
+	getline(input_file, ramp_line);
+	this->ramp = stoi(ramp_line);
 
-	// temp
-	cout << "this->parent->id: " << this->parent->id << endl;
-	cout << "this->id: " << this->id << endl;
-	cout << "this->predict_rate: " << this->predict_rate << endl;
+	string existing_sum_score_line;
+	getline(input_file, existing_sum_score_line);
+	this->existing_sum_score = stod(existing_sum_score_line);
+
+	string existing_count_line;
+	getline(input_file, existing_count_line);
+	this->existing_count = stoi(existing_count_line);
+
+	string new_sum_score_line;
+	getline(input_file, new_sum_score_line);
+	this->new_sum_score = stod(new_sum_score_line);
+
+	string new_count_line;
+	getline(input_file, new_count_line);
+	this->new_count = stoi(new_count_line);
 
 	string consec_original_line;
 	getline(input_file, consec_original_line);
@@ -137,6 +159,10 @@ void BranchNode::load(ifstream& input_file,
 	getline(input_file, original_average_instances_per_run_line);
 	this->original_average_instances_per_run = stod(original_average_instances_per_run_line);
 
+	string original_val_average_line;
+	getline(input_file, original_val_average_line);
+	this->original_val_average = stod(original_val_average_line);
+
 	string branch_average_instances_per_hit_line;
 	getline(input_file, branch_average_instances_per_hit_line);
 	this->branch_average_instances_per_hit = stod(branch_average_instances_per_hit_line);
@@ -144,6 +170,19 @@ void BranchNode::load(ifstream& input_file,
 	string branch_average_instances_per_run_line;
 	getline(input_file, branch_average_instances_per_run_line);
 	this->branch_average_instances_per_run = stod(branch_average_instances_per_run_line);
+
+	string branch_val_average_line;
+	getline(input_file, branch_val_average_line);
+	this->branch_val_average = stod(branch_val_average_line);
+
+	string predict_rate_line;
+	getline(input_file, predict_rate_line);
+	this->predict_rate = stod(predict_rate_line);
+
+	// temp
+	cout << "this->parent->id: " << this->parent->id << endl;
+	cout << "this->id: " << this->id << endl;
+	cout << "this->predict_rate: " << this->predict_rate << endl;
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);
@@ -176,13 +215,6 @@ void BranchNode::save_for_display(ofstream& output_file) {
 
 BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
 	this->node = node;
-}
-
-AbstractNodeHistory* BranchNodeHistory::copy_top() {
-	BranchNode* branch_node = (BranchNode*)this->node;
-	BranchNodeHistory* new_history = new BranchNodeHistory(branch_node);
-	new_history->is_branch = this->is_branch;
-	return new_history;
 }
 
 TrainPredictBranchNodeHistory::TrainPredictBranchNodeHistory(BranchNode* node) {

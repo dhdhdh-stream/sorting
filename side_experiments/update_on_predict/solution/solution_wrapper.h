@@ -26,10 +26,14 @@ public:
 	Solution* best_solution;
 
 	int iters_since_update;
-	// temp
-	std::string update_time;
 	int num_predict_hits;
 	int num_predict_misses;
+
+	std::vector<int> experiment_iters;
+	/**
+	 * - fully reset experiments every so often
+	 *   - to enable experiments in different places
+	 */
 
 	/**
 	 * - run variables
@@ -43,19 +47,20 @@ public:
 
 	int num_actions;
 
+	std::vector<std::map<BranchNode*, bool>> ramp_tracker;
+
+	bool is_explore;
+	int experiment_index;
+	std::vector<std::map<AbstractExperiment*, AbstractExperimentHistory*>> experiment_histories;
+
 	bool allow_predict;
 	bool in_predict;
-
-	std::vector<ScopeHistory*> existing_scope_histories;
-	std::vector<double> existing_target_val_histories;
-
-	int train_iter_index;
-
-	std::map<AbstractExperiment*, AbstractExperimentHistory*> experiment_histories;
 
 	std::vector<ScopeHistory*> run_predict_scope_histories;
 	std::vector<int> run_predict_indexes;
 	std::vector<bool> run_predict_is_existing;
+
+	int train_iter_index;
 
 	Problem* problem;
 

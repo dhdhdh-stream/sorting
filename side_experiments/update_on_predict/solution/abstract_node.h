@@ -65,9 +65,9 @@ class AbstractNodeHistory {
 public:
 	AbstractNode* node;
 
-	virtual ~AbstractNodeHistory() {};
+	std::vector<double> obs;
 
-	virtual AbstractNodeHistory* copy_top() = 0;
+	virtual ~AbstractNodeHistory() {};
 };
 
 class TrainAbstractNodeHistory {

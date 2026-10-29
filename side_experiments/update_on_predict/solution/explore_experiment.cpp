@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "network.h"
 #include "noop_node.h"
@@ -16,11 +17,13 @@
 using namespace std;
 
 ExploreExperiment::ExploreExperiment(SolutionWrapper* wrapper,
+									 int experiment_index,
 									 Scope* scope_context,
 									 AbstractNode* node_context,
 									 bool is_branch,
 									 AbstractNode* exit_next_node) {
 	this->wrapper = wrapper;
+	this->experiment_index = experiment_index;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
@@ -31,8 +34,6 @@ ExploreExperiment::ExploreExperiment(SolutionWrapper* wrapper,
 	this->new_network = NULL;
 
 	this->try_iter = 0;
-
-	this->sum_vals = 0.0;
 
 	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
@@ -101,6 +102,34 @@ ExploreExperiment::~ExploreExperiment() {
 
 	if (this->new_network != NULL) {
 		delete this->new_network;
+	}
+}
+
+void ExploreExperiment::backprop(vector<double>& obs,
+								 double target_val) {
+	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
+	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
+	case EXPLORE_EXPERIMENT_STATE_MEASURE:
+		this->existing_network->activate(obs);
+		double error = target_val - this->existing_network->output->acti_vals(0);
+		this->existing_network->backprop(error);
+		break;
+	}
+}
+
+void ExploreExperiment::update() {
+	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
+	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
+	case EXPLORE_EXPERIMENT_STATE_MEASURE:
+		this->existing_network->epoch_iter++;
+		if (this->existing_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
+			this->existing_network->update();
+
+			this->existing_network->epoch_iter = 0;
+		}
+		break;
 	}
 }
 

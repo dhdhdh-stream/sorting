@@ -35,6 +35,8 @@ public:
 
 	ObsNetwork* obs_network;
 
+	int predict_num_stabilize;
+
 	double predict_rate;
 
 	ScoreNetwork* score_network;
@@ -45,11 +47,6 @@ public:
 	std::vector<ScopeNode*> generic_scope_nodes;
 
 	std::vector<std::list<double>> train_new_last_scores;
-
-	std::vector<ScopeHistory*> predict_scope_histories;
-	std::vector<int> predict_index_histories;
-	std::vector<bool> predict_is_existing_histories;
-	std::vector<double> predict_target_val_histories;
 
 	Scope();
 	~Scope();
@@ -81,8 +78,6 @@ public:
 
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();
-
-	ScopeHistory* copy_top();
 };
 
 #endif /* SCOPE_H */

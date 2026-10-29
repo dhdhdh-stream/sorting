@@ -492,10 +492,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		clean_scope(wrapper->solution->scopes[s_index]);
-	}
-
 	wrapper->solution->timestamp++;
 	wrapper->iters_since_update = 0;
 }

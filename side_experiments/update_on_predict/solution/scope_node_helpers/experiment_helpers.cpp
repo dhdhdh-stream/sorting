@@ -42,6 +42,9 @@ void ScopeNode::experiment_exit_step(vector<double>& obs,
 									 SolutionWrapper* wrapper) {
 	ScopeHistory* scope_history = wrapper->scope_histories[wrapper->scope_histories.size()-2];
 	ScopeNodeHistory* history = (ScopeNodeHistory*)scope_history->node_histories.back();
+
+	history->obs = obs;
+
 	history->end_inner_state = wrapper->states.back();
 
 	this->out_network->activate(wrapper->states.back(),

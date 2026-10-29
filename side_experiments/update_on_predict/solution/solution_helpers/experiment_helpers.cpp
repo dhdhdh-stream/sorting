@@ -169,6 +169,7 @@ void create_experiment(ScopeHistory* scope_history,
 
 		ExploreExperiment* new_experiment = new ExploreExperiment(
 			wrapper,
+			wrapper->experiment_index,
 			context_it->second.explore_node->parent,
 			context_it->second.explore_node,
 			context_it->second.explore_is_branch,

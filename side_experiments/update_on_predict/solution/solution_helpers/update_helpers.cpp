@@ -1,7 +1,19 @@
+/**
+ * - OK to train on only paths taken:
+ *   - initially, paths not taken are ones that have low score
+ *   - since bad paths are no longer taken, score increase overall...
+ *   - ...increasing score for bad paths, leading to them being taken again
+ *   - ultimately, bad paths will be predicted as bad, but not accurately
+ * 
+ * - do not batch train
+ *   - adam easily overfits(?)
+ */
+
 #include "solution_helpers.h"
 
 #include <iostream>
 
+#include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -15,30 +27,50 @@
 
 using namespace std;
 
-void update_helper(ScopeHistory* scope_history) {
+void update_helper(ScopeHistory* scope_history,
+				   double target_val) {
 	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
 		AbstractNode* node = scope_history->node_histories[h_index]->node;
 		switch (node->type) {
 		case NODE_TYPE_NOOP:
 			{
 				NoopNode* noop_node = (NoopNode*)node;
+
 				noop_node->curr_num_instances++;
+
+				for (int e_index = 0; e_index < (int)noop_node->experiments.size(); e_index++) {
+					noop_node->experiments[e_index]->backprop(scope_history->node_histories[h_index]->obs,
+															  target_val);
+				}
 			}
 			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)node;
+
 				action_node->curr_num_instances++;
+
+				for (int e_index = 0; e_index < (int)action_node->experiments.size(); e_index++) {
+					action_node->experiments[e_index]->backprop(scope_history->node_histories[h_index]->obs,
+																target_val);
+				}
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
 				ScopeNode* scope_node = (ScopeNode*)node;
+
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
 
-				update_helper(scope_node_history->scope_history);
+				update_helper(scope_node_history->scope_history,
+							  target_val);
 
 				scope_node->curr_num_instances++;
+
+				for (int e_index = 0; e_index < (int)scope_node->experiments.size(); e_index++) {
+					scope_node->experiments[e_index]->backprop(scope_history->node_histories[h_index]->obs,
+															   target_val);
+				}
 			}
 			break;
 		case NODE_TYPE_BRANCH:
@@ -47,15 +79,33 @@ void update_helper(ScopeHistory* scope_history) {
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)scope_history->node_histories[h_index];
 
 				if (branch_node_history->is_branch) {
+					branch_node->branch_network->activate(branch_node_history->obs);
+					double error = target_val - branch_node->branch_network->output->acti_vals(0);
+					branch_node->branch_network->backprop(error);
+
 					branch_node->branch_curr_num_instances++;
 
 					branch_node->consec_original = 0;
 					branch_node->consec_branch++;
+
+					for (int e_index = 0; e_index < (int)branch_node->branch_experiments.size(); e_index++) {
+						branch_node->branch_experiments[e_index]->backprop(scope_history->node_histories[h_index]->obs,
+																		   target_val);
+					}
 				} else {
+					branch_node->original_network->activate(branch_node_history->obs);
+					double error = target_val - branch_node->original_network->output->acti_vals(0);
+					branch_node->original_network->backprop(error);
+
 					branch_node->original_curr_num_instances++;
 
 					branch_node->consec_original++;
 					branch_node->consec_branch = 0;
+
+					for (int e_index = 0; e_index < (int)branch_node->original_experiments.size(); e_index++) {
+						branch_node->original_experiments[e_index]->backprop(scope_history->node_histories[h_index]->obs,
+																			 target_val);
+					}
 				}
 			}
 			break;
@@ -67,7 +117,8 @@ void update_helper(SolutionWrapper* wrapper,
 				   double target_val) {
 	wrapper->solution->curr_score = 0.999*wrapper->solution->curr_score + 0.001*target_val;
 
-	update_helper(wrapper->scope_histories[0]);
+	update_helper(wrapper->scope_histories[0],
+				  target_val);
 
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		Scope* scope = wrapper->solution->scopes[s_index];
@@ -80,6 +131,11 @@ void update_helper(SolutionWrapper* wrapper,
 					noop_node->average_instances_per_run = 0.999*noop_node->average_instances_per_run + 0.001*noop_node->curr_num_instances;
 					if (noop_node->curr_num_instances > 0) {
 						noop_node->average_instances_per_hit = 0.999*noop_node->average_instances_per_hit + 0.001*noop_node->curr_num_instances;
+						noop_node->val_average = 0.999*noop_node->val_average + 0.001*target_val;
+
+						for (int e_index = 0; e_index < (int)noop_node->experiments.size(); e_index++) {
+							noop_node->experiments[e_index]->update();
+						}
 
 						noop_node->curr_num_instances = 0;
 					}
@@ -91,6 +147,11 @@ void update_helper(SolutionWrapper* wrapper,
 					action_node->average_instances_per_run = 0.999*action_node->average_instances_per_run + 0.001*action_node->curr_num_instances;
 					if (action_node->curr_num_instances > 0) {
 						action_node->average_instances_per_hit = 0.999*action_node->average_instances_per_hit + 0.001*action_node->curr_num_instances;
+						action_node->val_average = 0.999*action_node->val_average + 0.001*target_val;
+
+						for (int e_index = 0; e_index < (int)action_node->experiments.size(); e_index++) {
+							action_node->experiments[e_index]->update();
+						}
 
 						action_node->curr_num_instances = 0;
 					}
@@ -102,6 +163,11 @@ void update_helper(SolutionWrapper* wrapper,
 					scope_node->average_instances_per_run = 0.999*scope_node->average_instances_per_run + 0.001*scope_node->curr_num_instances;
 					if (scope_node->curr_num_instances > 0) {
 						scope_node->average_instances_per_hit = 0.999*scope_node->average_instances_per_hit + 0.001*scope_node->curr_num_instances;
+						scope_node->val_average = 0.999*scope_node->val_average + 0.001*target_val;
+
+						for (int e_index = 0; e_index < (int)scope_node->experiments.size(); e_index++) {
+							scope_node->experiments[e_index]->update();
+						}
 
 						scope_node->curr_num_instances = 0;
 					}
@@ -113,17 +179,69 @@ void update_helper(SolutionWrapper* wrapper,
 					branch_node->original_average_instances_per_run = 0.999*branch_node->original_average_instances_per_run + 0.001*branch_node->original_curr_num_instances;
 					if (branch_node->original_curr_num_instances > 0) {
 						branch_node->original_average_instances_per_hit = 0.999*branch_node->original_average_instances_per_hit + 0.001*branch_node->original_curr_num_instances;
+						branch_node->original_val_average = 0.999*branch_node->original_val_average + 0.001*target_val;
+
+						branch_node->original_network->epoch_iter++;
+						if (branch_node->original_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
+							branch_node->original_network->update();
+
+							branch_node->original_network->epoch_iter = 0;
+						}
+
+						for (int e_index = 0; e_index < (int)branch_node->original_experiments.size(); e_index++) {
+							branch_node->original_experiments[e_index]->update();
+						}
 
 						branch_node->original_curr_num_instances = 0;
 					}
 					branch_node->branch_average_instances_per_run = 0.999*branch_node->branch_average_instances_per_run + 0.001*branch_node->branch_curr_num_instances;
 					if (branch_node->branch_curr_num_instances > 0) {
 						branch_node->branch_average_instances_per_hit = 0.999*branch_node->branch_average_instances_per_hit + 0.001*branch_node->branch_curr_num_instances;
+						branch_node->branch_val_average = 0.999*branch_node->branch_val_average + 0.001*target_val;
+
+						branch_node->branch_network->epoch_iter++;
+						if (branch_node->branch_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
+							branch_node->branch_network->update();
+
+							branch_node->branch_network->epoch_iter = 0;
+						}
+
+						for (int e_index = 0; e_index < (int)branch_node->branch_experiments.size(); e_index++) {
+							branch_node->branch_experiments[e_index]->update();
+						}
 
 						branch_node->branch_curr_num_instances = 0;
 					}
 				}
 				break;
+			}
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)wrapper->ramp_tracker.size(); s_index++) {
+		for (map<BranchNode*, bool>::iterator it = wrapper->ramp_tracker[s_index].begin();
+				it != wrapper->ramp_tracker[s_index].end(); it++) {
+			if (it->second) {
+				it->first->new_sum_score += target_val;
+				it->first->new_count++;
+			} else {
+				it->first->existing_sum_score += target_val;
+				it->first->existing_count++;
+			}
+
+			if (it->first->new_count + it->first->existing_count >= ITERS_PER_RAMP) {
+				double existing_score = it->first->existing_sum_score / it->first->existing_count;
+				double new_score = it->first->new_sum_score / it->first->new_count;
+				if (new_score > existing_score) {
+					it->first->ramp++;
+				} else {
+					it->first->ramp--;
+				}
+
+				it->first->existing_sum_score = 0.0;
+				it->first->existing_count = 0;
+				it->first->new_sum_score = 0.0;
+				it->first->new_count = 0;
 			}
 		}
 	}

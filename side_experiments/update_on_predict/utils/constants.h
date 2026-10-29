@@ -51,6 +51,12 @@ const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
 #if defined(MDEBUG) && MDEBUG
+const int DIVERSITY = 2;
+#else
+const int DIVERSITY = 5;
+#endif /* MDEBUG */
+
+#if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_LAST_TRACK = 4;
 const int TRAIN_NEW_MIN_NUM_LAST_TRACK = 2;
 const std::vector<double> TRAIN_NEW_LAST_BETTER_THAN_RATIO{0.5, 0.5, 0.5};
@@ -61,24 +67,22 @@ const std::vector<double> TRAIN_NEW_LAST_BETTER_THAN_RATIO{0.8, 0.8, 0.5};
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int NUM_UPDATE = 200;
-const int NUM_PREDICT_STABILIZE = 20;
-const int BATCH_SIZE = 10;
-const int ITERS_PER_BATCH = 10;
 const int NEW_SCOPE_NUM_STABILIZE = 200;
 #else
-const int NUM_UPDATE = 400000;
-const int NUM_PREDICT_STABILIZE = 100000;
-const int BATCH_SIZE = 1000;
-const int ITERS_PER_BATCH = 10000;
-/**
- * - need large BATCH_SIZE and low ITERS_PER_BATCH
- *   - adam easily overfits
- */
-const int NEW_SCOPE_NUM_STABILIZE = 400000;
+const int NEW_SCOPE_NUM_STABILIZE = 100000;
 #endif /* MDEBUG */
 
-const int GENERALIZE_ITER = 3;
+#if defined(MDEBUG) && MDEBUG
+const int MAX_RAMP = 5;
+const int STARTING_RAMP = 2;
+const int ITERS_PER_RAMP = 2;
+#else
+const int MAX_RAMP = 40;
+const int STARTING_RAMP = 2;
+const int ITERS_PER_RAMP = 10000;
+#endif /* MDEBUG */
+
+const int GENERALIZE_ITER = 6;
 
 const int EXPERIMENT_REFRESH_NUM_ITERS = 10;
 

@@ -27,13 +27,11 @@
 
 using namespace std;
 
-void train_predict_helper(Scope* scope,
-						  SolutionWrapper* wrapper) {
-	uniform_int_distribution<int> sample_distribution(0, scope->predict_scope_histories.size()-1);
-	for (int iter_index = 0; iter_index < ITERS_PER_BATCH; iter_index++) {
-		int index = sample_distribution(generator);
-
-		ScopeHistory* scope_history = scope->predict_scope_histories[index];
+void train_predict_helper(SolutionWrapper* wrapper,
+						  double target_val) {
+	for (int i_index = 0; i_index < (int)wrapper->run_predict_scope_histories.size(); i_index++) {
+		ScopeHistory* scope_history = wrapper->run_predict_scope_histories[i_index];
+		Scope* scope = scope_history->scope;
 
 		Eigen::VectorXf state;
 		state.resize(NUM_STATES);
@@ -42,7 +40,7 @@ void train_predict_helper(Scope* scope,
 		scope->obs_network->activate(state,
 									 scope_history->obs);
 
-		int explore_index = scope->predict_index_histories[index];
+		int explore_index = wrapper->run_predict_indexes[i_index];
 
 		vector<TrainAbstractNodeHistory*> pre_train_node_histories;
 		for (int h_index = 0; h_index <= explore_index; h_index++) {
@@ -53,7 +51,7 @@ void train_predict_helper(Scope* scope,
 		}
 
 		vector<TrainAbstractNodeHistory*> post_train_node_histories;
-		if (scope->predict_is_existing_histories[index]) {
+		if (wrapper->run_predict_is_existing[i_index]) {
 			geometric_distribution<int> exit_distribution(0.3);
 			int random_index;
 			while (true) {
@@ -112,7 +110,7 @@ void train_predict_helper(Scope* scope,
 		state_error.resize(NUM_STATES);
 		state_error.setConstant(0.0);
 
-		scope->score_network->backprop(scope->predict_target_val_histories[index],
+		scope->score_network->backprop(target_val,
 									   state_error);
 
 		for (int h_index = (int)post_train_node_histories.size()-1; h_index >= 0; h_index--) {
@@ -151,12 +149,13 @@ void train_predict_helper(Scope* scope,
 		for (int h_index = 0; h_index < (int)post_train_node_histories.size(); h_index++) {
 			delete post_train_node_histories[h_index];
 		}
+
+		if (scope->predict_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
+			scope->predict_num_stabilize++;
+		}
 	}
 
-	for (int h_index = 0; h_index < (int)scope->predict_scope_histories.size(); h_index++) {
-		delete scope->predict_scope_histories[h_index];
-	}
-	scope->predict_scope_histories.clear();
-	scope->predict_index_histories.clear();
-	scope->predict_target_val_histories.clear();
+	wrapper->run_predict_scope_histories.clear();
+	wrapper->run_predict_indexes.clear();
+	wrapper->run_predict_is_existing.clear();
 }

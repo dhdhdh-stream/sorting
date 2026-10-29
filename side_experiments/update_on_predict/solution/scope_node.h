@@ -45,6 +45,7 @@ public:
 
 	double average_instances_per_hit;
 	double average_instances_per_run;
+	double val_average;
 	std::vector<AbstractExperiment*> experiments;
 
 	int curr_num_instances;
@@ -94,8 +95,6 @@ public:
 
 	ScopeNodeHistory(ScopeNode* node);
 	~ScopeNodeHistory();
-
-	AbstractNodeHistory* copy_top();
 };
 
 class TrainScopeNodeHistory : public TrainAbstractNodeHistory {

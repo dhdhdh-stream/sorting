@@ -68,32 +68,7 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 		} else {
 			if (this->allow_predict
 					&& !this->in_predict) {
-				if (this->solution->starting_scope_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
-					if (distribution(generator) <= this->solution->predict_rate) {
-						uniform_int_distribution<int> predict_select_distribution(0, 4);
-						if (predict_select_distribution(generator) == 0) {
-							if (this->scope_histories.back()->scope == this->solution->starting_scope) {
-								if (this->node_context.back() == NULL) {
-									if (distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
-										uniform_int_distribution<int> existing_distribution(0, 1);
-										if (existing_distribution(generator) != 0) {
-											predict_helper(this);
-											continue;
-										}
-									}
-								} else {
-									if (distribution(generator) <= this->node_context.back()->predict_rate) {
-										uniform_int_distribution<int> existing_distribution(0, 1);
-										if (existing_distribution(generator) != 0) {
-											predict_helper(this);
-											continue;
-										}
-									}
-								}
-							}
-						}
-					}
-				} else {
+				if (this->scope_histories.back()->scope->predict_num_stabilize >= NEW_SCOPE_NUM_STABILIZE) {
 					if (distribution(generator) <= this->solution->predict_rate) {
 						uniform_int_distribution<int> predict_select_distribution(0, 4);
 						if (predict_select_distribution(generator) == 0) {

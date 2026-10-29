@@ -228,13 +228,6 @@ void Network::update() {
 	this->num_instances = 0;
 }
 
-void Network::clear_momentum() {
-	this->hidden_1->clear_momentum();
-	this->hidden_2->clear_momentum();
-	this->hidden_3->clear_momentum();
-	this->output->clear_momentum();
-}
-
 void Network::save(ofstream& output_file) {
 	output_file << this->input->acti_vals.size() << endl;
 	output_file << this->hidden_1->acti_vals.size() << endl;

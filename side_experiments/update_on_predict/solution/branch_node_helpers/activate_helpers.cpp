@@ -18,6 +18,28 @@ void BranchNode::step(vector<double>& obs,
 					  int& action,
 					  bool& is_next,
 					  SolutionWrapper* wrapper) {
+	if (this->ramp == 0) {
+		wrapper->node_context.back() = this->original_next_node;
+		return;
+	} else if (this->ramp < MAX_RAMP) {
+		map<BranchNode*, bool>::iterator it = wrapper->ramp_tracker[
+			this->parent->id].find(this);
+		if (it == wrapper->ramp_tracker[this->parent->id].end()) {
+			uniform_int_distribution<int> distribution(0, MAX_RAMP-1);
+			bool is_on;
+			if (distribution(generator) < this->ramp) {
+				is_on = true;
+			} else {
+				is_on = false;
+			}
+			it = wrapper->ramp_tracker[this->parent->id].insert({this, is_on}).first;
+		}
+		if (!it->second) {
+			wrapper->node_context.back() = this->original_next_node;
+			return;
+		}
+	}
+
 	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
 		wrapper->node_context.back() = this->original_next_node;
 		return;

@@ -56,7 +56,6 @@ Solution::Solution(Solution* original) {
 
 	this->starting_scope = this->scopes[original->starting_scope->id];
 	this->starting_scope_num_improvements = original->starting_scope_num_improvements;
-	this->starting_scope_num_stabilize = original->starting_scope_num_stabilize;
 
 	this->run_average_num_actions = original->run_average_num_actions;
 	this->predict_rate = original->predict_rate;
@@ -99,6 +98,10 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->node_counter++;
 	new_scope->nodes[start_node->id] = start_node;
 
+	start_node->average_instances_per_hit = 1.0;
+	start_node->average_instances_per_run = 1.0;
+	start_node->val_average = this->curr_score;
+
 	start_node->predict_rate = 0.5;
 
 	start_node->next_node_id = -1;
@@ -106,6 +109,8 @@ void Solution::init(ProblemType* problem_type) {
 
 	new_scope->obs_network = new ObsNetwork(NUM_STATES,
 											this->num_obs);
+
+	new_scope->predict_num_stabilize = 0;
 
 	new_scope->predict_rate = 0.5;
 
@@ -126,6 +131,10 @@ void Solution::init(ProblemType* problem_type) {
 
 		new_action_node->predict_network = new PredictNetwork(NUM_STATES);
 
+		new_action_node->average_instances_per_hit = 1.0;
+		new_action_node->average_instances_per_run = 1.0;
+		new_action_node->val_average = this->curr_score;
+
 		new_action_node->predict_rate = 0.5;
 
 		new_action_node->next_node_id = -1;
@@ -138,7 +147,6 @@ void Solution::init(ProblemType* problem_type) {
 
 	this->starting_scope = new_scope;
 	this->starting_scope_num_improvements = 0;
-	this->starting_scope_num_stabilize = 0;
 
 	this->run_average_num_actions = 1.0;
 	this->predict_rate = 1.0;
@@ -195,10 +203,6 @@ void Solution::load(ifstream& input_file) {
 	string starting_scope_num_improvements_line;
 	getline(input_file, starting_scope_num_improvements_line);
 	this->starting_scope_num_improvements = stoi(starting_scope_num_improvements_line);
-
-	string starting_scope_num_stabilize_line;
-	getline(input_file, starting_scope_num_stabilize_line);
-	this->starting_scope_num_stabilize = stoi(starting_scope_num_stabilize_line);
 
 	string run_average_num_actions_line;
 	getline(input_file, run_average_num_actions_line);
@@ -295,7 +299,6 @@ void Solution::save(ofstream& output_file) {
 
 	output_file << this->starting_scope->id << endl;
 	output_file << this->starting_scope_num_improvements << endl;
-	output_file << this->starting_scope_num_stabilize << endl;
 
 	output_file << this->run_average_num_actions << endl;
 

@@ -33,7 +33,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
 	ss << "iters_since_update: " << wrapper->iters_since_update << "; ";
-	ss << "update_time: " << wrapper->update_time << "; ";
 	ss << "num_predict_hits: " << wrapper->num_predict_hits << "; ";
 	ss << "num_predict_misses: " << wrapper->num_predict_misses << "; ";
 	ss << "predict_score: " << wrapper->solution->predict_score << "; ";
@@ -67,6 +66,50 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 	cout << ss.str() << endl;
 
+	double average_instances_per_hit;
+	double average_instances_per_run;
+	double val_average;
+	switch (this->node_context->type) {
+	case NODE_TYPE_NOOP:
+		{
+			NoopNode* noop_node = (NoopNode*)this->node_context;
+			average_instances_per_hit = noop_node->average_instances_per_hit;
+			average_instances_per_run = noop_node->average_instances_per_run;
+			val_average = noop_node->val_average;
+		}
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+			average_instances_per_hit = action_node->average_instances_per_hit;
+			average_instances_per_run = action_node->average_instances_per_run;
+			val_average = action_node->val_average;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)this->node_context;
+			average_instances_per_hit = scope_node->average_instances_per_hit;
+			average_instances_per_run = scope_node->average_instances_per_run;
+			val_average = scope_node->val_average;
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)this->node_context;
+			if (this->is_branch) {
+				average_instances_per_hit = branch_node->branch_average_instances_per_hit;
+				average_instances_per_run = branch_node->branch_average_instances_per_run;
+				val_average = branch_node->branch_val_average;
+			} else {
+				average_instances_per_hit = branch_node->original_average_instances_per_hit;
+				average_instances_per_run = branch_node->original_average_instances_per_run;
+				val_average = branch_node->original_val_average;
+			}
+		}
+		break;
+	}
+
 	vector<AbstractNode*> new_nodes;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -82,6 +125,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			ActionNode* generic_action_node = this->scope_context->generic_action_nodes[this->best_indexes[s_index]];
 			new_action_node->obs_network = new ObsNetwork(generic_action_node->obs_network);
 			new_action_node->predict_network = new PredictNetwork(generic_action_node->predict_network);
+
+			new_action_node->average_instances_per_hit = average_instances_per_hit;
+			new_action_node->average_instances_per_run = average_instances_per_run;
+			new_action_node->val_average = val_average;
 
 			new_action_node->predict_rate = 0.5;
 
@@ -103,6 +150,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 			new_scope_node->predict_network = new PredictNetwork(generic_scope_node->predict_network);
 
+			new_scope_node->average_instances_per_hit = average_instances_per_hit;
+			new_scope_node->average_instances_per_run = average_instances_per_run;
+			new_scope_node->val_average = val_average;
+
 			new_scope_node->predict_rate = 0.5;
 
 			new_nodes.push_back(new_scope_node);
@@ -119,6 +170,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		new_ending_node->id = this->scope_context->node_counter;
 		this->scope_context->node_counter++;
 
+		double average_instances_per_hit;
+		double average_instances_per_run;
+		double val_average;
 		for (map<int, AbstractNode*>::iterator it = this->scope_context->nodes.begin();
 				it != this->scope_context->nodes.end(); it++) {
 			if (it->second->type == NODE_TYPE_NOOP) {
@@ -129,6 +183,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 					new_ending_node->ancestor_ids.push_back(noop_node->id);
 
+					average_instances_per_hit = noop_node->average_instances_per_hit;
+					average_instances_per_run = noop_node->average_instances_per_run;
+					val_average = noop_node->val_average;
+
 					break;
 				}
 			}
@@ -138,6 +196,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 		new_ending_node->next_node_id = -1;
 		new_ending_node->next_node = NULL;
+
+		new_ending_node->average_instances_per_hit = average_instances_per_hit;
+		new_ending_node->average_instances_per_run = average_instances_per_run;
+		new_ending_node->val_average = val_average;
 
 		new_ending_node->predict_rate = 0.5;
 
@@ -171,6 +233,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 					new_ending_node->id = this->scope_context->node_counter;
 					this->scope_context->node_counter++;
 
+					double average_instances_per_hit;
+					double average_instances_per_run;
+					double val_average;
 					for (map<int, AbstractNode*>::iterator it = this->scope_context->nodes.begin();
 							it != this->scope_context->nodes.end(); it++) {
 						if (it->second->type == NODE_TYPE_NOOP) {
@@ -181,6 +246,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 								new_ending_node->ancestor_ids.push_back(p_noop_node->id);
 
+								average_instances_per_hit = p_noop_node->average_instances_per_hit;
+								average_instances_per_run = p_noop_node->average_instances_per_run;
+								val_average = p_noop_node->val_average;
+
 								break;
 							}
 						}
@@ -190,6 +259,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 					new_ending_node->next_node_id = -1;
 					new_ending_node->next_node = NULL;
+
+					new_ending_node->average_instances_per_hit = average_instances_per_hit;
+					new_ending_node->average_instances_per_run = average_instances_per_run;
+					new_ending_node->val_average = val_average;
 
 					new_ending_node->predict_rate = 0.5;
 
@@ -338,12 +411,25 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
 
-	new_branch_node->branch_predict_network = new ScoreNetwork(NUM_STATES);
-
-	new_branch_node->predict_rate = 0.5;
+	new_branch_node->ramp = STARTING_RAMP;
+	new_branch_node->existing_sum_score = 0.0;
+	new_branch_node->existing_count = 0;
+	new_branch_node->new_sum_score = 0.0;
+	new_branch_node->new_count = 0;
 
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;
+
+	new_branch_node->original_average_instances_per_hit = average_instances_per_hit;
+	new_branch_node->original_average_instances_per_run = average_instances_per_run;
+	new_branch_node->original_val_average = val_average;
+	new_branch_node->branch_average_instances_per_hit = average_instances_per_hit;
+	new_branch_node->branch_average_instances_per_run = average_instances_per_run;
+	new_branch_node->branch_val_average = val_average;
+
+	new_branch_node->branch_predict_network = new ScoreNetwork(NUM_STATES);
+
+	new_branch_node->predict_rate = 0.5;
 
 	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
 		int next_node_id;
@@ -376,8 +462,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
 	}
 
-	wrapper->solution->timestamp++;
-
 	if (this->scope_context == wrapper->solution->starting_scope) {
 		wrapper->solution->starting_scope_num_improvements++;
 		if (wrapper->solution->starting_scope_num_improvements >= GENERALIZE_ITER) {
@@ -386,11 +470,17 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->node_counter = 0;
 			wrapper->solution->scopes.push_back(new_scope);
 
+			wrapper->ramp_tracker.push_back(map<BranchNode*, bool>());
+
 			NoopNode* start_node = new NoopNode();
 			start_node->parent = new_scope;
 			start_node->id = new_scope->node_counter;
 			new_scope->node_counter++;
 			new_scope->nodes[start_node->id] = start_node;
+
+			start_node->average_instances_per_run = 1.0;
+			start_node->average_instances_per_hit = 1.0;
+			start_node->val_average = wrapper->solution->curr_score;
 
 			start_node->predict_rate = 0.5;
 
@@ -408,6 +498,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 			scope_node->predict_network = new PredictNetwork(NUM_STATES);
 
+			scope_node->average_instances_per_run = 1.0;
+			scope_node->average_instances_per_hit = 1.0;
+			scope_node->val_average = wrapper->solution->curr_score;
+
 			scope_node->predict_rate = 0.5;
 
 			NoopNode* end_node = new NoopNode();
@@ -415,6 +509,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			end_node->id = new_scope->node_counter;
 			new_scope->node_counter++;
 			new_scope->nodes[end_node->id] = end_node;
+
+			end_node->average_instances_per_run = 1.0;
+			end_node->average_instances_per_hit = 1.0;
+			end_node->val_average = wrapper->solution->curr_score;
 
 			end_node->predict_rate = 0.5;
 
@@ -433,6 +531,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 			new_scope->obs_network = new ObsNetwork(
 				wrapper->solution->starting_scope->obs_network);
+
+			new_scope->predict_num_stabilize = 0;
 
 			new_scope->predict_rate = 0.5;
 
@@ -454,6 +554,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 				new_action_node->predict_network = new PredictNetwork(
 					wrapper->solution->starting_scope->generic_action_nodes[a_index]->predict_network);
+
+				new_action_node->average_instances_per_run = 1.0;
+				new_action_node->average_instances_per_hit = 1.0;
+				new_action_node->val_average = wrapper->solution->curr_score;
 
 				new_action_node->predict_rate = 0.5;
 
@@ -481,6 +585,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 				new_scope_node->predict_network = new PredictNetwork(
 					wrapper->solution->starting_scope->generic_scope_nodes[c_index]->predict_network);
 
+				new_scope_node->average_instances_per_run = 1.0;
+				new_scope_node->average_instances_per_hit = 1.0;
+				new_scope_node->val_average = wrapper->solution->curr_score;
+
 				new_scope_node->predict_rate = 0.5;
 
 				new_scope_node->next_node_id = -1;
@@ -506,6 +614,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 				new_scope_node->predict_network = new PredictNetwork(NUM_STATES);
 
+				new_scope_node->average_instances_per_run = 1.0;
+				new_scope_node->average_instances_per_hit = 1.0;
+				new_scope_node->val_average = wrapper->solution->curr_score;
+
 				new_scope_node->predict_rate = 0.5;
 
 				new_scope_node->next_node_id = -1;
@@ -518,105 +630,11 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 			wrapper->solution->starting_scope = new_scope;
 			wrapper->solution->starting_scope_num_improvements = 0;
-			wrapper->solution->starting_scope_num_stabilize = 0;
 		}
 	}
 
+	wrapper->solution->timestamp++;
 	wrapper->iters_since_update = 0;
 	wrapper->num_predict_hits = 0;
 	wrapper->num_predict_misses = 0;
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		Scope* scope = wrapper->solution->scopes[s_index];
-		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-				it != scope->nodes.end(); it++) {
-			if (it->second->type == NODE_TYPE_BRANCH) {
-				BranchNode* branch_node = (BranchNode*)it->second;
-				branch_node->original_network->clear_momentum();
-				branch_node->branch_network->clear_momentum();
-			}
-		}
-	}
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		Scope* scope = wrapper->solution->scopes[s_index];
-		scope->obs_network->clear_momentum();
-		scope->score_network->clear_momentum();
-
-		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-				it != scope->nodes.end(); it++) {
-			switch (it->second->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)it->second;
-					action_node->obs_network->clear_momentum();
-					action_node->predict_network->clear_momentum();
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)it->second;
-					scope_node->out_network->clear_momentum();
-					scope_node->predict_network->clear_momentum();
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)it->second;
-					branch_node->branch_predict_network->clear_momentum();
-				}
-				break;
-			}
-		}
-	}
-	for (int h_index = 0; h_index < (int)wrapper->existing_scope_histories.size(); h_index++) {
-		delete wrapper->existing_scope_histories[h_index];
-	}
-	wrapper->existing_scope_histories.clear();
-	wrapper->existing_target_val_histories.clear();
-
-	/**
-	 * - includes delete this
-	 */
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		Scope* scope = wrapper->solution->scopes[s_index];
-		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-				it != scope->nodes.end(); it++) {
-			switch (it->second->type) {
-			case NODE_TYPE_NOOP:
-				{
-					NoopNode* noop_node = (NoopNode*)it->second;
-					while (noop_node->experiments.size() > 0) {
-						delete noop_node->experiments[0];
-					}
-				}
-				break;
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)it->second;
-					while (action_node->experiments.size() > 0) {
-						delete action_node->experiments[0];
-					}
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)it->second;
-					while (scope_node->experiments.size() > 0) {
-						delete scope_node->experiments[0];
-					}
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)it->second;
-					while (branch_node->original_experiments.size() > 0) {
-						delete branch_node->original_experiments[0];
-					}
-					while (branch_node->branch_experiments.size() > 0) {
-						delete branch_node->branch_experiments[0];
-					}
-				}
-				break;
-			}
-		}
-	}
 }

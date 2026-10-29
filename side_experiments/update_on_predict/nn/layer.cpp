@@ -286,21 +286,6 @@ void Layer::update(int num_instances,
 	}
 }
 
-void Layer::clear_momentum() {
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
-			this->weight_ms[n_index][l_index].setConstant(0.0);
-			this->weight_vs[n_index][l_index].setConstant(0.0);
-		}
-
-		this->constant_ms[n_index] = 0.0;
-		this->constant_vs[n_index] = 0.0;
-	}
-
-	this->m_bch = 1.0;
-	this->v_bch = 1.0;
-}
-
 void Layer::save_weights(ofstream& output_file) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {

@@ -26,14 +26,22 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 			&& this->num_instances_until_target <= 0) {
 		history->has_explore = true;
 
-		history->obs_histories.push_back(obs);
+		if (wrapper->is_explore
+				&& wrapper->experiment_index == this->experiment_index) {
+			history->obs_histories.push_back(obs);
 
-		// wrapper->predict_scope_histories.push_back(wrapper->scope_histories.back());
-		// wrapper->predict_indexes.push_back(wrapper->scope_histories.back()->node_histories.size()-1);
+			wrapper->run_predict_scope_histories.push_back(wrapper->scope_histories.back());
+			wrapper->run_predict_indexes.push_back(wrapper->scope_histories.back()->node_histories.size()-1);
+			wrapper->run_predict_is_existing.push_back(false);
 
-		ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
-		new_experiment_state->step_index = 0;
-		wrapper->experiment_context.back() = new_experiment_state;
+			ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
+			new_experiment_state->step_index = 0;
+			wrapper->experiment_context.back() = new_experiment_state;
+		} else {
+			wrapper->run_predict_scope_histories.push_back(wrapper->scope_histories.back());
+			wrapper->run_predict_indexes.push_back(wrapper->scope_histories.back()->node_histories.size()-1);
+			wrapper->run_predict_is_existing.push_back(true);
+		}
 	}
 }
 
@@ -224,110 +232,173 @@ void ExploreExperiment::train_new_backprop(
 		double target_val,
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
-	double average_instances_per_hit;
-	switch (this->node_context->type) {
-	case NODE_TYPE_NOOP:
-		{
-			NoopNode* noop_node = (NoopNode*)this->node_context;
-			average_instances_per_hit = noop_node->average_instances_per_hit;
-		}
-		break;
-	case NODE_TYPE_ACTION:
-		{
-			ActionNode* action_node = (ActionNode*)this->node_context;
-			average_instances_per_hit = action_node->average_instances_per_hit;
-		}
-		break;
-	case NODE_TYPE_SCOPE:
-		{
-			ScopeNode* scope_node = (ScopeNode*)this->node_context;
-			average_instances_per_hit = scope_node->average_instances_per_hit;
-		}
-		break;
-	default:
-	// case NODE_TYPE_BRANCH:
-		{
-			BranchNode* branch_node = (BranchNode*)this->node_context;
-			if (this->is_branch) {
-				average_instances_per_hit = branch_node->branch_average_instances_per_hit;
-			} else {
-				average_instances_per_hit = branch_node->original_average_instances_per_hit;
+	if (wrapper->is_explore
+			&& wrapper->experiment_index == this->experiment_index) {
+		double average_instances_per_hit;
+		switch (this->node_context->type) {
+		case NODE_TYPE_NOOP:
+			{
+				NoopNode* noop_node = (NoopNode*)this->node_context;
+				average_instances_per_hit = noop_node->average_instances_per_hit;
 			}
-		}
-		break;
-	}
-	uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
-	this->num_instances_until_target = until_distribution(generator);
-
-	if (history->has_explore) {
-		for (int i_index = 0; i_index < (int)history->obs_histories.size(); i_index++) {
-			this->new_obs_histories.push_back(history->obs_histories[i_index]);
-			this->new_target_val_histories.push_back(target_val);
-		}
-
-		this->state_iter++;
-
-		bool is_fail = false;
-		for (int l_index = 0; l_index < (int)TRAIN_NEW_NUM_DATAPOINTS.size(); l_index++) {
-			if (this->state_iter == TRAIN_NEW_NUM_DATAPOINTS[l_index]) {
-				bool is_success = train_new_helper(l_index);
-				if (!is_success) {
-					is_fail = true;
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->node_context;
+				average_instances_per_hit = action_node->average_instances_per_hit;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)this->node_context;
+				average_instances_per_hit = scope_node->average_instances_per_hit;
+			}
+			break;
+		default:
+		// case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)this->node_context;
+				if (this->is_branch) {
+					average_instances_per_hit = branch_node->branch_average_instances_per_hit;
+				} else {
+					average_instances_per_hit = branch_node->original_average_instances_per_hit;
 				}
 			}
+			break;
 		}
+		uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
+		this->num_instances_until_target = until_distribution(generator);
 
-		if (is_fail) {
-			this->try_iter++;
-			if (this->try_iter >= EXPERIMENT_MAX_TRIES) {
-				delete this;
-			} else {
-				this->new_obs_histories.clear();
-				this->new_target_val_histories.clear();
+		if (history->has_explore) {
+			for (int i_index = 0; i_index < (int)history->obs_histories.size(); i_index++) {
+				this->new_obs_histories.push_back(history->obs_histories[i_index]);
+				this->new_target_val_histories.push_back(target_val);
+			}
 
-				double average_instances_per_hit;
-				switch (this->node_context->type) {
-				case NODE_TYPE_NOOP:
-					{
-						NoopNode* noop_node = (NoopNode*)this->node_context;
-						average_instances_per_hit = noop_node->average_instances_per_hit;
+			this->state_iter++;
+
+			bool is_fail = false;
+			for (int l_index = 0; l_index < (int)TRAIN_NEW_NUM_DATAPOINTS.size(); l_index++) {
+				if (this->state_iter == TRAIN_NEW_NUM_DATAPOINTS[l_index]) {
+					bool is_success = train_new_helper(l_index);
+					if (!is_success) {
+						is_fail = true;
 					}
-					break;
-				case NODE_TYPE_ACTION:
-					{
-						ActionNode* action_node = (ActionNode*)this->node_context;
-						average_instances_per_hit = action_node->average_instances_per_hit;
-					}
-					break;
-				case NODE_TYPE_SCOPE:
-					{
-						ScopeNode* scope_node = (ScopeNode*)this->node_context;
-						average_instances_per_hit = scope_node->average_instances_per_hit;
-					}
-					break;
-				default:
-				// case NODE_TYPE_BRANCH:
-					{
-						BranchNode* branch_node = (BranchNode*)this->node_context;
-						if (this->is_branch) {
-							average_instances_per_hit = branch_node->branch_average_instances_per_hit;
-						} else {
-							average_instances_per_hit = branch_node->original_average_instances_per_hit;
+				}
+			}
+
+			if (is_fail) {
+				this->try_iter++;
+				if (this->try_iter >= EXPERIMENT_MAX_TRIES) {
+					int experiment_index = this->experiment_index;
+
+					delete this;
+
+					wrapper->experiment_iters[experiment_index]++;
+					if (wrapper->experiment_iters[experiment_index] >= EXPERIMENT_REFRESH_NUM_ITERS) {
+						for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+							Scope* scope = wrapper->solution->scopes[s_index];
+							for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+									it != scope->nodes.end(); it++) {
+								switch (it->second->type) {
+								case NODE_TYPE_NOOP:
+									{
+										NoopNode* noop_node = (NoopNode*)it->second;
+										for (int e_index = (int)noop_node->experiments.size()-1; e_index >= 0; e_index--) {
+											if (noop_node->experiments[e_index]->experiment_index == experiment_index) {
+												delete noop_node->experiments[e_index];
+											}
+										}
+									}
+									break;
+								case NODE_TYPE_ACTION:
+									{
+										ActionNode* action_node = (ActionNode*)it->second;
+										for (int e_index = (int)action_node->experiments.size()-1; e_index >= 0; e_index--) {
+											if (action_node->experiments[e_index]->experiment_index == experiment_index) {
+												delete action_node->experiments[e_index];
+											}
+										}
+									}
+									break;
+								case NODE_TYPE_SCOPE:
+									{
+										ScopeNode* scope_node = (ScopeNode*)it->second;
+										for (int e_index = (int)scope_node->experiments.size()-1; e_index >= 0; e_index--) {
+											if (scope_node->experiments[e_index]->experiment_index == experiment_index) {
+												delete scope_node->experiments[e_index];
+											}
+										}
+									}
+									break;
+								case NODE_TYPE_BRANCH:
+									{
+										BranchNode* branch_node = (BranchNode*)it->second;
+										for (int e_index = (int)branch_node->original_experiments.size()-1; e_index >= 0; e_index--) {
+											if (branch_node->original_experiments[e_index]->experiment_index == experiment_index) {
+												delete branch_node->original_experiments[e_index];
+											}
+										}
+										for (int e_index = (int)branch_node->branch_experiments.size()-1; e_index >= 0; e_index--) {
+											if (branch_node->branch_experiments[e_index]->experiment_index == experiment_index) {
+												delete branch_node->branch_experiments[e_index];
+											}
+										}
+									}
+									break;
+								}
+							}
 						}
+						wrapper->experiment_iters[experiment_index] = 0;
 					}
-					break;
-				}
-				uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
-				this->num_instances_until_target = until_distribution(generator);
+				} else {
+					this->new_obs_histories.clear();
+					this->new_target_val_histories.clear();
 
-				this->state = EXPLORE_EXPERIMENT_STATE_EXPLORE;
+					double average_instances_per_hit;
+					switch (this->node_context->type) {
+					case NODE_TYPE_NOOP:
+						{
+							NoopNode* noop_node = (NoopNode*)this->node_context;
+							average_instances_per_hit = noop_node->average_instances_per_hit;
+						}
+						break;
+					case NODE_TYPE_ACTION:
+						{
+							ActionNode* action_node = (ActionNode*)this->node_context;
+							average_instances_per_hit = action_node->average_instances_per_hit;
+						}
+						break;
+					case NODE_TYPE_SCOPE:
+						{
+							ScopeNode* scope_node = (ScopeNode*)this->node_context;
+							average_instances_per_hit = scope_node->average_instances_per_hit;
+						}
+						break;
+					default:
+					// case NODE_TYPE_BRANCH:
+						{
+							BranchNode* branch_node = (BranchNode*)this->node_context;
+							if (this->is_branch) {
+								average_instances_per_hit = branch_node->branch_average_instances_per_hit;
+							} else {
+								average_instances_per_hit = branch_node->original_average_instances_per_hit;
+							}
+						}
+						break;
+					}
+					uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_hit);
+					this->num_instances_until_target = until_distribution(generator);
+
+					this->state = EXPLORE_EXPERIMENT_STATE_EXPLORE;
+					this->state_iter = 0;
+				}
+			} else if (this->state_iter == TRAIN_NEW_NUM_DATAPOINTS.back()) {
+				this->sum_vals = 0.0;
+
+				this->state = EXPLORE_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			}
-		} else if (this->state_iter == TRAIN_NEW_NUM_DATAPOINTS.back()) {
-			this->sum_vals = 0.0;
-
-			this->state = EXPLORE_EXPERIMENT_STATE_MEASURE;
-			this->state_iter = 0;
 		}
 	}
 }

@@ -43,8 +43,6 @@ public:
 	void update(int num_instances,
 				double learning_rate);
 
-	void clear_momentum();
-
 	void save_weights(std::ofstream& output_file);
 };
 

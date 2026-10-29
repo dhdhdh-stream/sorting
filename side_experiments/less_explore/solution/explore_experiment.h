@@ -126,8 +126,6 @@ public:
 	void update();
 
 	void add(SolutionWrapper* wrapper);
-
-	bool further_than(AbstractExperiment* other);
 };
 
 class ExploreExperimentHistory : public AbstractExperimentHistory {

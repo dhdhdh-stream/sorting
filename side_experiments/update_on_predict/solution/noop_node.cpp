@@ -13,9 +13,6 @@ using namespace std;
 NoopNode::NoopNode() {
 	this->type = NODE_TYPE_NOOP;
 
-	this->average_instances_per_hit = 1.0;
-	this->average_instances_per_run = 0.0;
-
 	this->curr_num_instances = 0;
 }
 
@@ -29,10 +26,11 @@ void NoopNode::copy_from(NoopNode* original,
 						 Solution* parent_solution) {
 	this->next_node_id = original->next_node_id;
 
-	this->predict_rate = original->predict_rate;
-
 	this->average_instances_per_hit = original->average_instances_per_hit;
 	this->average_instances_per_run = original->average_instances_per_run;
+	this->val_average = original->val_average;
+
+	this->predict_rate = original->predict_rate;
 
 	this->ancestor_ids = original->ancestor_ids;
 }
@@ -40,10 +38,11 @@ void NoopNode::copy_from(NoopNode* original,
 void NoopNode::save(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 
-	output_file << this->predict_rate << endl;
-
 	output_file << this->average_instances_per_hit << endl;
 	output_file << this->average_instances_per_run << endl;
+	output_file << this->val_average << endl;
+
+	output_file << this->predict_rate << endl;
 
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
@@ -57,6 +56,18 @@ void NoopNode::load(ifstream& input_file,
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
 
+	string average_instances_per_hit_line;
+	getline(input_file, average_instances_per_hit_line);
+	this->average_instances_per_hit = stod(average_instances_per_hit_line);
+
+	string average_instances_per_run_line;
+	getline(input_file, average_instances_per_run_line);
+	this->average_instances_per_run = stod(average_instances_per_run_line);
+
+	string val_average_line;
+	getline(input_file, val_average_line);
+	this->val_average = stod(val_average_line);
+
 	string predict_rate_line;
 	getline(input_file, predict_rate_line);
 	this->predict_rate = stod(predict_rate_line);
@@ -65,14 +76,6 @@ void NoopNode::load(ifstream& input_file,
 	cout << "this->parent->id: " << this->parent->id << endl;
 	cout << "this->id: " << this->id << endl;
 	cout << "this->predict_rate: " << this->predict_rate << endl;
-
-	string average_instances_per_hit_line;
-	getline(input_file, average_instances_per_hit_line);
-	this->average_instances_per_hit = stod(average_instances_per_hit_line);
-
-	string average_instances_per_run_line;
-	getline(input_file, average_instances_per_run_line);
-	this->average_instances_per_run = stod(average_instances_per_run_line);
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);
@@ -98,10 +101,4 @@ void NoopNode::save_for_display(ofstream& output_file) {
 
 NoopNodeHistory::NoopNodeHistory(NoopNode* node) {
 	this->node = node;
-}
-
-AbstractNodeHistory* NoopNodeHistory::copy_top() {
-	NoopNode* noop_node = (NoopNode*)this->node;
-	NoopNodeHistory* new_history = new NoopNodeHistory(noop_node);
-	return new_history;
 }

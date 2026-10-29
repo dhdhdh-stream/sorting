@@ -11,6 +11,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_helpers.h"
 #include "solution_wrapper.h"
 #include "utilities.h"
 
@@ -141,6 +142,10 @@ void ExploreExperiment::measure_backprop(double target_val,
 				int experiment_index = this->experiment_index;
 
 				delete this;
+
+				for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+					clean_scope(wrapper->solution->scopes[s_index]);
+				}
 
 				wrapper->experiment_iters[experiment_index]++;
 				if (wrapper->experiment_iters[experiment_index] >= EXPERIMENT_REFRESH_NUM_ITERS) {

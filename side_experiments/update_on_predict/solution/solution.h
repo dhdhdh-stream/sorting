@@ -47,7 +47,6 @@ public:
 	std::vector<Scope*> scopes;
 	Scope* starting_scope;
 	int starting_scope_num_improvements;
-	int starting_scope_num_stabilize;
 
 	double run_average_num_actions;
 	double predict_rate;

@@ -38,8 +38,6 @@ public:
 	std::vector<std::vector<std::vector<double>>> existing_obs_histories;
 	std::vector<double> existing_target_val_histories;
 
-	double existing_val_average;
-
 	Network* existing_network;
 
 	int num_instances_until_target;
@@ -58,6 +56,7 @@ public:
 	double sum_vals;
 
 	ExploreExperiment(SolutionWrapper* wrapper,
+					 int experiment_index,
 					  Scope* scope_context,
 					  AbstractNode* node_context,
 					  bool is_branch,
@@ -131,6 +130,10 @@ public:
 	void measure_backprop(double target_val,
 						  ExploreExperimentHistory* history,
 						  SolutionWrapper* wrapper);
+
+	void backprop(std::vector<double>& obs,
+				  double target_val);
+	void update();
 
 	void add(SolutionWrapper* wrapper);
 };

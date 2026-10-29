@@ -92,6 +92,8 @@ void Scope::copy_from(Scope* original,
 
 	this->obs_network = new ObsNetwork(original->obs_network);
 
+	this->predict_num_stabilize = original->predict_num_stabilize;
+
 	this->predict_rate = original->predict_rate;
 
 	this->score_network = new ScoreNetwork(original->score_network);
@@ -125,6 +127,8 @@ void Scope::save(ofstream& output_file) {
 	}
 
 	this->obs_network->save(output_file);
+
+	output_file << this->predict_num_stabilize << endl;
 
 	output_file << this->predict_rate << endl;
 
@@ -214,6 +218,10 @@ void Scope::load(ifstream& input_file,
 	}
 
 	this->obs_network = new ObsNetwork(input_file);
+
+	string predict_num_stabilize_line;
+	getline(input_file, predict_num_stabilize_line);
+	this->predict_num_stabilize = stoi(predict_num_stabilize_line);
 
 	string predict_rate_line;
 	getline(input_file, predict_rate_line);
@@ -352,16 +360,4 @@ ScopeHistory::~ScopeHistory() {
 	for (int h_index = 0; h_index < (int)this->node_histories.size(); h_index++) {
 		delete this->node_histories[h_index];
 	}
-}
-
-ScopeHistory* ScopeHistory::copy_top() {
-	ScopeHistory* new_history = new ScopeHistory(this->scope);
-
-	new_history->obs = this->obs;
-
-	for (int h_index = 0; h_index < (int)this->node_histories.size(); h_index++) {
-		new_history->node_histories.push_back(this->node_histories[h_index]->copy_top());
-	}
-
-	return new_history;
 }

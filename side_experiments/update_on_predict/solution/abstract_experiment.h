@@ -15,14 +15,15 @@ class AbstractExperimentHistory;
 class AbstractExperiment {
 public:
 	SolutionWrapper* wrapper;
-
-	int state;
-	int state_iter;
+	int experiment_index;
 
 	Scope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;
 	AbstractNode* exit_next_node;
+
+	int state;
+	int state_iter;
 
 	virtual ~AbstractExperiment() {};
 
@@ -39,6 +40,10 @@ public:
 	virtual void backprop(double target_val,
 						  AbstractExperimentHistory* history,
 						  SolutionWrapper* wrapper) = 0;
+
+	virtual void backprop(std::vector<double>& obs,
+						  double target_val) = 0;
+	virtual void update() = 0;
 
 	bool further_than(AbstractExperiment* other);
 };

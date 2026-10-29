@@ -31,6 +31,7 @@ public:
 
 	double average_instances_per_hit;
 	double average_instances_per_run;
+	double val_average;
 	std::vector<AbstractExperiment*> experiments;
 
 	int curr_num_instances;
@@ -73,11 +74,7 @@ public:
 
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
-	std::vector<double> obs;
-
 	ActionNodeHistory(ActionNode* node);
-
-	AbstractNodeHistory* copy_top();
 };
 
 class TrainActionNodeHistory : public TrainAbstractNodeHistory {

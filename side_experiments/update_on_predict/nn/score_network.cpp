@@ -169,12 +169,6 @@ void ScoreNetwork::update() {
 	}
 }
 
-void ScoreNetwork::clear_momentum() {
-	this->hidden_1->clear_momentum();
-	this->hidden_2->clear_momentum();
-	this->output->clear_momentum();
-}
-
 void ScoreNetwork::save(ofstream& output_file) {
 	output_file << this->state_input->acti_vals.size() << endl;
 

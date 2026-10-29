@@ -38,14 +38,22 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
+	int ramp;
+	double existing_sum_score;
+	int existing_count;
+	double new_sum_score;
+	int new_count;
+
 	int consec_original;
 	int consec_branch;
 
 	double original_average_instances_per_hit;
 	double original_average_instances_per_run;
+	double original_val_average;
 	std::vector<AbstractExperiment*> original_experiments;
 	double branch_average_instances_per_hit;
 	double branch_average_instances_per_run;
+	double branch_val_average;
 	std::vector<AbstractExperiment*> branch_experiments;
 
 	int original_curr_num_instances;
@@ -89,11 +97,7 @@ class BranchNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_branch;
 
-	std::vector<double> obs;
-
 	BranchNodeHistory(BranchNode* node);
-
-	AbstractNodeHistory* copy_top();
 };
 
 class TrainPredictBranchNodeHistory : public TrainAbstractNodeHistory {

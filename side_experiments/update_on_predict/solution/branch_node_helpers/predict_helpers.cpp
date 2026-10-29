@@ -1,5 +1,6 @@
 #include "branch_node.h"
 
+#include "constants.h"
 #include "globals.h"
 #include "score_network.h"
 #include "utilities.h"
@@ -8,6 +9,17 @@ using namespace std;
 
 void BranchNode::predict_step(Eigen::VectorXf& state,
 							  AbstractNode*& node_context) {
+	if (this->ramp == 0) {
+		node_context = this->original_next_node;
+		return;
+	} else if (this->ramp < MAX_RAMP) {
+		uniform_int_distribution<int> distribution(0, MAX_RAMP-1);
+		if (distribution(generator) >= this->ramp) {
+			node_context = this->original_next_node;
+			return;
+		}
+	}
+
 	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
 		node_context = this->original_next_node;
 		return;
