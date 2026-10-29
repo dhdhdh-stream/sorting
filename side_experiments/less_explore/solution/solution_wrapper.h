@@ -25,7 +25,8 @@ public:
 
 	int iters_since_update;
 
-	int experiment_iter;
+	std::vector<AbstractExperiment*> experiments;
+	std::vector<int> experiment_iters;
 	/**
 	 * - fully reset experiments every so often
 	 *   - to enable experiments in different places
@@ -42,7 +43,9 @@ public:
 
 	std::vector<std::map<BranchNode*, bool>> ramp_tracker;
 
-	std::map<AbstractExperiment*, AbstractExperimentHistory*> experiment_histories;
+	bool is_explore;
+	int experiment_index;
+	std::vector<std::map<AbstractExperiment*, AbstractExperimentHistory*>> experiment_histories;
 
 	Problem* problem;
 

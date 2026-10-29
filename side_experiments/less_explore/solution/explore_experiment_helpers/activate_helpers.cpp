@@ -12,9 +12,9 @@ using namespace std;
 void ExploreExperiment::experiment_check_activate(vector<double>& obs,
 												  SolutionWrapper* wrapper) {
 	map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it =
-		wrapper->experiment_histories.find(this);
-	if (it == wrapper->experiment_histories.end()) {
-		it = wrapper->experiment_histories.insert({this, new ExploreExperimentHistory(this)}).first;
+		wrapper->experiment_histories[this->experiment_index].find(this);
+	if (it == wrapper->experiment_histories[this->experiment_index].end()) {
+		it = wrapper->experiment_histories[this->experiment_index].insert({this, new ExploreExperimentHistory(this)}).first;
 	}
 	ExploreExperimentHistory* explore_experiment_history = (ExploreExperimentHistory*)it->second;
 

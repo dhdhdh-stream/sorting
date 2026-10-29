@@ -49,6 +49,8 @@ public:
 	AbstractNode* node;
 	int index;
 
+	std::vector<double> obs;
+
 	virtual ~AbstractNodeHistory() {};
 };
 

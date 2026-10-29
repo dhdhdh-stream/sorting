@@ -26,6 +26,20 @@ void SolutionWrapper::experiment_init() {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
+	#if defined(MDEBUG) && MDEBUG
+	uniform_int_distribution<int> is_explore_distribution(0, 1);
+	#else
+	uniform_int_distribution<int> is_explore_distribution(0, 4);
+	#endif /* MDEBUG */
+	if (is_explore_distribution(generator) == 0) {
+		this->is_explore = true;
+	} else {
+		this->is_explore = false;
+	}
+
+	uniform_int_distribution<int> experiment_distribution(0, DIVERSITY-1);
+	this->experiment_index = experiment_distribution(generator);
+
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->starting_scope);
 	this->scope_histories.push_back(scope_history);
 	this->node_context.push_back(this->solution->starting_scope->nodes[0]);
@@ -86,7 +100,7 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	if (this->iters_since_update < UPDATE_NUM_ITERS) {
+	if (!this->is_explore) {
 		/**
 		 * - training on explore significantly hurts results
 		 *   - even if, e.g., training only post explore
@@ -99,14 +113,16 @@ void SolutionWrapper::experiment_end(double result) {
 		this->ramp_tracker[s_index].clear();
 	}
 
-	if (this->iters_since_update >= UPDATE_NUM_ITERS) {
-		if (this->experiment_histories.size() == 0) {
-			create_experiment(this->scope_histories[0],
-							  this);
-		} else if (this->experiment_histories.size() >= 2) {
+	if (this->experiment_histories[this->experiment_index].size() == 0) {
+		create_experiment(this->scope_histories[0],
+						  this);
+	}
+
+	for (int e_index = 0; e_index < DIVERSITY; e_index++) {
+		if (this->experiment_histories[e_index].size() >= 2) {
 			AbstractExperiment* keep_experiment = NULL;
-			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
-					it != this->experiment_histories.end(); it++) {
+			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[e_index].begin();
+					it != this->experiment_histories[e_index].end(); it++) {
 				if (keep_experiment == NULL) {
 					keep_experiment = it->first;
 				} else {
@@ -128,20 +144,35 @@ void SolutionWrapper::experiment_end(double result) {
 	this->node_context.clear();
 	this->experiment_context.clear();
 
-	if (this->experiment_histories.size() == 1) {
-		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
-				it != this->experiment_histories.end(); it++) {
-			it->first->backprop(result,
-								it->second,
-								this);
+	if (this->is_explore) {
+		if (this->experiment_histories[this->experiment_index].size() == 1) {
+			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[this->experiment_index].begin();
+					it != this->experiment_histories[this->experiment_index].end(); it++) {
+				it->first->backprop(result,
+									it->second,
+									this);
+			}
+		}
+	} else {
+		for (int e_index = 0; e_index < DIVERSITY; e_index++) {
+			if (this->experiment_histories[e_index].size() == 1) {
+				for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[e_index].begin();
+						it != this->experiment_histories[e_index].end(); it++) {
+					it->first->backprop(result,
+										it->second,
+										this);
+				}
+			}
 		}
 	}
 
-	for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories.begin();
-			it != this->experiment_histories.end(); it++) {
-		delete it->second;
+	for (int e_index = 0; e_index < DIVERSITY; e_index++) {
+		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[e_index].begin();
+				it != this->experiment_histories[e_index].end(); it++) {
+			delete it->second;
+		}
+		this->experiment_histories[e_index].clear();
 	}
-	this->experiment_histories.clear();
 
 	this->iters_since_update++;
 }

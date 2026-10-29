@@ -29,6 +29,8 @@ void ScopeNode::experiment_exit_step(vector<double>& obs,
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
+	history->obs = obs;
+
 	history->scope_history = wrapper->scope_histories.back();
 
 	wrapper->scope_histories.pop_back();

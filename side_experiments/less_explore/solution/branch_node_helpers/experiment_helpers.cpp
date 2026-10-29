@@ -54,6 +54,8 @@ void BranchNode::experiment_step(vector<double>& obs,
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
+	history->obs = obs;
+
 	bool is_branch;
 	this->original_network->activate(obs);
 	double original_predicted = this->original_network->output->acti_vals[0];
@@ -75,8 +77,6 @@ void BranchNode::experiment_step(vector<double>& obs,
 	#endif /* MDEBUG */
 
 	history->is_branch = is_branch;
-
-	history->obs = obs;
 
 	if (is_branch) {
 		wrapper->node_context.back() = this->branch_next_node;

@@ -14,11 +14,6 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->original_average_instances_per_hit = 1.0;
-	this->original_average_instances_per_run = 0.0;
-	this->branch_average_instances_per_hit = 1.0;
-	this->branch_average_instances_per_run = 0.0;
-
 	this->original_curr_num_instances = 0;
 	this->branch_curr_num_instances = 0;
 }
@@ -54,8 +49,10 @@ void BranchNode::copy_from(BranchNode* original,
 
 	this->original_average_instances_per_hit = original->original_average_instances_per_hit;
 	this->original_average_instances_per_run = original->original_average_instances_per_run;
+	this->original_val_average = original->original_val_average;
 	this->branch_average_instances_per_hit = original->branch_average_instances_per_hit;
 	this->branch_average_instances_per_run = original->branch_average_instances_per_run;
+	this->branch_val_average = original->branch_val_average;
 
 	this->ancestor_ids = original->ancestor_ids;
 }
@@ -78,8 +75,10 @@ void BranchNode::save(ofstream& output_file) {
 
 	output_file << this->original_average_instances_per_hit << endl;
 	output_file << this->original_average_instances_per_run << endl;
+	output_file << this->original_val_average << endl;
 	output_file << this->branch_average_instances_per_hit << endl;
 	output_file << this->branch_average_instances_per_run << endl;
+	output_file << this->branch_val_average << endl;
 
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
@@ -146,6 +145,10 @@ void BranchNode::load(ifstream& input_file,
 	getline(input_file, original_average_instances_per_run_line);
 	this->original_average_instances_per_run = stod(original_average_instances_per_run_line);
 
+	string original_val_average_line;
+	getline(input_file, original_val_average_line);
+	this->original_val_average = stod(original_val_average_line);
+
 	string branch_average_instances_per_hit_line;
 	getline(input_file, branch_average_instances_per_hit_line);
 	this->branch_average_instances_per_hit = stod(branch_average_instances_per_hit_line);
@@ -153,6 +156,10 @@ void BranchNode::load(ifstream& input_file,
 	string branch_average_instances_per_run_line;
 	getline(input_file, branch_average_instances_per_run_line);
 	this->branch_average_instances_per_run = stod(branch_average_instances_per_run_line);
+
+	string branch_val_average_line;
+	getline(input_file, branch_val_average_line);
+	this->branch_val_average = stod(branch_val_average_line);
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);

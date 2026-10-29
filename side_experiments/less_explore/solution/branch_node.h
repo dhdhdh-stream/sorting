@@ -47,9 +47,11 @@ public:
 
 	double original_average_instances_per_hit;
 	double original_average_instances_per_run;
+	double original_val_average;
 	std::vector<AbstractExperiment*> original_experiments;
 	double branch_average_instances_per_hit;
 	double branch_average_instances_per_run;
+	double branch_val_average;
 	std::vector<AbstractExperiment*> branch_experiments;
 
 	int original_curr_num_instances;
@@ -82,8 +84,6 @@ public:
 class BranchNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_branch;
-
-	std::vector<double> obs;
 
 	BranchNodeHistory(BranchNode* node);
 };

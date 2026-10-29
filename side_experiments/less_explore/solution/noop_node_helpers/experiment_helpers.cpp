@@ -20,6 +20,8 @@ void NoopNode::experiment_step(vector<double>& obs,
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
+	history->obs = obs;
+
 	wrapper->node_context.back() = this->next_node;
 
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {

@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
@@ -60,6 +61,63 @@ void replace_next(AbstractNode* node,
 }
 
 void clean_scope(Scope* scope) {
+	set<AbstractNode*> experiment_endpoints;
+	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+			it != scope->nodes.end(); it++) {
+		switch (it->second->type) {
+		case NODE_TYPE_NOOP:
+			{
+				NoopNode* noop_node = (NoopNode*)it->second;
+				for (int e_index = 0; e_index < (int)noop_node->experiments.size(); e_index++) {
+					if (noop_node->experiments[e_index] != NULL
+							&& noop_node->experiments[e_index]->exit_next_node != NULL) {
+						experiment_endpoints.insert(noop_node->experiments[e_index]->exit_next_node);
+					}
+				}
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)it->second;
+				for (int e_index = 0; e_index < (int)action_node->experiments.size(); e_index++) {
+					if (action_node->experiments[e_index] != NULL
+							&& action_node->experiments[e_index]->exit_next_node != NULL) {
+						experiment_endpoints.insert(action_node->experiments[e_index]->exit_next_node);
+					}
+				}
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)it->second;
+				for (int e_index = 0; e_index < (int)scope_node->experiments.size(); e_index++) {
+					if (scope_node->experiments[e_index] != NULL
+							&& scope_node->experiments[e_index]->exit_next_node != NULL) {
+						experiment_endpoints.insert(scope_node->experiments[e_index]->exit_next_node);
+					}
+				}
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				for (int e_index = 0; e_index < (int)branch_node->original_experiments.size(); e_index++) {
+					if (branch_node->original_experiments[e_index] != NULL
+							&& branch_node->original_experiments[e_index]->exit_next_node != NULL) {
+						experiment_endpoints.insert(branch_node->original_experiments[e_index]->exit_next_node);
+					}
+				}
+				for (int e_index = 0; e_index < (int)branch_node->branch_experiments.size(); e_index++) {
+					if (branch_node->branch_experiments[e_index] != NULL
+							&& branch_node->branch_experiments[e_index]->exit_next_node != NULL) {
+						experiment_endpoints.insert(branch_node->branch_experiments[e_index]->exit_next_node);
+					}
+				}
+			}
+			break;
+		}
+	}
+
 	/**
 	 * - remove useless BranchNodes
 	 */
@@ -70,7 +128,8 @@ void clean_scope(Scope* scope) {
 
 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 				it != scope->nodes.end(); it++) {
-			if (it->second->type == NODE_TYPE_BRANCH) {
+			if (it->second->type == NODE_TYPE_BRANCH
+					&& experiment_endpoints.find(it->second) == experiment_endpoints.end()) {
 				BranchNode* branch_node = (BranchNode*)it->second;
 
 				bool is_remove = false;
@@ -168,8 +227,8 @@ void clean_scope(Scope* scope) {
 
 		map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 		while (it != scope->nodes.end()) {
-			set<int>::iterator needed_it = next_node_ids.find(it->first);
-			if (needed_it == next_node_ids.end()) {
+			if (next_node_ids.find(it->first) == next_node_ids.end()
+					&& experiment_endpoints.find(it->second) == experiment_endpoints.end()) {
 				removed_node = true;
 
 				switch (it->second->type) {

@@ -7,8 +7,6 @@
 
 using namespace std;
 
-const int INIT_EPOCH_SIZE = 10;
-
 Network::Network(int input_size) {
 	this->input = new Layer(LINEAR_LAYER);
 	this->input->acti_vals.resize(input_size);
@@ -224,13 +222,6 @@ void Network::update() {
 	this->output->update(this->num_instances);
 
 	this->num_instances = 0;
-}
-
-void Network::clear_momentum() {
-	this->hidden_1->clear_momentum();
-	this->hidden_2->clear_momentum();
-	this->hidden_3->clear_momentum();
-	this->output->clear_momentum();
 }
 
 void Network::save(ofstream& output_file) {
