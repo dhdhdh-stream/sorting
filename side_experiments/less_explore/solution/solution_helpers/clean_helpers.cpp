@@ -1,6 +1,7 @@
 #include "solution_helpers.h"
 
 #include <iostream>
+#include <sstream>
 
 #include "abstract_experiment.h"
 #include "action_node.h"
@@ -9,6 +10,7 @@
 #include "noop_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
@@ -60,7 +62,8 @@ void replace_next(AbstractNode* node,
 	replacement->ancestor_ids.push_back(node->id);
 }
 
-void clean_scope(Scope* scope) {
+void clean_scope(Scope* scope,
+				 SolutionWrapper* wrapper) {
 	set<AbstractNode*> experiment_endpoints;
 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 			it != scope->nodes.end(); it++) {
@@ -147,6 +150,10 @@ void clean_scope(Scope* scope) {
 									 noop_node->next_node);
 					}
 
+					stringstream ss;
+					ss << "useless Noop " << scope->id << " " << noop_node->id << "; ";
+					wrapper->logs.push_back(ss.str());
+
 					scope->nodes.erase(noop_node->id);
 					delete noop_node;
 
@@ -162,15 +169,31 @@ void clean_scope(Scope* scope) {
 				if (branch_node->ramp == 0) {
 					is_remove = true;
 					replacement = branch_node->original_next_node;
+
+					stringstream ss;
+					ss << "ramp 0 " << scope->id << " " << branch_node->id << "; ";
+					wrapper->logs.push_back(ss.str());
 				} else if (branch_node->consec_original >= CONSEC_DEPRECATE_LIMIT) {
 					is_remove = true;
+
+					stringstream ss;
+					ss << "consec_original " << scope->id << " " << branch_node->id << "; ";
+					wrapper->logs.push_back(ss.str());
 					replacement = branch_node->original_next_node;
 				} else if (branch_node->consec_branch >= CONSEC_DEPRECATE_LIMIT) {
 					is_remove = true;
+
+					stringstream ss;
+					ss << "consec_branch " << scope->id << " " << branch_node->id << "; ";
+					wrapper->logs.push_back(ss.str());
 					replacement = branch_node->branch_next_node;
 				} else if (branch_node->original_next_node == branch_node->branch_next_node) {
 					is_remove = true;
 					replacement = branch_node->original_next_node;
+
+					stringstream ss;
+					ss << "useless Branch " << scope->id << " " << branch_node->id << "; ";
+					wrapper->logs.push_back(ss.str());
 				}
 
 				if (is_remove) {

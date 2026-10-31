@@ -48,6 +48,7 @@ public:
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
+	std::vector<std::string> log_history;
 
 	Solution();
 	Solution(Solution* original);

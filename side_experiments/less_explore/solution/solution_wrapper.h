@@ -24,6 +24,7 @@ public:
 	Solution* best_solution;
 
 	int iters_since_update;
+	std::vector<std::string> logs;
 
 	std::vector<int> experiment_iters;
 	/**

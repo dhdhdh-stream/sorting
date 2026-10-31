@@ -23,7 +23,7 @@ class ScopeHistory;
 class Solution;
 class SolutionWrapper;
 
-const int CONSEC_DEPRECATE_LIMIT = 4000;
+const int CONSEC_DEPRECATE_LIMIT = 4000.0;
 
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
@@ -42,8 +42,8 @@ public:
 	double new_sum_score;
 	int new_count;
 
-	int consec_original;
-	int consec_branch;
+	double consec_original;
+	double consec_branch;
 
 	double original_average_instances_per_hit;
 	double original_average_instances_per_run;

@@ -86,8 +86,8 @@ void update_helper(ScopeHistory* scope_history,
 
 					branch_node->branch_curr_num_instances++;
 
-					branch_node->consec_original = 0;
-					branch_node->consec_branch++;
+					branch_node->consec_original = 0.0;
+					branch_node->consec_branch += 1.0 / branch_node->branch_average_instances_per_hit;
 
 					for (int e_index = 0; e_index < (int)branch_node->branch_experiments.size(); e_index++) {
 						branch_node->branch_experiments[e_index]->backprop(h_it->second->obs,
@@ -100,8 +100,8 @@ void update_helper(ScopeHistory* scope_history,
 
 					branch_node->original_curr_num_instances++;
 
-					branch_node->consec_original++;
-					branch_node->consec_branch = 0;
+					branch_node->consec_original += 1.0 / branch_node->original_average_instances_per_hit;
+					branch_node->consec_branch = 0.0;
 
 					for (int e_index = 0; e_index < (int)branch_node->original_experiments.size(); e_index++) {
 						branch_node->original_experiments[e_index]->backprop(h_it->second->obs,

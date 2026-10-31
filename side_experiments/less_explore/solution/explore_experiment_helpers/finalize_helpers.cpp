@@ -25,37 +25,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		wrapper->best_solution = new Solution(wrapper->solution);
 	}
 
-	stringstream ss;
-	ss << get_time() << "; ";
-	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
-	ss << "iters_since_update: " << wrapper->iters_since_update << "; ";
-	ss << "Experiment" << "; ";
-	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
-	ss << "this->node_context->id: " << this->node_context->id << "; ";
-	ss << "this->is_branch: " << this->is_branch << "; ";
-	ss << "new explore path:";
-	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			ss << " " << this->best_actions[s_index];
-		} else {
-			ss << " E" << this->best_scopes[s_index]->id;
-		}
-	}
-	ss << "; ";
-
-	if (this->exit_next_node == NULL) {
-		ss << "this->exit_next_node->id: " << -1 << "; ";
-	} else {
-		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
-	}
-
-	wrapper->solution->improvement_history.push_back(wrapper->solution->curr_score);
-	cout << "previous_val_average: " << wrapper->solution->curr_score << endl;
-
-	wrapper->solution->change_history.push_back(ss.str());
-
-	cout << ss.str() << endl;
-
 	double average_instances_per_hit;
 	double average_instances_per_run;
 	double val_average;
@@ -84,7 +53,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			val_average = scope_node->val_average;
 		}
 		break;
-	case NODE_TYPE_BRANCH:
+	default:
+	// case NODE_TYPE_BRANCH:
 		{
 			BranchNode* branch_node = (BranchNode*)this->node_context;
 			if (this->is_branch) {
@@ -386,8 +356,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	new_branch_node->new_sum_score = 0.0;
 	new_branch_node->new_count = 0;
 
-	new_branch_node->consec_original = 0;
-	new_branch_node->consec_branch = 0;
+	new_branch_node->consec_original = 0.0;
+	new_branch_node->consec_branch = 0.0;
 
 	new_branch_node->original_average_instances_per_hit = average_instances_per_hit;
 	new_branch_node->original_average_instances_per_run = average_instances_per_run;
@@ -491,6 +461,50 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			wrapper->solution->starting_num_improvements = 0;
 		}
 	}
+
+	stringstream ss;
+	ss << get_time() << "; ";
+	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
+	ss << "iters_since_update: " << wrapper->iters_since_update << "; ";
+	ss << "Experiment" << "; ";
+	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
+	ss << "this->node_context->id: " << this->node_context->id << "; ";
+	ss << "this->is_branch: " << this->is_branch << "; ";
+	ss << "new explore path:";
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			ss << " " << this->best_actions[s_index];
+		} else {
+			ss << " E" << this->best_scopes[s_index]->id;
+		}
+	}
+	ss << "; ";
+
+	if (this->exit_next_node == NULL) {
+		ss << "this->exit_next_node->id: " << -1 << "; ";
+	} else {
+		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
+	}
+
+	wrapper->solution->improvement_history.push_back(wrapper->solution->curr_score);
+	cout << "previous_val_average: " << wrapper->solution->curr_score << endl;
+
+	// temp
+	{
+		double val_average = measure_helper(wrapper);
+		ss << "post val_average: " << val_average << "; ";
+	}
+
+	wrapper->solution->change_history.push_back(ss.str());
+
+	cout << ss.str() << endl;
+
+	stringstream log_ss;
+	for (int i_index = 0; i_index < (int)wrapper->logs.size(); i_index++) {
+		log_ss << wrapper->logs[i_index] << "; ";
+	}
+	wrapper->logs.clear();
+	wrapper->solution->log_history.push_back(log_ss.str());
 
 	wrapper->solution->timestamp++;
 	wrapper->iters_since_update = 0;

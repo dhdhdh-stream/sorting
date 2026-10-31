@@ -119,7 +119,8 @@ void ExploreExperiment::measure_backprop(double target_val,
 					existing_val_average = scope_node->val_average;
 				}
 				break;
-			case NODE_TYPE_BRANCH:
+			default:
+			// case NODE_TYPE_BRANCH:
 				{
 					BranchNode* branch_node = (BranchNode*)this->node_context;
 					if (this->is_branch) {
@@ -144,7 +145,8 @@ void ExploreExperiment::measure_backprop(double target_val,
 				delete this;
 
 				for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-					clean_scope(wrapper->solution->scopes[s_index]);
+					clean_scope(wrapper->solution->scopes[s_index],
+								wrapper);
 				}
 
 				wrapper->experiment_iters[experiment_index]++;
