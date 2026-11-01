@@ -462,6 +462,18 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		}
 	}
 
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			if (it->second->type == NODE_TYPE_BRANCH) {
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->original_network->clear_momentum();
+				branch_node->branch_network->clear_momentum();
+			}
+		}
+	}
+
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
@@ -488,12 +500,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 	wrapper->solution->improvement_history.push_back(wrapper->solution->curr_score);
 	cout << "previous_val_average: " << wrapper->solution->curr_score << endl;
-
-	// temp
-	{
-		double val_average = measure_helper(wrapper);
-		ss << "post val_average: " << val_average << "; ";
-	}
 
 	wrapper->solution->change_history.push_back(ss.str());
 

@@ -24,7 +24,7 @@ void BranchNode::experiment_step(vector<double>& obs,
 		map<BranchNode*, bool>::iterator it = wrapper->ramp_tracker[
 			this->parent->id].find(this);
 		if (it == wrapper->ramp_tracker[this->parent->id].end()) {
-			uniform_int_distribution<int> distribution(0, MAX_RAMP);
+			uniform_int_distribution<int> distribution(0, MAX_RAMP-1);
 			bool is_on;
 			if (distribution(generator) < this->ramp) {
 				is_on = true;
