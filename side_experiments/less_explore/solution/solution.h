@@ -50,6 +50,8 @@ public:
 	std::vector<std::string> change_history;
 	std::vector<std::string> log_history;
 
+	int num_resets;
+
 	Solution();
 	Solution(Solution* original);
 	~Solution();

@@ -50,6 +50,8 @@ Solution::Solution(Solution* original) {
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
 	this->log_history = original->log_history;
+
+	this->num_resets = original->num_resets;
 }
 
 Solution::~Solution() {
@@ -98,6 +100,8 @@ void Solution::init(ProblemType* problem_type) {
 
 	this->starting_scope = new_scope;
 	this->starting_num_improvements = 0;
+
+	this->num_resets = 0;
 }
 
 void Solution::load(ifstream& input_file) {
@@ -152,6 +156,10 @@ void Solution::load(ifstream& input_file) {
 		getline(input_file, log_line);
 		this->log_history.push_back(log_line);
 	}
+
+	string num_resets_line;
+	getline(input_file, num_resets_line);
+	this->num_resets = stoi(num_resets_line);
 }
 
 void Solution::clean_scopes() {
@@ -230,6 +238,8 @@ void Solution::save(ofstream& output_file) {
 		output_file << this->change_history[h_index] << endl;
 		output_file << this->log_history[h_index] << endl;
 	}
+
+	output_file << this->num_resets << endl;
 }
 
 void Solution::save_for_display(ofstream& output_file) {

@@ -187,4 +187,17 @@ void SolutionWrapper::experiment_end(double result) {
 	}
 
 	this->iters_since_update++;
+
+	if (this->previous_solution->curr_score > this->solution->curr_score + 0.2) {
+		cout << "reset" << endl;
+
+		this->previous_solution->num_resets++;
+
+		delete this->solution;
+		this->solution = new Solution(this->previous_solution);
+
+		this->iters_since_update = 0;
+		this->logs.clear();
+		this->experiment_iters = vector<int>(DIVERSITY, 0);
+	}
 }

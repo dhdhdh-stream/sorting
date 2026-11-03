@@ -462,17 +462,17 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		Scope* scope = wrapper->solution->scopes[s_index];
-		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-				it != scope->nodes.end(); it++) {
-			if (it->second->type == NODE_TYPE_BRANCH) {
-				BranchNode* branch_node = (BranchNode*)it->second;
-				branch_node->original_network->clear_momentum();
-				branch_node->branch_network->clear_momentum();
-			}
-		}
-	}
+	// for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+	// 	Scope* scope = wrapper->solution->scopes[s_index];
+	// 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+	// 			it != scope->nodes.end(); it++) {
+	// 		if (it->second->type == NODE_TYPE_BRANCH) {
+	// 			BranchNode* branch_node = (BranchNode*)it->second;
+	// 			branch_node->original_network->clear_momentum();
+	// 			branch_node->branch_network->clear_momentum();
+	// 		}
+	// 	}
+	// }
 
 	stringstream ss;
 	ss << get_time() << "; ";
@@ -514,4 +514,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 	wrapper->solution->timestamp++;
 	wrapper->iters_since_update = 0;
+
+	delete wrapper->previous_solution;
+	wrapper->previous_solution = new Solution(wrapper->solution);
 }
