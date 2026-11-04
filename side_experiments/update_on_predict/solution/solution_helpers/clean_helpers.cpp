@@ -252,27 +252,36 @@ void clean_scope(Scope* scope) {
 
 		map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 		while (it != scope->nodes.end()) {
-			if (next_node_ids.find(it->first) == next_node_ids.end()
-					&& experiment_endpoints.find(it->second) == experiment_endpoints.end()) {
-				removed_node = true;
+			switch (it->second->type) {
+			case NODE_TYPE_NOOP:
+				if (next_node_ids.find(it->first) == next_node_ids.end()
+						&& experiment_endpoints.find(it->second) == experiment_endpoints.end()) {
+					removed_node = true;
 
-				switch (it->second->type) {
-				case NODE_TYPE_NOOP:
-					{
-						NoopNode* noop_node = (NoopNode*)it->second;
+					NoopNode* noop_node = (NoopNode*)it->second;
 
-						for (int a_index = 0; a_index < (int)noop_node->next_node->ancestor_ids.size(); a_index++) {
-							if (noop_node->next_node->ancestor_ids[a_index] == it->second->id) {
-								noop_node->next_node->ancestor_ids.erase(
-									noop_node->next_node->ancestor_ids.begin() + a_index);
-								break;
-							}
+					for (int a_index = 0; a_index < (int)noop_node->next_node->ancestor_ids.size(); a_index++) {
+						if (noop_node->next_node->ancestor_ids[a_index] == it->second->id) {
+							noop_node->next_node->ancestor_ids.erase(
+								noop_node->next_node->ancestor_ids.begin() + a_index);
+							break;
 						}
 					}
-					break;
-				case NODE_TYPE_ACTION:
-					{
-						ActionNode* action_node = (ActionNode*)it->second;
+
+					delete it->second;
+					it = scope->nodes.erase(it);
+				} else {
+					it++;
+				}
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)it->second;
+
+					if (!action_node->is_generic
+							&& next_node_ids.find(it->first) == next_node_ids.end()
+							&& experiment_endpoints.find(it->second) == experiment_endpoints.end()) {
+						removed_node = true;
 
 						for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
 							if (action_node->next_node->ancestor_ids[a_index] == it->second->id) {
@@ -281,11 +290,22 @@ void clean_scope(Scope* scope) {
 								break;
 							}
 						}
+
+						delete it->second;
+						it = scope->nodes.erase(it);
+					} else {
+						it++;
 					}
-					break;
-				case NODE_TYPE_SCOPE:
-					{
-						ScopeNode* scope_node = (ScopeNode*)it->second;
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)it->second;
+
+					if (!scope_node->is_generic
+							&& next_node_ids.find(it->first) == next_node_ids.end()
+							&& experiment_endpoints.find(it->second) == experiment_endpoints.end()) {
+						removed_node = true;
 
 						for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
 							if (scope_node->next_node->ancestor_ids[a_index] == it->second->id) {
@@ -294,35 +314,43 @@ void clean_scope(Scope* scope) {
 								break;
 							}
 						}
-					}
-					break;
-				case NODE_TYPE_BRANCH:
-					{
-						BranchNode* branch_node = (BranchNode*)it->second;
 
-						for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
-							if (branch_node->original_next_node->ancestor_ids[a_index] == it->second->id) {
-								branch_node->original_next_node->ancestor_ids.erase(
-									branch_node->original_next_node->ancestor_ids.begin() + a_index);
-								break;
-							}
-						}
-
-						for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
-							if (branch_node->branch_next_node->ancestor_ids[a_index] == it->second->id) {
-								branch_node->branch_next_node->ancestor_ids.erase(
-									branch_node->branch_next_node->ancestor_ids.begin() + a_index);
-								break;
-							}
-						}
+						delete it->second;
+						it = scope->nodes.erase(it);
+					} else {
+						it++;
 					}
-					break;
 				}
+				break;
+			case NODE_TYPE_BRANCH:
+				if (next_node_ids.find(it->first) == next_node_ids.end()
+						&& experiment_endpoints.find(it->second) == experiment_endpoints.end()) {
+					removed_node = true;
 
-				delete it->second;
-				it = scope->nodes.erase(it);
-			} else {
-				it++;
+					BranchNode* branch_node = (BranchNode*)it->second;
+
+					for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
+						if (branch_node->original_next_node->ancestor_ids[a_index] == it->second->id) {
+							branch_node->original_next_node->ancestor_ids.erase(
+								branch_node->original_next_node->ancestor_ids.begin() + a_index);
+							break;
+						}
+					}
+
+					for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
+						if (branch_node->branch_next_node->ancestor_ids[a_index] == it->second->id) {
+							branch_node->branch_next_node->ancestor_ids.erase(
+								branch_node->branch_next_node->ancestor_ids.begin() + a_index);
+							break;
+						}
+					}
+
+					delete it->second;
+					it = scope->nodes.erase(it);
+				} else {
+					it++;
+				}
+				break;
 			}
 		}
 

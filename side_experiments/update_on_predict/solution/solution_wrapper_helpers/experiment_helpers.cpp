@@ -38,8 +38,8 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	uniform_int_distribution<int> experiment_distribution(0, DIVERSITY-1);
 	this->experiment_index = experiment_distribution(generator);
 
-	uniform_int_distribution<int> allow_predict_distribution(0, 9);
-	if (allow_predict_distribution(generator) != 0) {
+	uniform_int_distribution<int> allow_predict_distribution(0, 1);
+	if (allow_predict_distribution(generator) == 0) {
 		this->allow_predict = true;
 	} else {
 		this->allow_predict = false;
@@ -107,32 +107,42 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 						if (predict_select_distribution(generator) == 0) {
 							if (this->node_context.back() == NULL) {
 								if (distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
-									this->run_predict_scope_histories.push_back(this->scope_histories.back());
-									this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-
 									uniform_int_distribution<int> existing_distribution(0, 1);
 									if (existing_distribution(generator) != 0) {
-										this->run_predict_is_existing.push_back(false);
+										if (!this->is_explore) {
+											this->run_predict_scope_histories.push_back(this->scope_histories.back());
+											this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
+											this->run_predict_is_existing.push_back(false);
+										}
 
 										predict_helper(this);
 										continue;
 									} else {
-										this->run_predict_is_existing.push_back(true);
+										if (!this->is_explore) {
+											this->run_predict_scope_histories.push_back(this->scope_histories.back());
+											this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
+											this->run_predict_is_existing.push_back(true);
+										}
 									}
 								}
 							} else {
 								if (distribution(generator) <= this->node_context.back()->predict_rate) {
-									this->run_predict_scope_histories.push_back(this->scope_histories.back());
-									this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
-
 									uniform_int_distribution<int> existing_distribution(0, 1);
 									if (existing_distribution(generator) != 0) {
-										this->run_predict_is_existing.push_back(false);
+										if (!this->is_explore) {
+											this->run_predict_scope_histories.push_back(this->scope_histories.back());
+											this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
+											this->run_predict_is_existing.push_back(false);
+										}
 
 										predict_helper(this);
 										continue;
 									} else {
-										this->run_predict_is_existing.push_back(true);
+										if (!this->is_explore) {
+											this->run_predict_scope_histories.push_back(this->scope_histories.back());
+											this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
+											this->run_predict_is_existing.push_back(true);
+										}
 									}
 								}
 							}

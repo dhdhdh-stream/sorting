@@ -30,7 +30,6 @@ const double BETTER_THAN_RATIO = 0.9;
 void ExploreExperiment::explore_check_activate(vector<double>& obs,
 											   ExploreExperimentHistory* history,
 											   SolutionWrapper* wrapper) {
-		
 	this->num_instances_until_target--;
 	if (!history->has_explore
 			&& this->num_instances_until_target <= 0) {
