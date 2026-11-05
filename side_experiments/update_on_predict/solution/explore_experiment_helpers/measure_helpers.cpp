@@ -52,6 +52,9 @@ void ExploreExperiment::measure_check_activate(vector<double>& obs,
 			wrapper->run_predict_scope_histories.push_back(wrapper->scope_histories.back());
 			wrapper->run_predict_indexes.push_back(wrapper->scope_histories.back()->node_histories.size()-1);
 			wrapper->run_predict_is_existing.push_back(false);
+			if (this->scope_context->predict_explore_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
+				this->scope_context->predict_explore_num_stabilize++;
+			}
 
 			ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
 			new_experiment_state->step_index = 0;
@@ -170,7 +173,8 @@ void ExploreExperiment::measure_backprop(double target_val,
 				delete this;
 
 				for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-					clean_scope(wrapper->solution->scopes[s_index]);
+					clean_scope(wrapper->solution->scopes[s_index],
+								wrapper);
 				}
 
 				wrapper->experiment_iters[experiment_index]++;

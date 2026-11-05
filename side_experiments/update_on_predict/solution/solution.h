@@ -36,6 +36,7 @@ public:
 	 */
 	int timestamp;
 	double curr_score;
+	int sum_iters;
 
 	// temp
 	double predict_score;
@@ -53,6 +54,9 @@ public:
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
+	std::vector<std::string> log_history;
+
+	int num_resets;
 
 	Solution();
 	Solution(Solution* original);

@@ -69,7 +69,7 @@ const std::vector<double> TRAIN_NEW_LAST_BETTER_THAN_RATIO{0.8, 0.8, 0.5};
 #if defined(MDEBUG) && MDEBUG
 const int NEW_SCOPE_NUM_STABILIZE = 200;
 #else
-const int NEW_SCOPE_NUM_STABILIZE = 300000;
+const int NEW_SCOPE_NUM_STABILIZE = 100000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
@@ -77,7 +77,7 @@ const int MAX_RAMP = 5;
 const int STARTING_RAMP = 2;
 const int ITERS_PER_RAMP = 2;
 #else
-const int MAX_RAMP = 40;
+const int MAX_RAMP = 20;
 const int STARTING_RAMP = 2;
 const int ITERS_PER_RAMP = 10000;
 #endif /* MDEBUG */

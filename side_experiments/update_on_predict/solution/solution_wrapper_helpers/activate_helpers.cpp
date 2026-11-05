@@ -68,7 +68,7 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 		} else {
 			if (this->allow_predict
 					&& !this->in_predict) {
-				if (this->scope_histories.back()->scope->predict_num_stabilize >= NEW_SCOPE_NUM_STABILIZE) {
+				if (this->scope_histories.back()->scope->predict_explore_num_stabilize >= NEW_SCOPE_NUM_STABILIZE) {
 					if (distribution(generator) <= this->solution->predict_rate) {
 						uniform_int_distribution<int> predict_select_distribution(0, 4);
 						if (predict_select_distribution(generator) == 0) {

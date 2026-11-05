@@ -32,6 +32,7 @@ Solution::Solution() {
 Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
 	this->curr_score = original->curr_score;
+	this->sum_iters = original->sum_iters;
 
 	this->predict_score = original->predict_score;
 	this->non_predict_score = original->non_predict_score;
@@ -62,6 +63,9 @@ Solution::Solution(Solution* original) {
 
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
+	this->log_history = original->log_history;
+
+	this->num_resets = original->num_resets;
 }
 
 Solution::~Solution() {
@@ -80,6 +84,7 @@ void Solution::init(ProblemType* problem_type) {
 
 	this->timestamp = 0;
 	this->curr_score = sum_score / INIT_MEASURE_ITERS;
+	this->sum_iters = 0;
 
 	this->predict_score = this->curr_score;
 	this->non_predict_score = this->curr_score;
@@ -110,7 +115,8 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->obs_network = new ObsNetwork(NUM_STATES,
 											this->num_obs);
 
-	new_scope->predict_num_stabilize = 0;
+	new_scope->predict_explore_num_stabilize = 0;
+	new_scope->predict_existing_num_stabilize = 0;
 
 	new_scope->predict_rate = 0.5;
 
@@ -150,6 +156,8 @@ void Solution::init(ProblemType* problem_type) {
 
 	this->run_average_num_actions = 1.0;
 	this->predict_rate = 1.0;
+
+	this->num_resets = 0;
 }
 
 void Solution::load(ifstream& input_file) {
@@ -160,6 +168,10 @@ void Solution::load(ifstream& input_file) {
 	string curr_score_line;
 	getline(input_file, curr_score_line);
 	this->curr_score = stod(curr_score_line);
+
+	string sum_iters_line;
+	getline(input_file, sum_iters_line);
+	this->sum_iters = stoi(sum_iters_line);
 
 	string predict_score_line;
 	getline(input_file, predict_score_line);
@@ -221,7 +233,15 @@ void Solution::load(ifstream& input_file) {
 		string change_line;
 		getline(input_file, change_line);
 		this->change_history.push_back(change_line);
+
+		string log_line;
+		getline(input_file, log_line);
+		this->log_history.push_back(log_line);
 	}
+
+	string num_resets_line;
+	getline(input_file, num_resets_line);
+	this->num_resets = stoi(num_resets_line);
 }
 
 void Solution::clean_scopes() {
@@ -284,6 +304,7 @@ void Solution::clean_scopes() {
 void Solution::save(ofstream& output_file) {
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
+	output_file << this->sum_iters << endl;
 
 	output_file << this->predict_score << endl;
 	output_file << this->non_predict_score << endl;
@@ -306,7 +327,10 @@ void Solution::save(ofstream& output_file) {
 	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {
 		output_file << this->improvement_history[h_index] << endl;
 		output_file << this->change_history[h_index] << endl;
+		output_file << this->log_history[h_index] << endl;
 	}
+
+	output_file << this->num_resets << endl;
 }
 
 void Solution::save_for_display(ofstream& output_file) {

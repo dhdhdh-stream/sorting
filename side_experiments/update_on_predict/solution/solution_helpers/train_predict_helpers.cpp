@@ -149,10 +149,6 @@ void train_predict_helper(SolutionWrapper* wrapper,
 		for (int h_index = 0; h_index < (int)post_train_node_histories.size(); h_index++) {
 			delete post_train_node_histories[h_index];
 		}
-
-		if (scope->predict_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
-			scope->predict_num_stabilize++;
-		}
 	}
 
 	wrapper->run_predict_scope_histories.clear();

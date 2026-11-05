@@ -66,6 +66,13 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 	cout << ss.str() << endl;
 
+	stringstream log_ss;
+	for (int i_index = 0; i_index < (int)wrapper->logs.size(); i_index++) {
+		log_ss << wrapper->logs[i_index] << "; ";
+	}
+	wrapper->logs.clear();
+	wrapper->solution->log_history.push_back(log_ss.str());
+
 	double average_instances_per_hit;
 	double average_instances_per_run;
 	double val_average;
@@ -532,7 +539,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->obs_network = new ObsNetwork(
 				wrapper->solution->starting_scope->obs_network);
 
-			new_scope->predict_num_stabilize = 0;
+			new_scope->predict_explore_num_stabilize = 0;
+			new_scope->predict_existing_num_stabilize = 0;
 
 			new_scope->predict_rate = 0.5;
 
@@ -637,4 +645,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	wrapper->iters_since_update = 0;
 	wrapper->num_predict_hits = 0;
 	wrapper->num_predict_misses = 0;
+
+	delete wrapper->previous_solution;
+	wrapper->previous_solution = new Solution(wrapper->solution);
 }

@@ -23,9 +23,15 @@ class Solution;
 class SolutionWrapper {
 public:
 	Solution* solution;
+	Solution* previous_solution;
+	/**
+	 * - simply reset when training unstable
+	 *   - clearing momentum, adding noise, clipping all don't protect against random exploding gradients
+	 */
 	Solution* best_solution;
 
 	int iters_since_update;
+	std::vector<std::string> logs;
 	int num_predict_hits;
 	int num_predict_misses;
 

@@ -27,7 +27,7 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	#if defined(MDEBUG) && MDEBUG
 	uniform_int_distribution<int> is_explore_distribution(0, 1);
 	#else
-	uniform_int_distribution<int> is_explore_distribution(0, 4);
+	uniform_int_distribution<int> is_explore_distribution(0, 3);
 	#endif /* MDEBUG */
 	if (is_explore_distribution(generator) == 0) {
 		this->is_explore = true;
@@ -101,7 +101,7 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 		} else {
 			if (this->allow_predict
 					&& !this->in_predict) {
-				if (this->scope_histories.back()->scope->predict_num_stabilize >= NEW_SCOPE_NUM_STABILIZE) {
+				if (this->scope_histories.back()->scope->predict_explore_num_stabilize >= NEW_SCOPE_NUM_STABILIZE) {
 					if (distribution(generator) <= this->solution->predict_rate) {
 						uniform_int_distribution<int> predict_select_distribution(0, 4);
 						if (predict_select_distribution(generator) == 0) {
@@ -143,6 +143,30 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 											this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
 											this->run_predict_is_existing.push_back(true);
 										}
+									}
+								}
+							}
+						}
+					}
+				} else {
+					if (!this->is_explore
+							&& this->scope_histories.back()->scope->predict_explore_num_stabilize > this->scope_histories.back()->scope->predict_existing_num_stabilize) {
+						if (distribution(generator) <= this->solution->predict_rate) {
+							uniform_int_distribution<int> predict_select_distribution(0, 4);
+							if (predict_select_distribution(generator) == 0) {
+								if (this->node_context.back() == NULL) {
+									if (distribution(generator) <= this->scope_histories.back()->scope->predict_rate) {
+										this->run_predict_scope_histories.push_back(this->scope_histories.back());
+										this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
+										this->run_predict_is_existing.push_back(true);
+										this->scope_histories.back()->scope->predict_existing_num_stabilize++;
+									}
+								} else {
+									if (distribution(generator) <= this->node_context.back()->predict_rate) {
+										this->run_predict_scope_histories.push_back(this->scope_histories.back());
+										this->run_predict_indexes.push_back(this->scope_histories.back()->node_histories.size()-1);
+										this->run_predict_is_existing.push_back(true);
+										this->scope_histories.back()->scope->predict_existing_num_stabilize++;
 									}
 								}
 							}
@@ -288,4 +312,20 @@ void SolutionWrapper::experiment_end(double result) {
 	}
 
 	this->iters_since_update++;
+	this->solution->sum_iters++;
+
+	if (this->previous_solution->curr_score > this->solution->curr_score + 0.2) {
+		cout << "reset" << endl;
+
+		this->previous_solution->num_resets++;
+
+		delete this->solution;
+		this->solution = new Solution(this->previous_solution);
+
+		this->iters_since_update = 0;
+		this->num_predict_hits = 0;
+		this->num_predict_misses = 0;
+		this->logs.clear();
+		this->experiment_iters = vector<int>(DIVERSITY, 0);
+	}
 }

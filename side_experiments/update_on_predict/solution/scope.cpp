@@ -92,7 +92,8 @@ void Scope::copy_from(Scope* original,
 
 	this->obs_network = new ObsNetwork(original->obs_network);
 
-	this->predict_num_stabilize = original->predict_num_stabilize;
+	this->predict_explore_num_stabilize = original->predict_explore_num_stabilize;
+	this->predict_existing_num_stabilize = original->predict_existing_num_stabilize;
 
 	this->predict_rate = original->predict_rate;
 
@@ -128,7 +129,8 @@ void Scope::save(ofstream& output_file) {
 
 	this->obs_network->save(output_file);
 
-	output_file << this->predict_num_stabilize << endl;
+	output_file << this->predict_explore_num_stabilize << endl;
+	output_file << this->predict_existing_num_stabilize << endl;
 
 	output_file << this->predict_rate << endl;
 
@@ -219,9 +221,13 @@ void Scope::load(ifstream& input_file,
 
 	this->obs_network = new ObsNetwork(input_file);
 
-	string predict_num_stabilize_line;
-	getline(input_file, predict_num_stabilize_line);
-	this->predict_num_stabilize = stoi(predict_num_stabilize_line);
+	string predict_explore_num_stabilize_line;
+	getline(input_file, predict_explore_num_stabilize_line);
+	this->predict_explore_num_stabilize = stoi(predict_explore_num_stabilize_line);
+
+	string predict_existing_num_stabilize_line;
+	getline(input_file, predict_existing_num_stabilize_line);
+	this->predict_existing_num_stabilize = stoi(predict_existing_num_stabilize_line);
 
 	string predict_rate_line;
 	getline(input_file, predict_rate_line);

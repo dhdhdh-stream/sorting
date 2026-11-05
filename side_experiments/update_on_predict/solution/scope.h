@@ -35,7 +35,8 @@ public:
 
 	ObsNetwork* obs_network;
 
-	int predict_num_stabilize;
+	int predict_explore_num_stabilize;
+	int predict_existing_num_stabilize;
 
 	double predict_rate;
 

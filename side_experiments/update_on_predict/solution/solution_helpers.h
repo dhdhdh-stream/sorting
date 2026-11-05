@@ -30,6 +30,7 @@ void update_helper(SolutionWrapper* wrapper,
 void train_predict_helper(SolutionWrapper* wrapper,
 						  double target_val);
 
-void clean_scope(Scope* scope);
+void clean_scope(Scope* scope,
+				 SolutionWrapper* wrapper);
 
 #endif /* SOLUTION_HELPERS_H */
