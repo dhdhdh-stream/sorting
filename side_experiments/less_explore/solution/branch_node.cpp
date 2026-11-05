@@ -16,6 +16,9 @@ BranchNode::BranchNode() {
 
 	this->original_curr_num_instances = 0;
 	this->branch_curr_num_instances = 0;
+
+	this->original_obs_histories.push_back(vector<vector<double>>());
+	this->branch_obs_histories.push_back(vector<vector<double>>());
 }
 
 BranchNode::~BranchNode() {

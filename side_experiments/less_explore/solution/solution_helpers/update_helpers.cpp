@@ -27,6 +27,16 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int MIN_BATCH_SIZE = 2;
+const int BATCH_SIZE = 10;
+const int ITERS_PER_BATCH = 2;
+#else
+const int MIN_BATCH_SIZE = 100;
+const int BATCH_SIZE = 1000;
+const int ITERS_PER_BATCH = 20;
+#endif /* MDEBUG */
+
 void update_helper(ScopeHistory* scope_history,
 				   double target_val) {
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
@@ -84,6 +94,8 @@ void update_helper(ScopeHistory* scope_history,
 					double error = target_val - branch_node->branch_network->output->acti_vals(0);
 					branch_node->branch_network->backprop(error);
 
+					branch_node->branch_obs_histories.back().push_back(branch_node_history->obs);
+
 					branch_node->branch_curr_num_instances++;
 
 					branch_node->consec_original = 0.0;
@@ -94,9 +106,7 @@ void update_helper(ScopeHistory* scope_history,
 																		   target_val);
 					}
 				} else {
-					branch_node->original_network->activate(branch_node_history->obs);
-					double error = target_val - branch_node->original_network->output->acti_vals(0);
-					branch_node->original_network->backprop(error);
+					branch_node->original_obs_histories.back().push_back(branch_node_history->obs);
 
 					branch_node->original_curr_num_instances++;
 
@@ -182,11 +192,29 @@ void update_helper(SolutionWrapper* wrapper,
 						branch_node->original_average_instances_per_hit = 0.999*branch_node->original_average_instances_per_hit + 0.001*branch_node->original_curr_num_instances;
 						branch_node->original_val_average = 0.999*branch_node->original_val_average + 0.001*target_val;
 
-						branch_node->original_network->epoch_iter++;
-						if (branch_node->original_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
-							branch_node->original_network->update();
+						branch_node->original_target_val_histories.push_back(target_val);
+						if (branch_node->original_obs_histories.size() >= MIN_BATCH_SIZE) {
+							uniform_int_distribution<int> sample_distribution(0, branch_node->original_obs_histories.size()-1);
+							for (int iter_index = 0; iter_index < ITERS_PER_BATCH; iter_index++) {
+								int sample_index = sample_distribution(generator);
+								for (int i_index = 0; i_index < (int)branch_node->original_obs_histories[sample_index].size(); i_index++) {
+									branch_node->original_network->activate(branch_node->original_obs_histories[sample_index][i_index]);
+									double error = branch_node->original_target_val_histories[sample_index] - branch_node->original_network->output->acti_vals(0);
+									branch_node->original_network->backprop(error);
+								}
 
-							branch_node->original_network->epoch_iter = 0;
+								branch_node->original_network->epoch_iter++;
+								if (branch_node->original_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
+									branch_node->original_network->update();
+
+									branch_node->original_network->epoch_iter = 0;
+								}
+							}
+						}
+						branch_node->original_obs_histories.push_back(vector<vector<double>>());
+						if (branch_node->original_obs_histories.size() > BATCH_SIZE) {
+							branch_node->original_obs_histories.erase(branch_node->original_obs_histories.begin());
+							branch_node->original_target_val_histories.erase(branch_node->original_target_val_histories.begin());
 						}
 
 						for (int e_index = 0; e_index < (int)branch_node->original_experiments.size(); e_index++) {
@@ -200,11 +228,29 @@ void update_helper(SolutionWrapper* wrapper,
 						branch_node->branch_average_instances_per_hit = 0.999*branch_node->branch_average_instances_per_hit + 0.001*branch_node->branch_curr_num_instances;
 						branch_node->branch_val_average = 0.999*branch_node->branch_val_average + 0.001*target_val;
 
-						branch_node->branch_network->epoch_iter++;
-						if (branch_node->branch_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
-							branch_node->branch_network->update();
+						branch_node->branch_target_val_histories.push_back(target_val);
+						if (branch_node->branch_obs_histories.size() >= MIN_BATCH_SIZE) {
+							uniform_int_distribution<int> sample_distribution(0, branch_node->branch_obs_histories.size()-1);
+							for (int iter_index = 0; iter_index < ITERS_PER_BATCH; iter_index++) {
+								int sample_index = sample_distribution(generator);
+								for (int i_index = 0; i_index < (int)branch_node->branch_obs_histories[sample_index].size(); i_index++) {
+									branch_node->branch_network->activate(branch_node->branch_obs_histories[sample_index][i_index]);
+									double error = branch_node->branch_target_val_histories[sample_index] - branch_node->branch_network->output->acti_vals(0);
+									branch_node->branch_network->backprop(error);
+								}
 
-							branch_node->branch_network->epoch_iter = 0;
+								branch_node->branch_network->epoch_iter++;
+								if (branch_node->branch_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
+									branch_node->branch_network->update();
+
+									branch_node->branch_network->epoch_iter = 0;
+								}
+							}
+						}
+						branch_node->branch_obs_histories.push_back(vector<vector<double>>());
+						if (branch_node->branch_obs_histories.size() > BATCH_SIZE) {
+							branch_node->branch_obs_histories.erase(branch_node->branch_obs_histories.begin());
+							branch_node->branch_target_val_histories.erase(branch_node->branch_target_val_histories.begin());
 						}
 
 						for (int e_index = 0; e_index < (int)branch_node->branch_experiments.size(); e_index++) {

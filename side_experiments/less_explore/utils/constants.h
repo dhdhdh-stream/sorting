@@ -68,9 +68,9 @@ const int MAX_RAMP = 5;
 const int STARTING_RAMP = 2;
 const int ITERS_PER_RAMP = 2;
 #else
-const int MAX_RAMP = 40;
+const int MAX_RAMP = 10;
 const int STARTING_RAMP = 2;
-const int ITERS_PER_RAMP = 10000;
+const int ITERS_PER_RAMP = 2000;
 #endif /* MDEBUG */
 
 const int GENERALIZE_ITER = 6;

@@ -26,11 +26,7 @@ void SolutionWrapper::experiment_init() {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	#if defined(MDEBUG) && MDEBUG
 	uniform_int_distribution<int> is_explore_distribution(0, 1);
-	#else
-	uniform_int_distribution<int> is_explore_distribution(0, 4);
-	#endif /* MDEBUG */
 	if (is_explore_distribution(generator) == 0) {
 		this->is_explore = true;
 	} else {
@@ -107,6 +103,10 @@ void SolutionWrapper::experiment_end(double result) {
 		 */
 		update_helper(this,
 					  result);
+
+		this->solution->existing_sum_iters++;
+	} else {
+		this->solution->explore_sum_iters++;
 	}
 
 	for (int s_index = 0; s_index < (int)this->ramp_tracker.size(); s_index++) {

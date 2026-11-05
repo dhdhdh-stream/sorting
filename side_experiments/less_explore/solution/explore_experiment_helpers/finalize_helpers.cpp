@@ -478,6 +478,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
 	ss << "iters_since_update: " << wrapper->iters_since_update << "; ";
+	ss << "existing_sum_iters: " << wrapper->solution->existing_sum_iters << "; ";
+	ss << "explore_sum_iters: " << wrapper->solution->explore_sum_iters << "; ";
 	ss << "Experiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";

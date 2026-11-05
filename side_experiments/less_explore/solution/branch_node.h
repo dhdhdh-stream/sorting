@@ -57,6 +57,11 @@ public:
 	int original_curr_num_instances;
 	int branch_curr_num_instances;
 
+	std::vector<std::vector<std::vector<double>>> original_obs_histories;
+	std::vector<double> original_target_val_histories;
+	std::vector<std::vector<std::vector<double>>> branch_obs_histories;
+	std::vector<double> branch_target_val_histories;
+
 	BranchNode();
 	~BranchNode();
 

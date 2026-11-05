@@ -36,6 +36,8 @@ public:
 	 */
 	int timestamp;
 	double curr_score;
+	int existing_sum_iters;
+	int explore_sum_iters;
 
 	std::vector<Scope*> scopes;
 	Scope* starting_scope;
