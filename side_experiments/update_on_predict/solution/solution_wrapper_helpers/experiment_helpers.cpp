@@ -177,6 +177,9 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 
 			if (this->node_context.back() == NULL
 					&& this->experiment_context.back() == NULL) {
+				Scope* scope = this->scope_histories.back()->scope;
+				scope->experiment_exit_activate(this);
+
 				if (this->scope_histories.size() == 1) {
 					is_next = true;
 					is_done = true;

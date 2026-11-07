@@ -79,9 +79,15 @@ void update_helper(ScopeHistory* scope_history,
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)scope_history->node_histories[h_index];
 
 				if (branch_node_history->is_branch) {
-					branch_node->branch_network->activate(branch_node_history->obs);
-					double error = target_val - branch_node->branch_network->output->acti_vals(0);
-					branch_node->branch_network->backprop(error);
+					if (scope_history->scope->predict_explore_num_stabilize >= NEW_SCOPE_NUM_STABILIZE) {
+						branch_node->branch_network->activate(branch_node_history->obs);
+						double error = scope_history->signal - branch_node->branch_network->output->acti_vals(0);
+						branch_node->branch_network->backprop(error);
+					} else {
+						branch_node->branch_network->activate(branch_node_history->obs);
+						double error = target_val - branch_node->branch_network->output->acti_vals(0);
+						branch_node->branch_network->backprop(error);
+					}
 
 					branch_node->branch_curr_num_instances++;
 
@@ -93,9 +99,15 @@ void update_helper(ScopeHistory* scope_history,
 																		   target_val);
 					}
 				} else {
-					branch_node->original_network->activate(branch_node_history->obs);
-					double error = target_val - branch_node->original_network->output->acti_vals(0);
-					branch_node->original_network->backprop(error);
+					if (scope_history->scope->predict_explore_num_stabilize >= NEW_SCOPE_NUM_STABILIZE) {
+						branch_node->original_network->activate(branch_node_history->obs);
+						double error = scope_history->signal - branch_node->original_network->output->acti_vals(0);
+						branch_node->original_network->backprop(error);
+					} else {
+						branch_node->original_network->activate(branch_node_history->obs);
+						double error = target_val - branch_node->original_network->output->acti_vals(0);
+						branch_node->original_network->backprop(error);
+					}
 
 					branch_node->original_curr_num_instances++;
 

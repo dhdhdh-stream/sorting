@@ -57,6 +57,7 @@ public:
 
 	void experiment_start_activate(std::vector<double>& obs,
 								   SolutionWrapper* wrapper);
+	void experiment_exit_activate(SolutionWrapper* wrapper);
 
 	void copy_from(Scope* original,
 				   Solution* parent_solution);
@@ -76,6 +77,8 @@ public:
 	std::vector<double> obs;
 
 	std::vector<AbstractNodeHistory*> node_histories;
+
+	double signal;
 
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();
