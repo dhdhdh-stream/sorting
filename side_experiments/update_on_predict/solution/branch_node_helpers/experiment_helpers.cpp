@@ -20,23 +20,6 @@ void BranchNode::experiment_step(vector<double>& obs,
 	if (this->ramp == 0) {
 		wrapper->node_context.back() = this->original_next_node;
 		return;
-	} else if (this->ramp < MAX_RAMP) {
-		map<BranchNode*, bool>::iterator it = wrapper->ramp_tracker[
-			this->parent->id].find(this);
-		if (it == wrapper->ramp_tracker[this->parent->id].end()) {
-			uniform_int_distribution<int> distribution(0, MAX_RAMP-1);
-			bool is_on;
-			if (distribution(generator) < this->ramp) {
-				is_on = true;
-			} else {
-				is_on = false;
-			}
-			it = wrapper->ramp_tracker[this->parent->id].insert({this, is_on}).first;
-		}
-		if (!it->second) {
-			wrapper->node_context.back() = this->original_next_node;
-			return;
-		}
 	}
 
 	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
@@ -56,24 +39,33 @@ void BranchNode::experiment_step(vector<double>& obs,
 	history->obs = obs;
 
 	bool is_branch;
-	this->original_network->activate(obs);
-	double original_predicted = this->original_network->output->acti_vals[0];
-	this->branch_network->activate(obs);
-	double branch_predicted = this->branch_network->output->acti_vals[0];
-	if (branch_predicted >= original_predicted) {
-		is_branch = true;
-	} else {
+	uniform_int_distribution<int> distribution(0, MAX_RAMP-1);
+	if (this->ramp < MAX_RAMP && distribution(generator) >= this->ramp) {
 		is_branch = false;
-	}
 
-	#if defined(MDEBUG) && MDEBUG
-	if (wrapper->curr_run_seed%2 == 0) {
-		is_branch = true;
+		history->is_on = false;
 	} else {
-		is_branch = false;
+		this->original_network->activate(obs);
+		double original_predicted = this->original_network->output->acti_vals[0];
+		this->branch_network->activate(obs);
+		double branch_predicted = this->branch_network->output->acti_vals[0];
+		if (branch_predicted >= original_predicted) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
+
+		#if defined(MDEBUG) && MDEBUG
+		if (wrapper->curr_run_seed%2 == 0) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
+		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
+		#endif /* MDEBUG */
+
+		history->is_on = true;
 	}
-	wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
-	#endif /* MDEBUG */
 
 	history->is_branch = is_branch;
 

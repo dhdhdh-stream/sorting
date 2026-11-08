@@ -39,10 +39,11 @@ public:
 	AbstractNode* branch_next_node;
 
 	int ramp;
-	double existing_sum_score;
-	int existing_count;
 	double new_sum_score;
 	int new_count;
+	double existing_sum_score;
+	int existing_count;
+	int iter_count;
 
 	int consec_original;
 	int consec_branch;
@@ -96,6 +97,8 @@ public:
 class BranchNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_branch;
+
+	bool is_on;
 
 	BranchNodeHistory(BranchNode* node);
 };

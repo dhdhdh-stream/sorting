@@ -53,8 +53,6 @@ public:
 
 	int num_actions;
 
-	std::vector<std::map<BranchNode*, bool>> ramp_tracker;
-
 	bool is_explore;
 	int experiment_index;
 	std::vector<std::map<AbstractExperiment*, AbstractExperimentHistory*>> experiment_histories;

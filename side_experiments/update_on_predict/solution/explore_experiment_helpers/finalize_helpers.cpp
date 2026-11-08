@@ -423,6 +423,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	new_branch_node->existing_count = 0;
 	new_branch_node->new_sum_score = 0.0;
 	new_branch_node->new_count = 0;
+	new_branch_node->iter_count = 0;
 
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;
@@ -476,8 +477,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->id = wrapper->solution->scopes.size();
 			new_scope->node_counter = 0;
 			wrapper->solution->scopes.push_back(new_scope);
-
-			wrapper->ramp_tracker.push_back(map<BranchNode*, bool>());
 
 			NoopNode* start_node = new NoopNode();
 			start_node->parent = new_scope;

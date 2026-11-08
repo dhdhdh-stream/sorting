@@ -20,8 +20,6 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->experiment_iters = vector<int>(DIVERSITY, 0);
 
-	this->ramp_tracker = vector<map<BranchNode*, bool>>(this->solution->scopes.size());
-
 	this->experiment_histories = vector<map<AbstractExperiment*, AbstractExperimentHistory*>>(DIVERSITY);
 
 	this->train_iter_index = 0;
@@ -52,8 +50,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->num_predict_misses = 0;
 
 	this->experiment_iters = vector<int>(DIVERSITY, 0);
-
-	this->ramp_tracker = vector<map<BranchNode*, bool>>(this->solution->scopes.size());
 
 	this->experiment_histories = vector<map<AbstractExperiment*, AbstractExperimentHistory*>>(DIVERSITY);
 

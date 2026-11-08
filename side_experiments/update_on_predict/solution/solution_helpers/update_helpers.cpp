@@ -5,8 +5,9 @@
  *   - ...increasing score for bad paths, leading to them being taken again
  *   - ultimately, bad paths will be predicted as bad, but not accurately
  * 
- * - do not batch train
- *   - adam easily overfits(?)
+ * - do not use signals to update BranchNode decisions
+ *   - difficult for signal to capture all details for every BranchNode
+ *   - can afford to be a slow process that averages across true
  */
 
 #include "solution_helpers.h"
@@ -79,15 +80,9 @@ void update_helper(ScopeHistory* scope_history,
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)scope_history->node_histories[h_index];
 
 				if (branch_node_history->is_branch) {
-					if (scope_history->scope->predict_explore_num_stabilize >= NEW_SCOPE_NUM_STABILIZE) {
-						branch_node->branch_network->activate(branch_node_history->obs);
-						double error = scope_history->signal - branch_node->branch_network->output->acti_vals(0);
-						branch_node->branch_network->backprop(error);
-					} else {
-						branch_node->branch_network->activate(branch_node_history->obs);
-						double error = target_val - branch_node->branch_network->output->acti_vals(0);
-						branch_node->branch_network->backprop(error);
-					}
+					branch_node->branch_network->activate(branch_node_history->obs);
+					double error = target_val - branch_node->branch_network->output->acti_vals(0);
+					branch_node->branch_network->backprop(error);
 
 					branch_node->branch_curr_num_instances++;
 
@@ -99,15 +94,9 @@ void update_helper(ScopeHistory* scope_history,
 																		   target_val);
 					}
 				} else {
-					if (scope_history->scope->predict_explore_num_stabilize >= NEW_SCOPE_NUM_STABILIZE) {
-						branch_node->original_network->activate(branch_node_history->obs);
-						double error = scope_history->signal - branch_node->original_network->output->acti_vals(0);
-						branch_node->original_network->backprop(error);
-					} else {
-						branch_node->original_network->activate(branch_node_history->obs);
-						double error = target_val - branch_node->original_network->output->acti_vals(0);
-						branch_node->original_network->backprop(error);
-					}
+					branch_node->original_network->activate(branch_node_history->obs);
+					double error = target_val - branch_node->original_network->output->acti_vals(0);
+					branch_node->original_network->backprop(error);
 
 					branch_node->original_curr_num_instances++;
 
@@ -117,6 +106,24 @@ void update_helper(ScopeHistory* scope_history,
 					for (int e_index = 0; e_index < (int)branch_node->original_experiments.size(); e_index++) {
 						branch_node->original_experiments[e_index]->backprop(scope_history->node_histories[h_index]->obs,
 																			 target_val);
+					}
+				}
+
+				if (branch_node->ramp < MAX_RAMP) {
+					if (branch_node_history->is_on) {
+						if (scope_history->scope->predict_explore_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
+							branch_node->new_sum_score += target_val;
+						} else {
+							branch_node->new_sum_score += scope_history->signal;
+						}
+						branch_node->new_count++;
+					} else {
+						if (scope_history->scope->predict_explore_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
+							branch_node->existing_sum_score += target_val;
+						} else {
+							branch_node->existing_sum_score += scope_history->signal;
+						}
+						branch_node->existing_count++;
 					}
 				}
 			}
@@ -188,6 +195,29 @@ void update_helper(SolutionWrapper* wrapper,
 			case NODE_TYPE_BRANCH:
 				{
 					BranchNode* branch_node = (BranchNode*)it->second;
+
+					if (branch_node->ramp < MAX_RAMP) {
+						if (branch_node->original_curr_num_instances > 0
+								|| branch_node->branch_curr_num_instances > 0) {
+							branch_node->iter_count++;
+							if (branch_node->iter_count >= ITERS_PER_RAMP) {
+								double existing_score = branch_node->existing_sum_score / branch_node->existing_count;
+								double new_score = branch_node->new_sum_score / branch_node->new_count;
+								if (new_score > existing_score) {
+									branch_node->ramp++;
+								} else {
+									branch_node->ramp--;
+								}
+
+								branch_node->existing_sum_score = 0.0;
+								branch_node->existing_count = 0;
+								branch_node->new_sum_score = 0.0;
+								branch_node->new_count = 0;
+								branch_node->iter_count = 0;
+							}
+						}
+					}
+
 					branch_node->original_average_instances_per_run = 0.999*branch_node->original_average_instances_per_run + 0.001*branch_node->original_curr_num_instances;
 					if (branch_node->original_curr_num_instances > 0) {
 						branch_node->original_average_instances_per_hit = 0.999*branch_node->original_average_instances_per_hit + 0.001*branch_node->original_curr_num_instances;
@@ -226,34 +256,6 @@ void update_helper(SolutionWrapper* wrapper,
 					}
 				}
 				break;
-			}
-		}
-	}
-
-	for (int s_index = 0; s_index < (int)wrapper->ramp_tracker.size(); s_index++) {
-		for (map<BranchNode*, bool>::iterator it = wrapper->ramp_tracker[s_index].begin();
-				it != wrapper->ramp_tracker[s_index].end(); it++) {
-			if (it->second) {
-				it->first->new_sum_score += target_val;
-				it->first->new_count++;
-			} else {
-				it->first->existing_sum_score += target_val;
-				it->first->existing_count++;
-			}
-
-			if (it->first->new_count + it->first->existing_count >= ITERS_PER_RAMP) {
-				double existing_score = it->first->existing_sum_score / it->first->existing_count;
-				double new_score = it->first->new_sum_score / it->first->new_count;
-				if (new_score > existing_score) {
-					it->first->ramp++;
-				} else {
-					it->first->ramp--;
-				}
-
-				it->first->existing_sum_score = 0.0;
-				it->first->existing_count = 0;
-				it->first->new_sum_score = 0.0;
-				it->first->new_count = 0;
 			}
 		}
 	}

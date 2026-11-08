@@ -49,6 +49,7 @@ void BranchNode::copy_from(BranchNode* original,
 	this->existing_count = original->existing_count;
 	this->new_sum_score = original->new_sum_score;
 	this->new_count = original->new_count;
+	this->iter_count = original->iter_count;
 
 	this->consec_original = original->consec_original;
 	this->consec_branch = original->consec_branch;
@@ -79,6 +80,7 @@ void BranchNode::save(ofstream& output_file) {
 	output_file << this->existing_count << endl;
 	output_file << this->new_sum_score << endl;
 	output_file << this->new_count << endl;
+	output_file << this->iter_count << endl;
 
 	output_file << this->consec_original << endl;
 	output_file << this->consec_branch << endl;
@@ -132,6 +134,10 @@ void BranchNode::load(ifstream& input_file,
 	string new_count_line;
 	getline(input_file, new_count_line);
 	this->new_count = stoi(new_count_line);
+
+	string iter_count_line;
+	getline(input_file, iter_count_line);
+	this->iter_count = stoi(iter_count_line);
 
 	string consec_original_line;
 	getline(input_file, consec_original_line);
