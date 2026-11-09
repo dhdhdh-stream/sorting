@@ -22,6 +22,7 @@ void ExploreExperiment::train_existing_check_activate(
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
 	history->obs_histories.push_back(obs);
+	history->scope_histories.push_back(wrapper->scope_histories.back());
 }
 
 void ExploreExperiment::train_existing_backprop(
@@ -29,7 +30,15 @@ void ExploreExperiment::train_existing_backprop(
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
 	this->existing_obs_histories.push_back(history->obs_histories);
-	this->existing_target_val_histories.push_back(target_val);
+	vector<double> target_val_histories;
+	if (this->scope_context->predict_explore_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
+		target_val_histories = vector<double>(history->obs_histories.size(), target_val);
+	} else {
+		for (int i_index = 0; i_index < (int)history->scope_histories.size(); i_index++) {
+			target_val_histories.push_back(history->scope_histories[i_index]->signal);
+		}
+	}
+	this->existing_target_val_histories.push_back(target_val_histories);
 
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
@@ -48,7 +57,7 @@ void ExploreExperiment::train_existing_backprop(
 
 			this->existing_network->activate(this->existing_obs_histories[run_index][instance_index]);
 
-			double error = this->existing_target_val_histories[run_index] - this->existing_network->output->acti_vals[0];
+			double error = this->existing_target_val_histories[run_index][instance_index] - this->existing_network->output->acti_vals[0];
 
 			this->existing_network->init_backprop(error,
 												  hidden_1_average_max_update,

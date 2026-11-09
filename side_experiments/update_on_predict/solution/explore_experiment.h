@@ -36,7 +36,7 @@ class ExploreExperimentHistory;
 class ExploreExperiment : public AbstractExperiment {
 public:
 	std::vector<std::vector<std::vector<double>>> existing_obs_histories;
-	std::vector<double> existing_target_val_histories;
+	std::vector<std::vector<double>> existing_target_val_histories;
 
 	Network* existing_network;
 
@@ -141,6 +141,7 @@ public:
 class ExploreExperimentHistory : public AbstractExperimentHistory {
 public:
 	std::vector<std::vector<double>> obs_histories;
+	std::vector<ScopeHistory*> scope_histories;
 
 	bool has_explore;
 

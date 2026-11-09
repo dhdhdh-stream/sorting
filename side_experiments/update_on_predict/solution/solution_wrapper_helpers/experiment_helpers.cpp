@@ -239,15 +239,6 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	}
 
-	delete this->scope_histories[0];
-
-	this->scope_histories.clear();
-	this->node_context.clear();
-	this->experiment_context.clear();
-	this->remaining_predict.clear();
-
-	this->states.clear();
-
 	if (this->is_explore) {
 		if (this->experiment_histories[this->experiment_index].size() >= 2) {
 			AbstractExperiment* keep_experiment = NULL;
@@ -301,6 +292,15 @@ void SolutionWrapper::experiment_end(double result) {
 			}
 		}
 	}
+
+	delete this->scope_histories[0];
+
+	this->scope_histories.clear();
+	this->node_context.clear();
+	this->experiment_context.clear();
+	this->remaining_predict.clear();
+
+	this->states.clear();
 
 	for (int e_index = 0; e_index < DIVERSITY; e_index++) {
 		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->experiment_histories[e_index].begin();

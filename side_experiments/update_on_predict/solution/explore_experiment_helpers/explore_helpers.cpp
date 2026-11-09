@@ -39,6 +39,7 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 				&& wrapper->experiment_index == this->experiment_index) {
 			this->existing_network->activate(obs);
 			history->existing_predicted = this->existing_network->output->acti_vals[0];
+			history->scope_histories.push_back(wrapper->scope_histories.back());
 
 			bool exit_is_next;
 			switch (this->node_context->type) {
@@ -249,7 +250,12 @@ void ExploreExperiment::explore_backprop(double target_val,
 		if (history->has_explore) {
 			this->state_iter++;
 
-			double curr_vs_surprise = target_val - history->existing_predicted;
+			double curr_vs_surprise;
+			if (this->scope_context->predict_explore_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
+				curr_vs_surprise = target_val - history->existing_predicted;
+			} else {
+				curr_vs_surprise = history->scope_histories[0]->signal - history->existing_predicted;
+			}
 
 			bool is_vs_success = false;
 			if (curr_vs_surprise >= 0.0) {

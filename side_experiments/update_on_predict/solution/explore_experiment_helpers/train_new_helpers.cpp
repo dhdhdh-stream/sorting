@@ -29,6 +29,7 @@ void ExploreExperiment::train_new_check_activate(vector<double>& obs,
 		if (wrapper->is_explore
 				&& wrapper->experiment_index == this->experiment_index) {
 			history->obs_histories.push_back(obs);
+			history->scope_histories.push_back(wrapper->scope_histories.back());
 
 			wrapper->run_predict_scope_histories.push_back(wrapper->scope_histories.back());
 			wrapper->run_predict_indexes.push_back(wrapper->scope_histories.back()->node_histories.size()-1);
@@ -130,7 +131,7 @@ bool ExploreExperiment::train_new_helper(int l_index) {
 			this->new_network->activate(this->existing_obs_histories[r_index][i_index]);
 			double new_predicted = this->new_network->output->acti_vals[0];
 			if (new_predicted >= existing_predicted) {
-				existing_sum_vals += this->existing_target_val_histories[r_index];
+				existing_sum_vals += this->existing_target_val_histories[r_index][i_index];
 				existing_count++;
 			}
 		}
@@ -271,7 +272,11 @@ void ExploreExperiment::train_new_backprop(
 		if (history->has_explore) {
 			for (int i_index = 0; i_index < (int)history->obs_histories.size(); i_index++) {
 				this->new_obs_histories.push_back(history->obs_histories[i_index]);
-				this->new_target_val_histories.push_back(target_val);
+				if (this->scope_context->predict_explore_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
+					this->new_target_val_histories.push_back(target_val);
+				} else {
+					this->new_target_val_histories.push_back(history->scope_histories[i_index]->signal);
+				}
 			}
 
 			this->state_iter++;
