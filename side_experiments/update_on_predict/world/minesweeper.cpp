@@ -7,6 +7,18 @@
 
 using namespace std;
 
+const int MINESWEEPER_ACTION_UP = 0;
+const int MINESWEEPER_ACTION_RIGHT = 1;
+const int MINESWEEPER_ACTION_DOWN = 2;
+const int MINESWEEPER_ACTION_LEFT = 3;
+const int MINESWEEPER_ACTION_CLICK = 4;
+const int MINESWEEPER_ACTION_FLAG = 5;
+const int MINESWEEPER_ACTION_DOUBLECLICK = 6;
+/**
+ * - for visual problems, stick to moving focus and looking one square at a time
+ *   - don't, e.g., use convolutional NN as far too expensive
+ */
+
 const int WIDTH = 9;
 const int HEIGHT = 9;
 const int NUM_MINES = 10;
@@ -103,6 +115,8 @@ Minesweeper::Minesweeper() {
 
 	this->hit_mine = false;
 
+	this->score = 1.0;
+
 	reveal_helper(STARTING_X, STARTING_Y);
 }
 
@@ -167,12 +181,25 @@ void Minesweeper::reveal_helper(int x, int y) {
 	} else if (this->revealed[x][y]) {
 		return;
 	} else {
-		this->flagged[x][y] = false;
+		if (this->flagged[x][y]) {
+			this->flagged[x][y] = false;
+
+			if (this->world[x][y] != -1) {
+				this->score += 1.0;
+			} else {
+				this->score -= 0.2;
+			}
+		}
+
 		this->revealed[x][y] = true;
 
 		if (this->world[x][y] == -1) {
 			this->hit_mine = true;
+
+			this->score -= 1.0;
 		} else {
+			this->score += 0.01;
+
 			if (this->world[x][y] == 0) {
 				reveal_helper(x-1, y-1);
 				reveal_helper(x-1, y);
@@ -236,9 +263,24 @@ void Minesweeper::perform_action(int action) {
 					&& this->current_x < WIDTH
 					&& this->current_y >= 0
 					&& this->current_y < HEIGHT) {
-				if (!this->revealed[this->current_x][this->current_y]
-						&& !this->flagged[this->current_x][this->current_y]) {
-					this->flagged[this->current_x][this->current_y] = true;
+				if (!this->revealed[this->current_x][this->current_y]) {
+					if (this->flagged[this->current_x][this->current_y]) {
+						this->flagged[this->current_x][this->current_y] = false;
+
+						if (this->world[this->current_x][this->current_y] != -1) {
+							this->score += 1.0;
+						} else {
+							this->score -= 0.2;
+						}
+					} else {
+						this->flagged[this->current_x][this->current_y] = true;
+
+						if (this->world[this->current_x][this->current_y] != -1) {
+							this->score -= 1.0;
+						} else {
+							this->score += 0.2;
+						}
+					}
 				}
 			}
 		}
@@ -358,44 +400,8 @@ void Minesweeper::perform_action(int action) {
 	}
 }
 
-double Minesweeper::score_result_helper() {
-	int curr_revealed = 0;
-	int num_mines = 0;
-	double score = 1.0;
-	for (int x_index = 0; x_index < WIDTH; x_index++) {
-		for (int y_index = 0; y_index < HEIGHT; y_index++) {
-			if (this->revealed[x_index][y_index]) {
-				if (this->world[x_index][y_index] != -1) {
-					curr_revealed++;
-				}
-			} else if (this->flagged[x_index][y_index]) {
-				if (this->world[x_index][y_index] != -1) {
-					score -= 1.0;
-				} else {
-					num_mines++;
-					score += 0.2;
-				}
-			}
-		}
-	}
-
-	if (curr_revealed == 71
-			&& num_mines == 10
-			&& !this->hit_mine) {
-		score += 10.0;
-	}
-
-	score += 0.01*curr_revealed;
-
-	if (this->hit_mine) {
-		score -= 1.0;
-	}
-
-	return score;
-}
-
 double Minesweeper::score_result() {
-	return score_result_helper();
+	return this->score;
 }
 
 Problem* Minesweeper::copy_and_reset() {
@@ -408,6 +414,8 @@ Problem* Minesweeper::copy_and_reset() {
 
 	new_problem->current_x = STARTING_X;
 	new_problem->current_y = STARTING_Y;
+
+	new_problem->score = 1.0;
 
 	new_problem->reveal_helper(STARTING_X, STARTING_Y);
 
@@ -423,6 +431,8 @@ Problem* Minesweeper::copy_snapshot() {
 	new_problem->current_x = this->current_x;
 	new_problem->current_y = this->current_y;
 	new_problem->hit_mine = this->hit_mine;
+
+	new_problem->score = this->score;
 
 	return new_problem;
 }
@@ -466,7 +476,8 @@ Problem* TypeMinesweeper::get_problem() {
 
 int TypeMinesweeper::num_obs() {
 	// return 1;
-	return 25;
+	// return 25;
+	return 26;
 }
 
 int TypeMinesweeper::num_possible_actions() {
