@@ -33,6 +33,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
 	ss << "iters_since_update: " << wrapper->iters_since_update << "; ";
+	ss << "sum_iters: " << wrapper->solution->sum_iters << "; ";
 	ss << "num_predict_hits: " << wrapper->num_predict_hits << "; ";
 	ss << "num_predict_misses: " << wrapper->num_predict_misses << "; ";
 	ss << "predict_score: " << wrapper->solution->predict_score << "; ";
@@ -52,6 +53,14 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		}
 	}
 	ss << "; ";
+	bool is_signal;
+	if (this->scope_context->predict_explore_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
+		is_signal = false;
+	} else {
+		is_signal = true;
+	}
+
+	ss << "is_signal: " << is_signal << "; ";
 
 	if (this->exit_next_node == NULL) {
 		ss << "this->exit_next_node->id: " << -1 << "; ";

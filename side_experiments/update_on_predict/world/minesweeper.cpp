@@ -169,6 +169,8 @@ vector<double> Minesweeper::get_observations() {
 		}
 	}
 
+	obs.push_back(this->score);
+
 	return obs;
 }
 
