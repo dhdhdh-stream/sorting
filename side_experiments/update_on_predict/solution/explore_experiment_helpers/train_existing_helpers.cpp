@@ -33,7 +33,8 @@ void ExploreExperiment::train_existing_backprop(
 	vector<double> target_val_histories;
 	if (this->is_signal) {
 		for (int i_index = 0; i_index < (int)history->scope_histories.size(); i_index++) {
-			target_val_histories.push_back(history->scope_histories[i_index]->signal);
+			target_val_histories.push_back(
+				history->scope_histories[i_index]->score_signal - history->scope_histories[i_index]->misguess_signal);
 		}
 	} else {
 		target_val_histories = vector<double>(history->obs_histories.size(), target_val);

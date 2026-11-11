@@ -252,7 +252,8 @@ void ExploreExperiment::explore_backprop(double target_val,
 
 			double curr_vs_surprise;
 			if (this->is_signal) {
-				curr_vs_surprise = history->scope_histories[0]->signal - history->existing_predicted;
+				curr_vs_surprise = (history->scope_histories[0]->score_signal - history->scope_histories[0]->misguess_signal)
+					- history->existing_predicted;
 			} else {
 				curr_vs_surprise = target_val - history->existing_predicted;
 			}

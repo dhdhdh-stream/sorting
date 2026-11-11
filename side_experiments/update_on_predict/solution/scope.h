@@ -41,6 +41,7 @@ public:
 	double predict_rate;
 
 	ScoreNetwork* score_network;
+	ScoreNetwork* misguess_network;
 
 	std::vector<Scope*> child_scopes;
 
@@ -78,7 +79,8 @@ public:
 
 	std::vector<AbstractNodeHistory*> node_histories;
 
-	double signal;
+	double score_signal;
+	double misguess_signal;
 
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();

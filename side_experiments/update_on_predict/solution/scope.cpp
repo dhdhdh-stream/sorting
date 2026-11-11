@@ -31,6 +31,7 @@ Scope::~Scope() {
 	delete this->obs_network;
 
 	delete this->score_network;
+	delete this->misguess_network;
 
 	/**
 	 * - generic_action_nodes, generic_scope_nodes deleted in nodes
@@ -98,6 +99,7 @@ void Scope::copy_from(Scope* original,
 	this->predict_rate = original->predict_rate;
 
 	this->score_network = new ScoreNetwork(original->score_network);
+	this->misguess_network = new ScoreNetwork(original->misguess_network);
 
 	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
 		this->child_scopes.push_back(parent_solution->scopes[original->child_scopes[c_index]->id]);
@@ -135,6 +137,7 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->predict_rate << endl;
 
 	this->score_network->save(output_file);
+	this->misguess_network->save(output_file);
 
 	output_file << this->child_scopes.size() << endl;
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
@@ -238,6 +241,7 @@ void Scope::load(ifstream& input_file,
 	cout << "this->predict_rate: " << this->predict_rate << endl;
 
 	this->score_network = new ScoreNetwork(input_file);
+	this->misguess_network = new ScoreNetwork(input_file);
 
 	string num_child_scopes_line;
 	getline(input_file, num_child_scopes_line);
