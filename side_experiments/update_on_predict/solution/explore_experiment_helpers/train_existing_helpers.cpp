@@ -31,12 +31,12 @@ void ExploreExperiment::train_existing_backprop(
 		SolutionWrapper* wrapper) {
 	this->existing_obs_histories.push_back(history->obs_histories);
 	vector<double> target_val_histories;
-	if (this->scope_context->predict_explore_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
-		target_val_histories = vector<double>(history->obs_histories.size(), target_val);
-	} else {
+	if (this->is_signal) {
 		for (int i_index = 0; i_index < (int)history->scope_histories.size(); i_index++) {
 			target_val_histories.push_back(history->scope_histories[i_index]->signal);
 		}
+	} else {
+		target_val_histories = vector<double>(history->obs_histories.size(), target_val);
 	}
 	this->existing_target_val_histories.push_back(target_val_histories);
 

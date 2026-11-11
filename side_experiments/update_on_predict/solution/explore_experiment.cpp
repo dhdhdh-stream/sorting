@@ -30,6 +30,12 @@ ExploreExperiment::ExploreExperiment(SolutionWrapper* wrapper,
 	this->is_branch = is_branch;
 	this->exit_next_node = exit_next_node;
 
+	if (this->scope_context->predict_explore_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
+		this->is_signal = false;
+	} else {
+		this->is_signal = true;
+	}
+
 	this->existing_network = NULL;
 	this->new_network = NULL;
 

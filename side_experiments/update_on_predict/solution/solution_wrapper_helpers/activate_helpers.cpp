@@ -120,6 +120,10 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 }
 
 void SolutionWrapper::end() {
+	for (int s_index = 0; s_index < (int)this->ramp_tracker.size(); s_index++) {
+		this->ramp_tracker[s_index].clear();
+	}
+
 	delete this->scope_histories[0];
 
 	this->scope_histories.clear();

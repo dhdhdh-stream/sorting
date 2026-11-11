@@ -53,14 +53,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 		}
 	}
 	ss << "; ";
-	bool is_signal;
-	if (this->scope_context->predict_explore_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
-		is_signal = false;
-	} else {
-		is_signal = true;
-	}
-
-	ss << "is_signal: " << is_signal << "; ";
+	ss << "is_signal: " << this->is_signal << "; ";
 
 	if (this->exit_next_node == NULL) {
 		ss << "this->exit_next_node->id: " << -1 << "; ";
@@ -432,7 +425,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	new_branch_node->existing_count = 0;
 	new_branch_node->new_sum_score = 0.0;
 	new_branch_node->new_count = 0;
-	new_branch_node->iter_count = 0;
+
+	new_branch_node->was_signal = this->is_signal;
 
 	new_branch_node->consec_original = 0;
 	new_branch_node->consec_branch = 0;

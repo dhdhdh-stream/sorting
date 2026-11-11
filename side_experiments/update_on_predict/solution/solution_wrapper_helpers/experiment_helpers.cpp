@@ -232,6 +232,10 @@ void SolutionWrapper::experiment_end(double result) {
 					  result);
 	}
 
+	for (int s_index = 0; s_index < (int)this->ramp_tracker.size(); s_index++) {
+		this->ramp_tracker[s_index].clear();
+	}
+
 	if (this->experiment_histories[this->experiment_index].size() == 0) {
 		if (!this->allow_predict) {
 			create_experiment(this->scope_histories[0],

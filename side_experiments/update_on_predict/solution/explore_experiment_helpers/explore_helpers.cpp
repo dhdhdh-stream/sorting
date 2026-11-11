@@ -251,10 +251,10 @@ void ExploreExperiment::explore_backprop(double target_val,
 			this->state_iter++;
 
 			double curr_vs_surprise;
-			if (this->scope_context->predict_explore_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
-				curr_vs_surprise = target_val - history->existing_predicted;
-			} else {
+			if (this->is_signal) {
 				curr_vs_surprise = history->scope_histories[0]->signal - history->existing_predicted;
+			} else {
+				curr_vs_surprise = target_val - history->existing_predicted;
 			}
 
 			bool is_vs_success = false;

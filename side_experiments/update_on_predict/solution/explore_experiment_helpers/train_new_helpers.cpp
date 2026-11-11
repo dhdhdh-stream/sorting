@@ -272,10 +272,10 @@ void ExploreExperiment::train_new_backprop(
 		if (history->has_explore) {
 			for (int i_index = 0; i_index < (int)history->obs_histories.size(); i_index++) {
 				this->new_obs_histories.push_back(history->obs_histories[i_index]);
-				if (this->scope_context->predict_explore_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
-					this->new_target_val_histories.push_back(target_val);
-				} else {
+				if (this->is_signal) {
 					this->new_target_val_histories.push_back(history->scope_histories[i_index]->signal);
+				} else {
+					this->new_target_val_histories.push_back(target_val);
 				}
 			}
 

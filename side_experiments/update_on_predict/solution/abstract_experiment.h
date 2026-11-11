@@ -22,6 +22,8 @@ public:
 	bool is_branch;
 	AbstractNode* exit_next_node;
 
+	bool is_signal;
+
 	int state;
 	int state_iter;
 
