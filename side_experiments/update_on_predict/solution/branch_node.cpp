@@ -141,6 +141,11 @@ void BranchNode::load(ifstream& input_file,
 	getline(input_file, was_signal_line);
 	this->was_signal = stoi(was_signal_line);
 
+	cout << "this->parent->id: " << this->parent->id << endl;
+	cout << "this->id: " << this->id << endl;
+	cout << "this->was_signal: " << this->was_signal << endl;
+	cout << endl;
+
 	string consec_original_line;
 	getline(input_file, consec_original_line);
 	this->consec_original = stoi(consec_original_line);

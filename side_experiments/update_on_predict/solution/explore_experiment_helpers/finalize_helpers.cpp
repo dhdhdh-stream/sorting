@@ -481,6 +481,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->node_counter = 0;
 			wrapper->solution->scopes.push_back(new_scope);
 
+			wrapper->ramp_tracker.push_back(map<BranchNode*, bool>());
+
 			NoopNode* start_node = new NoopNode();
 			start_node->parent = new_scope;
 			start_node->id = new_scope->node_counter;
