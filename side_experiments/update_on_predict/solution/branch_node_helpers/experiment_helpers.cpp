@@ -55,11 +55,15 @@ void BranchNode::experiment_step(vector<double>& obs,
 
 	history->obs = obs;
 
-	this->original_network->activate(obs);
-	double original_predicted = this->original_network->output->acti_vals[0];
-	this->branch_network->activate(obs);
-	double branch_predicted = this->branch_network->output->acti_vals[0];
 	bool is_branch;
+	this->original_score_network->activate(obs);
+	this->original_misguess_network->activate(obs);
+	double original_predicted = this->original_score_network->output->acti_vals[0]
+		- MISGUESS_FACTOR * this->original_misguess_network->output->acti_vals[0];
+	this->branch_score_network->activate(obs);
+	this->branch_misguess_network->activate(obs);
+	double branch_predicted = this->branch_score_network->output->acti_vals[0]
+		- MISGUESS_FACTOR * this->branch_misguess_network->output->acti_vals[0];
 	if (branch_predicted >= original_predicted) {
 		is_branch = true;
 	} else {

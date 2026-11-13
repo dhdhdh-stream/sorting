@@ -415,10 +415,14 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	new_branch_node->original_network = this->existing_network;
-	this->existing_network = NULL;
-	new_branch_node->branch_network = this->new_network;
-	this->new_network = NULL;
+	new_branch_node->original_score_network = this->existing_score_network;
+	this->existing_score_network = NULL;
+	new_branch_node->original_misguess_network = this->existing_misguess_network;
+	this->existing_misguess_network = NULL;
+	new_branch_node->branch_score_network = this->new_score_network;
+	this->new_score_network = NULL;
+	new_branch_node->branch_misguess_network = this->new_misguess_network;
+	this->new_misguess_network = NULL;
 
 	new_branch_node->ramp = STARTING_RAMP;
 	new_branch_node->existing_sum_score = 0.0;
@@ -550,8 +554,6 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 			new_scope->score_network = new ScoreNetwork(
 				wrapper->solution->starting_scope->score_network);
-			new_scope->misguess_network = new ScoreNetwork(
-				wrapper->solution->starting_scope->misguess_network);
 
 			for (int a_index = 0; a_index < wrapper->solution->num_actions; a_index++) {
 				ActionNode* new_action_node = new ActionNode();

@@ -30,6 +30,8 @@ using namespace std;
 
 void update_helper(ScopeHistory* scope_history,
 				   double target_val) {
+	double misguess = abs(target_val - scope_history->score_signal);
+
 	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
 		AbstractNode* node = scope_history->node_histories[h_index]->node;
 		switch (node->type) {
@@ -41,7 +43,8 @@ void update_helper(ScopeHistory* scope_history,
 
 				for (int e_index = 0; e_index < (int)noop_node->experiments.size(); e_index++) {
 					noop_node->experiments[e_index]->backprop(scope_history->node_histories[h_index]->obs,
-															  target_val);
+															  target_val,
+															  misguess);
 				}
 			}
 			break;
@@ -53,7 +56,8 @@ void update_helper(ScopeHistory* scope_history,
 
 				for (int e_index = 0; e_index < (int)action_node->experiments.size(); e_index++) {
 					action_node->experiments[e_index]->backprop(scope_history->node_histories[h_index]->obs,
-																target_val);
+																target_val,
+																misguess);
 				}
 			}
 			break;
@@ -70,7 +74,8 @@ void update_helper(ScopeHistory* scope_history,
 
 				for (int e_index = 0; e_index < (int)scope_node->experiments.size(); e_index++) {
 					scope_node->experiments[e_index]->backprop(scope_history->node_histories[h_index]->obs,
-															   target_val);
+															   target_val,
+															   misguess);
 				}
 			}
 			break;
@@ -80,9 +85,13 @@ void update_helper(ScopeHistory* scope_history,
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)scope_history->node_histories[h_index];
 
 				if (branch_node_history->is_branch) {
-					branch_node->branch_network->activate(branch_node_history->obs);
-					double error = target_val - branch_node->branch_network->output->acti_vals(0);
-					branch_node->branch_network->backprop(error);
+					branch_node->branch_score_network->activate(branch_node_history->obs);
+					double score_error = target_val - branch_node->branch_score_network->output->acti_vals(0);
+					branch_node->branch_score_network->backprop(score_error);
+
+					branch_node->branch_misguess_network->activate(branch_node_history->obs);
+					double misguess_error = misguess - branch_node->branch_misguess_network->output->acti_vals(0);
+					branch_node->branch_misguess_network->backprop(misguess_error);
 
 					branch_node->branch_curr_num_instances++;
 
@@ -91,12 +100,17 @@ void update_helper(ScopeHistory* scope_history,
 
 					for (int e_index = 0; e_index < (int)branch_node->branch_experiments.size(); e_index++) {
 						branch_node->branch_experiments[e_index]->backprop(scope_history->node_histories[h_index]->obs,
-																		   target_val);
+																		   target_val,
+																		   misguess);
 					}
 				} else {
-					branch_node->original_network->activate(branch_node_history->obs);
-					double error = target_val - branch_node->original_network->output->acti_vals(0);
-					branch_node->original_network->backprop(error);
+					branch_node->original_score_network->activate(branch_node_history->obs);
+					double score_error = target_val - branch_node->original_score_network->output->acti_vals(0);
+					branch_node->original_score_network->backprop(score_error);
+
+					branch_node->original_misguess_network->activate(branch_node_history->obs);
+					double misguess_error = misguess - branch_node->original_misguess_network->output->acti_vals(0);
+					branch_node->original_misguess_network->backprop(misguess_error);
 
 					branch_node->original_curr_num_instances++;
 
@@ -105,7 +119,8 @@ void update_helper(ScopeHistory* scope_history,
 
 					for (int e_index = 0; e_index < (int)branch_node->original_experiments.size(); e_index++) {
 						branch_node->original_experiments[e_index]->backprop(scope_history->node_histories[h_index]->obs,
-																			 target_val);
+																			 target_val,
+																			 misguess);
 					}
 				}
 			}
@@ -183,11 +198,12 @@ void update_helper(SolutionWrapper* wrapper,
 						branch_node->original_average_instances_per_hit = 0.999*branch_node->original_average_instances_per_hit + 0.001*branch_node->original_curr_num_instances;
 						branch_node->original_val_average = 0.999*branch_node->original_val_average + 0.001*target_val;
 
-						branch_node->original_network->epoch_iter++;
-						if (branch_node->original_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
-							branch_node->original_network->update();
+						branch_node->original_score_network->epoch_iter++;
+						if (branch_node->original_score_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
+							branch_node->original_score_network->update();
+							branch_node->original_misguess_network->update();
 
-							branch_node->original_network->epoch_iter = 0;
+							branch_node->original_score_network->epoch_iter = 0;
 						}
 
 						for (int e_index = 0; e_index < (int)branch_node->original_experiments.size(); e_index++) {
@@ -201,11 +217,12 @@ void update_helper(SolutionWrapper* wrapper,
 						branch_node->branch_average_instances_per_hit = 0.999*branch_node->branch_average_instances_per_hit + 0.001*branch_node->branch_curr_num_instances;
 						branch_node->branch_val_average = 0.999*branch_node->branch_val_average + 0.001*target_val;
 
-						branch_node->branch_network->epoch_iter++;
-						if (branch_node->branch_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
-							branch_node->branch_network->update();
+						branch_node->branch_score_network->epoch_iter++;
+						if (branch_node->branch_score_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
+							branch_node->branch_score_network->update();
+							branch_node->branch_misguess_network->update();
 
-							branch_node->branch_network->epoch_iter = 0;
+							branch_node->branch_score_network->epoch_iter = 0;
 						}
 
 						for (int e_index = 0; e_index < (int)branch_node->branch_experiments.size(); e_index++) {

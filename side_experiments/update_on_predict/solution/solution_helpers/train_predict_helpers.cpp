@@ -109,7 +109,6 @@ void train_predict_helper(SolutionWrapper* wrapper,
 			}
 
 			scope->score_network->activate(state);
-			scope->misguess_network->activate(state);
 
 			Eigen::VectorXf state_error;
 			state_error.resize(NUM_STATES);
@@ -117,10 +116,6 @@ void train_predict_helper(SolutionWrapper* wrapper,
 
 			scope->score_network->backprop(target_val,
 										   state_error);
-
-			double misguess = abs(target_val - scope->score_network->output->acti_vals(0));
-			scope->misguess_network->backprop(misguess,
-											  state_error);
 
 			for (int h_index = (int)post_train_node_histories.size()-1; h_index >= 0; h_index--) {
 				post_train_node_histories[h_index]->backprop(state_error);
@@ -180,7 +175,6 @@ void train_predict_helper(SolutionWrapper* wrapper,
 			}
 
 			scope->score_network->activate(state);
-			scope->misguess_network->activate(state);
 
 			Eigen::VectorXf state_error;
 			state_error.resize(NUM_STATES);
@@ -188,10 +182,6 @@ void train_predict_helper(SolutionWrapper* wrapper,
 
 			scope->score_network->backprop(target_val,
 										   state_error);
-
-			double misguess = abs(target_val - scope->score_network->output->acti_vals(0));
-			scope->misguess_network->backprop(misguess,
-											  state_error);
 
 			for (int h_index = (int)train_node_histories.size()-1; h_index >= 0; h_index--) {
 				train_node_histories[h_index]->backprop(state_error);

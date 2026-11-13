@@ -36,8 +36,10 @@ ExploreExperiment::ExploreExperiment(SolutionWrapper* wrapper,
 		this->is_signal = true;
 	}
 
-	this->existing_network = NULL;
-	this->new_network = NULL;
+	this->existing_score_network = NULL;
+	this->existing_misguess_network = NULL;
+	this->new_score_network = NULL;
+	this->new_misguess_network = NULL;
 
 	this->try_iter = 0;
 
@@ -102,24 +104,36 @@ ExploreExperiment::~ExploreExperiment() {
 		break;
 	}
 
-	if (this->existing_network != NULL) {
-		delete this->existing_network;
+	if (this->existing_score_network != NULL) {
+		delete this->existing_score_network;
+	}
+	if (this->existing_misguess_network != NULL) {
+		delete this->existing_misguess_network;
 	}
 
-	if (this->new_network != NULL) {
-		delete this->new_network;
+	if (this->new_score_network != NULL) {
+		delete this->new_score_network;
+	}
+	if (this->new_misguess_network != NULL) {
+		delete this->new_misguess_network;
 	}
 }
 
 void ExploreExperiment::backprop(vector<double>& obs,
-								 double target_val) {
+								 double target_val,
+								 double misguess) {
 	switch (this->state) {
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
 	case EXPLORE_EXPERIMENT_STATE_MEASURE:
-		this->existing_network->activate(obs);
-		double error = target_val - this->existing_network->output->acti_vals(0);
-		this->existing_network->backprop(error);
+		this->existing_score_network->activate(obs);
+		double score_error = target_val - this->existing_score_network->output->acti_vals(0);
+		this->existing_score_network->backprop(score_error);
+
+		this->existing_misguess_network->activate(obs);
+		double misguess_error = misguess - this->existing_misguess_network->output->acti_vals(0);
+		this->existing_misguess_network->backprop(misguess_error);
+
 		break;
 	}
 }
@@ -129,11 +143,12 @@ void ExploreExperiment::update() {
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
 	case EXPLORE_EXPERIMENT_STATE_MEASURE:
-		this->existing_network->epoch_iter++;
-		if (this->existing_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
-			this->existing_network->update();
+		this->existing_score_network->epoch_iter++;
+		if (this->existing_score_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
+			this->existing_score_network->update();
+			this->existing_misguess_network->update();
 
-			this->existing_network->epoch_iter = 0;
+			this->existing_score_network->epoch_iter = 0;
 		}
 		break;
 	}

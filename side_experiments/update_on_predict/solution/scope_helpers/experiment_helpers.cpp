@@ -26,7 +26,4 @@ void Scope::experiment_exit_activate(SolutionWrapper* wrapper) {
 
 	this->score_network->activate(wrapper->states.back());
 	scope_history->score_signal = this->score_network->output->acti_vals(0);
-
-	this->misguess_network->activate(wrapper->states.back());
-	scope_history->misguess_signal = this->misguess_network->output->acti_vals(0);
 }

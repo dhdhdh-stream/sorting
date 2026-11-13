@@ -24,8 +24,13 @@ const int CONSEC_DEPRECATE_LIMIT = 4000;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	Network* original_network;
-	Network* branch_network;
+	Network* original_score_network;
+	Network* original_misguess_network;
+	Network* branch_score_network;
+	Network* branch_misguess_network;
+	/**
+	 * - misguess at end, not misguess at branch
+	 */
 
 	ScoreNetwork* branch_predict_network;
 	/**

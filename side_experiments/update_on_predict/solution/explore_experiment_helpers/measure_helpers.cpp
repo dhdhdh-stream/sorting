@@ -28,11 +28,16 @@ void ExploreExperiment::measure_check_activate(vector<double>& obs,
 											   SolutionWrapper* wrapper) {
 	if (wrapper->is_explore
 			&& wrapper->experiment_index == this->experiment_index) {
+		this->existing_score_network->activate(obs);
+		this->existing_misguess_network->activate(obs);
+		double existing_predicted = this->existing_score_network->output->acti_vals[0]
+			- MISGUESS_FACTOR * this->existing_misguess_network->output->acti_vals[0];
+		this->new_score_network->activate(obs);
+		this->new_misguess_network->activate(obs);
+		double new_predicted = this->new_score_network->output->acti_vals[0]
+			- MISGUESS_FACTOR * this->new_misguess_network->output->acti_vals[0];
+
 		bool is_branch;
-		this->existing_network->activate(obs);
-		double existing_predicted = this->existing_network->output->acti_vals[0];
-		this->new_network->activate(obs);
-		double new_predicted = this->new_network->output->acti_vals[0];
 		if (new_predicted >= existing_predicted) {
 			is_branch = true;
 		} else {

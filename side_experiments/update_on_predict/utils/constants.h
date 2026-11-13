@@ -50,6 +50,8 @@ const int RAW_ACTION_WEIGHT = 8;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
+const double MISGUESS_FACTOR = 0.5;
+
 #if defined(MDEBUG) && MDEBUG
 const int DIVERSITY = 2;
 #else

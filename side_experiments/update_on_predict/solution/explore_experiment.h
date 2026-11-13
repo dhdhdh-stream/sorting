@@ -37,8 +37,10 @@ class ExploreExperiment : public AbstractExperiment {
 public:
 	std::vector<std::vector<std::vector<double>>> existing_obs_histories;
 	std::vector<std::vector<double>> existing_target_val_histories;
+	std::vector<std::vector<double>> existing_misguess_histories;
 
-	Network* existing_network;
+	Network* existing_score_network;
+	Network* existing_misguess_network;
 
 	int num_instances_until_target;
 
@@ -50,8 +52,10 @@ public:
 
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
+	std::vector<double> new_misguess_histories;
 
-	Network* new_network;
+	Network* new_score_network;
+	Network* new_misguess_network;
 
 	double sum_vals;
 
@@ -132,7 +136,8 @@ public:
 						  SolutionWrapper* wrapper);
 
 	void backprop(std::vector<double>& obs,
-				  double target_val);
+				  double target_val,
+				  double misguess);
 	void update();
 
 	void add(SolutionWrapper* wrapper);

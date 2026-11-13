@@ -31,23 +31,30 @@ void ExploreExperiment::train_existing_backprop(
 		SolutionWrapper* wrapper) {
 	this->existing_obs_histories.push_back(history->obs_histories);
 	vector<double> target_val_histories;
-	if (this->is_signal) {
-		for (int i_index = 0; i_index < (int)history->scope_histories.size(); i_index++) {
-			target_val_histories.push_back(
-				history->scope_histories[i_index]->score_signal - history->scope_histories[i_index]->misguess_signal);
+	vector<double> misguess_histories;
+	for (int i_index = 0; i_index < (int)history->scope_histories.size(); i_index++) {
+		if (this->is_signal) {
+			target_val_histories.push_back(history->scope_histories[i_index]->score_signal);
+		} else {
+			target_val_histories.push_back(target_val);
 		}
-	} else {
-		target_val_histories = vector<double>(history->obs_histories.size(), target_val);
+		misguess_histories.push_back(abs(target_val - history->scope_histories[i_index]->score_signal));
 	}
 	this->existing_target_val_histories.push_back(target_val_histories);
+	this->existing_misguess_histories.push_back(misguess_histories);
 
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
-		this->existing_network = new Network(this->existing_obs_histories[0][0].size());
-		double hidden_1_average_max_update = 0.0;
-		double hidden_2_average_max_update = 0.0;
-		double hidden_3_average_max_update = 0.0;
-		double output_average_max_update = 0.0;
+		this->existing_score_network = new Network(this->existing_obs_histories[0].size());
+		double score_hidden_1_average_max_update = 0.0;
+		double score_hidden_2_average_max_update = 0.0;
+		double score_hidden_3_average_max_update = 0.0;
+		double score_output_average_max_update = 0.0;
+		this->existing_misguess_network = new Network(this->existing_obs_histories[0].size());
+		double misguess_hidden_1_average_max_update = 0.0;
+		double misguess_hidden_2_average_max_update = 0.0;
+		double misguess_hidden_3_average_max_update = 0.0;
+		double misguess_output_average_max_update = 0.0;
 
 		uniform_int_distribution<int> run_distribution(0, this->existing_obs_histories.size()-1);
 		for (int iter_index = 0; iter_index < TRAIN_EXISTING_ITERS; iter_index++) {
@@ -56,15 +63,23 @@ void ExploreExperiment::train_existing_backprop(
 			uniform_int_distribution<int> instance_distribution(0, this->existing_obs_histories[run_index].size()-1);
 			int instance_index = instance_distribution(generator);
 
-			this->existing_network->activate(this->existing_obs_histories[run_index][instance_index]);
+			this->existing_score_network->activate(this->existing_obs_histories[run_index][instance_index]);
+			double score_error = this->existing_target_val_histories[run_index][instance_index] - this->existing_score_network->output->acti_vals[0];
+			this->existing_score_network->init_backprop(
+				score_error,
+				score_hidden_1_average_max_update,
+				score_hidden_2_average_max_update,
+				score_hidden_3_average_max_update,
+				score_output_average_max_update);
 
-			double error = this->existing_target_val_histories[run_index][instance_index] - this->existing_network->output->acti_vals[0];
-
-			this->existing_network->init_backprop(error,
-												  hidden_1_average_max_update,
-												  hidden_2_average_max_update,
-												  hidden_3_average_max_update,
-												  output_average_max_update);
+			this->existing_misguess_network->activate(this->existing_obs_histories[run_index][instance_index]);
+			double misguess_error = this->existing_misguess_histories[run_index][instance_index] - this->existing_misguess_network->output->acti_vals[0];
+			this->existing_misguess_network->init_backprop(
+				misguess_error,
+				misguess_hidden_1_average_max_update,
+				misguess_hidden_2_average_max_update,
+				misguess_hidden_3_average_max_update,
+				misguess_output_average_max_update);
 		}
 
 		double average_instances_per_hit;

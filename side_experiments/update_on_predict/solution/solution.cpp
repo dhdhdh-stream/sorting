@@ -121,7 +121,6 @@ void Solution::init(ProblemType* problem_type) {
 	new_scope->predict_rate = 0.5;
 
 	new_scope->score_network = new ScoreNetwork(NUM_STATES);
-	new_scope->misguess_network = new ScoreNetwork(NUM_STATES);
 
 	for (int a_index = 0; a_index < this->num_actions; a_index++) {
 		ActionNode* new_action_node = new ActionNode();

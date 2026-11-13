@@ -44,7 +44,8 @@ public:
 						  SolutionWrapper* wrapper) = 0;
 
 	virtual void backprop(std::vector<double>& obs,
-						  double target_val) = 0;
+						  double target_val,
+						  double misguess) = 0;
 	virtual void update() = 0;
 
 	bool further_than(AbstractExperiment* other);
