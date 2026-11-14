@@ -23,6 +23,12 @@ public:
 	AbstractNode* exit_next_node;
 
 	bool is_signal;
+	/**
+	 * - simply switch between true and signal
+	 *   - true can be bad because too many factors can go into true
+	 *     - too much variance
+	 *   - signal can be bad because what is good may be initially unrecognizable
+	 */
 
 	int state;
 	int state_iter;
@@ -44,8 +50,7 @@ public:
 						  SolutionWrapper* wrapper) = 0;
 
 	virtual void backprop(std::vector<double>& obs,
-						  double target_val,
-						  double misguess) = 0;
+						  double target_val) = 0;
 	virtual void update() = 0;
 
 	bool further_than(AbstractExperiment* other);

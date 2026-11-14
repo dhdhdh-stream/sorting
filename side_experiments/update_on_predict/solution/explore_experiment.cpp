@@ -33,13 +33,16 @@ ExploreExperiment::ExploreExperiment(SolutionWrapper* wrapper,
 	if (this->scope_context->predict_explore_num_stabilize < NEW_SCOPE_NUM_STABILIZE) {
 		this->is_signal = false;
 	} else {
-		this->is_signal = true;
+		uniform_int_distribution<int> is_signal_distribution(0, 1);
+		if (is_signal_distribution(generator) == 0) {
+			this->is_signal = true;
+		} else {
+			this->is_signal = false;
+		}
 	}
 
 	this->existing_score_network = NULL;
-	this->existing_misguess_network = NULL;
 	this->new_score_network = NULL;
-	this->new_misguess_network = NULL;
 
 	this->try_iter = 0;
 
@@ -107,21 +110,14 @@ ExploreExperiment::~ExploreExperiment() {
 	if (this->existing_score_network != NULL) {
 		delete this->existing_score_network;
 	}
-	if (this->existing_misguess_network != NULL) {
-		delete this->existing_misguess_network;
-	}
 
 	if (this->new_score_network != NULL) {
 		delete this->new_score_network;
 	}
-	if (this->new_misguess_network != NULL) {
-		delete this->new_misguess_network;
-	}
 }
 
 void ExploreExperiment::backprop(vector<double>& obs,
-								 double target_val,
-								 double misguess) {
+								 double target_val) {
 	switch (this->state) {
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
@@ -129,11 +125,6 @@ void ExploreExperiment::backprop(vector<double>& obs,
 		this->existing_score_network->activate(obs);
 		double score_error = target_val - this->existing_score_network->output->acti_vals(0);
 		this->existing_score_network->backprop(score_error);
-
-		this->existing_misguess_network->activate(obs);
-		double misguess_error = misguess - this->existing_misguess_network->output->acti_vals(0);
-		this->existing_misguess_network->backprop(misguess_error);
-
 		break;
 	}
 }
@@ -146,7 +137,6 @@ void ExploreExperiment::update() {
 		this->existing_score_network->epoch_iter++;
 		if (this->existing_score_network->epoch_iter >= UPDATE_EPOCH_SIZE) {
 			this->existing_score_network->update();
-			this->existing_misguess_network->update();
 
 			this->existing_score_network->epoch_iter = 0;
 		}

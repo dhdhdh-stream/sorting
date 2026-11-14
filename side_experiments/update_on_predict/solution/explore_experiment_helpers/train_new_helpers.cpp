@@ -106,14 +106,6 @@ bool ExploreExperiment::train_new_helper(int l_index) {
 	double score_hidden_2_average_max_update = 0.0;
 	double score_hidden_3_average_max_update = 0.0;
 	double score_output_average_max_update = 0.0;
-	if (this->new_misguess_network != NULL) {
-		delete this->new_misguess_network;
-	}
-	this->new_misguess_network = new Network(this->new_obs_histories[0].size());
-	double misguess_hidden_1_average_max_update = 0.0;
-	double misguess_hidden_2_average_max_update = 0.0;
-	double misguess_hidden_3_average_max_update = 0.0;
-	double misguess_output_average_max_update = 0.0;
 
 	uniform_int_distribution<int> new_train_distribution(0, this->new_obs_histories.size()-1);
 	for (int iter_index = 0; iter_index < TRAIN_NEW_ITERS[l_index]; iter_index++) {
@@ -127,15 +119,6 @@ bool ExploreExperiment::train_new_helper(int l_index) {
 			score_hidden_2_average_max_update,
 			score_hidden_3_average_max_update,
 			score_output_average_max_update);
-
-		this->new_misguess_network->activate(this->new_obs_histories[rand_index]);
-		double misguess_error = this->new_misguess_histories[rand_index] - this->new_misguess_network->output->acti_vals[0];
-		this->new_misguess_network->init_backprop(
-			misguess_error,
-			misguess_hidden_1_average_max_update,
-			misguess_hidden_2_average_max_update,
-			misguess_hidden_3_average_max_update,
-			misguess_output_average_max_update);
 	}
 
 	double existing_sum_vals = 0.0;
@@ -143,13 +126,9 @@ bool ExploreExperiment::train_new_helper(int l_index) {
 	for (int r_index = 0; r_index < (int)this->existing_obs_histories.size(); r_index++) {
 		for (int i_index = 0; i_index < (int)this->existing_obs_histories[r_index].size(); i_index++) {
 			this->existing_score_network->activate(this->existing_obs_histories[r_index][i_index]);
-			this->existing_misguess_network->activate(this->existing_obs_histories[r_index][i_index]);
-			double existing_predicted = this->existing_score_network->output->acti_vals[0]
-				- MISGUESS_FACTOR * this->existing_misguess_network->output->acti_vals[0];
+			double existing_predicted = this->existing_score_network->output->acti_vals[0];
 			this->new_score_network->activate(this->existing_obs_histories[r_index][i_index]);
-			this->new_misguess_network->activate(this->existing_obs_histories[r_index][i_index]);
-			double new_predicted = this->new_score_network->output->acti_vals[0]
-				- MISGUESS_FACTOR * this->new_misguess_network->output->acti_vals[0];
+			double new_predicted = this->new_score_network->output->acti_vals[0];
 			if (new_predicted >= existing_predicted) {
 				existing_sum_vals += this->existing_target_val_histories[r_index][i_index];
 				existing_count++;
@@ -161,13 +140,9 @@ bool ExploreExperiment::train_new_helper(int l_index) {
 	int new_count = 0;
 	for (int h_index = 0; h_index < (int)this->new_obs_histories.size(); h_index++) {
 		this->existing_score_network->activate(this->new_obs_histories[h_index]);
-		this->existing_misguess_network->activate(this->new_obs_histories[h_index]);
-		double existing_predicted = this->existing_score_network->output->acti_vals[0]
-			- MISGUESS_FACTOR * this->existing_misguess_network->output->acti_vals[0];
+		double existing_predicted = this->existing_score_network->output->acti_vals[0];
 		this->new_score_network->activate(this->new_obs_histories[h_index]);
-		this->new_misguess_network->activate(this->new_obs_histories[h_index]);
-		double new_predicted = this->new_score_network->output->acti_vals[0]
-			- MISGUESS_FACTOR * this->new_misguess_network->output->acti_vals[0];
+		double new_predicted = this->new_score_network->output->acti_vals[0];
 		if (new_predicted >= existing_predicted) {
 			new_sum_vals += this->new_target_val_histories[h_index];
 			new_count++;
@@ -301,7 +276,6 @@ void ExploreExperiment::train_new_backprop(
 				} else {
 					this->new_target_val_histories.push_back(target_val);
 				}
-				this->new_misguess_histories.push_back(abs(target_val - history->scope_histories[i_index]->score_signal));
 			}
 
 			this->state_iter++;

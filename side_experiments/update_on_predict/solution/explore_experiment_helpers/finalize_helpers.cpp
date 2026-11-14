@@ -417,12 +417,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 	new_branch_node->original_score_network = this->existing_score_network;
 	this->existing_score_network = NULL;
-	new_branch_node->original_misguess_network = this->existing_misguess_network;
-	this->existing_misguess_network = NULL;
 	new_branch_node->branch_score_network = this->new_score_network;
 	this->new_score_network = NULL;
-	new_branch_node->branch_misguess_network = this->new_misguess_network;
-	this->new_misguess_network = NULL;
 
 	new_branch_node->ramp = STARTING_RAMP;
 	new_branch_node->existing_sum_score = 0.0;

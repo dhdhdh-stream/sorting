@@ -25,11 +25,12 @@ class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
 	Network* original_score_network;
-	Network* original_misguess_network;
 	Network* branch_score_network;
-	Network* branch_misguess_network;
 	/**
-	 * - misguess at end, not misguess at branch
+	 * - don't worry about reducing misguess/maximizing certainty
+	 *   - the best solution may be slightly better but have significantly more variance
+	 *   - also initially, may make mistakes
+	 *     - reducing misguess may prevent paths from being tried/improvement
 	 */
 
 	ScoreNetwork* branch_predict_network;

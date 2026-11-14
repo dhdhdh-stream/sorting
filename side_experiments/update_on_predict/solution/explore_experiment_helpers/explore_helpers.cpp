@@ -38,9 +38,7 @@ void ExploreExperiment::explore_check_activate(vector<double>& obs,
 		if (wrapper->is_explore
 				&& wrapper->experiment_index == this->experiment_index) {
 			this->existing_score_network->activate(obs);
-			this->existing_misguess_network->activate(obs);
-			double existing_predicted = this->existing_score_network->output->acti_vals[0]
-				- MISGUESS_FACTOR * this->existing_misguess_network->output->acti_vals[0];
+			double existing_predicted = this->existing_score_network->output->acti_vals[0];
 			history->existing_predicted = existing_predicted;
 			history->scope_histories.push_back(wrapper->scope_histories.back());
 
@@ -253,14 +251,11 @@ void ExploreExperiment::explore_backprop(double target_val,
 		if (history->has_explore) {
 			this->state_iter++;
 
-			double misguess = abs(target_val - history->scope_histories[0]->score_signal);
 			double curr_vs_surprise;
 			if (this->is_signal) {
-				curr_vs_surprise = (history->scope_histories[0]->score_signal - MISGUESS_FACTOR * misguess)
-					- history->existing_predicted;
+				curr_vs_surprise = history->scope_histories[0]->score_signal - history->existing_predicted;
 			} else {
-				curr_vs_surprise = (target_val - MISGUESS_FACTOR * misguess)
-					- history->existing_predicted;
+				curr_vs_surprise = target_val - history->existing_predicted;
 			}
 
 			bool is_vs_success = false;

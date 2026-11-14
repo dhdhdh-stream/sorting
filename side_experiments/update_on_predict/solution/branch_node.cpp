@@ -22,9 +22,7 @@ BranchNode::BranchNode() {
 
 BranchNode::~BranchNode() {
 	delete this->original_score_network;
-	delete this->original_misguess_network;
 	delete this->branch_score_network;
-	delete this->branch_misguess_network;
 
 	delete this->branch_predict_network;
 
@@ -39,9 +37,7 @@ BranchNode::~BranchNode() {
 void BranchNode::copy_from(BranchNode* original,
 						   Solution* parent_solution) {
 	this->original_score_network = new Network(original->original_score_network);
-	this->original_misguess_network = new Network(original->original_misguess_network);
 	this->branch_score_network = new Network(original->branch_score_network);
-	this->branch_misguess_network = new Network(original->branch_misguess_network);
 
 	this->branch_predict_network = new ScoreNetwork(original->branch_predict_network);
 
@@ -73,9 +69,7 @@ void BranchNode::copy_from(BranchNode* original,
 
 void BranchNode::save(ofstream& output_file) {
 	this->original_score_network->save(output_file);
-	this->original_misguess_network->save(output_file);
 	this->branch_score_network->save(output_file);
-	this->branch_misguess_network->save(output_file);
 
 	this->branch_predict_network->save(output_file);
 
@@ -111,9 +105,7 @@ void BranchNode::save(ofstream& output_file) {
 void BranchNode::load(ifstream& input_file,
 					  Solution* parent_solution) {
 	this->original_score_network = new Network(input_file);
-	this->original_misguess_network = new Network(input_file);
 	this->branch_score_network = new Network(input_file);
-	this->branch_misguess_network = new Network(input_file);
 
 	this->branch_predict_network = new ScoreNetwork(input_file);
 
