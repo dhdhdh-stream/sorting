@@ -1,0 +1,45 @@
+#include "branch_node.h"
+
+#include "constants.h"
+#include "globals.h"
+#include "score_network.h"
+#include "utilities.h"
+
+using namespace std;
+
+void BranchNode::predict_step(Eigen::VectorXf& state,
+							  AbstractNode*& node_context) {
+	if (this->ramp == 0) {
+		node_context = this->original_next_node;
+		return;
+	} else if (this->ramp < MAX_RAMP) {
+		uniform_int_distribution<int> distribution(0, MAX_RAMP-1);
+		if (distribution(generator) >= this->ramp) {
+			node_context = this->original_next_node;
+			return;
+		}
+	}
+
+	if (this->consec_original >= CONSEC_DEPRECATE_LIMIT) {
+		node_context = this->original_next_node;
+		return;
+	}
+	if (this->consec_branch >= CONSEC_DEPRECATE_LIMIT) {
+		node_context = this->branch_next_node;
+		return;
+	}
+
+	bool is_branch;
+	this->branch_predict_network->activate(state);
+	if (this->branch_predict_network->output->acti_vals(0) > 0.0) {
+		is_branch = true;
+	} else {
+		is_branch = false;
+	}
+
+	if (is_branch) {
+		node_context = this->branch_next_node;
+	} else {
+		node_context = this->original_next_node;
+	}
+}
