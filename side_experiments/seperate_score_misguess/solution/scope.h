@@ -41,6 +41,8 @@ public:
 	double predict_rate;
 
 	ScoreNetwork* score_network;
+	// temp
+	double misguess_average;
 
 	std::vector<Scope*> child_scopes;
 

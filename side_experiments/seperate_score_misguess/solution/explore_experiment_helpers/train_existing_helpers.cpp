@@ -45,12 +45,12 @@ void ExploreExperiment::train_existing_backprop(
 
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
-		this->existing_score_network = new Network(this->existing_obs_histories[0].size());
+		this->existing_score_network = new Network(wrapper->solution->num_obs);
 		double score_hidden_1_average_max_update = 0.0;
 		double score_hidden_2_average_max_update = 0.0;
 		double score_hidden_3_average_max_update = 0.0;
 		double score_output_average_max_update = 0.0;
-		this->existing_misguess_network = new Network(this->existing_obs_histories[0].size());
+		this->existing_misguess_network = new Network(wrapper->solution->num_obs);
 		double misguess_hidden_1_average_max_update = 0.0;
 		double misguess_hidden_2_average_max_update = 0.0;
 		double misguess_hidden_3_average_max_update = 0.0;

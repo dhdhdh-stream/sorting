@@ -157,8 +157,8 @@ void BranchNode::load(ifstream& input_file,
 
 	cout << "this->parent->id: " << this->parent->id << endl;
 	cout << "this->id: " << this->id << endl;
+	cout << "this->minimize_misguess: " << this->minimize_misguess << endl;
 	cout << "this->was_signal: " << this->was_signal << endl;
-	cout << endl;
 
 	string consec_original_line;
 	getline(input_file, consec_original_line);
@@ -205,11 +205,6 @@ void BranchNode::load(ifstream& input_file,
 	string predict_rate_line;
 	getline(input_file, predict_rate_line);
 	this->predict_rate = stod(predict_rate_line);
-
-	// temp
-	cout << "this->parent->id: " << this->parent->id << endl;
-	cout << "this->id: " << this->id << endl;
-	cout << "this->predict_rate: " << this->predict_rate << endl;
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);

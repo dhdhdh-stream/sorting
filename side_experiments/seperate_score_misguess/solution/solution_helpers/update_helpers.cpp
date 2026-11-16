@@ -131,6 +131,8 @@ void update_helper(ScopeHistory* scope_history,
 			break;
 		}
 	}
+
+	scope_history->scope->misguess_average = 0.999*scope_history->scope->misguess_average + 0.001*misguess;
 }
 
 void update_helper(SolutionWrapper* wrapper,

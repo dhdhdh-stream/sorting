@@ -555,6 +555,7 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 			new_scope->score_network = new ScoreNetwork(
 				wrapper->solution->starting_scope->score_network);
+			new_scope->misguess_average = 0.0;
 
 			for (int a_index = 0; a_index < wrapper->solution->num_actions; a_index++) {
 				ActionNode* new_action_node = new ActionNode();

@@ -72,11 +72,6 @@ void NoopNode::load(ifstream& input_file,
 	getline(input_file, predict_rate_line);
 	this->predict_rate = stod(predict_rate_line);
 
-	// temp
-	cout << "this->parent->id: " << this->parent->id << endl;
-	cout << "this->id: " << this->id << endl;
-	cout << "this->predict_rate: " << this->predict_rate << endl;
-
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);
 	int num_ancestors = stoi(num_ancestors_line);
