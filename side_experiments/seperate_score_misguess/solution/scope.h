@@ -76,6 +76,9 @@ class ScopeHistory {
 public:
 	Scope* scope;
 
+	ScopeNode* outer_node;
+	Eigen::VectorXf outer_state;
+
 	std::vector<double> obs;
 
 	std::vector<AbstractNodeHistory*> node_histories;

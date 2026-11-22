@@ -24,6 +24,8 @@ void ScopeNode::experiment_step(vector<double>& obs,
 	scope_history->node_histories.push_back(history);
 
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->scope);
+	inner_scope_history->outer_node = this;
+	inner_scope_history->outer_state = wrapper->states.back();
 	wrapper->scope_histories.push_back(inner_scope_history);
 	history->scope_history = inner_scope_history;
 	wrapper->node_context.push_back(this->scope->nodes[0]);
@@ -33,6 +35,9 @@ void ScopeNode::experiment_step(vector<double>& obs,
 	wrapper->states.push_back(Eigen::VectorXf());
 	wrapper->states.back().resize(NUM_STATES);
 	wrapper->states.back().setConstant(0.0);
+
+	this->in_network->activate(wrapper->states[wrapper->states.size()-2],
+							   wrapper->states.back());
 
 	this->scope->experiment_start_activate(obs,
 										   wrapper);

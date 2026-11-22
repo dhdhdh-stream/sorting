@@ -153,6 +153,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 			ScopeNode* generic_scope_node = this->scope_context->generic_scope_nodes[this->best_indexes[s_index]];
 
+			new_scope_node->in_network = new TransitionNetwork(generic_scope_node->in_network);
+
 			new_scope_node->scope = this->scope_context->child_scopes[this->best_indexes[s_index]];
 
 			new_scope_node->out_network = new TransitionNetwork(generic_scope_node->out_network);
@@ -507,6 +509,10 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 			new_scope->nodes[scope_node->id] = scope_node;
 
 			scope_node->is_generic = false;
+
+			scope_node->in_network = new TransitionNetwork(NUM_STATES,
+														   NUM_STATES);
+
 			scope_node->scope = wrapper->solution->starting_scope;
 
 			scope_node->out_network = new TransitionNetwork(NUM_STATES,
@@ -595,6 +601,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 				new_scope_node->is_generic = true;
 
+				new_scope_node->in_network = new TransitionNetwork(
+					wrapper->solution->starting_scope->generic_scope_nodes[c_index]->in_network);
+
 				new_scope_node->scope = new_scope->child_scopes[c_index];
 
 				new_scope_node->out_network = new TransitionNetwork(
@@ -624,6 +633,9 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 				new_scope->nodes[new_scope_node->id] = new_scope_node;
 
 				new_scope_node->is_generic = true;
+
+				new_scope_node->in_network = new TransitionNetwork(NUM_STATES,
+																   NUM_STATES);
 
 				new_scope_node->scope = new_scope->child_scopes.back();
 

@@ -24,6 +24,7 @@
 #include "score_network.h"
 #include "solution.h"
 #include "solution_wrapper.h"
+#include "transition_network.h"
 
 using namespace std;
 
@@ -40,6 +41,12 @@ void train_predict_helper(SolutionWrapper* wrapper,
 			Eigen::VectorXf state;
 			state.resize(NUM_STATES);
 			state.setConstant(0.0);
+
+			if (scope_history->outer_node != NULL) {
+				scope_history->outer_node->in_network->activate(
+					scope_history->outer_state,
+					state);
+			}
 
 			scope->obs_network->activate(state,
 										 scope_history->obs);
@@ -126,6 +133,10 @@ void train_predict_helper(SolutionWrapper* wrapper,
 
 			scope->obs_network->backprop(state_error);
 
+			if (scope_history->outer_node != NULL) {
+				scope_history->outer_node->in_network->backprop(state_error);
+			}
+
 			if (scope->score_network->last_update_iter != wrapper->train_iter_index) {
 				scope->score_network->update();
 
@@ -139,10 +150,10 @@ void train_predict_helper(SolutionWrapper* wrapper,
 				pre_train_node_histories[h_index]->update(wrapper->train_iter_index);
 			}
 
-			if (scope->obs_network->last_update_iter != wrapper->train_iter_index) {
-				scope->obs_network->update();
+			scope->obs_network->update();
 
-				scope->obs_network->last_update_iter = wrapper->train_iter_index;
+			if (scope_history->outer_node != NULL) {
+				scope_history->outer_node->in_network->update();
 			}
 
 			wrapper->train_iter_index++;
@@ -162,6 +173,12 @@ void train_predict_helper(SolutionWrapper* wrapper,
 			Eigen::VectorXf state;
 			state.resize(NUM_STATES);
 			state.setConstant(0.0);
+
+			if (scope_history->outer_node != NULL) {
+				scope_history->outer_node->in_network->activate(
+					scope_history->outer_state,
+					state);
+			}
 
 			scope->obs_network->activate(state,
 										 scope_history->obs);
@@ -189,6 +206,10 @@ void train_predict_helper(SolutionWrapper* wrapper,
 
 			scope->obs_network->backprop(state_error);
 
+			if (scope_history->outer_node != NULL) {
+				scope_history->outer_node->in_network->backprop(state_error);
+			}
+
 			if (scope->score_network->last_update_iter != wrapper->train_iter_index) {
 				scope->score_network->update();
 
@@ -199,10 +220,10 @@ void train_predict_helper(SolutionWrapper* wrapper,
 				train_node_histories[h_index]->update(wrapper->train_iter_index);
 			}
 
-			if (scope->obs_network->last_update_iter != wrapper->train_iter_index) {
-				scope->obs_network->update();
+			scope->obs_network->update();
 
-				scope->obs_network->last_update_iter = wrapper->train_iter_index;
+			if (scope_history->outer_node != NULL) {
+				scope_history->outer_node->in_network->update();
 			}
 
 			wrapper->train_iter_index++;

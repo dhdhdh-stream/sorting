@@ -34,6 +34,8 @@ class ScopeNode : public AbstractNode {
 public:
 	bool is_generic;
 
+	TransitionNetwork* in_network;
+
 	Scope* scope;
 
 	TransitionNetwork* out_network;

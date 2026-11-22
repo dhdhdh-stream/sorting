@@ -19,6 +19,8 @@ ScopeNode::ScopeNode() {
 }
 
 ScopeNode::~ScopeNode() {
+	delete this->in_network;
+
 	delete this->out_network;
 
 	delete this->predict_network;
@@ -31,6 +33,8 @@ ScopeNode::~ScopeNode() {
 void ScopeNode::copy_from(ScopeNode* original,
 						  Solution* parent_solution) {
 	this->is_generic = original->is_generic;
+
+	this->in_network = new TransitionNetwork(original->in_network);
 
 	this->scope = parent_solution->scopes[original->scope->id];
 
@@ -51,6 +55,8 @@ void ScopeNode::copy_from(ScopeNode* original,
 
 void ScopeNode::save(ofstream& output_file) {
 	output_file << this->is_generic << endl;
+
+	this->in_network->save(output_file);
 
 	output_file << this->scope->id << endl;
 
@@ -77,6 +83,8 @@ void ScopeNode::load(ifstream& input_file,
 	string is_generic_line;
 	getline(input_file, is_generic_line);
 	this->is_generic = stoi(is_generic_line);
+
+	this->in_network = new TransitionNetwork(input_file);
 
 	string scope_id_line;
 	getline(input_file, scope_id_line);

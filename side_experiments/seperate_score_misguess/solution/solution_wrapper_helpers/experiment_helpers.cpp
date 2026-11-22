@@ -53,6 +53,7 @@ void SolutionWrapper::experiment_init(vector<double> obs) {
 	this->num_actions = 1;
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->starting_scope);
+	scope_history->outer_node = NULL;
 	this->scope_histories.push_back(scope_history);
 	this->node_context.push_back(this->solution->starting_scope->nodes[0]);
 	this->experiment_context.push_back(NULL);
