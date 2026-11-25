@@ -29,6 +29,7 @@ Scope::~Scope() {
 	}
 
 	delete this->obs_network;
+	delete this->start_score_network;
 
 	delete this->score_network;
 
@@ -91,6 +92,7 @@ void Scope::copy_from(Scope* original,
 	}
 
 	this->obs_network = new ObsNetwork(original->obs_network);
+	this->start_score_network = new ScoreNetwork(original->start_score_network);
 
 	this->predict_explore_num_stabilize = original->predict_explore_num_stabilize;
 	this->predict_existing_num_stabilize = original->predict_existing_num_stabilize;
@@ -129,6 +131,7 @@ void Scope::save(ofstream& output_file) {
 	}
 
 	this->obs_network->save(output_file);
+	this->start_score_network->save(output_file);
 
 	output_file << this->predict_explore_num_stabilize << endl;
 	output_file << this->predict_existing_num_stabilize << endl;
@@ -222,6 +225,7 @@ void Scope::load(ifstream& input_file,
 	}
 
 	this->obs_network = new ObsNetwork(input_file);
+	this->start_score_network = new ScoreNetwork(input_file);
 
 	string predict_explore_num_stabilize_line;
 	getline(input_file, predict_explore_num_stabilize_line);

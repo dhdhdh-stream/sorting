@@ -34,6 +34,7 @@ public:
 	 */
 
 	ObsNetwork* obs_network;
+	ScoreNetwork* start_score_network;
 
 	int predict_explore_num_stabilize;
 	int predict_existing_num_stabilize;
@@ -74,6 +75,8 @@ public:
 
 class ScopeHistory {
 public:
+	double start_score;
+
 	Scope* scope;
 
 	ScopeNode* outer_node;

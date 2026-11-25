@@ -553,6 +553,8 @@ void ExploreExperiment::add(SolutionWrapper* wrapper) {
 
 			new_scope->obs_network = new ObsNetwork(
 				wrapper->solution->starting_scope->obs_network);
+			new_scope->start_score_network = new ScoreNetwork(
+				wrapper->solution->starting_scope->start_score_network);
 
 			new_scope->predict_explore_num_stabilize = 0;
 			new_scope->predict_existing_num_stabilize = 0;

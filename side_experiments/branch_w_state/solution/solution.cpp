@@ -114,6 +114,7 @@ void Solution::init(ProblemType* problem_type) {
 
 	new_scope->obs_network = new ObsNetwork(NUM_STATES,
 											this->num_obs);
+	new_scope->start_score_network = new ScoreNetwork(NUM_STATES);
 
 	new_scope->predict_explore_num_stabilize = 0;
 	new_scope->predict_existing_num_stabilize = 0;

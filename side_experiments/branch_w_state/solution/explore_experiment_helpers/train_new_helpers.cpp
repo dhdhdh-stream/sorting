@@ -336,12 +336,13 @@ void ExploreExperiment::train_new_backprop(
 			for (int i_index = 0; i_index < (int)history->obs_histories.size(); i_index++) {
 				this->new_state_histories.push_back(history->state_histories[i_index]);
 				this->new_obs_histories.push_back(history->obs_histories[i_index]);
+				double improvement = target_val - history->scope_histories[i_index]->start_score;
 				if (this->is_signal) {
 					this->new_target_val_histories.push_back(history->scope_histories[i_index]->score_signal);
 				} else {
-					this->new_target_val_histories.push_back(target_val);
+					this->new_target_val_histories.push_back(improvement);
 				}
-				this->new_misguess_histories.push_back(abs(target_val - history->scope_histories[i_index]->score_signal));
+				this->new_misguess_histories.push_back(abs(improvement - history->scope_histories[i_index]->score_signal));
 			}
 
 			this->state_iter++;

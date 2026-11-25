@@ -51,6 +51,8 @@ void train_predict_helper(SolutionWrapper* wrapper,
 			scope->obs_network->activate(state,
 										 scope_history->obs);
 
+			scope->start_score_network->activate(state);
+
 			int explore_index = wrapper->run_predict_indexes[i_index];
 
 			vector<TrainAbstractNodeHistory*> pre_train_node_histories;
@@ -121,7 +123,8 @@ void train_predict_helper(SolutionWrapper* wrapper,
 			state_error.resize(NUM_STATES);
 			state_error.setConstant(0.0);
 
-			scope->score_network->backprop(target_val,
+			double improvement = target_val - scope_history->start_score;
+			scope->score_network->backprop(improvement,
 										   state_error);
 
 			for (int h_index = (int)post_train_node_histories.size()-1; h_index >= 0; h_index--) {
@@ -130,6 +133,9 @@ void train_predict_helper(SolutionWrapper* wrapper,
 			for (int h_index = (int)pre_train_node_histories.size()-1; h_index >= 0; h_index--) {
 				pre_train_node_histories[h_index]->backprop(state_error);
 			}
+
+			scope->start_score_network->backprop(target_val,
+												 state_error);
 
 			scope->obs_network->backprop(state_error);
 
@@ -149,6 +155,8 @@ void train_predict_helper(SolutionWrapper* wrapper,
 			for (int h_index = (int)pre_train_node_histories.size()-1; h_index >= 0; h_index--) {
 				pre_train_node_histories[h_index]->update(wrapper->train_iter_index);
 			}
+
+			scope->start_score_network->update();
 
 			scope->obs_network->update();
 
@@ -183,6 +191,8 @@ void train_predict_helper(SolutionWrapper* wrapper,
 			scope->obs_network->activate(state,
 										 scope_history->obs);
 
+			scope->start_score_network->activate(state);
+
 			vector<TrainAbstractNodeHistory*> train_node_histories;
 			for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
 				AbstractNode* node = scope_history->node_histories[h_index]->node;
@@ -197,12 +207,16 @@ void train_predict_helper(SolutionWrapper* wrapper,
 			state_error.resize(NUM_STATES);
 			state_error.setConstant(0.0);
 
-			scope->score_network->backprop(target_val,
+			double improvement = target_val - scope_history->start_score;
+			scope->score_network->backprop(improvement,
 										   state_error);
 
 			for (int h_index = (int)train_node_histories.size()-1; h_index >= 0; h_index--) {
 				train_node_histories[h_index]->backprop(state_error);
 			}
+
+			scope->start_score_network->backprop(target_val,
+												 state_error);
 
 			scope->obs_network->backprop(state_error);
 
@@ -219,6 +233,8 @@ void train_predict_helper(SolutionWrapper* wrapper,
 			for (int h_index = (int)train_node_histories.size()-1; h_index >= 0; h_index--) {
 				train_node_histories[h_index]->update(wrapper->train_iter_index);
 			}
+
+			scope->start_score_network->update();
 
 			scope->obs_network->update();
 

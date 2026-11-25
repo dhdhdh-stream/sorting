@@ -262,21 +262,22 @@ void ExploreExperiment::explore_backprop(double target_val,
 		if (history->has_explore) {
 			this->state_iter++;
 
+			double improvement = target_val - history->scope_histories[0]->start_score;
 			double curr_vs_surprise;
 			if (this->minimize_misguess) {
-				double misguess = abs(target_val - history->scope_histories[0]->score_signal);
+				double misguess = abs(improvement - history->scope_histories[0]->score_signal);
 				if (this->is_signal) {
 					curr_vs_surprise = (history->scope_histories[0]->score_signal - MISGUESS_FACTOR * misguess)
 						- history->existing_predicted;
 				} else {
-					curr_vs_surprise = (target_val - MISGUESS_FACTOR * misguess)
+					curr_vs_surprise = (improvement - MISGUESS_FACTOR * misguess)
 						- history->existing_predicted;
 				}
 			} else {
 				if (this->is_signal) {
 					curr_vs_surprise = history->scope_histories[0]->score_signal - history->existing_predicted;
 				} else {
-					curr_vs_surprise = target_val - history->existing_predicted;
+					curr_vs_surprise = improvement - history->existing_predicted;
 				}
 			}
 

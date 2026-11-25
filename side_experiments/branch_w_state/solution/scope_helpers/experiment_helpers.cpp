@@ -19,6 +19,9 @@ void Scope::experiment_start_activate(vector<double>& obs,
 
 	this->obs_network->activate(wrapper->states.back(),
 								obs);
+
+	this->start_score_network->activate(wrapper->states.back());
+	scope_history->start_score = this->start_score_network->output->acti_vals(0);
 }
 
 void Scope::experiment_exit_activate(SolutionWrapper* wrapper) {
